@@ -22,7 +22,7 @@ import {
 } from "../composables/realtime/websocketChannel";
 import { newFileInMemoryAccess } from "../composables/fileInMemoryAccess";
 
-const DIAGRAM_KEY = "test-project-diagram";
+const INDEXEDDB_DIAGRAM_KEY = "test-project-diagram";
 const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
 
 const { indexedDBMode } = newFeatureFlags();
@@ -45,6 +45,7 @@ interface PersistenceOption {
 }
 
 export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) {
+  // Empty refers to "file-in-memory"
   const [workspaceType, setWorkspaceType] = useState("");
 
   const [diagramDoc, setDiagramDoc] = useState(defaultDiagramDoc);
@@ -206,14 +207,6 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       let fn = saveSheetUpdateThrottleMap.current.get(sheetId);
       if (!fn) {
         fn = newLeveledThrottle(async () => {
-          // Save to IndexedDB if it's active
-          if (indexedDBMode) {
-            const sheet = await loadIndependentSheet(sheetId);
-            Y.applyUpdate(sheet, update);
-            await saveIndexeddbPersistence(sheetId, sheet);
-            sheet.destroy();
-          }
-
           try {
             const sheet = await loadIndependentSheet(sheetId);
             Y.applyUpdate(sheet, update);
@@ -332,7 +325,9 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
         try {
           await activeFileAccess.openSheet(sheetId, nextSheetDoc);
           setSyncStatus("ok");
-          await clearIndexeddbPersistence(sheetId);
+          if (workspaceType) {
+            await clearIndexeddbPersistence(sheetId);
+          }
         } catch (e) {
           handleSyncError(e);
           console.error("Failed to load local sheet: ", sheetId, e);
@@ -352,7 +347,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
         documentStore: newDocumentStore({ ydoc: nextSheetDoc }),
       });
     },
-    [activeFileAccess, handleSyncError, flushSaveThrottles],
+    [activeFileAccess, handleSyncError, flushSaveThrottles, workspaceType],
   );
 
   const initDiagram = useCallback(
@@ -364,7 +359,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
       }
 
       const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
-      const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+      const provider = newIndexeddbPersistence(INDEXEDDB_DIAGRAM_KEY, nextDiagramDoc);
       await provider?.whenSynced;
 
       if (!diagramStore.getEntity().id) {
@@ -414,7 +409,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     closeWSClient();
     await clearIndexeddbPersistenceAll();
 
-    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+    const provider = newIndexeddbPersistence(INDEXEDDB_DIAGRAM_KEY, nextDiagramDoc);
     await provider?.whenSynced;
     const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
 
@@ -450,7 +445,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     await clearIndexeddbPersistenceAll();
 
     const nextDiagramDoc = new Y.Doc();
-    const provider = newIndexeddbPersistence(DIAGRAM_KEY, nextDiagramDoc);
+    const provider = newIndexeddbPersistence(INDEXEDDB_DIAGRAM_KEY, nextDiagramDoc);
     await provider?.whenSynced;
     const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
 
