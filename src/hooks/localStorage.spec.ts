@@ -1,12 +1,16 @@
-import { expect, describe, test, beforeEach } from "vitest";
+import { expect, describe, test, beforeEach, afterEach } from "vitest";
 import { renderHook, act, cleanup } from "@testing-library/react";
 import { useLocalStorageAdopter } from "./localStorage";
-import { sleep } from "../testUtils";
+import { vi } from "vitest";
 
 describe("useLocalStorageAdopter", () => {
   beforeEach(() => {
     cleanup();
     localStorage.clear();
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   test("should work like usual state and save state to localStorage periodically", async () => {
@@ -26,11 +30,11 @@ describe("useLocalStorageAdopter", () => {
     });
     expect(rendered.result.current[0]).toBe(3);
 
-    await sleep(6);
+    vi.advanceTimersByTime(6);
     const rendered1 = renderHook(() => useLocalStorageAdopter(option));
     expect(rendered1.result.current[0]).toBe(1);
 
-    await sleep(6);
+    vi.advanceTimersByTime(6);
     const rendered2 = renderHook(() => useLocalStorageAdopter(option));
     expect(rendered2.result.current[0]).toBe(3);
   });
@@ -52,6 +56,7 @@ describe("useLocalStorageAdopter", () => {
     act(() => {
       rendered.result.current[1](2);
     });
+    vi.advanceTimersByTime(15);
     expect(rendered.result.current[0]).toBe(2);
     expect(count).toBe(1);
   });
