@@ -129,10 +129,12 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
           }
 
           const selectedShapeMap = mapReduce(ctx.getSelectedShapeIdMap(), (_, id) => shapeMap[id]);
-          const [attachableShapes, otherAttachedShapes] = splitList(
+          const [attachableCandidates, otherAttachedShapes] = splitList(
             toList(selectedShapeMap),
             (s) => !s.attachment || s.attachment?.id === line.id || s.id === option.shapeId,
           );
+          // Some shapes, such as lines, are unattachable
+          const [attachableShapes, unattachableShapes] = splitList(attachableCandidates, (s) => !isLineShape(s));
           let attachInfoMap: Map<string, [to: IVec2]>;
 
           if (event.data.shift) {
@@ -210,6 +212,15 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
               },
               (_, currentPatch) => {
                 return getPatchAfterLayouts(shapeComposite, { update: currentPatch });
+              },
+              (latestMap) => {
+                const shape = shapeMap[option.shapeId];
+                const latestShape = latestMap[option.shapeId];
+                if (!shape || !latestShape) return {};
+
+                // Translate unattachable shapes along with the target.
+                const t: AffineMatrix = [1, 0, 0, 1, latestShape.p.x - shape.p.x, latestShape.p.y - shape.p.y];
+                return mapReduce(toMap(unattachableShapes), (s) => shapeComposite.transformShape(s, t));
               },
               (latestMap) => {
                 const shape = shapeMap[option.shapeId];
