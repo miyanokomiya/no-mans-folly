@@ -1,8 +1,9 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { LineShape, getLinePath, isLineShape, patchConnection, patchVertex } from "../../../../shapes/line";
+import { LineShape, getLinePath, patchVertex } from "../../../../shapes/line";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import {
   ConnectionResult,
+  getConnectionResultByHook,
   isLineSnappableShape,
   newLineSnapping,
   optimizeLinePath,
@@ -18,11 +19,9 @@ import { renderBezierControls } from "../../../lineBounding";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 import { getSnappableCandidates } from "../commons";
-import { add, getRectCenter, IVec2, sub } from "okageo";
+import { add, IVec2, sub } from "okageo";
 import { newCacheWithArg } from "../../../../utils/stateful/cache";
 import { handleCommonWheel } from "../../commons";
-import { findBackward } from "../../../../utils/commons";
-import { ConnectionPoint } from "../../../../models";
 
 interface Option {
   lineShape: LineShape;
@@ -89,21 +88,13 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
 
           connectionResult = undefined;
           if (event.data.shift) {
-            const snappable = lineSnappingCache.getValue(ctx).snappableShapes.filter((s) => !isLineShape(s));
-            const candidate = findBackward(snappable, (s) => {
-              return shapeComposite.isPointOn(s, point);
-            });
-            if (candidate) {
-              const connection: ConnectionPoint = { id: candidate.id, rate: { x: 0.5, y: 0.5 }, optimized: true };
-              const patch = patchConnection(option.lineShape, option.index, connection);
-              const patchedLine = { ...option.lineShape, ...patch };
-              const optimized = optimizeLinePath(ctx, patchedLine);
-              const optimizedLine = optimized ? { ...patchedLine, ...optimized } : patchedLine;
-              const p = optimized
-                ? getLinePath(optimizedLine)[option.index]
-                : getRectCenter(shapeComposite.getWrapperRect(candidate));
-              connectionResult = { connection, outlineSrc: candidate.id, p };
-            }
+            connectionResult = getConnectionResultByHook(
+              shapeComposite,
+              lineSnappingCache.getValue(ctx).snappableShapes,
+              point,
+              option.lineShape,
+              option.index,
+            );
           }
 
           if (!connectionResult) {
@@ -203,7 +194,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
 
       if (connectionResult) {
         renderConnectionResult(renderCtx, {
-          result: connectionResult,
+          result: { ...connectionResult, p: vertex },
           scale: ctx.getScale(),
           style: ctx.getStyleScheme(),
           shapeComposite,

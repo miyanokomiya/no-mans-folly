@@ -21,7 +21,7 @@ import {
 } from "../shapes";
 import { ConnectionPoint, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
-import { LineShape, getConnection, getLinePath, isLineShape } from "../shapes/line";
+import { LineShape, getConnection, getLinePath, isLineShape, patchConnection } from "../shapes/line";
 import {
   ISegment,
   TAU,
@@ -38,7 +38,7 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { applyCurvePath, applyPath, scaleGlobalAlpha } from "../utils/renderer";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
-import { isObjectEmpty, pickMinItem, splitList } from "../utils/commons";
+import { findBackward, isObjectEmpty, pickMinItem, splitList } from "../utils/commons";
 import { isGroupShape } from "../shapes/group";
 import { isLineLabelShape } from "../shapes/utils/lineLabel";
 import { isConnectedToCenter } from "../shapes/utils/line";
@@ -883,4 +883,28 @@ function seekLineConnectionAt(line: LineShape, p: IVec2): ConnectionPoint | unde
   const index = points.findIndex((v) => isSame(v, p));
   if (index === -1) return;
   return getConnection(line, index);
+}
+
+export function getConnectionResultByHook(
+  shapeComposite: ShapeComposite,
+  snappable: Shape[],
+  point: IVec2,
+  line: LineShape,
+  index: number,
+): ConnectionResult | undefined {
+  const candidate = findBackward(
+    snappable.filter((s) => !isLineShape(s)),
+    (s) => {
+      return shapeComposite.isPointOn(s, point);
+    },
+  );
+  if (candidate) {
+    const connection: ConnectionPoint = { id: candidate.id, rate: { x: 0.5, y: 0.5 }, optimized: true };
+    const patch = patchConnection(line, index, connection);
+    const patchedLine = { ...line, ...patch };
+    const optimized = optimizeLinePath({ getShapeComposite: () => shapeComposite }, patchedLine);
+    const optimizedLine = optimized ? { ...patchedLine, ...optimized } : patchedLine;
+    const p = optimized ? getLinePath(optimizedLine)[index] : getRectCenter(shapeComposite.getWrapperRect(candidate));
+    return { connection, outlineSrc: candidate.id, p };
+  }
 }

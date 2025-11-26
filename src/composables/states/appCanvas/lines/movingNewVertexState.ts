@@ -1,9 +1,10 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { LineShape, addNewVertex } from "../../../../shapes/line";
+import { LineShape, addNewVertex, getLinePath } from "../../../../shapes/line";
 import { IVec2 } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import {
   ConnectionResult,
+  getConnectionResultByHook,
   isLineSnappableShape,
   newLineSnapping,
   optimizeLinePath,
@@ -27,10 +28,9 @@ interface Option {
 }
 
 export function newMovingNewVertexState(option: Option): AppCanvasState {
-  let vertex = option.p;
   let connectionResult: ConnectionResult | undefined;
   let preserveAttachmentHandler: PreserveAttachmentHandler;
-  const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
+  const coordinateRenderer = newCoordinateRenderer({ coord: option.p });
 
   const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
     const shapeComposite = ctx.getShapeComposite();
@@ -58,9 +58,13 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       preserveAttachmentHandler = newPreserveAttachmentHandler({ shapeComposite, lineId: option.lineShape.id });
       if (preserveAttachmentHandler.hasAttachment) {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT, COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+        ctx.setCommandExams([
+          COMMAND_EXAM_SRC.PRESERVE_ATTACHMENT,
+          COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP,
+          COMMAND_EXAM_SRC.HOOK_TO_SHAPE,
+        ]);
       } else {
-        ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+        ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP, COMMAND_EXAM_SRC.HOOK_TO_SHAPE]);
       }
     },
     onResume: () => {
@@ -74,14 +78,34 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
+          const shapeComposite = ctx.getShapeComposite();
           const point = event.data.current;
-          connectionResult = event.data.ctrl
-            ? undefined
-            : lineSnappingCache.getValue(ctx).testConnection(point, ctx.getScale());
-          vertex = connectionResult?.p ?? point;
 
-          coordinateRenderer.saveCoord(vertex);
-          let patch = addNewVertex(option.lineShape, option.index, vertex, connectionResult?.connection);
+          connectionResult = undefined;
+          if (event.data.shift) {
+            connectionResult = getConnectionResultByHook(
+              shapeComposite,
+              lineSnappingCache.getValue(ctx).snappableShapes,
+              point,
+              option.lineShape,
+              option.index,
+            );
+          }
+
+          if (!connectionResult) {
+            connectionResult =
+              event.data.ctrl || event.data.shift
+                ? undefined
+                : lineSnappingCache.getValue(ctx).testConnection(point, ctx.getScale());
+          }
+
+          let patch = addNewVertex(
+            option.lineShape,
+            option.index,
+            connectionResult?.p ?? point,
+            connectionResult?.connection,
+          );
+
           const optimized = optimizeLinePath(ctx, { ...option.lineShape, ...patch });
           patch = optimized ? { ...patch, ...optimized } : patch;
 
@@ -103,6 +127,13 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
         }
         case "selection": {
           return ctx.states.newSelectionHubState;
+        }
+        case "shape-updated": {
+          if (event.data.keys.has(option.lineShape.id)) {
+            const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
+            if (!line || !getLinePath(line)[option.index]) return ctx.states.newSelectionHubState;
+          }
+          return;
         }
         case "keydown":
           switch (event.data.key) {
@@ -127,22 +158,26 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
     render(ctx, renderCtx) {
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
+      const vertexSize = 8 * scale;
 
+      const shapeComposite = ctx.getShapeComposite();
+      const line = shapeComposite.mergedShapeMap[option.lineShape.id] as LineShape;
+      if (!line) return;
+
+      const vertex = getLinePath(line)[option.index];
+      coordinateRenderer.saveCoord(vertex);
       coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
 
-      const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
       renderBezierControls(renderCtx, style, scale, line);
 
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
-      const vertexSize = 8 * scale;
       renderCtx.beginPath();
-      renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, TAU);
+      renderCtx.arc(vertex.x, vertex.y, vertexSize, 0, TAU);
       renderCtx.fill();
 
-      const shapeComposite = ctx.getShapeComposite();
       if (connectionResult) {
         renderConnectionResult(renderCtx, {
-          result: connectionResult,
+          result: { ...connectionResult, p: vertex },
           scale: ctx.getScale(),
           style: ctx.getStyleScheme(),
           shapeComposite,

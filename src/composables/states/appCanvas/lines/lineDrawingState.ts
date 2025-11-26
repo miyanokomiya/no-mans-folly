@@ -3,6 +3,7 @@ import { newDefaultState } from "../defaultState";
 import { getLinePath, LineShape, patchVertex } from "../../../../shapes/line";
 import {
   ConnectionResult,
+  getConnectionResultByHook,
   isLineSnappableShape,
   newLineSnapping,
   optimizeLinePath,
@@ -33,10 +34,9 @@ export function newLineDrawingState(option: Option): AppCanvasState {
   const linePath = getLinePath(srcShape);
   const movingIndex = linePath.length - 1;
   let latestShape = srcShape;
-  let vertex = linePath[movingIndex];
   let connectionResult: ConnectionResult | undefined;
   let elbowHandler: ElbowLineHandler | undefined;
-  const coordinateRenderer = newCoordinateRenderer({ coord: vertex });
+  const coordinateRenderer = newCoordinateRenderer({ coord: linePath[movingIndex] });
   let hoverMode = false;
 
   const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
@@ -62,7 +62,7 @@ export function newLineDrawingState(option: Option): AppCanvasState {
     getLabel: () => "LineDrawing",
     onStart: (ctx) => {
       ctx.startDragging();
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP]);
+      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_LINE_VERTEX_SNAP, COMMAND_EXAM_SRC.HOOK_TO_SHAPE]);
       elbowHandler =
         srcShape.lineType === "elbow" ? newElbowLineHandler({ getShapeComposite: ctx.getShapeComposite }) : undefined;
     },
@@ -73,14 +73,28 @@ export function newLineDrawingState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
+          const shapeComposite = ctx.getShapeComposite();
           const point = event.data.current;
-          connectionResult = event.data.ctrl
-            ? undefined
-            : lineSnappingCache.getValue(ctx).testConnection(point, ctx.getScale());
-          vertex = connectionResult?.p ?? point;
 
-          coordinateRenderer.saveCoord(vertex);
-          let patch = patchVertex(srcShape, movingIndex, vertex, connectionResult?.connection);
+          connectionResult = undefined;
+          if (event.data.shift) {
+            connectionResult = getConnectionResultByHook(
+              shapeComposite,
+              lineSnappingCache.getValue(ctx).snappableShapes,
+              point,
+              srcShape,
+              movingIndex,
+            );
+          }
+
+          if (!connectionResult) {
+            connectionResult =
+              event.data.ctrl || event.data.shift
+                ? undefined
+                : lineSnappingCache.getValue(ctx).testConnection(point, ctx.getScale());
+          }
+
+          let patch = patchVertex(srcShape, movingIndex, connectionResult?.p ?? point, connectionResult?.connection);
 
           const optimized = optimizeLinePath(ctx, { ...srcShape, ...patch });
           patch = optimized ? { ...patch, ...optimized } : patch;
@@ -92,8 +106,6 @@ export function newLineDrawingState(option: Option): AppCanvasState {
             // Append middle vertex to make a curve
             patch = { ...patch, body: getDefaultCurveBody(srcShape.p, patch.q ?? latestShape.q) };
           }
-
-          const shapeComposite = ctx.getShapeComposite();
 
           // Include connected shapes to temporary shape composite.
           // => This is essential for connection layout to work properly.
@@ -164,6 +176,9 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       const style = ctx.getStyleScheme();
       const vertexSize = 8 * scale;
 
+      const shapeComposite = ctx.getShapeComposite();
+      const vertex = getLinePath(latestShape)[movingIndex];
+      coordinateRenderer.saveCoord(vertex);
       coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
 
       applyFillStyle(renderCtx, { color: style.selectionPrimary });
@@ -171,10 +186,9 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       renderCtx.ellipse(vertex.x, vertex.y, vertexSize, vertexSize, 0, 0, TAU);
       renderCtx.fill();
 
-      const shapeComposite = ctx.getShapeComposite();
       if (connectionResult) {
         renderConnectionResult(renderCtx, {
-          result: connectionResult,
+          result: { ...connectionResult, p: vertex },
           scale: ctx.getScale(),
           style: ctx.getStyleScheme(),
           shapeComposite,
