@@ -17,6 +17,7 @@ export const COMMAND_EXAM_SRC = {
   SMART_BRANCH_SETTING: { command: "Right click", title: "Smart branch setting" },
   EXTRUDE_LINE_SEGMENT: { command: "e", title: "Extrude segment" },
   SLIDE_LINE_SEGMENT: { command: "e", title: "Slide segment" },
+  HOOK_TO_SHAPE: { command: "Shift", title: "Hook to shape" },
 
   ATTACH_LINE_VERTEX: { command: "Click", title: "Select attaching target" },
   COMBINE_LINES: { command: "Click", title: "Select vertex to combine" },

@@ -477,7 +477,7 @@ export function newLineSnapping(option: Option) {
     return;
   }
 
-  return { testConnection };
+  return { testConnection, snappableShapes: option.snappableShapes };
 }
 export type LineSnapping = ReturnType<typeof newLineSnapping>;
 
