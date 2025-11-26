@@ -402,6 +402,11 @@ export function getClosestPointOnPolyline(
   p: IVec2,
   threshold: number,
 ): [p: IVec2, rate: number] | undefined {
+  if (edgeInfo.totalLength === 0) {
+    const d = getDistance(edgeInfo.edges[0][0], p);
+    return d < threshold ? [edgeInfo.edges[0][0], 0] : undefined;
+  }
+
   const edges = edgeInfo.edges;
 
   const values = edges

@@ -152,6 +152,12 @@ describe("attachLabelToLine", () => {
     expect(ret1.vAlign).toBe("center");
     expect(ret1.lineAttached).toBeCloseTo(0.75, 3);
   });
+
+  test("should regard the line with zero length", () => {
+    const line0 = lineStruct.create({ p: { x: 10, y: 30 }, q: { x: 10, y: 30 } });
+    const label0 = textStruct.create({ p: { x: 20, y: 20 }, width: 10, height: 10 });
+    expect(attachLabelToLine(line0, label0).p).toEqualPoint({ x: 10, y: 20 });
+  });
 });
 
 describe("isLineLabelShape", () => {

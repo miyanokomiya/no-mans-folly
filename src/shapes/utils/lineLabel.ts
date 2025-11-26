@@ -11,9 +11,10 @@ export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0)
   const labelCenter = getRectCenter(labelBounds);
   const rotateFn = getRotateFn(-label.rotation, labelCenter);
 
-  const closestInfo = getClosestOutlineInfoOfLine(line, labelCenter, Infinity)!;
-  const [closestPedal, rate] = closestInfo;
+  const closestInfo = getClosestOutlineInfoOfLine(line, labelCenter, Infinity);
+  if (!closestInfo) return { p: line.p };
 
+  const [closestPedal, rate] = closestInfo;
   let patch: Partial<TextShape> = {};
 
   const rotatedClosestPedal = rotateFn(closestPedal);

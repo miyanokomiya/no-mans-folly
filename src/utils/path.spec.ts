@@ -480,6 +480,17 @@ describe("getPolylineEdgeInfo", () => {
 });
 
 describe("getClosestPointOnPolyline", () => {
+  test("should regard the line with zero length", () => {
+    const edgeInfo = getPolylineEdgeInfo(
+      getSegments([
+        { x: 100, y: 0 },
+        { x: 100, y: 0 },
+      ]),
+    );
+    expect(getClosestPointOnPolyline(edgeInfo, { x: 100, y: 5 }, 10)).toEqual([{ x: 100, y: 0 }, 0]);
+    expect(getClosestPointOnPolyline(edgeInfo, { x: 100, y: 15 }, 10)).toEqual(undefined);
+  });
+
   test("should return the closest outline info if exists", () => {
     const edgeInfo = getPolylineEdgeInfo(
       getSegments([
