@@ -589,6 +589,7 @@ describe("newPreserveAttachmentByShapeHandler", () => {
       rotation: 0,
     },
   });
+
   test("should return patch to preserve line attachments", () => {
     const shapeComposite = newShapeComposite({
       shapes: [line, shapeA],
@@ -598,7 +599,31 @@ describe("newPreserveAttachmentByShapeHandler", () => {
     const res0 = handler.getPatch({ a: { p: { x: 10, y: 0 } } });
     expect(Object.keys(res0)).toEqual(["a"]);
     expect(res0["a"].attachment?.to).toEqualPoint({ x: 0.35, y: 0 });
+    expect(res0["a"].attachment?.anchor).toEqualPoint({ x: 0.5, y: 0.5 });
     expect(Object.keys(res0["a"]), "should update attachment only").toEqual(["attachment"]);
+  });
+
+  test("should return patch to preserve line attachments: keepAnchor is true", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [line, shapeA],
+      getStruct: getCommonStruct,
+    });
+    const handler = newPreserveAttachmentByShapeHandler({ shapeComposite, keepAnchor: true });
+
+    // Original anchor can stay inside the shape
+    const res0 = handler.getPatch({ a: { p: { x: 10, y: -25 } } });
+    expect(res0["a"].attachment?.to).toEqualPoint({ x: 0.5, y: 0 });
+    expect(res0["a"].attachment?.anchor).toEqualPoint({ x: 0.8, y: 0.5 });
+
+    // Original anchor can't stay inside the shape but patched anchor can
+    const res1 = handler.getPatch({ a: { p: { x: -10, y: -25 } } });
+    expect(res1["a"].attachment?.to).toEqualPoint({ x: 0.15, y: 0 });
+    expect(res1["a"].attachment?.anchor).toEqualPoint({ x: 0.5, y: 0.5 });
+
+    // No anchor can stay inside the shape
+    const res2 = handler.getPatch({ a: { p: { x: -60, y: -25 } } });
+    expect(res2["a"]).toHaveProperty("attachment");
+    expect(res2["a"].attachment).toBe(undefined);
   });
 });
 

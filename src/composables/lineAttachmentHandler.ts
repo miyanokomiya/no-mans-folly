@@ -218,10 +218,15 @@ export function getNextAttachmentAnchorPoint(shapeComposite: ShapeComposite, sha
   return rotateFn(localAnchor);
 }
 
-export function getNextAttachmentAnchor(shapeComposite: ShapeComposite, shape: Shape, point: IVec2): IVec2 {
+export function getNextAttachmentAnchor(
+  shapeComposite: ShapeComposite,
+  shape: Shape,
+  point: IVec2,
+  allowOutside = false,
+): IVec2 {
   const localSpace = shapeComposite.getLocalSpace(shape);
   const localPoint = rotate(point, -localSpace[1], getRectCenter(localSpace[0]));
-  return getRelativeRateWithinRect(localSpace[0], localPoint, true);
+  return getRelativeRateWithinRect(localSpace[0], localPoint, !allowOutside);
 }
 
 export function getEvenlySpacedLineAttachmentBetweenFixedOnes(
@@ -427,7 +432,13 @@ export function newPreserveAttachmentHandler({
   return { setActive, getPatch, render, hasAttachment };
 }
 
-export function newPreserveAttachmentByShapeHandler({ shapeComposite }: { shapeComposite: ShapeComposite }) {
+export function newPreserveAttachmentByShapeHandler({
+  shapeComposite,
+  keepAnchor,
+}: {
+  shapeComposite: ShapeComposite;
+  keepAnchor?: boolean;
+}) {
   function getPatch(patch: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> } {
     const nextSC = getNextShapeComposite(shapeComposite, { update: patch });
     const nextTargets = Object.keys(patch).map((id) => nextSC.shapeMap[id]);
@@ -448,9 +459,31 @@ export function newPreserveAttachmentByShapeHandler({ shapeComposite }: { shapeC
       const attachedLine = nextSC.shapeMap[nextShape.attachment.id];
       if (!attachedLine || !isLineShape(attachedLine)) return p;
 
-      const nextAnchor = getAttachmentAnchorPoint(nextSC, nextShape);
-      const closestInfo = getClosestPointOnPolyline(getEdgeInfo(attachedLine), nextAnchor, Infinity);
+      const nextAnchorP = getAttachmentAnchorPoint(nextSC, nextShape);
+      const closestInfo = getClosestPointOnPolyline(getEdgeInfo(attachedLine), nextAnchorP, Infinity);
       if (!closestInfo) return p;
+
+      if (keepAnchor) {
+        const anchorP = getAttachmentAnchorPoint(shapeComposite, shapeComposite.shapeMap[nextShape.id]);
+        const nextAnchorOrigin = getNextAttachmentAnchor(nextSC, nextShape, anchorP, true);
+        // Shift the anchor to keep the original position if it's inside the bounds
+        if (isInnerRateValue(nextAnchorOrigin.x) && isInnerRateValue(nextAnchorOrigin.y)) {
+          p[nextShape.id] = { attachment: { ...nextShape.attachment, anchor: nextAnchorOrigin } };
+          return p;
+        }
+
+        // Give up shifting the anchor but trye to keep the attachment based on patched anchor
+        const nextAnchorFree = getNextAttachmentAnchor(nextSC, nextShape, closestInfo[0], true);
+        if (isInnerRateValue(nextAnchorFree.x) && isInnerRateValue(nextAnchorFree.y)) {
+          p[nextShape.id] = {
+            attachment: { ...nextShape.attachment, to: { x: closestInfo[1], y: 0 }, anchor: nextAnchorFree },
+          };
+          return p;
+        }
+
+        p[nextShape.id] = { attachment: undefined };
+        return p;
+      }
 
       p[nextShape.id] = { attachment: { ...nextShape.attachment, to: { x: closestInfo[1], y: 0 } } };
       return p;
@@ -517,4 +550,8 @@ export function snapRectWithLineAttachment({
     lineAnchorRate: closestInfo[1],
     lineAnchor: nextLineAnchorP,
   };
+}
+
+function isInnerRateValue(val: number): boolean {
+  return Math.abs(val - 0.5) <= 0.5;
 }

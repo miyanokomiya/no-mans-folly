@@ -17,7 +17,7 @@ import {
   renderSnappingResult,
 } from "../../shapeSnapping";
 import { ConnectionRenderer, getConnectedLineInfoMap, newConnectionRenderer } from "../../connectedLineHandler";
-import { patchPipe, toMap } from "../../../utils/commons";
+import { mergeMap, patchPipe, toMap } from "../../../utils/commons";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { TextShape } from "../../../shapes/text";
 import { DocDelta } from "../../../models/document";
@@ -28,6 +28,7 @@ import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { resizeShapeTrees } from "../../shapeResizing";
 import { getTree } from "../../../utils/tree";
 import { getSnappableCandidates } from "./commons";
+import { newPreserveAttachmentByShapeHandler } from "../../lineAttachmentHandler";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -178,6 +179,10 @@ export function newResizingState(option: Option): AppCanvasState {
                   });
                 }
                 return shapePatch;
+              },
+              (_, patch) => {
+                const handler = newPreserveAttachmentByShapeHandler({ shapeComposite, keepAnchor: true });
+                return mergeMap(patch, handler.getPatch(patch));
               },
             ],
             shapeMap,
