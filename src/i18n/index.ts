@@ -62,6 +62,7 @@ const en = {
           "The API server only manages WebSocket connections and data transfer across clients without storing workspace data.",
         host: "Anyone in the room may become the host who distributes workspace data.",
       },
+      open_remote_diagram_confirm: "Opening the remote diagram will close the current one. Do you want to proceed?",
     },
 
     exconnection: {
@@ -220,6 +221,7 @@ const ja: TranslationResource = {
           "APIサーバーはWebSocket接続とクライアント間のデータ通信の管理のみを行い、ワークスペースのデータを保存しません。",
         host: "ルーム内の誰もがワークスペースのデータ配信者となる可能性があります。",
       },
+      open_remote_diagram_confirm: "リモートの図を開くと、現在の図は閉じられます。続行しますか？",
     },
 
     exconnection: {

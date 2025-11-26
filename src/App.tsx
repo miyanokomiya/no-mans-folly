@@ -21,7 +21,7 @@ import { exportWorkspaceToAnother, newFileAccess } from "./composables/fileAcces
 import { LoadingDialog } from "./components/navigations/LoadingDialog";
 import { WorkspacePickerDialog } from "./components/navigations/WorkspacePickerDialog";
 import { useEffectOnce } from "./hooks/utils";
-import { useHasShape } from "./hooks/storeHooks";
+import { useHasMultipleSheet, useHasShape } from "./hooks/storeHooks";
 import { newFeatureFlags } from "./composables/featureFlags";
 import { useUnloadWarning } from "./hooks/window";
 import { useToastMessages } from "./hooks/toastMessage";
@@ -291,9 +291,10 @@ function App() {
   }, []);
 
   const hasShape = useHasShape(shapeStore);
-  const hasTemporaryDiagram = !workspaceType && hasShape;
-
-  useUnloadWarning(!userSetting.getState().debug && (savePendingFlag || hasTemporaryDiagram));
+  const hasMultipleSheet = useHasMultipleSheet(sheetStore);
+  const hasTemporaryDiagram = !workspaceType && (hasShape || hasMultipleSheet);
+  const saveProcessingFlag = !!workspaceType && (savePendingFlag || savingFlag);
+  useUnloadWarning(!userSetting.getState().debug && (saveProcessingFlag || hasTemporaryDiagram));
 
   const loading = !ready || revoking || exportProgress !== undefined;
 

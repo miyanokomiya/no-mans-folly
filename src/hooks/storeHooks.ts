@@ -5,6 +5,7 @@ import { ShapeStore } from "../stores/shapes";
 import { ShapeComposite } from "../composables/shapeComposite";
 import { DocOutput } from "../models/document";
 import { mapReduce } from "../utils/commons";
+import { SheetStore } from "../stores/sheets";
 
 export function useUserSetting(): [UserSetting, patchUserSetting: (patch: Partial<UserSetting>) => void] {
   const { userSettingStore } = useContext(AppCanvasContext);
@@ -133,6 +134,13 @@ export function useHasShape(shapeStore: ShapeStore): boolean {
   return useSyncExternalStore(
     shapeStore.watch,
     useCallback(() => shapeStore.shapeComposite.shapes.length > 0, [shapeStore]),
+  );
+}
+
+export function useHasMultipleSheet(sheetStore: SheetStore): boolean {
+  return useSyncExternalStore(
+    sheetStore.watch,
+    useCallback(() => sheetStore.getEntities().length > 1, [sheetStore]),
   );
 }
 

@@ -21,6 +21,7 @@ import {
   WS_UPDATE_ORIGIN,
 } from "../composables/realtime/websocketChannel";
 import { newFileInMemoryAccess } from "../composables/fileInMemoryAccess";
+import { i18n } from "../i18n";
 
 const INDEXEDDB_DIAGRAM_KEY = "test-project-diagram";
 const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
@@ -459,11 +460,20 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
   const openRemoteDiagram = useCallback(
     async (diagramUpdate?: Uint8Array) => {
+      if (diagramStores.sheetStore.getEntities().length > 1 || sheetStores.shapeStore.getEntities().length > 0) {
+        try {
+          const res = confirm(i18n.t("realtime.open_remote_diagram_confirm"));
+          if (!res) return;
+        } catch {
+          // Ignore confirmation error
+        }
+      }
+
       await flushSaveThrottles();
       disconnectFileAccessGracefully(activeFileAccess);
       initDiagram(diagramUpdate);
     },
-    [initDiagram, flushSaveThrottles, activeFileAccess],
+    [initDiagram, flushSaveThrottles, activeFileAccess, diagramStores, sheetStores],
   );
 
   /**
