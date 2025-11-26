@@ -6,6 +6,7 @@ import {
   getEvenlySpacedLineAttachmentBetweenFixedOnes,
   getLineAttachmentPatch,
   getNextAttachmentAnchor,
+  newPreserveAttachmentByShapeHandler,
   newPreserveAttachmentHandler,
   snapRectWithLineAttachment,
 } from "./lineAttachmentHandler";
@@ -570,6 +571,34 @@ describe("newPreserveAttachmentHandler", () => {
       target.setActive(false);
       expect(target.getPatch({ q: { x: 0, y: 100 } })).toBe(undefined);
     });
+  });
+});
+
+describe("newPreserveAttachmentByShapeHandler", () => {
+  const line = createShape<LineShape>(getCommonStruct, "line", { id: "line", q: { x: 100, y: 0 } });
+  const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "a",
+    p: { x: 25, y: -25 },
+    width: 50,
+    height: 50,
+    attachment: {
+      id: line.id,
+      to: { x: 0.5, y: 0 },
+      anchor: { x: 0.5, y: 0.5 },
+      rotationType: "absolute",
+      rotation: 0,
+    },
+  });
+  test("should return patch to preserve line attachments", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [line, shapeA],
+      getStruct: getCommonStruct,
+    });
+    const handler = newPreserveAttachmentByShapeHandler({ shapeComposite });
+    const res0 = handler.getPatch({ a: { p: { x: 10, y: 0 } } });
+    expect(Object.keys(res0)).toEqual(["a"]);
+    expect(res0["a"].attachment?.to).toEqualPoint({ x: 0.35, y: 0 });
+    expect(Object.keys(res0["a"]), "should update attachment only").toEqual(["attachment"]);
   });
 });
 

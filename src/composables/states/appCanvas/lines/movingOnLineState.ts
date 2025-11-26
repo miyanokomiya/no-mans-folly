@@ -1,14 +1,15 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import { mapReduce, patchPipe, toList, toMap } from "../../../../utils/commons";
+import { mapReduce, mergeMap, patchPipe, splitList, toList, toMap } from "../../../../utils/commons";
 import { getLinePath, isLineShape, LineShape } from "../../../../shapes/line";
 import { getLineEdgeInfo } from "../../../../shapes/utils/line";
 import { getDiagonalLengthOfRect, TAU } from "../../../../utils/geometry";
-import { add, getDistance, IRectangle, IVec2, moveRect, sub } from "okageo";
+import { add, AffineMatrix, getDistance, IRectangle, IVec2, moveRect, sub } from "okageo";
 import {
   getAttachmentAnchorPoint,
   getEvenlySpacedLineAttachment,
   getEvenlySpacedLineAttachmentBetweenFixedOnes,
+  newPreserveAttachmentByShapeHandler,
   snapRectWithLineAttachment,
 } from "../../../lineAttachmentHandler";
 import { Shape, ShapeAttachment } from "../../../../models";
@@ -128,7 +129,10 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
           }
 
           const selectedShapeMap = mapReduce(ctx.getSelectedShapeIdMap(), (_, id) => shapeMap[id]);
-          const selectedShapes = toList(selectedShapeMap);
+          const [attachableShapes, otherAttachedShapes] = splitList(
+            toList(selectedShapeMap),
+            (s) => !s.attachment || s.attachment?.id === line.id || s.id === option.shapeId,
+          );
           let attachInfoMap: Map<string, [to: IVec2]>;
 
           if (event.data.shift) {
@@ -136,7 +140,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             const attachInfo = getEvenlySpacedLineAttachment(
               shapeMap,
               line.id,
-              Object.keys(selectedShapeMap),
+              attachableShapes.map((s) => s.id),
               option.shapeId,
               movedIndexAnchorP,
               edgeInfo,
@@ -171,11 +175,11 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
               }
             }
 
-            if (selectedShapes.length > 1) {
+            if (attachableShapes.length > 1) {
               const infoMap = getEvenlySpacedLineAttachmentBetweenFixedOnes(
                 shapeMap,
                 line.id,
-                Object.keys(selectedShapeMap),
+                attachableShapes.map((s) => s.id),
                 option.shapeId,
                 nextTo.x,
               );
@@ -203,6 +207,25 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
                   };
                   return { attachment };
                 });
+              },
+              (_, currentPatch) => {
+                return getPatchAfterLayouts(shapeComposite, { update: currentPatch });
+              },
+              (latestMap) => {
+                const shape = shapeMap[option.shapeId];
+                const latestShape = latestMap[option.shapeId];
+                if (!shape || !latestShape) return {};
+
+                // Translate other attached shapes as well as the target.
+                const t: AffineMatrix = [1, 0, 0, 1, latestShape.p.x - shape.p.x, latestShape.p.y - shape.p.y];
+                const patch = otherAttachedShapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
+                  p[s.id] = shapeComposite.transformShape(s, t);
+                  return p;
+                }, {});
+
+                // Try to preserve line attachments.
+                const handler = newPreserveAttachmentByShapeHandler({ shapeComposite });
+                return mergeMap(patch, handler.getPatch(patch));
               },
               (_, currentPatch) => {
                 return getPatchAfterLayouts(shapeComposite, { update: currentPatch });

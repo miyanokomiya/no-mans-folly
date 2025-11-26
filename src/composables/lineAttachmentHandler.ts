@@ -16,7 +16,7 @@ import { EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { isLineShape, LineShape } from "../shapes/line";
 import { getIntersectionsBetweenLineShapeAndLine, getLineEdgeInfo } from "../shapes/utils/line";
 import { getClosestPointOnPolyline, PolylineEdgeInfo } from "../utils/path";
-import { ShapeComposite } from "./shapeComposite";
+import { getNextShapeComposite, ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import {
   fillArray,
@@ -425,6 +425,39 @@ export function newPreserveAttachmentHandler({
   }
 
   return { setActive, getPatch, render, hasAttachment };
+}
+
+export function newPreserveAttachmentByShapeHandler({ shapeComposite }: { shapeComposite: ShapeComposite }) {
+  function getPatch(patch: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> } {
+    const nextSC = getNextShapeComposite(shapeComposite, { update: patch });
+    const nextTargets = Object.keys(patch).map((id) => nextSC.shapeMap[id]);
+    const edgeInfoMap = new Map<string, PolylineEdgeInfo>();
+
+    function getEdgeInfo(line: LineShape) {
+      const cache = edgeInfoMap.get(line.id);
+      if (cache) return cache;
+
+      const info = getLineEdgeInfo(line);
+      edgeInfoMap.set(line.id, info);
+      return info;
+    }
+
+    return nextTargets.reduce<{ [id: string]: Partial<Shape> }>((p, nextShape) => {
+      if (!nextShape.attachment) return p;
+
+      const attachedLine = nextSC.shapeMap[nextShape.attachment.id];
+      if (!attachedLine || !isLineShape(attachedLine)) return p;
+
+      const nextAnchor = getAttachmentAnchorPoint(nextSC, nextShape);
+      const closestInfo = getClosestPointOnPolyline(getEdgeInfo(attachedLine), nextAnchor, Infinity);
+      if (!closestInfo) return p;
+
+      p[nextShape.id] = { attachment: { ...nextShape.attachment, to: { x: closestInfo[1], y: 0 } } };
+      return p;
+    }, {});
+  }
+
+  return { getPatch };
 }
 
 export function snapRectWithLineAttachment({
