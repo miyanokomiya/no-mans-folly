@@ -141,17 +141,23 @@ export const newWSChannel: RealtimeHandler = (props) => {
         if (!data.update) return;
 
         if (data.id === props.diagramDoc.meta.diagramId) {
-          // Merge the requester's diagram
-          Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update));
-          // Broadcast as an usual diagram update
+          // Broadcast the diagram update for other members
           postWSMessage({
             type: "diagram-update",
-            id: props.diagramDoc.meta.diagramId,
+            id: data.id,
+            update: data.update,
+          } as RTMessageData);
+
+          // Merge the requester's diagram then return it to them
+          Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update));
+          postWSMessage({
+            type: "diagram-sync-res",
+            id: data.id,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(props.diagramDoc)),
             author: data.sender,
           } as RTMessageData);
         } else {
-          // Discard the requester's diagram
+          // Discard the requester's diagram and let them open current one
           postWSMessage({
             type: "diagram-open",
             id: props.diagramDoc.meta.diagramId,
@@ -161,22 +167,21 @@ export const newWSChannel: RealtimeHandler = (props) => {
         }
         return;
       }
+      case "diagram-sync-res": {
+        if (!data.update) return;
+
+        Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
+        requestSheetSync(props.sheetDoc.meta.sheetId, Y.encodeStateAsUpdate(props.sheetDoc));
+        return;
+      }
       case "diagram-open": {
         if (!data.update) return;
-        if (data.author !== connectionId) return;
-
         props.openDiagram(stringToUint8Array(data.update));
         return;
       }
       case "diagram-update": {
-        if (data.update) {
-          Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
-
-          // Request to sync current sheet if this update comes for the diagram sync
-          if (data.author === connectionId) {
-            requestSheetSync(props.sheetDoc.meta.sheetId, Y.encodeStateAsUpdate(props.sheetDoc));
-          }
-        }
+        if (!data.update) return;
+        Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
         return;
       }
       case "sheet-sync-req": {
@@ -184,11 +189,11 @@ export const newWSChannel: RealtimeHandler = (props) => {
 
         const isCurrentSheet = props.sheetDoc.meta.sheetId === data.id;
         const sheet = isCurrentSheet ? props.sheetDoc : await props.loadSheet(data.id);
-        Y.applyUpdate(sheet, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
 
-        // Broadcast as an usual sheet update
+        // Merge and return the sheet to the requester
+        Y.applyUpdate(sheet, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
         postWSMessage({
-          type: "sheet-update",
+          type: "sheet-sync-res",
           id: data.id,
           update: uint8ArrayToString(Y.encodeStateAsUpdate(sheet)),
           author: data.sender,
@@ -199,7 +204,8 @@ export const newWSChannel: RealtimeHandler = (props) => {
         }
         return;
       }
-      case "sheet-update": {
+      case "sheet-update":
+      case "sheet-sync-res": {
         if (!data.update) return;
 
         if (data.id === props.sheetDoc.meta.sheetId) {

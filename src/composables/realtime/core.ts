@@ -7,7 +7,14 @@ type RTData = {
 };
 
 type RTUpdateData = RTData & {
-  type: "diagram-sync-req" | "diagram-open" | "diagram-update" | "sheet-sync-req" | "sheet-update";
+  type:
+    | "diagram-sync-req"
+    | "diagram-sync-res"
+    | "diagram-open"
+    | "diagram-update"
+    | "sheet-sync-req"
+    | "sheet-sync-res"
+    | "sheet-update";
   id: string; // ID of either the diagram or the sheet
   update?: string; // Encoded Uint8Array
 };
