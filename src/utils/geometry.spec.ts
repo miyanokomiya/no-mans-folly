@@ -1163,6 +1163,21 @@ describe("getCrossSegAndSegWithT", () => {
     expect(res0?.[1]).toBeCloseTo(0.3);
     expect(res0?.[2]).toBeCloseTo(0.375);
   });
+
+  test("actual case: should allow small float error", () => {
+    const p = { x: 298.9661553428357, y: 89.72692009244616 };
+    const q = { x: 125, y: 44.58089301408927 };
+
+    const res0 = getCrossSegAndSegWithT([p, q], [{ x: 125, y: 0 }, q]);
+    expect(res0?.[0]).toEqualPoint({ x: 125, y: 44.58089301408927 });
+    expect(res0?.[1]).toBeCloseTo(1);
+    expect(res0?.[2]).toBeCloseTo(1);
+
+    const res1 = getCrossSegAndSegWithT([p, q], [q, { x: 0, y: q.y }]);
+    expect(res1?.[0]).toEqualPoint({ x: 125, y: 44.58089301408927 });
+    expect(res1?.[1]).toBeCloseTo(1);
+    expect(res1?.[2]).toBeCloseTo(0);
+  });
 });
 
 describe("sortPointFrom", () => {

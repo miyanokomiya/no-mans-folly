@@ -712,7 +712,16 @@ export function getCrossSegAndSegWithT(seg0: ISegment, seg1: ISegment): [IVec2, 
   const invCross = 1 / getCross(v, u);
   const t = getCross(sub(q, p), multi(u, invCross));
   const s = getCross(sub(p, q), multi(v, -invCross));
-  return 0 <= t && t <= 1 && 0 <= s && s <= 1 ? [add(p, multi(v, t)), t, s] : undefined;
+
+  // Allow small error for practical cases
+  const FLOAT_ERROR = 1e-15;
+  const zero = -FLOAT_ERROR;
+  const one = 1 + FLOAT_ERROR;
+  if (zero <= t && t <= one && zero <= s && s <= one) {
+    const s2 = clamp(0, 1, s);
+    const t2 = clamp(0, 1, t);
+    return [add(p, multi(v, t2)), t2, s2];
+  }
 }
 
 export function sortPointFrom(p: IVec2, points: IVec2[]): IVec2[] {
