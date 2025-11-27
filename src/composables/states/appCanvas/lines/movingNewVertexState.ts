@@ -165,6 +165,9 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
       if (!line) return;
 
       const vertex = getLinePath(line)[option.index];
+      if (!vertex) {
+        return;
+      }
       coordinateRenderer.saveCoord(vertex);
       coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
 
