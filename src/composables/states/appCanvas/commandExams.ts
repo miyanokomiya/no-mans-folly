@@ -37,7 +37,7 @@ export const COMMAND_EXAM_SRC = {
   PADDING_ALL_SIDES: { command: getAltOrOptionStr(), title: "All sides" },
   GAP_BOTH: { command: "Shift", title: "Both gaps" },
 
-  DELETE_INER_VERTX: { command: "Shift + Click", title: "Delete vertex" },
+  DELETE_INER_VERTX: { command: "x", title: "Delete vertex at cursor" },
 
   TEXT_MOVE_CURSOR: { command: "Ctrl + p, n, b, f", title: "Move cursor" },
   TEXT_BACKSPACE: { command: "Ctrl + h", title: "Backspace" },

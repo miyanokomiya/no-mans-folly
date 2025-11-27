@@ -120,17 +120,7 @@ export const newLineSelectedState = defineIntransientState(() => {
                       });
                   }
                   case "vertex":
-                    if (event.data.options.shift) {
-                      const patch = deleteVertex(lineShape, hitResult.index);
-                      if (Object.keys(patch).length > 0) {
-                        ctx.patchShapes(
-                          getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }),
-                        );
-                      }
-                      return ctx.states.newSelectionHubState;
-                    } else {
-                      return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
-                    }
+                    return () => newMovingLineVertexState({ lineShape, index: hitResult.index });
                   case "segment":
                     if (event.data.options.shift) {
                       return () => ctx.states.newExtrudingLineSegmentState({ lineShape, index: hitResult.index });
@@ -465,6 +455,21 @@ export const newLineSelectedState = defineIntransientState(() => {
             default:
               return;
           }
+        }
+        case "keydown": {
+          switch (event.data.key) {
+            case "x": {
+              const hitResult = lineBounding.hitTest(ctx.getCursorPoint(), ctx.getScale());
+              if (hitResult?.type === "vertex") {
+                const patch = deleteVertex(lineShape, hitResult.index);
+                if (!isObjectEmpty(patch)) {
+                  ctx.patchShapes(getPatchAfterLayouts(ctx.getShapeComposite(), { update: { [lineShape.id]: patch } }));
+                }
+              }
+              return ctx.states.newSelectionHubState;
+            }
+          }
+          return handleIntransientEvent(ctx, event);
         }
         default:
           return handleIntransientEvent(ctx, event);
