@@ -41,7 +41,7 @@ function resetKeepAliveTimer() {
 export async function initWSClient(props: { canHost: boolean; roomId: string; onClose?: () => void }) {
   closeWSClient();
   const encodedRoomId = encodeURI(props.roomId);
-  const preClient = new WebSocket(`${WS_ENDPOINT}/rooms/${encodedRoomId}?canHost=${props.canHost ? 1 : 0}`);
+  const preClient = new WebSocket(`${WS_ENDPOINT}/room?id=${encodedRoomId}&canHost=${props.canHost ? 1 : 0}`);
 
   return new Promise<void>((resolve, reject) => {
     preClient?.addEventListener("error", reject);
