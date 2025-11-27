@@ -260,7 +260,20 @@ export const struct: ShapeStruct<LineShape> = {
     };
   },
   getWrapperRect(shape, shapeContext, includeBounds) {
-    return getOuterRectangle([getLineLocalRectPolygon(shape, shapeContext, includeBounds)]);
+    const rects = [getOuterRectangle([getLineLocalRectPolygon(shape, shapeContext, includeBounds)])];
+
+    if (includeBounds) {
+      // Include child labels as part of bounds
+      shapeContext?.treeNodeMap[shape.id]?.children?.forEach((n) => {
+        const label = shapeContext.shapeMap[n.id];
+        if (label) {
+          const rect = shapeContext.getStruct(label.type).getWrapperRect(label, shapeContext, true);
+          rects.push(rect);
+        }
+      });
+    }
+
+    return rects.length > 1 ? getWrapperRect(rects) : rects[0];
   },
   getLocalRectPolygon(shape, shapeContext) {
     return getLineLocalRectPolygon(shape, shapeContext);

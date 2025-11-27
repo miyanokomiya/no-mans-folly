@@ -17,10 +17,11 @@ import {
   patchVertices,
   struct,
 } from "./line";
-import { getCommonStruct } from ".";
+import { createShape, getCommonStruct } from ".";
 import { createLineHead } from "./lineHeads";
 import { struct as groupStruct } from "./group";
 import { newShapeComposite } from "../composables/shapeComposite";
+import { TextShape } from "./text";
 
 describe("struct", () => {
   describe("create", () => {
@@ -164,6 +165,32 @@ describe("struct", () => {
       });
       const composite = newShapeComposite({ getStruct: getCommonStruct, shapes: [parent, shape] });
       expect(composite.getWrapperRect(shape)).toEqualRect({ x: -10, y: 0, width: 20, height: 20 });
+    });
+
+    test("should include child labels when includeBounds is set true", () => {
+      const line = struct.create({ id: "a", p: { x: 0, y: 0 }, q: { x: 10, y: 0 } });
+      const label = createShape<TextShape>(getCommonStruct, "text", {
+        id: "b",
+        p: { x: 5, y: 5 },
+        width: 20,
+        height: 10,
+        parentId: line.id,
+        lineAttached: 0.5,
+      });
+      const ctx = {
+        shapeMap: { [line.id]: line, [label.id]: label },
+        treeNodeMap: { [line.id]: { id: line.id, children: [{ id: label.id, children: [] }] } },
+        getStruct: getCommonStruct,
+        lineJumpMap: new Map(),
+      };
+
+      expect(struct.getWrapperRect(line, ctx, false)).toEqual({ x: 0, y: 0, width: 10, height: 0 });
+
+      const rect = struct.getWrapperRect(line, ctx, true);
+      expect(rect.x).toBeCloseTo(-1.05, 1);
+      expect(rect.y).toBeCloseTo(-1.05, 1);
+      expect(rect.width).toBeCloseTo(26.05, 1);
+      expect(rect.height).toBeCloseTo(16.05, 1);
     });
   });
 
