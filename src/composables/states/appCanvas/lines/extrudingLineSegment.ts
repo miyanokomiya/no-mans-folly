@@ -13,6 +13,7 @@ import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { getPatchByExtrudeLineSegment } from "../../../../shapes/utils/line";
 import { handleCommonWheel } from "../../commons";
 import { getSnappableCandidates } from "../commons";
+import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
 
 interface Option {
   lineShape: LineShape;
@@ -117,6 +118,9 @@ export function newExtrudingLineSegmentState(option: Option): AppCanvasState {
         }
         case "selection": {
           return ctx.states.newSelectionHubState;
+        }
+        case "shape-updated": {
+          return handleLineVertexExistence(ctx, event, option.lineShape.id, option.index + 1);
         }
         case "keydown": {
           switch (event.data.key) {

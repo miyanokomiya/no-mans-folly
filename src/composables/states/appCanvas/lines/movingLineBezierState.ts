@@ -17,6 +17,7 @@ import { getSnappableCandidates } from "../commons";
 import { newCacheWithArg } from "../../../../utils/stateful/cache";
 import { ConnectionResult, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
 import { handleCommonWheel } from "../../commons";
+import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
 
 interface Option {
   lineShape: LineShape;
@@ -152,6 +153,9 @@ export function newMovingLineBezierState(option: Option): AppCanvasState {
         }
         case "selection": {
           return ctx.states.newSelectionHubState;
+        }
+        case "shape-updated": {
+          return handleLineVertexExistence(ctx, event, option.lineShape.id, option.index + 1);
         }
         case "keydown":
           switch (event.data.key) {

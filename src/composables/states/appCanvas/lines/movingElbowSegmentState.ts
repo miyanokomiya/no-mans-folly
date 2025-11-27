@@ -7,6 +7,7 @@ import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 import { getSnappableCandidates } from "../commons";
+import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
 
 interface Option {
   lineShape: LineShape;
@@ -100,6 +101,9 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
         }
         case "selection": {
           return ctx.states.newSelectionHubState;
+        }
+        case "shape-updated": {
+          return handleLineVertexExistence(ctx, event, option.lineShape.id, option.index + 1);
         }
         default:
           return;

@@ -22,6 +22,7 @@ import { getSnappableCandidates } from "../commons";
 import { add, IVec2, sub } from "okageo";
 import { newCacheWithArg } from "../../../../utils/stateful/cache";
 import { handleCommonWheel } from "../../commons";
+import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
 
 interface Option {
   lineShape: LineShape;
@@ -139,11 +140,7 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
           return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
-          if (event.data.keys.has(option.lineShape.id)) {
-            const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
-            if (!line || !getLinePath(line)[option.index]) return ctx.states.newSelectionHubState;
-          }
-          return;
+          return handleLineVertexExistence(ctx, event, option.lineShape.id, option.index);
         }
         case "keydown":
           switch (event.data.key) {

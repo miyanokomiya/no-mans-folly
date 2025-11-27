@@ -10,6 +10,7 @@ import { ConnectionPoint } from "../../../../models";
 import { IVec2 } from "okageo";
 import { TAU } from "../../../../utils/geometry";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
 
 interface Option {
   lineShape: LineShape;
@@ -76,6 +77,9 @@ export function newVertexAttachingState(option: Option): AppCanvasState {
           candidateId = candidate?.id;
           ctx.redraw();
           return;
+        }
+        case "shape-updated": {
+          return handleLineVertexExistence(ctx, event, option.lineShape.id, Math.max(...verticesInfo.map(([v]) => v)));
         }
         case "keydown":
           switch (event.data.key) {

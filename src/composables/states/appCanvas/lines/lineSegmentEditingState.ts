@@ -16,6 +16,7 @@ import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { isObjectEmpty } from "../../../../utils/commons";
 import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
+import { handleShapeUpdate } from "../utils/shapeUpdatedEventHandlers";
 
 interface Option {
   lineShape: LineShape;
@@ -188,9 +189,10 @@ export function newLineSegmentEditingState(option: Option): AppCanvasState {
           return;
         }
         case "shape-updated": {
-          if (event.data.keys.has(lineShape.id)) {
+          const res = handleShapeUpdate(ctx, event, [option.lineShape.id]);
+          if (res) {
             cancel = true;
-            return ctx.states.newSelectionHubState;
+            return res;
           }
           return;
         }

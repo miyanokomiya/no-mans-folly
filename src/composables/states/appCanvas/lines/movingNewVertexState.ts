@@ -20,6 +20,7 @@ import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../.
 import { getSnappableCandidates } from "../commons";
 import { newCacheWithArg } from "../../../../utils/stateful/cache";
 import { handleCommonWheel } from "../../commons";
+import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
 
 interface Option {
   lineShape: LineShape;
@@ -129,11 +130,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
           return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
-          if (event.data.keys.has(option.lineShape.id)) {
-            const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;
-            if (!line || !getLinePath(line)[option.index]) return ctx.states.newSelectionHubState;
-          }
-          return;
+          return handleLineVertexExistence(ctx, event, option.lineShape.id, option.index);
         }
         case "keydown":
           switch (event.data.key) {

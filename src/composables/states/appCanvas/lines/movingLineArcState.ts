@@ -18,6 +18,7 @@ import { fillArray } from "../../../../utils/commons";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { isArcControl } from "../../../../utils/path";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
+import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
 
 interface Option {
   lineShape: LineShape;
@@ -119,6 +120,9 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
         }
         case "selection": {
           return ctx.states.newSelectionHubState;
+        }
+        case "shape-updated": {
+          return handleLineVertexExistence(ctx, event, option.lineShape.id, option.index + 1);
         }
         default:
           return;
