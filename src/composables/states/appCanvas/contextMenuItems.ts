@@ -431,7 +431,7 @@ function exportRangeAsPNG(ctx: AppCanvasStateContext) {
 
 function exportAsPNG(ctx: AppCanvasStateContext, builder: ImageBuilder) {
   try {
-    saveFileInWeb(builder.toDataURL(), "shapes.png");
+    saveFileInWeb(builder.toDataURL(), `${generateShapeFileName()}.png`);
   } catch (e) {
     ctx.showToastMessage({
       text: "Failed to create image",
@@ -508,7 +508,11 @@ async function exportShapesAsSVG(ctx: AppCanvasStateContext, withMeta = false): 
     return;
   }
 
-  await exportAsSVG(ctx, getSVGBuilderForShapes(ctx, withMeta), withMeta ? `shapes${FOLLY_SVG_PREFIX}` : "shapes.svg");
+  await exportAsSVG(
+    ctx,
+    getSVGBuilderForShapes(ctx, withMeta),
+    withMeta ? `${generateShapeFileName()}${FOLLY_SVG_PREFIX}` : `${generateShapeFileName()}.svg`,
+  );
 }
 
 async function exportRangeAsSVG(ctx: AppCanvasStateContext): Promise<void> {
@@ -520,7 +524,7 @@ async function exportRangeAsSVG(ctx: AppCanvasStateContext): Promise<void> {
     return;
   }
 
-  await exportAsSVG(ctx, getSVGBuilderForRange(ctx), "shapes.svg");
+  await exportAsSVG(ctx, getSVGBuilderForRange(ctx), `${generateShapeFileName()}.svg`);
 }
 
 export async function exportAsSVG(ctx: AppCanvasStateContext, builder: SVGImageBuilder, name: string): Promise<void> {
@@ -535,6 +539,10 @@ export async function exportAsSVG(ctx: AppCanvasStateContext, builder: SVGImageB
     });
     console.error(e);
   }
+}
+
+function generateShapeFileName(): string {
+  return `shapes_${Date.now()}`;
 }
 
 export function groupShapes(ctx: AppCanvasStateContext): boolean {
