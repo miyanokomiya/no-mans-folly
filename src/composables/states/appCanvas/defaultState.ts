@@ -1,6 +1,5 @@
 import type { AppCanvasState } from "./core";
 import { getCommonCommandExams, handleIntransientEvent, isShapeInteratctiveWithinViewport } from "./commons";
-import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
 import { defineIntransientState } from "./intransientState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
@@ -32,7 +31,7 @@ const state: AppCanvasState = {
                 if (event.data.options.alt) {
                   return newDuplicatingShapesState;
                 } else {
-                  return newSingleSelectedByPointerOnState;
+                  return ctx.states.newSelectedByPointerOnState;
                 }
               }
               return ctx.states.newSelectionHubState;

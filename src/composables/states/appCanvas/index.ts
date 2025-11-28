@@ -13,7 +13,9 @@ import { newMovingHubState } from "./movingHubState";
 import { newMovingShapeState } from "./movingShapeState";
 import { newPanToShapeState } from "./panToShapeState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
+import { newRectangleSelectingState } from "./rectangleSelectingState";
 import { newSelectionHubState } from "./selectionHubState";
+import { newSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { newSmartBranchChildMarginState } from "./smartBranch/smartBranchChildMarginState";
 import { newSmartBranchPointerDownState } from "./smartBranch/smartBranchPointerDownState";
 import { newSmartBranchSettingState } from "./smartBranch/smartBranchSettingState";
@@ -26,6 +28,7 @@ import { newVNNodeSelectedState } from "./vectorNetworks/vnNodeSelectedState";
 // TODO: Should hoist all states here to avoid circular dependencies.
 export const stateGenerators = {
   newSelectionHubState,
+  newRectangleSelectingState,
   newMovingHubState,
   newMovingShapeState,
   newMovingOnLineState,
@@ -40,6 +43,7 @@ export const stateGenerators = {
   newExtrudingLineSegmentState,
   newLineSegmentEditingState,
   newPointerDownEmptyState,
+  newSelectedByPointerOnState,
   newPanToShapeState,
   newSmartBranchPointerDownState,
   newSmartBranchSettingState,

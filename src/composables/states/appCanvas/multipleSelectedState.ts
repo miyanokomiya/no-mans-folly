@@ -1,7 +1,6 @@
 import { getCommonCommandExams, handleIntransientEvent, isShapeInteratctiveWithinViewport } from "./commons";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyCurvePath } from "../../../utils/renderer";
-import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { BoundingBox, newBoundingBox } from "../../boundingBox";
 import { newResizingState } from "./resizingState";
 import { newRotatingState } from "./rotatingState";
@@ -152,25 +151,27 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
                   newPointerDownEmptyState({ ...event.data.options, boundingBox, renderWhilePanning: render });
               }
 
-              if (!event.data.options.ctrl) {
-                if (selectedIdMap[shape.id]) {
-                  if (event.data.options.alt) {
-                    return newDuplicatingShapesState;
-                  } else {
-                    return () => ctx.states.newMovingHubState({ boundingBox });
-                  }
-                } else {
-                  ctx.selectShape(shape.id, false);
-                  if (event.data.options.alt) {
-                    return newDuplicatingShapesState;
-                  } else {
-                    return newSingleSelectedByPointerOnState;
-                  }
-                }
+              const concurrent = selectedIdMap[shape.id];
+              if (event.data.options.ctrl) {
+                ctx.selectShape(shape.id, true);
+                if (concurrent) return;
+                return () => ctx.states.newSelectedByPointerOnState({ concurrent: selectedIdMap[shape.id] });
               }
 
-              ctx.selectShape(shape.id, true);
-              return;
+              if (concurrent) {
+                if (event.data.options.alt) {
+                  return newDuplicatingShapesState;
+                } else {
+                  return () => ctx.states.newMovingHubState({ boundingBox });
+                }
+              } else {
+                ctx.selectShape(shape.id, false);
+                if (event.data.options.alt) {
+                  return newDuplicatingShapesState;
+                } else {
+                  return ctx.states.newSelectedByPointerOnState;
+                }
+              }
             }
             case 1:
               return () => newPointerDownEmptyState({ ...event.data.options, boundingBox, renderWhilePanning: render });

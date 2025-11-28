@@ -1,5 +1,5 @@
 import { expect, describe, test, vi, afterEach, beforeEach } from "vitest";
-import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
@@ -34,7 +34,7 @@ function getMockCtx() {
   };
 }
 
-describe("newSingleSelectedByPointerOnState", () => {
+describe("newSelectedByPointerOnState", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -45,7 +45,7 @@ describe("newSingleSelectedByPointerOnState", () => {
   describe("lifecycle", () => {
     test("should setup and clean the state", () => {
       const ctx = getMockCtx();
-      const target = newSingleSelectedByPointerOnState();
+      const target = newSelectedByPointerOnState();
       target.onStart?.(ctx as any);
       expect(ctx.startDragging).toHaveBeenCalled();
       target.onEnd?.(ctx as any);
@@ -56,7 +56,7 @@ describe("newSingleSelectedByPointerOnState", () => {
   describe("handle pointermove", () => {
     test("should move to MovingHub state when the pointer moves or time passes beyond respective threshold", () => {
       const ctx = getMockCtx();
-      const target = newSingleSelectedByPointerOnState();
+      const target = newSelectedByPointerOnState();
       target.onStart?.(ctx as any);
 
       const result0 = target.handleEvent(ctx as any, {
@@ -102,7 +102,7 @@ describe("newSingleSelectedByPointerOnState", () => {
           ],
           getStruct: getCommonStruct,
         });
-      const target = newSingleSelectedByPointerOnState();
+      const target = newSelectedByPointerOnState();
       target.onStart?.(ctx as any);
 
       const result0 = target.handleEvent(ctx as any, {
@@ -122,7 +122,7 @@ describe("newSingleSelectedByPointerOnState", () => {
   describe("handle pointerup", () => {
     test("should move to SelectionHub state", () => {
       const ctx = getMockCtx();
-      const target = newSingleSelectedByPointerOnState();
+      const target = newSelectedByPointerOnState();
       target.onStart?.(ctx as any);
       const result = target.handleEvent(ctx as any, {
         type: "pointerup",
@@ -133,7 +133,7 @@ describe("newSingleSelectedByPointerOnState", () => {
 
     test("should move to TextEditing state when concurrent option is set true", () => {
       const ctx = getMockCtx();
-      const target = newSingleSelectedByPointerOnState({ concurrent: true });
+      const target = newSelectedByPointerOnState({ concurrent: true });
       const result0 = target.handleEvent(ctx as any, {
         type: "pointerup",
         data: { point: { x: 0, y: 0 }, options: { button: 0 } },
@@ -152,7 +152,7 @@ describe("newSingleSelectedByPointerOnState", () => {
   describe("handle selection", () => {
     test("should move to SelectionHub state", () => {
       const ctx = getMockCtx();
-      const target = newSingleSelectedByPointerOnState();
+      const target = newSelectedByPointerOnState();
       target.onStart?.(ctx as any);
       const result = target.handleEvent(ctx as any, {
         type: "selection",

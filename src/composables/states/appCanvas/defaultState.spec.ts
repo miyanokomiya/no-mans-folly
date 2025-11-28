@@ -1,6 +1,6 @@
 import { expect, test, describe, vi } from "vitest";
 import { newDefaultState } from "./defaultState";
-import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { newShapeComposite } from "../../shapeComposite";
@@ -42,7 +42,7 @@ describe("newDefaultState", () => {
       });
       expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "a", false);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
-      expect(result1).toBe(newSingleSelectedByPointerOnState);
+      expect(result1).toBe(newSelectedByPointerOnState);
 
       ctx.getSelectedShapeIdMap.mockReturnValue({});
       const result2 = target.handleEvent(ctx as any, {

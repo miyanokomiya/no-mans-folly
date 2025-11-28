@@ -32,7 +32,6 @@ import { isGroupShape } from "../../../shapes/group";
 import { newEmojiPickerState } from "./emojiPickerState";
 import { canGroupShapes, findBetterShapeAt, getAllShapeRangeWithinComposite } from "../../shapeComposite";
 import { newDuplicatingShapesState } from "./duplicatingShapesState";
-import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { ShapeSelectionScope } from "../../../shapes/core";
 import { CommandExam } from "../types";
@@ -602,20 +601,22 @@ export function handleCommonPointerDownLeftOnSingleSelection(
     return () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning });
   }
 
-  if (!event.data.options.ctrl) {
-    if (event.data.options.alt) {
-      ctx.selectShape(shapeAtPointer.id);
-      return newDuplicatingShapesState;
-    } else if (shapeAtPointer.id === selectedId) {
-      return () => newSingleSelectedByPointerOnState({ concurrent: true });
-    } else {
-      ctx.selectShape(shapeAtPointer.id, false);
-      return newSingleSelectedByPointerOnState;
-    }
+  const concurrent = shapeAtPointer.id === selectedId;
+  if (event.data.options.ctrl) {
+    ctx.selectShape(shapeAtPointer.id, true);
+    if (concurrent) return;
+    return () => ctx.states.newSelectedByPointerOnState({ concurrent });
   }
 
-  ctx.selectShape(shapeAtPointer.id, true);
-  return;
+  if (event.data.options.alt) {
+    ctx.selectShape(shapeAtPointer.id);
+    return newDuplicatingShapesState;
+  } else if (concurrent) {
+    return () => ctx.states.newSelectedByPointerOnState({ concurrent });
+  } else {
+    ctx.selectShape(shapeAtPointer.id, false);
+    return ctx.states.newSelectedByPointerOnState;
+  }
 }
 
 export function handleCommonPointerDownRightOnSingleSelection(

@@ -1,7 +1,7 @@
 import { expect, test, describe, vi } from "vitest";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { newMultipleSelectedState } from "./multipleSelectedState";
-import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
@@ -74,7 +74,21 @@ describe("newMultipleSelectedState", () => {
       });
       expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "b", false);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
-      expect(result1).toBe(newSingleSelectedByPointerOnState);
+      expect(result1).toBe(newSelectedByPointerOnState);
+    });
+
+    test("should toggle select a shape at the point when holding ctrl", () => {
+      const ctx = getMockCtx();
+      const target = newMultipleSelectedState();
+      target.onStart?.(ctx as any);
+
+      ctx.getSelectedShapeIdMap.mockReturnValue({ b: true });
+      const result1 = target.handleEvent(ctx as any, {
+        type: "pointerdown",
+        data: { point: { x: 10, y: 20 }, options: { button: 0, ctrl: true } },
+      });
+      expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "a", true);
+      expect(result1).toBe(undefined);
 
       const result2 = target.handleEvent(ctx as any, {
         type: "pointerdown",
@@ -82,7 +96,7 @@ describe("newMultipleSelectedState", () => {
       });
       expect(ctx.selectShape).toHaveBeenNthCalledWith(2, "b", true);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
-      expect(result2).toBe(undefined);
+      expect((result2 as any)().getLabel()).toBe("SelectedByPointerOn");
     });
 
     test("should move to RectangleSelecting state if there's no shape at the point", () => {

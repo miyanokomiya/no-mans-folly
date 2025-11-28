@@ -7,18 +7,16 @@ interface Option {
   concurrent?: boolean; // Set true, when the target shape has already been selected.
 }
 
-export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasState {
+export function newSelectedByPointerOnState(option?: Option): AppCanvasState {
   const fuzzyDrag = newFuzzyDrag();
 
   return {
-    getLabel: () => "SingleSelectedByPointerOn",
+    getLabel: () => "SelectedByPointerOn",
     onStart: (ctx) => {
-      ctx.showFloatMenu();
       ctx.startDragging();
       fuzzyDrag.onDown(Date.now());
     },
     onEnd: (ctx) => {
-      ctx.hideFloatMenu();
       ctx.stopDragging();
     },
     handleEvent: (ctx, event) => {
@@ -33,7 +31,11 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
             return ctx.states.newSelectionHubState;
           }
 
-          if (shapeComposite.attached(shape) && event.data.shift) {
+          if (
+            Object.keys(ctx.getSelectedShapeIdMap()).length === 1 &&
+            shapeComposite.attached(shape) &&
+            event.data.shift
+          ) {
             const lineId = shape.attachment.id;
             return () =>
               ctx.states.newMovingAnchorOnLineState({
@@ -42,12 +44,17 @@ export function newSingleSelectedByPointerOnState(option?: Option): AppCanvasSta
               });
           }
 
-          if (!option?.concurrent && isRigidMoveShape(shapeComposite.getShapeStruct, shape)) return;
+          const isRigid = isRigidMoveShape(shapeComposite.getShapeStruct, shape);
+          if (isRigid) {
+            // Deselect the rigid shape and activate rect-select.
+            ctx.selectShape(shape.id, true);
+            return () => ctx.states.newRectangleSelectingState({ keepSelection: event.data.ctrl });
+          }
 
           return () => ctx.states.newMovingHubState({ ...event.data });
         }
         case "pointerup": {
-          if (option?.concurrent && Date.now() - fuzzyDrag.getTimestampOnDown() < 200) {
+          if (!event.data.options.ctrl && option?.concurrent && Date.now() - fuzzyDrag.getTimestampOnDown() < 200) {
             const result = startTextEditingIfPossible(ctx, ctx.getLastSelectedShapeId(), event.data.point);
             if (result) return result;
           }

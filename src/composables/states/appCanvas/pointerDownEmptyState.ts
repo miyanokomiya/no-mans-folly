@@ -1,7 +1,6 @@
 import { BoundingBox } from "../../boundingBox";
 import { newPanningState } from "../panningState";
 import type { AppCanvasState } from "./core";
-import { newRectangleSelectingState } from "./rectangleSelectingState";
 
 interface Option {
   ctrl?: boolean; // when true, pass "keepSelection: true" to "RectangleSelectingState"
@@ -21,7 +20,7 @@ export function newPointerDownEmptyState(option?: Option): AppCanvasState {
 
       const toSelectingFn = option?.preventSelecting
         ? () => ctx.states.newSelectionHubState({ boundingBox: option.boundingBox })
-        : () => newRectangleSelectingState({ keepSelection: option?.ctrl });
+        : () => ctx.states.newRectangleSelectingState({ keepSelection: option?.ctrl });
 
       if (option?.button === 1) {
         switch (setting.leftDragAction) {

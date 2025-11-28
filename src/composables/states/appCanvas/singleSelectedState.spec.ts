@@ -1,6 +1,6 @@
 import { expect, test, describe, vi } from "vitest";
 import { newSingleSelectedState } from "./singleSelectedState";
-import { newSingleSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { createStyleScheme } from "../../../models/factories";
 import { RectangleShape } from "../../../shapes/rectangle";
@@ -74,7 +74,21 @@ describe("newSingleSelectedState", () => {
       });
       expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "b", false);
       expect(ctx.clearAllSelected).not.toHaveBeenCalled();
-      expect(result1).toBe(newSingleSelectedByPointerOnState);
+      expect(result1).toBe(newSelectedByPointerOnState);
+    });
+
+    test("should toggle select a shape at the point when holding ctrl", () => {
+      const ctx = getMockCtx();
+      const target = newSingleSelectedState();
+      target.onStart?.(ctx as any);
+
+      const result1 = target.handleEvent(ctx as any, {
+        type: "pointerdown",
+        data: { point: { x: 120, y: 120 }, options: { button: 0, ctrl: true } },
+      });
+      expect(ctx.selectShape).toHaveBeenNthCalledWith(1, "b", true);
+      expect(ctx.clearAllSelected).not.toHaveBeenCalled();
+      expect((result1 as any)().getLabel()).toBe("SelectedByPointerOn");
 
       const result2 = target.handleEvent(ctx as any, {
         type: "pointerdown",
