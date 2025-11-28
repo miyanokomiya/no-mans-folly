@@ -199,6 +199,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
       key: "DETACH_LINE_VERTEX",
     };
   },
+  get DETACH_LINE_VERTICES() {
+    return {
+      label: i18n.t("contextmenu.vertex.detach.all"),
+      key: "DETACH_LINE_VERTICES",
+    };
+  },
   get ATTACH_LINE_VERTEX() {
     return {
       label: i18n.t("contextmenu.vertex.attach"),

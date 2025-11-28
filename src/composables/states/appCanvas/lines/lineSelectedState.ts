@@ -9,10 +9,12 @@ import {
   deleteVertex,
   detachVertex,
   getConnection,
+  getConnections,
   getLinePath,
   getRelativePointOn,
   patchBodyVertex,
   patchConnection,
+  patchVertices,
 } from "../../../../shapes/line";
 import { isSegmentRelatedHitResult, LineBounding, newLineBounding } from "../../../lineBounding";
 import { newMovingLineVertexState } from "./movingLineVertexState";
@@ -282,10 +284,14 @@ export const newLineSelectedState = defineIntransientState(() => {
             }
           }
 
+          const connections = getConnections(lineShape);
+          const hasConnection = connections.some((c) => c);
+
           ctx.setContextMenuList({
             items: [
               ...items,
               CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES,
+              ...(hasConnection ? [CONTEXT_MENU_ITEM_SRC.DETACH_LINE_VERTICES] : []),
               CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H,
               CONTEXT_MENU_ITEM_SRC.FLIP_LINE_V,
               CONTEXT_MENU_ITEM_SRC.SEPARATOR,
@@ -420,6 +426,12 @@ export const newLineSelectedState = defineIntransientState(() => {
             }
             case CONTEXT_MENU_ITEM_SRC.ATTACH_LINE_VERTICES.key: {
               return () => ctx.states.newVertexAttachingState({ lineShape });
+            }
+            case CONTEXT_MENU_ITEM_SRC.DETACH_LINE_VERTICES.key: {
+              const patchInfo = getLinePath(lineShape).map<[number, IVec2, undefined]>((v, i) => [i, v, undefined]);
+              const patch = patchVertices(lineShape, patchInfo);
+              ctx.patchShapes({ [lineShape.id]: patch });
+              return ctx.states.newSelectionHubState;
             }
             case CONTEXT_MENU_ITEM_SRC.FLIP_LINE_H.key: {
               const patch = patchByFliplineH(lineShape);
