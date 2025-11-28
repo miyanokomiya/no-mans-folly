@@ -1,6 +1,6 @@
 import { expect, test, describe, vi } from "vitest";
 import { newSingleSelectedState } from "./singleSelectedState";
-import { newSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newSelectedByPointerOnState } from "./selectedByPointerOnState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { createStyleScheme } from "../../../models/factories";
 import { RectangleShape } from "../../../shapes/rectangle";

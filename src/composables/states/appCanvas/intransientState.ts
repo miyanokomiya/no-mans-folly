@@ -5,7 +5,7 @@ import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { findBetterShapeAt, ShapeComposite } from "../../shapeComposite";
 import { AppCanvasState } from "./core";
 import { LinkInfo } from "../types";
-import { getShapeTextBounds } from "../../../shapes";
+import { getShapeTextBounds, isRigidMoveShape } from "../../../shapes";
 import { getLinkAt } from "../../../utils/textEditor";
 import { getRectPoints } from "../../../utils/geometry";
 import { isShapeInteratctiveWithinViewport } from "./commons";
@@ -41,7 +41,12 @@ export function defineIntransientState<A extends any[]>(
               undefined,
               ctx.getScale(),
             );
-            shape = shape && isShapeInteratctiveWithinViewport(ctx, shape) ? shape : undefined;
+            shape =
+              shape &&
+              isShapeInteratctiveWithinViewport(ctx, shape) &&
+              !isRigidMoveShape(shapeComposite.getShapeStruct, shape)
+                ? shape
+                : undefined;
 
             if (hoveredShapeId !== shape?.id) {
               hoveredShapeId = shape?.id;

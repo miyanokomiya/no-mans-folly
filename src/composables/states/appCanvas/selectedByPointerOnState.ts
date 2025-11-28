@@ -45,7 +45,7 @@ export function newSelectedByPointerOnState(option?: Option): AppCanvasState {
           }
 
           const isRigid = isRigidMoveShape(shapeComposite.getShapeStruct, shape);
-          if (isRigid) {
+          if (!option?.concurrent && isRigid) {
             // Deselect the rigid shape and activate rect-select.
             ctx.selectShape(shape.id, true);
             return () => ctx.states.newRectangleSelectingState({ keepSelection: event.data.ctrl });

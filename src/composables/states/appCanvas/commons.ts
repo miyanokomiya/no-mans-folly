@@ -605,7 +605,7 @@ export function handleCommonPointerDownLeftOnSingleSelection(
   if (event.data.options.ctrl) {
     ctx.selectShape(shapeAtPointer.id, true);
     if (concurrent) return;
-    return () => ctx.states.newSelectedByPointerOnState({ concurrent });
+    return () => ctx.states.newSelectedByPointerOnState();
   }
 
   if (event.data.options.alt) {

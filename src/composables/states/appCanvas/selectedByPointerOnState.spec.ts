@@ -1,11 +1,12 @@
 import { expect, describe, test, vi, afterEach, beforeEach } from "vitest";
-import { newSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newSelectedByPointerOnState } from "./selectedByPointerOnState";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
 import { TextShape } from "../../../shapes/text";
 import { newShapeComposite } from "../../shapeComposite";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
+import { FrameShape } from "../../../shapes/frame";
 
 function getMockCtx() {
   return {
@@ -19,6 +20,12 @@ function getMockCtx() {
         shapes: [
           createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 50, height: 50 }),
           createShape<TextShape>(getCommonStruct, "text", { id: "label", lineAttached: 0.5 }),
+          createShape<FrameShape>(getCommonStruct, "frame", {
+            id: "frame",
+            p: { x: 100, y: 100 },
+            width: 50,
+            height: 50,
+          }),
         ],
         getStruct: getCommonStruct,
       }),
@@ -31,6 +38,7 @@ function getMockCtx() {
     setCursor: vi.fn(),
     getScale: () => 1,
     hideFloatMenu: vi.fn(),
+    selectShape: vi.fn(),
   };
 }
 
@@ -116,6 +124,36 @@ describe("newSelectedByPointerOnState", () => {
         data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1, shift: true },
       }) as any;
       expect(result1?.().getLabel(), "moved beyond threshold").toBe("MovingAnchorOnLine");
+    });
+
+    test("should deselect the frame and move to RectangleSelecting state when a newly selected frame is about to move", () => {
+      const ctx = getMockCtx();
+      ctx.getLastSelectedShapeId.mockReturnValue("frame");
+      ctx.getSelectedShapeIdMap.mockReturnValue({ frame: true });
+      const target = newSelectedByPointerOnState();
+      target.onStart?.(ctx as any);
+
+      const result0 = target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 110, y: 110 }, current: { x: 120, y: 120 }, scale: 1 },
+      }) as any;
+      expect(ctx.selectShape).toHaveBeenCalledWith("frame", true);
+      expect(result0?.().getLabel(), "moved beyond threshold").toBe("RectangleSelecting");
+    });
+
+    test("should move to MovingHub state when the already selected frame is about to move", () => {
+      const ctx = getMockCtx();
+      ctx.getLastSelectedShapeId.mockReturnValue("frame");
+      ctx.getSelectedShapeIdMap.mockReturnValue({ frame: true });
+      const target = newSelectedByPointerOnState({ concurrent: true });
+      target.onStart?.(ctx as any);
+
+      const result0 = target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 110, y: 110 }, current: { x: 120, y: 120 }, scale: 1 },
+      }) as any;
+      expect(ctx.selectShape).not.toHaveBeenCalled();
+      expect(result0?.().getLabel(), "moved beyond threshold").toBe("MovingHub");
     });
   });
 

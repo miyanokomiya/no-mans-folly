@@ -15,7 +15,7 @@ import { newPanToShapeState } from "./panToShapeState";
 import { newPointerDownEmptyState } from "./pointerDownEmptyState";
 import { newRectangleSelectingState } from "./rectangleSelectingState";
 import { newSelectionHubState } from "./selectionHubState";
-import { newSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newSelectedByPointerOnState } from "./selectedByPointerOnState";
 import { newSmartBranchChildMarginState } from "./smartBranch/smartBranchChildMarginState";
 import { newSmartBranchPointerDownState } from "./smartBranch/smartBranchPointerDownState";
 import { newSmartBranchSettingState } from "./smartBranch/smartBranchSettingState";

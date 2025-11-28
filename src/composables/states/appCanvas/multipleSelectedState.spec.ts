@@ -1,7 +1,7 @@
 import { expect, test, describe, vi } from "vitest";
 import { createShape, getCommonStruct } from "../../../shapes";
 import { newMultipleSelectedState } from "./multipleSelectedState";
-import { newSelectedByPointerOnState } from "./singleSelectedByPointerOnState";
+import { newSelectedByPointerOnState } from "./selectedByPointerOnState";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createStyleScheme } from "../../../models/factories";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";

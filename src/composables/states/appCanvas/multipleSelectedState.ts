@@ -155,7 +155,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
               if (event.data.options.ctrl) {
                 ctx.selectShape(shape.id, true);
                 if (concurrent) return;
-                return () => ctx.states.newSelectedByPointerOnState({ concurrent: selectedIdMap[shape.id] });
+                return () => ctx.states.newSelectedByPointerOnState();
               }
 
               if (concurrent) {
