@@ -291,7 +291,11 @@ export const FloatMenuInspector: React.FC<Props> = ({
       const shapeMap = shapeComposite.shapeMap;
       const lineIds = Object.keys(shapeStore.getSelected());
       const lines = lineIds.map((id) => shapeMap[id]).filter(isLineShape);
-      (shouldLayout ? updateShapes : patchShapes)({ update: mapReduce(toMap(lines), () => val) });
+      if (shouldLayout) {
+        updateShapes({ update: mapReduce(toMap(lines), () => val) });
+      } else {
+        patchShapes(mapReduce(toMap(lines), () => val));
+      }
     },
     [shapeStore, patchShapes, updateShapes],
   );
