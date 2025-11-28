@@ -30,6 +30,12 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
       description: i18n.t("term.linejump.desc"),
     };
   },
+  get OPTIMAL_HOOK() {
+    return {
+      text: i18n.t("term.optimalhook"),
+      description: i18n.t("term.optimalhook.desc"),
+    };
+  },
   get MAKE_POLYGON() {
     return {
       text: i18n.t("term.makepolygon"),

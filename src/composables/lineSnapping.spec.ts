@@ -1354,6 +1354,8 @@ describe("optimizeLinePath", () => {
     width: 100,
     height: 100,
   });
+  const frameA = { ...a, type: "frame" };
+  const frameB = { ...b, type: "frame" };
 
   describe("When the line has both p and q optimized connections", () => {
     test("should optimize both p and q connections", () => {
@@ -1376,6 +1378,46 @@ describe("optimizeLinePath", () => {
         pConnection: { id: "a", rate: { x: 1, y: 1 }, optimized: true },
         qConnection: { id: "b", rate: { x: 0, y: 0 }, optimized: true },
       });
+
+      expect(
+        optimizeLinePath(
+          {
+            getShapeComposite: () =>
+              newShapeComposite({
+                shapes: [frameA, frameB, { ...line, optimalHook: true } as LineShape],
+                getStruct: getCommonStruct,
+              }),
+          },
+          { ...line, optimalHook: true },
+        ),
+        "should prioritize optimalHook flag of the line",
+      ).toEqual(res);
+    });
+
+    test("should optimize both p and q connections: optimal line with non-rectangle shape", () => {
+      const ea = createShape<EllipseShape>(getCommonStruct, "ellipse", { id: "a", rx: 50, ry: 50 });
+      const line = createShape<LineShape>(getCommonStruct, "line", {
+        id: "line",
+        p: { x: 0, y: 0 },
+        q: { x: 300, y: 300 },
+        pConnection: { id: "a", rate: { x: 1, y: 0 }, optimized: true },
+        qConnection: { id: "b", rate: { x: 1, y: 1 }, optimized: true },
+        optimalHook: true,
+      });
+      const res = optimizeLinePath(
+        {
+          getShapeComposite: () => newShapeComposite({ shapes: [ea, b, line], getStruct: getCommonStruct }),
+        },
+        line,
+      );
+      expect(res).toEqual({
+        p: expect.anything(),
+        q: { x: 200, y: 200 },
+        pConnection: { id: "a", rate: expect.anything(), optimized: true },
+        qConnection: { id: "b", rate: { x: 0, y: 0 }, optimized: true },
+      });
+      expect(res?.p).toEqualPoint({ x: 85.355339, y: 85.355339 });
+      expect(res?.pConnection?.rate).toEqualPoint({ x: 0.85355339, y: 0.85355339 });
     });
   });
 

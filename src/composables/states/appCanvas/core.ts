@@ -26,6 +26,8 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   clearAllSelected: () => void;
   addShapes: (shapes: Shape[], docMap?: { [id: string]: DocDelta }, patch?: { [id: string]: Partial<Shape> }) => void;
   deleteShapes: (ids: string[], patch?: { [id: string]: Partial<Shape> }) => void;
+  // Directly apply the patch to shapes without recalculating layout.
+  // To recalculate it, use "updateShapes" instead.
   patchShapes: (val: { [id: string]: Partial<Shape> }) => void;
   updateShapes: (update: EntityPatchInfo<Shape>, docMap?: { [id: string]: DocOutput }) => void;
   getTmpShapeMap: () => { [id: string]: Partial<Shape> };

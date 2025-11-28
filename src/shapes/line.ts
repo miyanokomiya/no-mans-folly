@@ -94,6 +94,10 @@ export interface LineShape extends Shape {
    * When true, this line jumps over former lines.
    */
   jump?: boolean;
+  /**
+   * When true, this line runs the shortest path between hooked shapes.
+   */
+  optimalHook?: boolean;
 }
 
 export const LINE_JUMP_BASE_INTERVAL = 12;

@@ -58,7 +58,7 @@ export const FloatMenuInspector: React.FC<Props> = ({
 }) => {
   const { shapeStore } = useContext(AppCanvasContext);
   const { handleEvent } = useContext(AppStateMachineContext);
-  const { getShapeStruct, setTmpShapeMap, patchShapes, createLastIndex, createFirstIndex } =
+  const { getShapeStruct, setTmpShapeMap, patchShapes, createLastIndex, createFirstIndex, updateShapes } =
     useContext(AppStateContext);
   const indexShape = useMemo<Shape | undefined>(() => {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -285,15 +285,27 @@ export const FloatMenuInspector: React.FC<Props> = ({
     [shapeStore, patchShapes, getShapeStruct],
   );
 
-  const onLineJumpChanged = useCallback(
-    (val: boolean) => {
+  const patchLines = useCallback(
+    (val: Partial<LineShape>, shouldLayout = false) => {
       const shapeComposite = shapeStore.shapeComposite;
       const shapeMap = shapeComposite.shapeMap;
       const lineIds = Object.keys(shapeStore.getSelected());
       const lines = lineIds.map((id) => shapeMap[id]).filter(isLineShape);
-      patchShapes(mapReduce(toMap(lines), () => ({ jump: val ? true : undefined }) as Partial<LineShape>));
+      (shouldLayout ? updateShapes : patchShapes)({ update: mapReduce(toMap(lines), () => val) });
     },
-    [shapeStore, patchShapes],
+    [shapeStore, patchShapes, updateShapes],
+  );
+  const onLineJumpChanged = useCallback(
+    (val: boolean) => {
+      patchLines({ jump: val ? true : undefined });
+    },
+    [patchLines],
+  );
+  const onLineOptimalHookChanged = useCallback(
+    (val: boolean) => {
+      patchLines({ optimalHook: val ? true : undefined }, true);
+    },
+    [patchLines],
   );
 
   const onLinePolygonChanged = useCallback(
@@ -494,6 +506,8 @@ export const FloatMenuInspector: React.FC<Props> = ({
             onChange={onLineTypeChanged}
             jump={indexLineShape.jump}
             onJumpChange={onLineJumpChanged}
+            optimalHook={indexLineShape.optimalHook}
+            onOptimalHookChange={onLineOptimalHookChanged}
             polygonType={"line"}
             onPolygonChange={onLinePolygonChanged}
             canMakePolygon={canMakePolygon(indexLineShape)}

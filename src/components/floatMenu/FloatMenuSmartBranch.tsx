@@ -63,6 +63,12 @@ export const FloatMenuSmartBranch: React.FC = () => {
     },
     [handleLineChange],
   );
+  const onLineOptimalHookChanged = useCallback(
+    (val: boolean) => {
+      handleLineChange({ optimalHook: val });
+    },
+    [handleLineChange],
+  );
   const onLineHeadChanged = useCallback(
     (val: { pHead?: LineHead; qHead?: LineHead }) => {
       handleLineChange({ ...val });
@@ -133,6 +139,8 @@ export const FloatMenuSmartBranch: React.FC = () => {
           onChange={onLineTypeChanged}
           jump={indexLineShape.jump}
           onJumpChange={onLineJumpChanged}
+          optimalHook={indexLineShape.optimalHook}
+          onOptimalHookChange={onLineOptimalHookChanged}
           hidePolygon
         />
         <LineHeadItems

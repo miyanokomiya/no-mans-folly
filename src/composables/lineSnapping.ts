@@ -608,11 +608,12 @@ export function getOptimizedSegment(
   shapeComposite: ShapeComposite,
   shapeA: Shape,
   shapeB: Shape,
+  optimalHook = false,
 ): ISegment | undefined {
   const rectangularA = isRectangularOptimizedSegment(shapeComposite.getShapeStruct, shapeA);
   const rectangularB = isRectangularOptimizedSegment(shapeComposite.getShapeStruct, shapeB);
 
-  if (rectangularA && rectangularB) {
+  if (optimalHook || (rectangularA && rectangularB)) {
     const rectA = shapeComposite.getWrapperRect(shapeA);
     const rectB = shapeComposite.getWrapperRect(shapeB);
     const [baseA, baseB] = getMimumSegmentBetweenRecs(rectA, rectB);
@@ -654,12 +655,21 @@ function getOptimizedSegmentBetweenShapeAndPoint(
   shapeComposite: ShapeComposite,
   shape: Shape,
   point: IVec2,
+  optimalHook = false,
 ): ISegment | undefined {
   const rect = shapeComposite.getWrapperRect(shape);
-  if (isRectangularOptimizedSegment(shapeComposite.getShapeStruct, shape)) {
+  if (optimalHook || isRectangularOptimizedSegment(shapeComposite.getShapeStruct, shape)) {
     const [baseA, baseB] = getMimumSegmentBetweenRecs(rect, { ...point, width: 0, height: 0 });
     const pA = getIntersectedOutlines(shapeComposite.getShapeStruct, shape, baseB, baseA)?.[0];
-    return pA ? [pA, point] : undefined;
+    if (pA) return [pA, point];
+
+    // Seek the closest outline to the point.
+    // => The result isn't always optimal because the available threshold is too large.
+    const c = getRectCenter(shapeComposite.getWrapperRect(shape));
+    const closestP = getClosestOutline(shapeComposite.getShapeStruct, shape, point, getDistance(point, c), 0);
+    if (closestP) return [closestP, point];
+
+    return;
   } else {
     const pA = getIntersectedOutlines(shapeComposite.getShapeStruct, shape, point, getRectCenter(rect))?.[0];
     return pA ? [pA, point] : undefined;
@@ -709,6 +719,7 @@ export function optimizeLinePath(
   const vertices = getLinePath(lineShape);
   // When the line is elbow, always optimize it based on "p" and "q"
   const elbow = lineShape.lineType === "elbow";
+  const optimalHook = lineShape.optimalHook;
 
   const shapeMap = shapeComposite.shapeMap;
   const shapeP = lineShape.pConnection ? shapeMap[lineShape.pConnection.id] : undefined;
@@ -717,7 +728,7 @@ export function optimizeLinePath(
   if (shapeP && lineShape.pConnection?.optimized) {
     if (shapeQ && lineShape.qConnection?.optimized) {
       if (vertices.length === 2 || elbow) {
-        const seg = getOptimizedSegment(shapeComposite, shapeP, shapeQ);
+        const seg = getOptimizedSegment(shapeComposite, shapeP, shapeQ, optimalHook);
         if (!seg) return;
 
         const [p, q] = seg;
@@ -748,7 +759,7 @@ export function optimizeLinePath(
   const ret: Partial<LineShape> = {};
 
   if (shapeP && lineShape.pConnection?.optimized) {
-    const seg = getOptimizedSegmentBetweenShapeAndPoint(shapeComposite, shapeP, vertices[1]);
+    const seg = getOptimizedSegmentBetweenShapeAndPoint(shapeComposite, shapeP, vertices[1], optimalHook);
     if (!seg) return;
 
     const p = seg[0];
@@ -762,7 +773,12 @@ export function optimizeLinePath(
   }
 
   if (shapeQ && lineShape.qConnection?.optimized) {
-    const seg = getOptimizedSegmentBetweenShapeAndPoint(shapeComposite, shapeQ, vertices[vertices.length - 2]);
+    const seg = getOptimizedSegmentBetweenShapeAndPoint(
+      shapeComposite,
+      shapeQ,
+      vertices[vertices.length - 2],
+      optimalHook,
+    );
     if (!seg) return;
 
     const q = seg[0];

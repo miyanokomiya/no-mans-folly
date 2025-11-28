@@ -37,6 +37,8 @@ interface Props {
   onChange?: (lineType: LineType, curveType?: CurveType) => void;
   jump?: boolean;
   onJumpChange?: (val: boolean) => void;
+  optimalHook?: boolean;
+  onOptimalHookChange?: (val: boolean) => void;
   polygonType?: PolygonType;
   onPolygonChange?: (val: boolean, polyline?: boolean) => void;
   canMakePolygon?: boolean;
@@ -52,6 +54,8 @@ export const LineTypeButton: React.FC<Props> = ({
   onChange,
   jump,
   onJumpChange,
+  optimalHook,
+  onOptimalHookChange,
   polygonType,
   onPolygonChange,
   canMakePolygon,
@@ -83,6 +87,8 @@ export const LineTypeButton: React.FC<Props> = ({
             onTypeClick={onChange}
             jump={jump}
             onJumpChange={onJumpChange}
+            optimalHook={optimalHook}
+            onOptimalHookChange={onOptimalHookChange}
             polygonType={polygonType ?? "line"}
             onPolygonChange={onPolygonChange}
             canMakePolygon={canMakePolygon}
@@ -105,6 +111,8 @@ interface LineTypePanelProps {
   onTypeClick?: (lineType: LineType, curveType?: CurveType) => void;
   jump?: boolean;
   onJumpChange?: (val: boolean) => void;
+  optimalHook?: boolean;
+  onOptimalHookChange?: (val: boolean) => void;
   polygonType: PolygonType;
   onPolygonChange?: (val: boolean, polyline?: boolean) => void;
   canMakePolygon?: boolean;
@@ -116,6 +124,8 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({
   onTypeClick,
   jump,
   onJumpChange,
+  optimalHook,
+  onOptimalHookChange,
   polygonType,
   onPolygonChange,
   canMakePolygon,
@@ -188,6 +198,9 @@ const LineTypePanel: React.FC<LineTypePanelProps> = ({
           </InlineField>
           <InlineField label={<AppText portal>[[LINE_JUMP]]</AppText>}>
             <ToggleInput value={jump} onChange={onJumpChange} />
+          </InlineField>
+          <InlineField label={<AppText portal>[[OPTIMAL_HOOK]]</AppText>}>
+            <ToggleInput value={optimalHook} onChange={onOptimalHookChange} />
           </InlineField>
         </>
       )}
