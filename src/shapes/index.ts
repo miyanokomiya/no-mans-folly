@@ -418,11 +418,6 @@ export function stackOrderDisabled(getStruct: GetShapeStruct, shape: Shape): boo
   return !!struct.stackOrderDisabled;
 }
 
-export function isRectangularOptimizedSegment(getStruct: GetShapeStruct, shape: Shape): boolean {
-  const struct = getStruct(shape.type);
-  return !!struct.rectangularOptimizedSegment;
-}
-
 /**
  * Make sure both src and dist shapes have compatibility before calling this function.
  */

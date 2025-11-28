@@ -31,7 +31,6 @@ export const struct: ShapeStruct<FrameShape> = {
   getClipPath: undefined,
   createClipSVGPath: undefined,
   canAttachSmartBranch: false,
-  rectangularOptimizedSegment: false,
   getTextRangeRect: undefined,
   getTextPadding: undefined,
   patchTextPadding: undefined,

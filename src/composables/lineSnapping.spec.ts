@@ -1165,141 +1165,150 @@ describe("newLineSnapping", () => {
 });
 
 describe("getOptimizedSegment", () => {
-  describe("when two shapes overlap horizontally", () => {
-    test("should return optimized segment between two shapes", () => {
-      const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 });
-      const shapeB = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-        id: "b",
-        p: { x: 200, y: 50 },
-        width: 100,
-        height: 100,
+  describe("when optimalHook is true", () => {
+    describe("when two shapes overlap horizontally", () => {
+      test("should return optimized segment between two shapes", () => {
+        const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 });
+        const shapeB = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+          id: "b",
+          p: { x: 200, y: 50 },
+          width: 100,
+          height: 100,
+        });
+        const res = getOptimizedSegment(
+          newShapeComposite({ shapes: [shapeA, shapeB], getStruct: getCommonStruct }),
+          shapeA,
+          shapeB,
+          true,
+        );
+        expect(res).toEqual([
+          { x: 100, y: 75 },
+          { x: 200, y: 75 },
+        ]);
       });
-      const res = getOptimizedSegment(
-        newShapeComposite({ shapes: [shapeA, shapeB], getStruct: getCommonStruct }),
-        shapeA,
-        shapeB,
-      );
-      expect(res).toEqual([
-        { x: 100, y: 75 },
-        { x: 200, y: 75 },
-      ]);
+    });
+
+    describe("when two shapes overlap vertically", () => {
+      test("should return optimized segment between two shapes", () => {
+        const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 });
+        const shapeB = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+          id: "b",
+          p: { x: 50, y: 200 },
+          width: 100,
+          height: 100,
+        });
+        const res = getOptimizedSegment(
+          newShapeComposite({ shapes: [shapeA, shapeB], getStruct: getCommonStruct }),
+          shapeA,
+          shapeB,
+          true,
+        );
+        expect(res).toEqual([
+          { x: 75, y: 100 },
+          { x: 75, y: 200 },
+        ]);
+      });
+    });
+
+    describe("when two shapes overlap neither horizontally nor vertically", () => {
+      test("should return optimized segment between two shapes", () => {
+        const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 });
+
+        const shapeBottomRight = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+          id: "b",
+          p: { x: 150, y: 200 },
+          width: 100,
+          height: 100,
+        });
+        const res0 = getOptimizedSegment(
+          newShapeComposite({ shapes: [shapeA, shapeBottomRight], getStruct: getCommonStruct }),
+          shapeA,
+          shapeBottomRight,
+          true,
+        );
+        expect(res0).toEqual([
+          { x: 100, y: 100 },
+          { x: 150, y: 200 },
+        ]);
+
+        const shapeBottomLeft = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+          id: "b",
+          p: { x: -150, y: 200 },
+          width: 100,
+          height: 100,
+        });
+        const res1 = getOptimizedSegment(
+          newShapeComposite({ shapes: [shapeA, shapeBottomLeft], getStruct: getCommonStruct }),
+          shapeA,
+          shapeBottomLeft,
+          true,
+        );
+        expect(res1).toEqual([
+          { x: 0, y: 100 },
+          { x: -50, y: 200 },
+        ]);
+
+        const shapeTopLeft = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+          id: "b",
+          p: { x: -150, y: -200 },
+          width: 100,
+          height: 100,
+        });
+        const res2 = getOptimizedSegment(
+          newShapeComposite({ shapes: [shapeA, shapeTopLeft], getStruct: getCommonStruct }),
+          shapeA,
+          shapeTopLeft,
+          true,
+        );
+        expect(res2).toEqual([
+          { x: 0, y: 0 },
+          { x: -50, y: -100 },
+        ]);
+
+        const shapeTopRight = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+          id: "b",
+          p: { x: 150, y: -200 },
+          width: 100,
+          height: 100,
+        });
+        const res3 = getOptimizedSegment(
+          newShapeComposite({ shapes: [shapeA, shapeTopRight], getStruct: getCommonStruct }),
+          shapeA,
+          shapeTopRight,
+          true,
+        );
+        expect(res3).toEqual([
+          { x: 100, y: 0 },
+          { x: 150, y: -100 },
+        ]);
+      });
+
+      test("rotated case", () => {
+        const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 });
+
+        const shapeBottomRight = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+          id: "b",
+          p: { x: 150, y: -200 },
+          width: 100,
+          height: 100,
+          rotation: Math.PI / 4,
+        });
+        const res0 = getOptimizedSegment(
+          newShapeComposite({ shapes: [shapeA, shapeBottomRight], getStruct: getCommonStruct }),
+          shapeA,
+          shapeBottomRight,
+          true,
+        );
+        expect(res0?.[0]).toEqual({ x: 100, y: 0 });
+        expect(res0?.[1].x).toBeGreaterThan(50);
+        expect(res0?.[1].x).toBeLessThan(150);
+        expect(res0?.[1].y).toBeGreaterThan(-150);
+        expect(res0?.[1].y).toBeLessThan(-100);
+      });
     });
   });
 
-  describe("when two shapes overlap vertically", () => {
-    test("should return optimized segment between two shapes", () => {
-      const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 });
-      const shapeB = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-        id: "b",
-        p: { x: 50, y: 200 },
-        width: 100,
-        height: 100,
-      });
-      const res = getOptimizedSegment(
-        newShapeComposite({ shapes: [shapeA, shapeB], getStruct: getCommonStruct }),
-        shapeA,
-        shapeB,
-      );
-      expect(res).toEqual([
-        { x: 75, y: 100 },
-        { x: 75, y: 200 },
-      ]);
-    });
-  });
-
-  describe("when two shapes overlap neither horizontally nor vertically", () => {
-    test("should return optimized segment between two shapes", () => {
-      const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 });
-
-      const shapeBottomRight = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-        id: "b",
-        p: { x: 150, y: 200 },
-        width: 100,
-        height: 100,
-      });
-      const res0 = getOptimizedSegment(
-        newShapeComposite({ shapes: [shapeA, shapeBottomRight], getStruct: getCommonStruct }),
-        shapeA,
-        shapeBottomRight,
-      );
-      expect(res0).toEqual([
-        { x: 100, y: 100 },
-        { x: 150, y: 200 },
-      ]);
-
-      const shapeBottomLeft = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-        id: "b",
-        p: { x: -150, y: 200 },
-        width: 100,
-        height: 100,
-      });
-      const res1 = getOptimizedSegment(
-        newShapeComposite({ shapes: [shapeA, shapeBottomLeft], getStruct: getCommonStruct }),
-        shapeA,
-        shapeBottomLeft,
-      );
-      expect(res1).toEqual([
-        { x: 0, y: 100 },
-        { x: -50, y: 200 },
-      ]);
-
-      const shapeTopLeft = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-        id: "b",
-        p: { x: -150, y: -200 },
-        width: 100,
-        height: 100,
-      });
-      const res2 = getOptimizedSegment(
-        newShapeComposite({ shapes: [shapeA, shapeTopLeft], getStruct: getCommonStruct }),
-        shapeA,
-        shapeTopLeft,
-      );
-      expect(res2).toEqual([
-        { x: 0, y: 0 },
-        { x: -50, y: -100 },
-      ]);
-
-      const shapeTopRight = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-        id: "b",
-        p: { x: 150, y: -200 },
-        width: 100,
-        height: 100,
-      });
-      const res3 = getOptimizedSegment(
-        newShapeComposite({ shapes: [shapeA, shapeTopRight], getStruct: getCommonStruct }),
-        shapeA,
-        shapeTopRight,
-      );
-      expect(res3).toEqual([
-        { x: 100, y: 0 },
-        { x: 150, y: -100 },
-      ]);
-    });
-
-    test("rotated case", () => {
-      const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 });
-
-      const shapeBottomRight = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-        id: "b",
-        p: { x: 150, y: -200 },
-        width: 100,
-        height: 100,
-        rotation: Math.PI / 4,
-      });
-      const res0 = getOptimizedSegment(
-        newShapeComposite({ shapes: [shapeA, shapeBottomRight], getStruct: getCommonStruct }),
-        shapeA,
-        shapeBottomRight,
-      );
-      expect(res0?.[0]).toEqual({ x: 100, y: 0 });
-      expect(res0?.[1].x).toBeGreaterThan(50);
-      expect(res0?.[1].x).toBeLessThan(150);
-      expect(res0?.[1].y).toBeGreaterThan(-150);
-      expect(res0?.[1].y).toBeLessThan(-100);
-    });
-  });
-
-  test("should optimize based on the center when a shape doesn't require rectangular optimization", () => {
+  test("should optimize based on the center when optimalHook is false", () => {
     const shapeA = createShape<EllipseShape>(getCommonStruct, "ellipse", { id: "a", rx: 50, ry: 50 });
     const shapeB = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       id: "b",
@@ -1319,9 +1328,9 @@ describe("getOptimizedSegment", () => {
       shapeA,
       shapeB,
     );
-    expect(res0).toEqual([
-      { x: 100, y: 50 },
-      { x: 200, y: 50 },
+    expect(res0).toEqualPoints([
+      { x: 98.507125, y: 62.12678125 },
+      { x: 200, y: 87.5 },
     ]);
 
     const res1 = getOptimizedSegment(
@@ -1329,9 +1338,9 @@ describe("getOptimizedSegment", () => {
       shapeB,
       shapeA,
     );
-    expect(res1).toEqual([
-      { x: 200, y: 50 },
-      { x: 100, y: 50 },
+    expect(res1).toEqualPoints([
+      { x: 200, y: 87.5 },
+      { x: 98.507125, y: 62.12678125 },
     ]);
 
     const res2 = getOptimizedSegment(

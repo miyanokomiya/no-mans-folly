@@ -140,10 +140,6 @@ export interface ShapeStruct<T extends Shape> {
    */
   unboundChildren?: boolean;
   /**
-   * If true, lines that connect to the center of this shape are optimized based on rectangular bounds.
-   */
-  rectangularOptimizedSegment?: boolean;
-  /**
    * The smaller, the ealier shapes's order should be in the list.
    * "undefined" means zero.
    * This only affects root shapes.
