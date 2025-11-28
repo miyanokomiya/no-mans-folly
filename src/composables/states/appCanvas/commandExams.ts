@@ -32,6 +32,7 @@ export const COMMAND_EXAM_SRC = {
 
   RESIZE_PROPORTIONALLY: { command: "Shift", title: "Proportionally" },
   RESIZE_AT_CENTER: { command: getAltOrOptionStr(), title: "Based on center" },
+  PRESERVE_CONNECTIONS: { command: "s", title: "Preserve connections on/off" },
 
   PADDING_BOTH_SIDES: { command: "Shift", title: "Both sides" },
   PADDING_ALL_SIDES: { command: getAltOrOptionStr(), title: "All sides" },

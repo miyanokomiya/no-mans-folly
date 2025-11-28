@@ -6,9 +6,9 @@ import {
   getMovingBoundingBoxPoints,
   newBoundingBoxResizing,
 } from "../../boundingBox";
-import { AffineMatrix, IDENTITY_AFFINE, sub } from "okageo";
+import { AffineMatrix, IDENTITY_AFFINE, IVec2, sub } from "okageo";
 import { getTextRangeRect, resizeOnTextEdit, shouldKeepAspect, shouldResizeOnTextEdit } from "../../../shapes";
-import { Shape } from "../../../models";
+import { ConnectionPoint, Shape } from "../../../models";
 import {
   ShapeSnapping,
   SnappingResult,
@@ -29,6 +29,8 @@ import { resizeShapeTrees } from "../../shapeResizing";
 import { getTree } from "../../../utils/tree";
 import { getSnappableCandidates } from "./commons";
 import { newPreserveAttachmentByShapeHandler } from "../../lineAttachmentHandler";
+import { getConnections, getLinePath, isLineShape, LineShape, patchVertices } from "../../../shapes/line";
+import { getNextShapeComposite } from "../../shapeComposite";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -45,6 +47,7 @@ export function newResizingState(option: Option): AppCanvasState {
   let snappingResult: SnappingResult | undefined;
   let boundingBoxResizing: BoundingBoxResizing;
   let connectionRenderer: ConnectionRenderer;
+  let preserveConnectionsFlag = false;
 
   return {
     getLabel: () => "Resizing",
@@ -91,6 +94,7 @@ export function newResizingState(option: Option): AppCanvasState {
         COMMAND_EXAM_SRC.DISABLE_SNAP,
         COMMAND_EXAM_SRC.RESIZE_PROPORTIONALLY,
         COMMAND_EXAM_SRC.RESIZE_AT_CENTER,
+        COMMAND_EXAM_SRC.PRESERVE_CONNECTIONS,
       ]);
     },
     onEnd: (ctx) => {
@@ -184,6 +188,38 @@ export function newResizingState(option: Option): AppCanvasState {
                 const handler = newPreserveAttachmentByShapeHandler({ shapeComposite, keepAnchor: true });
                 return mergeMap(patch, handler.getPatch(patch));
               },
+              (_, patch) => {
+                if (!preserveConnectionsFlag) return {};
+
+                const ids = Object.keys(patch).filter((id) => shapeMap[id] && !isLineShape(shapeMap[id]));
+                if (ids.length === 0) return {};
+
+                const nextPatch = {} as { [id: string]: Partial<LineShape> };
+                const connectionInfoMap = getConnectedLineInfoMap(ctx, ids);
+                const currentShapeComposite = getNextShapeComposite(shapeComposite, { update: patch });
+                ids.forEach((id) => {
+                  connectionInfoMap[id]?.forEach((line) => {
+                    const srcLine = shapeMap[line.id] as LineShape;
+                    const srcVertices = getLinePath(srcLine);
+                    const patchInfo = getConnections(line).map<[number, IVec2, ConnectionPoint | undefined]>((c, i) => {
+                      const srcVertex = srcVertices[i];
+                      const targetShape = c ? currentShapeComposite.shapeMap[c.id] : undefined;
+                      if (!c || !targetShape) return [i, srcVertex, undefined];
+
+                      return [
+                        i,
+                        srcVertex,
+                        { ...c, rate: currentShapeComposite.getLocationRateOnShape(targetShape, srcVertex) },
+                      ];
+                    });
+                    nextPatch[line.id] = patchVertices(srcLine, patchInfo);
+                    // Only connections need to be adjusted
+                    delete nextPatch[line.id].p;
+                    delete nextPatch[line.id].q;
+                  });
+                });
+                return nextPatch;
+              },
             ],
             shapeMap,
           );
@@ -202,6 +238,15 @@ export function newResizingState(option: Option): AppCanvasState {
         }
         case "selection": {
           return ctx.states.newSelectionHubState;
+        }
+        case "keydown": {
+          switch (event.data.key) {
+            case "s": {
+              preserveConnectionsFlag = !preserveConnectionsFlag;
+              return;
+            }
+          }
+          return;
         }
         default:
           return;
