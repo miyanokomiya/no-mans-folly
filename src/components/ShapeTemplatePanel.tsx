@@ -5,6 +5,7 @@ import { parseTemplateShapes } from "../shapes/utils/shapeTemplateUtil";
 import { AffineMatrix, getRectCenter } from "okageo";
 import { newShapeComposite } from "../composables/shapeComposite";
 import { duplicateShapes } from "../shapes/utils/duplicator";
+import { getSymbolAssetMigrationInfo } from "../shapes/utils/symbol";
 
 const TEMPLATE_LIST = ["Flowchart", "Sequence", "Presentation", "Misc"];
 
@@ -62,15 +63,25 @@ export const ShapeTemplatePanel: React.FC = () => {
       if (!template) return;
 
       const smctx = getCtx();
+      const symbolAssetMigrationInfo = await getSymbolAssetMigrationInfo(template.shapes);
 
       if (template.assets) {
+        const adjustedAssets = template.assets.map<[string, Blob]>((info) => [
+          symbolAssetMigrationInfo.assetIdMigrationMap.get(info[0]) ?? info[0],
+          info[1],
+        ]);
         // Save assets asynchronously.
-        saveTemplateAssets(template.assets);
+        saveTemplateAssets(adjustedAssets);
       }
+
+      const adjustedShapes = template.shapes.map((s) => {
+        const patch = symbolAssetMigrationInfo.patch[s.id];
+        return patch ? { ...s, ...patch } : s;
+      });
 
       const duplicated = duplicateShapes(
         smctx.getShapeStruct,
-        template.shapes,
+        adjustedShapes,
         template.docs,
         smctx.generateUuid,
         smctx.createLastIndex(), // This is just a temprorary value and adjusted later.

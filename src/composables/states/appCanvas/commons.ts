@@ -50,6 +50,8 @@ import { duplicateShapes } from "../../../shapes/utils/duplicator";
 import { getLineUnrelatedIds } from "../../shapeRelation";
 import { isLineShape } from "../../../shapes/line";
 import { doesRectAccommodateRect, getRectLines, isPointOnRectangle, isRectOverlapped } from "../../../utils/geometry";
+import { getSymbolAssetMigrationInfo } from "../../../shapes/utils/symbol";
+import { patchPipe, toList, toMap } from "../../../utils/commons";
 
 type AcceptableEvent =
   | "Break"
@@ -537,12 +539,17 @@ async function pasteShapeTemplateInfoList(ctx: AppCanvasStateContext, templates:
     }
   }
 
+  const symbolAssetMigrationInfo = await getSymbolAssetMigrationInfo(newShapes);
+
   if (newShapes.length > 0) {
-    const ids = newShapes.map((s) => s.id);
-    const patch = patchShapesOrderToLast(ids, ctx.createLastIndex());
-    const adjustedNewShapes = newShapes.map((s) => {
-      return { ...s, ...patch[s.id] };
-    });
+    const patchInfo = patchPipe(
+      [
+        (current) => patchShapesOrderToLast(Object.keys(current), ctx.createLastIndex()),
+        () => symbolAssetMigrationInfo.patch,
+      ],
+      toMap(newShapes),
+    );
+    const adjustedNewShapes = toList(patchInfo.result);
     ctx.addShapes(adjustedNewShapes, newDocMap);
     // Select root shapes
     ctx.multiSelectShapes(adjustedNewShapes.filter((s) => !s.parentId).map((s) => s.id));
@@ -552,8 +559,10 @@ async function pasteShapeTemplateInfoList(ctx: AppCanvasStateContext, templates:
   const assetMap = new Map<string, Blob>();
   templates.forEach((t) => {
     t.assets?.forEach(([id, blob]) => {
-      if (imageStore.getImage(id)) return;
-      assetMap.set(id, blob);
+      const migratedId = symbolAssetMigrationInfo.assetIdMigrationMap.get(id) ?? id;
+      if (!imageStore.getImage(migratedId)) {
+        assetMap.set(migratedId, blob);
+      }
     });
   });
   if (assetMap.size === 0) return;
