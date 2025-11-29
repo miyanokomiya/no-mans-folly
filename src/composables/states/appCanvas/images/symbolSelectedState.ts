@@ -49,6 +49,7 @@ export const newSymbolSelectedState = defineSingleSelectedHandlerState<SymbolSha
                 return ctx.states.newSelectionHubState;
               }
             }
+            return;
           }
         }
       },

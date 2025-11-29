@@ -27,6 +27,7 @@ export const newSymbolHandler = defineShapeHandler<SymbolHitResult, Option>((opt
   const shape = shapeComposite.shapeMap[option.targetId] as SymbolShape;
   const shapeRect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
   const rotateFn = getRotateFn(shape.rotation, getRectCenter(shapeRect));
+  const canJump = shape.src.some((id) => shapeComposite.shapeMap[id]);
 
   function getOpenAnchor(scale: number): HitAnchor {
     const y = shapeRect.height + ANCHOR_SIZE_OPEN * 1.2 * scale;
@@ -34,8 +35,9 @@ export const newSymbolHandler = defineShapeHandler<SymbolHitResult, Option>((opt
   }
 
   function hitTest(p: IVec2, scale = 1): SymbolHitResult | undefined {
-    const adjustedP = sub(rotateFn(p, true), shape.p);
+    if (!canJump) return;
 
+    const adjustedP = sub(rotateFn(p, true), shape.p);
     const thresholdJump = ANCHOR_SIZE_OPEN * scale;
     const openAnchor = getOpenAnchor(scale);
     if (getDistance(openAnchor[1], adjustedP) <= thresholdJump) {
@@ -44,6 +46,8 @@ export const newSymbolHandler = defineShapeHandler<SymbolHitResult, Option>((opt
   }
 
   function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: SymbolHitResult) {
+    if (!canJump) return;
+
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       const thresholdJump = ANCHOR_SIZE_OPEN * scale;
       const openAnchor = getOpenAnchor(scale);
