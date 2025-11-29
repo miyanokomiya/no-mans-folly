@@ -16,7 +16,7 @@ export function newPanToShapeState(option: Option): AppCanvasState {
       if (option.ids.length === 0) return { type: "break" };
 
       const shapeComposite = ctx.getShapeComposite();
-      const shapes = option.ids.map((id) => shapeComposite.mergedShapeMap[id]);
+      const shapes = option.ids.map((id) => shapeComposite.mergedShapeMap[id]).filter((s) => s);
       const rect = shapeComposite.getWrapperRectForShapes(shapes);
       const targetRect = option.scaling ? expandRect(rect, 20) : ctx.getViewRect();
       const diff = sub(getRectCenter(rect), getRectCenter(targetRect));

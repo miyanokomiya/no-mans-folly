@@ -102,6 +102,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
       key: "CREATE_SYMBOL",
     };
   },
+  get UPDATE_SYMBOL() {
+    return {
+      label: i18n.t("contextmenu.update_symbol"),
+      key: "CREATE_SYMBOL",
+    };
+  },
   get ALIGN_LAYOUT() {
     return {
       label: i18n.t("contextmenu.align_layout"),
@@ -663,26 +669,12 @@ export function createAlignBox(ctx: AppCanvasStateContext): boolean {
  * Default margin doesn't have much meaning here. It's just to make the frame look a bit better.
  */
 async function createSymbolForShapes(ctx: AppCanvasStateContext): Promise<boolean> {
-  const shapeComposite = ctx.getShapeComposite();
   const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
+  const shapeComposite = ctx.getShapeComposite();
   if (targetIds.length === 0) return false;
 
-  let assetId: string;
-  try {
-    assetId = await generateSymbolAssetId(targetIds);
-    const info = getExportParamsForSelectedShapes(ctx.getShapeComposite(), targetIds);
-    const builder = getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range);
-    const blob = await builder.toBlob();
-    await ctx.assetAPI.saveAsset(assetId, blob);
-    await ctx.getImageStore().loadFromFile(assetId, blob);
-  } catch (e) {
-    ctx.showToastMessage({
-      text: "Failed to create symbol",
-      type: "error",
-    });
-    console.error(e);
-    return false;
-  }
+  const assetId = await createSymbolAsset(ctx, targetIds);
+  if (!assetId) return false;
 
   const rect = shapeComposite.getWrapperRectForShapes(
     targetIds.map((id) => shapeComposite.shapeMap[id]),
@@ -698,6 +690,27 @@ async function createSymbolForShapes(ctx: AppCanvasStateContext): Promise<boolea
   ctx.addShapes([symbol]);
   ctx.selectShape(symbol.id);
   return true;
+}
+
+export async function createSymbolAsset(ctx: AppCanvasStateContext, targetIds: string[]): Promise<string | undefined> {
+  if (targetIds.length === 0) return;
+
+  try {
+    const assetId = await generateSymbolAssetId(targetIds);
+    const info = getExportParamsForSelectedShapes(ctx.getShapeComposite(), targetIds);
+    const builder = getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range);
+    const blob = await builder.toBlob();
+    await ctx.assetAPI.saveAsset(assetId, blob);
+    await ctx.getImageStore().loadFromFile(assetId, blob);
+    return assetId;
+  } catch (e) {
+    ctx.showToastMessage({
+      text: "Failed to create symbol",
+      type: "error",
+    });
+    console.error(e);
+    return;
+  }
 }
 
 /**

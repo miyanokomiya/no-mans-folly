@@ -72,6 +72,7 @@ import { newRibbonSelectedState } from "./states/appCanvas/ribbon/ribbonSelected
 import { newVNNodeSelectedState } from "./states/appCanvas/vectorNetworks/vnNodeSelectedState";
 import { newSheetImageSelectedState } from "./states/appCanvas/sheetImage/sheetImageSelectedState";
 import { newGearSelectedState } from "./states/appCanvas/gear/gearSelectedState";
+import { newSymbolSelectedState } from "./states/appCanvas/images/symbolSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -181,6 +182,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newBubbleSelectedState;
     case "sheet_image":
       return newSheetImageSelectedState;
+    case "symbol":
+      return newSymbolSelectedState;
     case "tree_root":
       return newTreeRootSelectedState;
     case "tree_node":
