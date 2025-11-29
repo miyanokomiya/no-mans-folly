@@ -95,6 +95,7 @@ import {
   doesRectAccommodateRect,
   isRectOverlapped,
   getRadianRangeOfArcCurveParams,
+  isZeroSize,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -2277,5 +2278,15 @@ describe("doesRectAccommodateRect", () => {
     const outer = { x: 0, y: 0, width: 100, height: 100 };
     const inner = { x: 0, y: 0, width: 50, height: 50 };
     expect(doesRectAccommodateRect(outer, inner)).toBe(true);
+  });
+});
+
+describe("isZeroSize", () => {
+  test("should return true when the size is zero", () => {
+    expect(isZeroSize({ width: 0, height: 0 })).toBe(true);
+    expect(isZeroSize({ width: 1, height: 0 })).toBe(true);
+    expect(isZeroSize({ width: 0, height: -1 })).toBe(true);
+    expect(isZeroSize({ width: 1e-10, height: 1e-10 })).toBe(true);
+    expect(isZeroSize({ width: 1, height: -1 })).toBe(false);
   });
 });

@@ -1511,3 +1511,7 @@ export function doesRectAccommodateRect(outer: IRectangle, inner: IRectangle): b
     outer.y + outer.height >= inner.y + inner.height
   );
 }
+
+export function isZeroSize(size: Size): boolean {
+  return Math.abs(size.width * size.height) < MINVALUE;
+}

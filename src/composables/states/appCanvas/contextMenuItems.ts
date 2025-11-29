@@ -31,6 +31,7 @@ import { newColorParser } from "../../colorParser";
 import { generateFindexAfter } from "../../shapeRelation";
 import { canJoinAlignBox } from "../../alignHandler";
 import { AlignBoxShape } from "../../../shapes/align/alignBox";
+import { SymbolShape } from "../../../shapes/symbol";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get GRID_ON() {
@@ -92,6 +93,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
     return {
       label: i18n.t("contextmenu.ungroup"),
       key: "UNGROUP",
+    };
+  },
+  get CREATE_SYMBOL() {
+    return {
+      label: i18n.t("contextmenu.create_symbol"),
+      key: "CREATE_SYMBOL",
     };
   },
   get ALIGN_LAYOUT() {
@@ -291,6 +298,7 @@ export function getMenuItemsForSelectedShapes(
 
   return [
     ...lockItems,
+    CONTEXT_MENU_ITEM_SRC.CREATE_SYMBOL,
     CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE,
     ...(shapes[0].parentId ? [CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE_WITHIN_GROUP] : []),
     CONTEXT_MENU_ITEM_SRC.DUPLICATE_AS_PATH,
@@ -351,6 +359,10 @@ export function handleContextItemEvent(
     }
     case CONTEXT_MENU_ITEM_SRC.UNGROUP.key: {
       ungroupShapes(ctx);
+      return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.CREATE_SYMBOL.key: {
+      createSymbolForShapes(ctx);
       return;
     }
     case CONTEXT_MENU_ITEM_SRC.ALIGN_LAYOUT.key: {
@@ -643,6 +655,29 @@ export function createAlignBox(ctx: AppCanvasStateContext): boolean {
     update: mapReduce(ctx.getSelectedShapeIdMap(), () => ({ parentId: layoutShape.id })),
   });
   ctx.selectShape(layoutShape.id);
+  return true;
+}
+
+/**
+ * Default margin doesn't have much meaning here. It's just to make the frame look a bit better.
+ */
+export function createSymbolForShapes(ctx: AppCanvasStateContext): boolean {
+  const shapeComposite = ctx.getShapeComposite();
+  const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
+  if (targetIds.length === 0) return false;
+
+  const rect = shapeComposite.getWrapperRectForShapes(
+    targetIds.map((id) => shapeComposite.shapeMap[id]),
+    true,
+  );
+  const d = 20 * ctx.getScale();
+  const symbol = createShape<SymbolShape>(shapeComposite.getShapeStruct, "symbol", {
+    id: ctx.generateUuid(),
+    p: { x: rect.x + d, y: rect.y + d },
+    src: targetIds,
+  });
+  ctx.addShapes([symbol]);
+  ctx.selectShape(symbol.id);
   return true;
 }
 
