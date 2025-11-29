@@ -444,5 +444,8 @@ describe("preserveLineConnections", () => {
 
     const res1 = preserveLineConnections(shapeComposite, { [shapeB.id]: { p: { x: 0, y: 200 } } });
     expect(res1).toEqual({ [line.id]: { qConnection: { id: shapeB.id, rate: { x: 3, y: -1.5 } } } });
+
+    const res2 = preserveLineConnections(shapeComposite, { [shapeB.id]: { p: { x: 0, y: 200 } }, [line.id]: {} });
+    expect(res2).toEqual({});
   });
 });

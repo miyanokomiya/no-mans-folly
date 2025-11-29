@@ -22,7 +22,7 @@ import {
   newConnectionRenderer,
   preserveLineConnections,
 } from "../../connectedLineHandler";
-import { mergeMap, patchPipe, toMap } from "../../../utils/commons";
+import { mergeMap, patchPipe, PatchPipeItem, toMap } from "../../../utils/commons";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { TextShape } from "../../../shapes/text";
 import { DocDelta } from "../../../models/document";
@@ -129,6 +129,7 @@ export function newResizingState(option: Option): AppCanvasState {
             snappingResult = snappingInfo.snappingResult;
           }
 
+          connectionRenderer.setRigidLineIds([]);
           const selectedIdMap = ctx.getSelectedShapeIdMap();
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = shapeComposite.shapeMap;
@@ -191,10 +192,15 @@ export function newResizingState(option: Option): AppCanvasState {
                 const handler = newPreserveAttachmentByShapeHandler({ shapeComposite, keepAnchor: true });
                 return mergeMap(patch, handler.getPatch(patch));
               },
-              (_, patch) => {
-                if (!preserveConnectionsFlag) return {};
-                return preserveLineConnections(shapeComposite, patch);
-              },
+              ...(preserveConnectionsFlag
+                ? ([
+                    (_, patch) => {
+                      const rigidPatch = preserveLineConnections(shapeComposite, patch);
+                      connectionRenderer.setRigidLineIds(Object.keys(rigidPatch));
+                      return rigidPatch;
+                    },
+                  ] as PatchPipeItem<Shape>[])
+                : []),
             ],
             shapeMap,
           );

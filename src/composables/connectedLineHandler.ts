@@ -9,6 +9,7 @@ import { ShapeComposite, getNextShapeComposite, newShapeComposite } from "./shap
 import { mapEach, mapFilter, toList } from "../utils/commons";
 import { CanvasCTX } from "../utils/types";
 import { IVec2 } from "okageo";
+import { applyStrokeStyle } from "../utils/strokeStyle";
 
 interface Option {
   connectedLinesMap: {
@@ -254,6 +255,7 @@ export function getRotatedRectPathMap(
 
 export interface ConnectionRenderer {
   render(ctx: CanvasCTX, patchMap: { [id: string]: Partial<Shape> }, style: StyleScheme, scale: number): void;
+  setRigidLineIds(ids: string[]): void;
 }
 export function newConnectionRenderer(option: {
   connectedLinesMap: { [id: string]: LineShape[] };
@@ -268,34 +270,43 @@ export function newConnectionRenderer(option: {
     });
   });
 
+  let rigidLineIds = new Set<string>();
+  function setRigidLineIds(ids: string[]) {
+    rigidLineIds = new Set(ids);
+  }
+
   function render(ctx: CanvasCTX, patchMap: { [id: string]: Partial<Shape> }, style: StyleScheme, scale: number) {
     renderPatchedVertices(ctx, {
-      lines: Object.values(mapFilter(patchMap, (_, id) => indirectLineIds.has(id))),
+      lines: mapFilter(patchMap, (_, id) => indirectLineIds.has(id)),
+      rigidIds: rigidLineIds,
       style,
       scale,
     });
   }
 
-  return { render };
+  return { render, setRigidLineIds };
 }
 
 function renderPatchedVertices(
   ctx: CanvasCTX,
-  option: { lines: Partial<LineShape>[]; scale: number; style: StyleScheme },
+  option: { lines: { [id: string]: Partial<LineShape> }; rigidIds?: Set<string>; scale: number; style: StyleScheme },
 ) {
   applyFillStyle(ctx, { color: option.style.selectionSecondaly });
+  applyStrokeStyle(ctx, { color: option.style.selectionPrimary, width: 2 * option.scale });
   const size = 5 * option.scale;
 
-  option.lines.forEach((l) => {
+  mapEach(option.lines, (l, id) => {
     if (l.p) {
       ctx.beginPath();
       ctx.arc(l.p.x, l.p.y, size, 0, TAU);
       ctx.fill();
+      if (option.rigidIds?.has(id)) ctx.stroke();
     }
     if (l.q) {
       ctx.beginPath();
       ctx.arc(l.q.x, l.q.y, size, 0, TAU);
       ctx.fill();
+      if (option.rigidIds?.has(id)) ctx.stroke();
     }
     if (l.body) {
       l.body.forEach((b) => {
@@ -303,6 +314,7 @@ function renderPatchedVertices(
           ctx.beginPath();
           ctx.arc(b.p.x, b.p.y, size, 0, TAU);
           ctx.fill();
+          if (option.rigidIds?.has(id)) ctx.stroke();
         }
       });
     }
@@ -344,6 +356,7 @@ export function getConnectedLinePatch(srcComposite: ShapeComposite, patchInfo: E
 /**
  * Migrate each connection not to translate the corresponding vertex.
  * This takes care of connections that are directly connected to the shapes in "patchMap".
+ * When the line is included in "patchMap", it's exempted from preservation.
  */
 export function preserveLineConnections(shapeComposite: ShapeComposite, patchMap: { [id: string]: Partial<Shape> }) {
   const shapeMap = shapeComposite.shapeMap;
@@ -355,6 +368,8 @@ export function preserveLineConnections(shapeComposite: ShapeComposite, patchMap
   const currentShapeComposite = getNextShapeComposite(shapeComposite, { update: patchMap });
   ids.forEach((id) => {
     connectionInfoMap[id]?.forEach((line) => {
+      if (patchMap[line.id]) return;
+
       const srcLine = shapeMap[line.id] as LineShape;
       const srcVertices = getLinePath(srcLine);
       const patchInfo = getConnections(line).map<[number, IVec2, ConnectionPoint | undefined]>((c, i) => {
