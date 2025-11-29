@@ -2,6 +2,7 @@ import { expect, describe, test } from "vitest";
 import { createShape, getCommonStruct } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import {
+  getConnectionResultByHook,
   getOptimizedSegment,
   isLineSnappableShape,
   newLineSnapping,
@@ -1728,5 +1729,29 @@ describe("patchLinesConnectedToShapeOutline", () => {
     const shapeComposite = newShapeComposite({ shapes: [line, shapeA], getStruct: getCommonStruct });
     const res = patchLinesConnectedToShapeOutline(shapeComposite, { ...shapeA, id: "b" });
     expect(res).toEqual({});
+  });
+});
+
+describe("getConnectionResultByHook", () => {
+  test("should return snappable shape at the point", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      id: "a",
+      p: { x: -50, y: 20 },
+      q: { x: -50, y: 40 },
+    });
+    const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 });
+    const shapeB = { ...shapeA, id: "b", p: { x: 200, y: 0 } };
+    const shapeComposite = newShapeComposite({ shapes: [line, shapeA, shapeB], getStruct: getCommonStruct });
+
+    const res0 = getConnectionResultByHook(shapeComposite, shapeComposite.shapes, { x: -10, y: 10 }, line, 1);
+    expect(res0).toBe(undefined);
+
+    const res1 = getConnectionResultByHook(shapeComposite, shapeComposite.shapes, { x: 10, y: 10 }, line, 1);
+    expect(res1?.outlineSrc).toBe("a");
+    expect(res1?.p).toEqualPoint({ x: 0, y: 35 });
+    expect(res1?.connection).toEqual({ id: "a", optimized: true, rate: { x: 0.5, y: 0.5 } });
+
+    const res2 = getConnectionResultByHook(shapeComposite, shapeComposite.shapes, { x: 210, y: 10 }, line, 1);
+    expect(res2?.outlineSrc).toBe("b");
   });
 });

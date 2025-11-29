@@ -893,13 +893,13 @@ export function getConnectionResultByHook(
       return shapeComposite.isPointOn(s, point);
     },
   );
-  if (candidate) {
-    const connection: ConnectionPoint = { id: candidate.id, rate: { x: 0.5, y: 0.5 }, optimized: true };
-    const patch = patchConnection(line, index, connection);
-    const patchedLine = { ...line, ...patch };
-    const optimized = optimizeLinePath({ getShapeComposite: () => shapeComposite }, patchedLine);
-    const optimizedLine = optimized ? { ...patchedLine, ...optimized } : patchedLine;
-    const p = optimized ? getLinePath(optimizedLine)[index] : getRectCenter(shapeComposite.getWrapperRect(candidate));
-    return { connection, outlineSrc: candidate.id, p };
-  }
+  if (!candidate) return;
+
+  const connection: ConnectionPoint = { id: candidate.id, rate: { x: 0.5, y: 0.5 }, optimized: true };
+  const patch = patchConnection(line, index, connection);
+  const patchedLine = { ...line, ...patch };
+  const optimized = optimizeLinePath({ getShapeComposite: () => shapeComposite }, patchedLine);
+  const optimizedLine = optimized ? { ...patchedLine, ...optimized } : patchedLine;
+  const p = optimized ? getLinePath(optimizedLine)[index] : getRectCenter(shapeComposite.getWrapperRect(candidate));
+  return { connection, outlineSrc: candidate.id, p };
 }
