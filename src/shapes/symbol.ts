@@ -29,17 +29,17 @@ export const struct: ShapeStruct<SymbolShape> = {
       src: arg.src ?? [],
     };
   },
-  render(ctx, shape, shapeContext) {
-    if (!shapeContext || isZeroSize(shape)) return rectangleStruct.render(ctx, shape, shapeContext);
+  render(ctx, shape, shapeContext, imageStore) {
+    if (!shapeContext || isZeroSize(shape)) return rectangleStruct.render(ctx, shape, shapeContext, imageStore);
 
     const srcIds = shape.src.filter((id) => shapeContext.shapeMap[id]);
-    if (srcIds.length === 0) return rectangleStruct.render(ctx, shape, shapeContext);
+    if (srcIds.length === 0) return rectangleStruct.render(ctx, shape, shapeContext, imageStore);
 
     const srcShapes = srcIds.map((id) => shapeContext.shapeMap[id]);
     const srcRect = getWrapperRect(
       srcShapes.map((s) => shapeContext.getStruct(s.type).getWrapperRect(s, shapeContext, true)),
     );
-    if (isZeroSize(srcRect)) return rectangleStruct.render(ctx, shape, shapeContext);
+    if (isZeroSize(srcRect)) return rectangleStruct.render(ctx, shape, shapeContext, imageStore);
 
     const rectPolygon = this.getLocalRectPolygon(shape);
     if (!shape.fill.disabled) {
@@ -63,7 +63,7 @@ export const struct: ShapeStruct<SymbolShape> = {
 
     srcIds.forEach((id) => {
       const s = shapeContext.shapeMap[id];
-      shapeContext.getStruct(s.type).render(ctx, s, shapeContext);
+      shapeContext.getStruct(s.type).render(ctx, s, shapeContext, imageStore);
     });
 
     ctx.restore();
@@ -75,17 +75,18 @@ export const struct: ShapeStruct<SymbolShape> = {
       ctx.stroke();
     }
   },
-  createSVGElementInfo(shape, shapeContext) {
-    if (!shapeContext || isZeroSize(shape)) return rectangleStruct.createSVGElementInfo?.(shape, shapeContext);
+  createSVGElementInfo(shape, shapeContext, imageStore) {
+    if (!shapeContext || isZeroSize(shape))
+      return rectangleStruct.createSVGElementInfo?.(shape, shapeContext, imageStore);
 
     const srcIds = shape.src.filter((id) => shapeContext.shapeMap[id]);
-    if (srcIds.length === 0) return rectangleStruct.createSVGElementInfo?.(shape, shapeContext);
+    if (srcIds.length === 0) return rectangleStruct.createSVGElementInfo?.(shape, shapeContext, imageStore);
 
     const srcShapes = srcIds.map((id) => shapeContext.shapeMap[id]);
     const srcRect = getWrapperRect(
       srcShapes.map((s) => shapeContext.getStruct(s.type).getWrapperRect(s, shapeContext, true)),
     );
-    if (isZeroSize(srcRect)) return rectangleStruct.createSVGElementInfo?.(shape, shapeContext);
+    if (isZeroSize(srcRect)) return rectangleStruct.createSVGElementInfo?.(shape, shapeContext, imageStore);
 
     const viewAdjust = getViewportForRectWithinSize(srcRect, { width: shape.width, height: shape.height });
     const srcAffine = multiAffines([
@@ -95,7 +96,7 @@ export const struct: ShapeStruct<SymbolShape> = {
 
     const contents: SVGElementInfo[] = srcShapes
       .map((s) => {
-        return shapeContext.getStruct(s.type).createSVGElementInfo?.(s, shapeContext);
+        return shapeContext.getStruct(s.type).createSVGElementInfo?.(s, shapeContext, imageStore);
       })
       .filter((v) => !!v);
 
