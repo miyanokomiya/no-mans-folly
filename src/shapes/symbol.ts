@@ -194,6 +194,23 @@ export const struct: ShapeStruct<SymbolShape> = {
       ],
     };
   },
+  immigrateShapeIds(shape, oldToNewIdMap, removeNotFound) {
+    const ret: string[] = [];
+    shape.src.forEach((id) => {
+      if (oldToNewIdMap[id]) {
+        ret.push(oldToNewIdMap[id]);
+      } else if (!removeNotFound) {
+        ret.push(id);
+      }
+    });
+    return { src: ret };
+  },
+  refreshRelation(shape, availableIdSet) {
+    return { src: shape.src.filter((id) => availableIdSet.has(id)) };
+  },
+  shouldDelete(shape, shapeContext) {
+    return !shape.src.some((id) => shapeContext.shapeMap[id]);
+  },
   getTextRangeRect: undefined,
   ...mapReduce(textContainerModule, () => undefined),
 };
