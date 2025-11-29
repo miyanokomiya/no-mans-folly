@@ -126,3 +126,8 @@ export const struct: ShapeStruct<ImageShape> = {
 export function isImageShape(shape: Shape): shape is ImageShape {
   return shape.type === "image";
 }
+
+// Should use this function to check if the shape is asset related one.
+export function isImageAssetShape(shape: Shape): shape is ImageShape {
+  return "assetId" in shape;
+}

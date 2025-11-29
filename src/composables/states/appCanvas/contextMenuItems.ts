@@ -23,7 +23,7 @@ import { RectPolygonShape } from "../../../shapes/rectPolygon";
 import { expandRect } from "../../../utils/geometry";
 import { LineShape } from "../../../shapes/line";
 import { generateKeyBetweenAllowSame } from "../../../utils/findex";
-import { ImageShape, isImageShape } from "../../../shapes/image";
+import { ImageShape, isImageAssetShape } from "../../../shapes/image";
 import { parseSvgFile } from "../../../shapes/utils/svgParser";
 import { DocOutput } from "../../../models/document";
 import { calcOriginalDocSize, getInitialOutput } from "../../../utils/textEditor";
@@ -32,6 +32,7 @@ import { generateFindexAfter } from "../../shapeRelation";
 import { canJoinAlignBox } from "../../alignHandler";
 import { AlignBoxShape } from "../../../shapes/align/alignBox";
 import { SymbolShape } from "../../../shapes/symbol";
+import { generateSymbolAssetId } from "../../../shapes/utils/symbol";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get GRID_ON() {
@@ -661,10 +662,26 @@ export function createAlignBox(ctx: AppCanvasStateContext): boolean {
 /**
  * Default margin doesn't have much meaning here. It's just to make the frame look a bit better.
  */
-export function createSymbolForShapes(ctx: AppCanvasStateContext): boolean {
+async function createSymbolForShapes(ctx: AppCanvasStateContext): Promise<boolean> {
   const shapeComposite = ctx.getShapeComposite();
   const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
   if (targetIds.length === 0) return false;
+
+  let assetId: string;
+  try {
+    assetId = await generateSymbolAssetId(targetIds);
+    const info = getExportParamsForSelectedShapes(ctx.getShapeComposite(), targetIds);
+    const builder = getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range);
+    const blob = await builder.toBlob();
+    await ctx.assetAPI.saveAsset(assetId, blob);
+  } catch (e) {
+    ctx.showToastMessage({
+      text: "Failed to create symbol",
+      type: "error",
+    });
+    console.error(e);
+    return false;
+  }
 
   const rect = shapeComposite.getWrapperRectForShapes(
     targetIds.map((id) => shapeComposite.shapeMap[id]),
@@ -675,6 +692,7 @@ export function createSymbolForShapes(ctx: AppCanvasStateContext): boolean {
     id: ctx.generateUuid(),
     p: { x: rect.x + d, y: rect.y + d },
     src: targetIds,
+    assetId,
   });
   ctx.addShapes([symbol]);
   ctx.selectShape(symbol.id);
@@ -794,7 +812,7 @@ function duplicateSelectedShapesAsPaths(ctx: AppCanvasStateContext) {
 }
 
 function isSvgImageShape(shape: Shape): shape is ImageShape & { assetId: string } {
-  return isImageShape(shape) && !!shape.assetId?.toLowerCase().endsWith(".svg");
+  return isImageAssetShape(shape) && !!shape.assetId?.toLowerCase().endsWith(".svg");
 }
 
 async function parseSvgFileFromShapes(ctx: AppCanvasStateContext): Promise<void> {

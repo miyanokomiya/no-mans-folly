@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { ImageStore, ImageData, newImageStore } from "../../composables/imageStore";
-import { isImageShape } from "../../shapes/image";
+import { isImageAssetShape } from "../../shapes/image";
 import { ShapeStore } from "../../stores/shapes";
 import { EntityPatchInfo, Shape, Sheet } from "../../models";
 import { AppCanvasStateContext } from "../../composables/states/appCanvas/core";
@@ -38,7 +38,7 @@ export function useImageStore(shapeStore: ShapeStore, sheets: Sheet[]) {
   useEffect(() => {
     const imageDataList: [string, ImageData][] = [];
     // Conserve images that are already loaded.
-    shapeStore.shapeComposite.shapes.filter(isImageShape).forEach((s) => {
+    shapeStore.shapeComposite.shapes.filter(isImageAssetShape).forEach((s) => {
       if (!s.assetId) return;
       const imageData = imageStore.getImageData(s.assetId);
       if (!imageData) return;
@@ -74,7 +74,7 @@ export function useLoadShapeAssets(
   return useCallback(
     async (shapes: Shape[]) => {
       const errors = await imageStore.batchLoad(
-        shapes.filter(isImageShape).map((s) => s.assetId),
+        shapes.filter(isImageAssetShape).map((s) => s.assetId),
         assetAPI,
       );
       if (errors && errors.length > 0) {

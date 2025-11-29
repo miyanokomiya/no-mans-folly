@@ -34,7 +34,7 @@ import { renderFrameNames } from "../../composables/frame";
 import { FloatMenuOption } from "../../composables/states/commons";
 import { newDebounce } from "../../utils/stateful/debounce";
 import { saveSheetThumbnailAsSvg } from "../../composables/states/appCanvas/utils/shapeExport";
-import { isImageShape } from "../../shapes/image";
+import { isImageAssetShape } from "../../shapes/image";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -141,7 +141,7 @@ export const AppCanvas: React.FC = () => {
 
       // Proc image loading in case image shapes come from other clients
       const ids = Array.from(keys);
-      const images = ids.map((id) => shapeStore.getEntity(id)).filter((s) => !!s && isImageShape(s));
+      const images = ids.map((id) => shapeStore.getEntity(id)).filter((s) => !!s && isImageAssetShape(s));
       if (images.length > 0) {
         loadShapeAssets(images);
       }
