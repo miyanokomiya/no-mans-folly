@@ -615,6 +615,17 @@ describe("patchVertices", () => {
       curves: [{ c1: { x: -1, y: -1 }, c2: { x: -3, y: -4 } }, { c1: { x: -3, y: -4 }, c2: { x: 0, y: 0 } }, curve],
     });
   });
+
+  test("should optimize the patch if possible", () => {
+    const shape0 = struct.create({
+      p: { x: 0, y: 0 },
+      q: { x: 10, y: 0 },
+      pConnection: { id: "a", rate: { x: 0.1, y: 0.2 } },
+      qConnection: { id: "b", rate: { x: 0.1, y: 0.2 } },
+    });
+    expect(patchVertices(shape0, [[0, shape0.p, shape0.pConnection]])).toEqual({});
+    expect(patchVertices(shape0, [[1, shape0.q, shape0.qConnection]])).toEqual({});
+  });
 });
 
 describe("patchBodyVertex", () => {

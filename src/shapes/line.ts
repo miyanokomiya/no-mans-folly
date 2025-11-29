@@ -539,12 +539,12 @@ export function patchVertices(
   return data.reduce<Partial<LineShape>>((patch, [index, p, c]) => {
     switch (index) {
       case 0:
-        patch.p = p;
-        patch.pConnection = c;
+        if (shape.p !== p) patch.p = p;
+        if (shape.pConnection !== c) patch.pConnection = c;
         break;
       case vertices.length - 1:
-        patch.q = p;
-        patch.qConnection = c;
+        if (shape.q !== p) patch.q = p;
+        if (shape.qConnection !== c) patch.qConnection = c;
         break;
       default:
         if (shape.body) {

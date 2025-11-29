@@ -213,9 +213,6 @@ export function newResizingState(option: Option): AppCanvasState {
                       ];
                     });
                     nextPatch[line.id] = patchVertices(srcLine, patchInfo);
-                    // Only connections need to be adjusted
-                    delete nextPatch[line.id].p;
-                    delete nextPatch[line.id].q;
                   });
                 });
                 return nextPatch;
