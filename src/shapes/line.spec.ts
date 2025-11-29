@@ -622,9 +622,11 @@ describe("patchVertices", () => {
       q: { x: 10, y: 0 },
       pConnection: { id: "a", rate: { x: 0.1, y: 0.2 } },
       qConnection: { id: "b", rate: { x: 0.1, y: 0.2 } },
+      body: [{ p: { x: 50, y: 100 }, c: { id: "a", rate: { x: 0.5, y: 1 } } }],
     });
     expect(patchVertices(shape0, [[0, shape0.p, shape0.pConnection]])).toEqual({});
-    expect(patchVertices(shape0, [[1, shape0.q, shape0.qConnection]])).toEqual({});
+    expect(patchVertices(shape0, [[1, shape0.body![0].p, shape0.body![0].c]])).toEqual({});
+    expect(patchVertices(shape0, [[2, shape0.q, shape0.qConnection]])).toEqual({});
   });
 });
 

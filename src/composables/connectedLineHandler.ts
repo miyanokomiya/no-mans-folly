@@ -1,13 +1,14 @@
-import { LineShape, getConnections, isLineShape, patchVertex } from "../shapes/line";
+import { LineShape, getConnections, getLinePath, isLineShape, patchVertex, patchVertices } from "../shapes/line";
 import { RotatedRectPath, TAU, getLocationFromRateOnRectPath } from "../utils/geometry";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
-import { EntityPatchInfo, Shape, StyleScheme } from "../models";
+import { ConnectionPoint, EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { applyFillStyle } from "../utils/fillStyle";
 import { newElbowLineHandler } from "./elbowLineHandler";
 import { optimizeLinePath } from "./lineSnapping";
 import { ShapeComposite, getNextShapeComposite, newShapeComposite } from "./shapeComposite";
 import { mapEach, mapFilter, toList } from "../utils/commons";
 import { CanvasCTX } from "../utils/types";
+import { IVec2 } from "okageo";
 
 interface Option {
   connectedLinesMap: {
@@ -338,4 +339,33 @@ export function getConnectedLinePatch(srcComposite: ShapeComposite, patchInfo: E
     ctx: { getShapeComposite: () => srcComposite },
   });
   return handler.onModified(patchInfo.update);
+}
+
+/**
+ * Migrate each connection not to translate the corresponding vertex.
+ * This takes care of connections that are directly connected to the shapes in "patchMap".
+ */
+export function preserveLineConnections(shapeComposite: ShapeComposite, patchMap: { [id: string]: Partial<Shape> }) {
+  const shapeMap = shapeComposite.shapeMap;
+  const ids = Object.keys(patchMap).filter((id) => shapeMap[id] && !isLineShape(shapeMap[id]));
+  if (ids.length === 0) return {};
+
+  const nextPatch = {} as { [id: string]: Partial<LineShape> };
+  const connectionInfoMap = getConnectedLineInfoMap({ getShapeComposite: () => shapeComposite }, ids);
+  const currentShapeComposite = getNextShapeComposite(shapeComposite, { update: patchMap });
+  ids.forEach((id) => {
+    connectionInfoMap[id]?.forEach((line) => {
+      const srcLine = shapeMap[line.id] as LineShape;
+      const srcVertices = getLinePath(srcLine);
+      const patchInfo = getConnections(line).map<[number, IVec2, ConnectionPoint | undefined]>((c, i) => {
+        const srcVertex = srcVertices[i];
+        const targetShape = c ? currentShapeComposite.shapeMap[c.id] : undefined;
+        if (!c || !targetShape || !patchMap[c.id]) return [i, srcVertex, c];
+
+        return [i, srcVertex, { ...c, rate: currentShapeComposite.getLocationRateOnShape(targetShape, srcVertex) }];
+      });
+      nextPatch[line.id] = patchVertices(srcLine, patchInfo);
+    });
+  });
+  return nextPatch;
 }

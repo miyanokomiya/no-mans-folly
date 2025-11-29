@@ -6,9 +6,9 @@ import {
   getMovingBoundingBoxPoints,
   newBoundingBoxResizing,
 } from "../../boundingBox";
-import { AffineMatrix, IDENTITY_AFFINE, IVec2, sub } from "okageo";
+import { AffineMatrix, IDENTITY_AFFINE, sub } from "okageo";
 import { getTextRangeRect, resizeOnTextEdit, shouldKeepAspect, shouldResizeOnTextEdit } from "../../../shapes";
-import { ConnectionPoint, Shape } from "../../../models";
+import { Shape } from "../../../models";
 import {
   ShapeSnapping,
   SnappingResult,
@@ -16,7 +16,12 @@ import {
   newShapeSnapping,
   renderSnappingResult,
 } from "../../shapeSnapping";
-import { ConnectionRenderer, getConnectedLineInfoMap, newConnectionRenderer } from "../../connectedLineHandler";
+import {
+  ConnectionRenderer,
+  getConnectedLineInfoMap,
+  newConnectionRenderer,
+  preserveLineConnections,
+} from "../../connectedLineHandler";
 import { mergeMap, patchPipe, toMap } from "../../../utils/commons";
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { TextShape } from "../../../shapes/text";
@@ -29,8 +34,6 @@ import { resizeShapeTrees } from "../../shapeResizing";
 import { getTree } from "../../../utils/tree";
 import { getSnappableCandidates } from "./commons";
 import { newPreserveAttachmentByShapeHandler } from "../../lineAttachmentHandler";
-import { getConnections, getLinePath, isLineShape, LineShape, patchVertices } from "../../../shapes/line";
-import { getNextShapeComposite } from "../../shapeComposite";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -190,32 +193,7 @@ export function newResizingState(option: Option): AppCanvasState {
               },
               (_, patch) => {
                 if (!preserveConnectionsFlag) return {};
-
-                const ids = Object.keys(patch).filter((id) => shapeMap[id] && !isLineShape(shapeMap[id]));
-                if (ids.length === 0) return {};
-
-                const nextPatch = {} as { [id: string]: Partial<LineShape> };
-                const connectionInfoMap = getConnectedLineInfoMap(ctx, ids);
-                const currentShapeComposite = getNextShapeComposite(shapeComposite, { update: patch });
-                ids.forEach((id) => {
-                  connectionInfoMap[id]?.forEach((line) => {
-                    const srcLine = shapeMap[line.id] as LineShape;
-                    const srcVertices = getLinePath(srcLine);
-                    const patchInfo = getConnections(line).map<[number, IVec2, ConnectionPoint | undefined]>((c, i) => {
-                      const srcVertex = srcVertices[i];
-                      const targetShape = c ? currentShapeComposite.shapeMap[c.id] : undefined;
-                      if (!c || !targetShape) return [i, srcVertex, undefined];
-
-                      return [
-                        i,
-                        srcVertex,
-                        { ...c, rate: currentShapeComposite.getLocationRateOnShape(targetShape, srcVertex) },
-                      ];
-                    });
-                    nextPatch[line.id] = patchVertices(srcLine, patchInfo);
-                  });
-                });
-                return nextPatch;
+                return preserveLineConnections(shapeComposite, patch);
               },
             ],
             shapeMap,

@@ -3,6 +3,7 @@ import {
   getConnectedLineInfoMap,
   newConnectedLineDetouchHandler,
   newConnectedLineHandler,
+  preserveLineConnections,
 } from "./connectedLineHandler";
 import { LineShape, struct } from "../shapes/line";
 import { createShape, getCommonStruct } from "../shapes";
@@ -416,5 +417,32 @@ describe("getConnectedLineInfoMap", () => {
         ["a", "b"],
       ),
     ).toEqual({ a: [l0, l1], b: [l0] });
+  });
+});
+
+describe("preserveLineConnections", () => {
+  test("should preserve original line connections", () => {
+    const shapeA = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a", width: 100, height: 100 });
+    const shapeB = { ...shapeA, id: "b", p: { x: 200, y: 0 } };
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line",
+      p: { x: 0, y: 50 },
+      q: { x: 300, y: 50 },
+      pConnection: { id: shapeA.id, rate: { x: 0, y: 0.5 } },
+      qConnection: { id: shapeB.id, rate: { x: 1, y: 0.5 } },
+      body: [{ p: { x: 50, y: 100 }, c: { id: shapeA.id, rate: { x: 0.5, y: 1 } } }],
+    });
+    const shapeComposite = newShapeComposite({ shapes: [line, shapeA, shapeB], getStruct: getCommonStruct });
+
+    const res0 = preserveLineConnections(shapeComposite, { [shapeA.id]: { p: { x: 0, y: 100 } } });
+    expect(res0).toEqual({
+      [line.id]: {
+        pConnection: { id: shapeA.id, rate: { x: 0, y: -0.5 } },
+        body: [{ p: { x: 50, y: 100 }, c: { id: shapeA.id, rate: { x: 0.5, y: 0 } } }],
+      },
+    });
+
+    const res1 = preserveLineConnections(shapeComposite, { [shapeB.id]: { p: { x: 0, y: 200 } } });
+    expect(res1).toEqual({ [line.id]: { qConnection: { id: shapeB.id, rate: { x: 3, y: -1.5 } } } });
   });
 });

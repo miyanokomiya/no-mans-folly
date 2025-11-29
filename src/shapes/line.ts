@@ -547,7 +547,7 @@ export function patchVertices(
         if (shape.qConnection !== c) patch.qConnection = c;
         break;
       default:
-        if (shape.body) {
+        if (shape.body && !isSameBodyItem(shape.body[index - 1], { p, c })) {
           patch.body ??= shape.body.concat();
           patch.body[index - 1] = { p, c };
         }
@@ -555,6 +555,11 @@ export function patchVertices(
     }
     return patch;
   }, ret);
+}
+
+// Reference evaluation
+function isSameBodyItem(a: LineBodyItem, b: LineBodyItem): boolean {
+  return a.p === b.p && a.c === b.c && a.elbow === b.elbow;
 }
 
 export function patchBodyVertex(shape: LineShape, bodyIndex: number, item: LineBodyItem): Partial<LineShape> {
