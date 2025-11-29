@@ -674,6 +674,7 @@ async function createSymbolForShapes(ctx: AppCanvasStateContext): Promise<boolea
     const builder = getSVGBuilderForShapesWithRange(ctx, info.targetShapeComposite, info.range);
     const blob = await builder.toBlob();
     await ctx.assetAPI.saveAsset(assetId, blob);
+    await ctx.getImageStore().loadFromFile(assetId, blob);
   } catch (e) {
     ctx.showToastMessage({
       text: "Failed to create symbol",

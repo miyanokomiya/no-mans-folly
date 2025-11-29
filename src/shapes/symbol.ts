@@ -45,6 +45,8 @@ export const struct: ShapeStruct<SymbolShape> = {
   },
   getTextRangeRect: undefined,
   ...mapReduce(textContainerModule, () => undefined),
+  canAttachSmartBranch: true,
+  shouldKeepAspect: false,
 };
 
 export function isSymbolShape(shape: Shape): shape is SymbolShape {
