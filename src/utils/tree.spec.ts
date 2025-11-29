@@ -163,6 +163,33 @@ describe("getAllBranchIds", () => {
   });
 });
 
+describe("getAllBranchIdsByMap", () => {
+  test("should get all branch ids: targets and all nodes under them", () => {
+    const tree = target.getTree([
+      { id: "aaa", parentId: "aa" },
+      { id: "a", parentId: "" },
+      { id: "aa", parentId: "a" },
+      { id: "bb", parentId: "b" },
+      { id: "b", parentId: "" },
+    ]);
+    expect(target.getAllBranchIdsByMap(toMap(target.flatTree(tree)), ["a", "b"])).toEqual([
+      "a",
+      "aa",
+      "aaa",
+      "b",
+      "bb",
+    ]);
+
+    const tree2 = target.getTree([
+      { id: "c", parentId: "b" },
+      { id: "b", parentId: "a" },
+      { id: "a", parentId: "" },
+    ]);
+    expect(target.getAllBranchIdsByMap(toMap(target.flatTree(tree2)), ["a"])).toEqual(["a", "b", "c"]);
+    expect(target.getAllBranchIdsByMap(toMap(target.flatTree(tree2)), ["b"])).toEqual(["b", "c"]);
+  });
+});
+
 describe("getBranchPath", () => {
   test("should return ids from the root to the target", () => {
     const tree = target.getTree([

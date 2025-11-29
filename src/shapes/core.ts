@@ -24,6 +24,8 @@ export interface ShapeContext {
   treeNodeMap: { [id: string]: TreeNode };
   getStruct: GetShapeStruct;
   lineJumpMap: LineJumpMap;
+  // This can be used to avoid circular reference during hierarchical rendering.
+  renderingPaths: Set<string>;
 }
 
 /**

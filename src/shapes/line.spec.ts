@@ -48,6 +48,7 @@ describe("struct", () => {
         treeNodeMap: { [shape.id]: { id: shape.id, children: [] } },
         getStruct: getCommonStruct,
         lineJumpMap: new Map(),
+        renderingPaths: new Set(),
       });
       expect(ctx.stroke).toHaveBeenCalled();
     });
@@ -67,6 +68,7 @@ describe("struct", () => {
           treeNodeMap: { [shape0.id]: { id: shape0.id, children: [] } },
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
+          renderingPaths: new Set(),
         }),
       ).toMatchSnapshot("straight spline");
 
@@ -83,6 +85,7 @@ describe("struct", () => {
           treeNodeMap: { [shape1.id]: { id: shape1.id, children: [] } },
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
+          renderingPaths: new Set(),
         }),
       ).toMatchSnapshot("bezier spline");
 
@@ -96,6 +99,7 @@ describe("struct", () => {
           treeNodeMap: { [shape2.id]: { id: shape2.id, children: [] } },
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
+          renderingPaths: new Set(),
         }),
       ).toMatchSnapshot("arc spline");
     });
@@ -114,6 +118,7 @@ describe("struct", () => {
           treeNodeMap: { [shape0.id]: { id: shape0.id, children: [] } },
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
+          renderingPaths: new Set(),
         }),
       ).toMatchSnapshot("dot_blank, dot_filled");
 
@@ -128,6 +133,7 @@ describe("struct", () => {
           treeNodeMap: { [shape1.id]: { id: shape1.id, children: [] } },
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
+          renderingPaths: new Set(),
         }),
       ).toMatchSnapshot("closed_blank, closed_filled");
 
@@ -141,6 +147,7 @@ describe("struct", () => {
           treeNodeMap: { [shape2.id]: { id: shape2.id, children: [] } },
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
+          renderingPaths: new Set(),
         }),
       ).toMatchSnapshot("open");
     });
@@ -182,6 +189,7 @@ describe("struct", () => {
         treeNodeMap: { [line.id]: { id: line.id, children: [{ id: label.id, children: [] }] } },
         getStruct: getCommonStruct,
         lineJumpMap: new Map(),
+        renderingPaths: new Set<string>(),
       };
 
       expect(struct.getWrapperRect(line, ctx, false)).toEqual({ x: 0, y: 0, width: 10, height: 0 });

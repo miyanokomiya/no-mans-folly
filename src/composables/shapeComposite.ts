@@ -481,6 +481,7 @@ function newShapeContext(
       }
       return lineJumpMap;
     },
+    renderingPaths: new Set(),
   };
 }
 

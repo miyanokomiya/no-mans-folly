@@ -8,6 +8,8 @@ import { applyStrokeStyle, createStrokeStyle, renderStrokeSVGAttributes } from "
 import { renderTransform, SVGElementInfo } from "../utils/svgElements";
 import { ShapeStruct, createBaseShape, textContainerModule } from "./core";
 import { RectangleShape, struct as rectangleStruct } from "./rectangle";
+import { getAllBranchIdsByMap } from "../utils/tree";
+import { COLORS } from "../utils/color";
 
 /**
  * Displays the appearance of src shapes.
@@ -23,7 +25,7 @@ export const struct: ShapeStruct<SymbolShape> = {
       ...createBaseShape(arg),
       type: "symbol",
       fill: arg.fill ?? createFillStyle({ disabled: true }),
-      stroke: arg.stroke ?? createStrokeStyle({ disabled: true }),
+      stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 100,
       height: arg.height ?? 100,
       src: arg.src ?? [],
@@ -61,10 +63,26 @@ export const struct: ShapeStruct<SymbolShape> = {
     ctx.scale(1 / viewAdjust.scale, 1 / viewAdjust.scale);
     ctx.translate(-viewAdjust.p.x, -viewAdjust.p.y);
 
-    srcIds.forEach((id) => {
-      const s = shapeContext.shapeMap[id];
-      shapeContext.getStruct(s.type).render(ctx, s, shapeContext, imageStore);
-    });
+    // Symbol shape may create circular reference.
+    if (shapeContext.renderingPaths.has(shape.id)) {
+      const mw = srcRect.width / 4;
+      const mh = srcRect.height / 4;
+      applyStrokeStyle(ctx, { color: COLORS.BLACK, width: Math.min(mw, mh) / 4 });
+      ctx.beginPath();
+      ctx.moveTo(srcRect.x + mw, srcRect.y + mh);
+      ctx.lineTo(srcRect.x + srcRect.width - mw, srcRect.y + srcRect.height - mh);
+      ctx.moveTo(srcRect.x + mw, srcRect.y + srcRect.height - mh);
+      ctx.lineTo(srcRect.x + srcRect.width - mw, srcRect.y + mh);
+      ctx.stroke();
+    } else {
+      shapeContext.renderingPaths.add(shape.id);
+      const branchIds = getAllBranchIdsByMap(shapeContext.treeNodeMap, srcIds);
+      branchIds.forEach((id) => {
+        const s = shapeContext.shapeMap[id];
+        shapeContext.getStruct(s.type).render(ctx, s, shapeContext, imageStore);
+      });
+      shapeContext.renderingPaths.delete(shape.id);
+    }
 
     ctx.restore();
 
@@ -94,11 +112,46 @@ export const struct: ShapeStruct<SymbolShape> = {
       [1, 0, 0, 1, -viewAdjust.p.x, -viewAdjust.p.y],
     ]);
 
-    const contents: SVGElementInfo[] = srcShapes
-      .map((s) => {
-        return shapeContext.getStruct(s.type).createSVGElementInfo?.(s, shapeContext, imageStore);
-      })
-      .filter((v) => !!v);
+    let contents: SVGElementInfo[];
+    // Symbol shape may create circular reference.
+    if (shapeContext.renderingPaths.has(shape.id)) {
+      const mw = srcRect.width / 4;
+      const mh = srcRect.height / 4;
+      contents = [
+        {
+          tag: "line",
+          attributes: {
+            x1: srcRect.x + mw,
+            y1: srcRect.y + mh,
+            x2: srcRect.x + srcRect.width - mw,
+            y2: srcRect.y + srcRect.height - mh,
+            fill: "none",
+            ...renderStrokeSVGAttributes({ color: COLORS.BLACK, width: Math.min(mw, mh) / 4 }),
+          },
+        },
+        {
+          tag: "line",
+          attributes: {
+            x1: srcRect.x + mw,
+            y1: srcRect.y + srcRect.height - mh,
+            x2: srcRect.x + srcRect.width - mw,
+            y2: srcRect.y + mh,
+            fill: "none",
+            ...renderStrokeSVGAttributes({ color: COLORS.BLACK, width: Math.min(mw, mh) / 4 }),
+          },
+        },
+      ];
+    } else {
+      shapeContext.renderingPaths.add(shape.id);
+      const branchIds = getAllBranchIdsByMap(shapeContext.treeNodeMap, srcIds);
+      contents = branchIds
+        .map((id) => {
+          const s = shapeContext.shapeMap[id];
+          return shapeContext.getStruct(s.type).createSVGElementInfo?.(s, shapeContext, imageStore);
+        })
+        .filter((v) => !!v);
+      shapeContext.renderingPaths.delete(shape.id);
+    }
 
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const affine = getRotatedRectAffine(rect, shape.rotation);

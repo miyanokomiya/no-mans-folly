@@ -1,3 +1,5 @@
+import { mapEach } from "./commons";
+
 export interface TreeFlatNode {
   id: string;
   parentId?: string;
@@ -122,6 +124,17 @@ export function getAllBranchIds(allNodes: TreeNode[], targetIds: string[]): stri
   const retIdSet = new Set<string>();
   flatTree(flatTree(allNodes).filter((t) => idSet.has(t.id))).forEach((t) => {
     retIdSet.add(t.id);
+  });
+  return Array.from(retIdSet);
+}
+
+export function getAllBranchIdsByMap(treeNodeMap: { [id: string]: TreeNode }, targetIds: string[]): string[] {
+  const idSet = new Set(targetIds);
+  const retIdSet = new Set<string>();
+  mapEach(treeNodeMap, (n, id) => {
+    if (idSet.has(id)) {
+      flatTree([n]).forEach((nn) => retIdSet.add(nn.id));
+    }
   });
   return Array.from(retIdSet);
 }

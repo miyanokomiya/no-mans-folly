@@ -66,6 +66,7 @@ describe("renderShape", () => {
       treeNodeMap: { [shape.id]: { id: shape.id, children: [] } },
       getStruct: getCommonStruct,
       lineJumpMap: new Map(),
+      renderingPaths: new Set(),
     });
     expect(ctx.fill).toHaveBeenCalled();
     expect(ctx.stroke).toHaveBeenCalled();
