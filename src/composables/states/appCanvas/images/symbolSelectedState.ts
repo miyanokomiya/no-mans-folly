@@ -1,10 +1,24 @@
 import { SymbolShape } from "../../../../shapes/symbol";
 import { newSymbolHandler, SymbolHandler } from "../../../shapeHandlers/symbolHandler";
-import { CONTEXT_MENU_ITEM_SRC, createSymbolAsset, getMenuItemsForSelectedShapes } from "../contextMenuItems";
+import {
+  CONTEXT_MENU_ITEM_SRC,
+  createSymbolAsset,
+  getMenuItemsForSelectedShapes,
+  updateSymbolAssetIdBySrc,
+} from "../contextMenuItems";
+import { AppCanvasStateContext } from "../core";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 
 export const newSymbolSelectedState = defineSingleSelectedHandlerState<SymbolShape, SymbolHandler, never>(
   (getters) => {
+    async function updateSymbolAsset(ctx: AppCanvasStateContext) {
+      // Duplicated symbol shapes refer to the original asset files
+      // => Update their "assetId" if it contradicts with their "src".
+      const shape = getters.getTargetShape();
+      await createSymbolAsset(ctx, shape.src);
+      await updateSymbolAssetIdBySrc(ctx, shape.src);
+    }
+
     return {
       getLabel: () => "SymbolSelected",
       handleEvent: (ctx, event) => {
@@ -26,8 +40,7 @@ export const newSymbolSelectedState = defineSingleSelectedHandlerState<SymbolSha
                     return () => ctx.states.newPanToShapeState({ ids, duration: 150 });
                   }
                   case "reload": {
-                    const shape = getters.getTargetShape();
-                    createSymbolAsset(ctx, shape.src);
+                    updateSymbolAsset(ctx);
                     return ctx.states.newSelectionHubState;
                   }
                 }
@@ -49,8 +62,7 @@ export const newSymbolSelectedState = defineSingleSelectedHandlerState<SymbolSha
           case "contextmenu-item": {
             switch (event.data.key) {
               case CONTEXT_MENU_ITEM_SRC.UPDATE_SYMBOL.key: {
-                const shape = getters.getTargetShape();
-                createSymbolAsset(ctx, shape.src);
+                updateSymbolAsset(ctx);
                 return ctx.states.newSelectionHubState;
               }
             }

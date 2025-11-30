@@ -1,7 +1,7 @@
 import { Shape } from "../../../models";
 import { createShape, getOutlinePaths, resizeOnTextEdit, shouldResizeOnTextEdit } from "../../../shapes";
 import { isGroupShape } from "../../../shapes/group";
-import { groupBy, mapReduce, splitList } from "../../../utils/commons";
+import { groupBy, mapReduce, splitList, toMap } from "../../../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../../../utils/entities";
 import { FOLLY_SVG_PREFIX } from "../../../shapes/utils/shapeTemplateUtil";
 import { ImageBuilder, newImageBuilder, newSVGImageBuilder, SVGImageBuilder } from "../../imageBuilder";
@@ -31,8 +31,8 @@ import { newColorParser } from "../../colorParser";
 import { generateFindexAfter } from "../../shapeRelation";
 import { canJoinAlignBox } from "../../alignHandler";
 import { AlignBoxShape } from "../../../shapes/align/alignBox";
-import { SymbolShape } from "../../../shapes/symbol";
-import { generateSymbolAssetId } from "../../../shapes/utils/symbol";
+import { isSymbolShape, SymbolShape } from "../../../shapes/symbol";
+import { generateSymbolAssetId, getAssetIdSrcStr } from "../../../shapes/utils/symbol";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get GRID_ON() {
@@ -711,6 +711,18 @@ export async function createSymbolAsset(ctx: AppCanvasStateContext, targetIds: s
     console.error(e);
     return;
   }
+}
+
+export async function updateSymbolAssetIdBySrc(ctx: AppCanvasStateContext, src: string[]): Promise<void> {
+  if (src.length === 0) return;
+
+  const srcStr = getAssetIdSrcStr(src);
+  const assetId = await generateSymbolAssetId(src);
+  const symbolShapes = ctx.getShapeComposite().shapes.filter((s) => isSymbolShape(s));
+  const targetSymbols = symbolShapes.filter((s) => srcStr === getAssetIdSrcStr(s.src) && s.assetId !== assetId);
+  if (targetSymbols.length === 0) return;
+
+  ctx.patchShapes(mapReduce(toMap(targetSymbols), () => ({ assetId }) as Partial<SymbolShape>));
 }
 
 /**

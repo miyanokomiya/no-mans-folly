@@ -8,6 +8,17 @@ import { ImageShape, struct as imageStruct } from "./image";
 /**
  * Displays the appearance of src shapes.
  * Keeps the original aspect ratio by centering the content.
+ *
+ * [Aboud duplication]
+ * When duplicated:
+ * - Symbol shapes keep their original "assetId" as well as image shapes.
+ * - Symbol shapes migrate their "src" based on shape references.
+ *
+ * Therefore, duplicated symbol shapes refer to the original asset files until they are explicitly reloaded.
+ *
+ * Exceptions:
+ * - Symbol shapes keep the original "src" when nothing's migrated.
+ * - Symbol shapes migrate their "assetId" when they are restored via template SVG.
  */
 export type SymbolShape = ImageShape & { src: string[] };
 

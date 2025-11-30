@@ -3,8 +3,12 @@ import { generateSecureHash } from "../../utils/hash";
 import { isSymbolShape, SymbolShape } from "../symbol";
 
 export async function generateSymbolAssetId(ids: string[]): Promise<string> {
-  const hash = await generateSecureHash(ids.join(","));
+  const hash = await generateSecureHash(getAssetIdSrcStr(ids));
   return `symbol_${hash}.svg`;
+}
+
+export function getAssetIdSrcStr(ids: string[]): string {
+  return ids.join(",");
 }
 
 /**
