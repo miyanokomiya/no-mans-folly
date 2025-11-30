@@ -1,6 +1,7 @@
 import { expect, test, describe, vi } from "vitest";
 import {
   getCommonAcceptableEvents,
+  getSlideOverlayPosition,
   getSnappableCandidates,
   handleHistoryEvent,
   handleStateEvent,
@@ -253,5 +254,13 @@ describe("isShapeInteratctiveWithinViewport", () => {
       ),
       "between the outline and the hole",
     ).toBe(true);
+  });
+});
+
+describe("getSlideOverlayPosition", () => {
+  test("should return the center of the viewport when the slided position isn't in the viewport", () => {
+    const ctx = { getScale: () => 2, getViewRect: () => ({ x: 0, y: 0, width: 200, height: 100 }) };
+    expect(getSlideOverlayPosition(ctx, { x: 10, y: 10 })).toEqualPoint({ x: 50, y: 50 });
+    expect(getSlideOverlayPosition(ctx, { x: -50, y: 10 })).toEqualPoint({ x: 100, y: 50 });
   });
 });

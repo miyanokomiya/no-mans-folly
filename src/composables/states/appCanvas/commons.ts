@@ -819,3 +819,13 @@ export function isShapeInteratctiveWithinViewport(
   // Check if the viewport overlaps with the shape's wrapper rect
   return isRectOverlapped(viewRect, wrapperRect);
 }
+
+export function getSlideOverlayPosition(
+  ctx: Pick<AppCanvasStateContext, "getScale" | "getViewRect">,
+  from: IVec2,
+): IVec2 {
+  const d = 20 * ctx.getScale();
+  const slided = { x: from.x + d, y: from.y + d };
+  const viewRect = ctx.getViewRect();
+  return isPointOnRectangle(viewRect, slided) ? slided : getRectCenter(viewRect);
+}

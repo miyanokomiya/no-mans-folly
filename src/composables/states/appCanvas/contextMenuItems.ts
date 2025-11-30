@@ -33,6 +33,7 @@ import { canJoinAlignBox } from "../../alignHandler";
 import { AlignBoxShape } from "../../../shapes/align/alignBox";
 import { isSymbolShape, SymbolShape } from "../../../shapes/symbol";
 import { generateSymbolAssetId, getAssetIdSrcStr } from "../../../shapes/utils/symbol";
+import { getSlideOverlayPosition } from "./commons";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get GRID_ON() {
@@ -680,10 +681,9 @@ async function createSymbolForShapes(ctx: AppCanvasStateContext): Promise<boolea
     targetIds.map((id) => shapeComposite.shapeMap[id]),
     true,
   );
-  const d = 20 * ctx.getScale();
   const symbol = createShape<SymbolShape>(shapeComposite.getShapeStruct, "symbol", {
     id: ctx.generateUuid(),
-    p: { x: rect.x + d, y: rect.y + d },
+    p: getSlideOverlayPosition(ctx, rect),
     src: targetIds,
     assetId,
   });
@@ -779,7 +779,6 @@ function duplicateSelectedShapes(ctx: AppCanvasStateContext, withinGroup = false
   const ids = Object.keys(ctx.getSelectedShapeIdMap());
   if (ids.length === 0) return;
 
-  const scale = ctx.getScale();
   const shapeComposite = ctx.getShapeComposite();
   const srcShapes = shapeComposite.getAllBranchMergedShapes(ids);
   const docMap = ctx.getDocumentMap();
@@ -791,7 +790,7 @@ function duplicateSelectedShapes(ctx: AppCanvasStateContext, withinGroup = false
     ctx.generateUuid,
     ctx.createLastIndex(),
     new Set(Object.keys(shapeComposite.shapeMap)),
-    { x: srcBounds.x + 20 * scale, y: srcBounds.y + 20 * scale },
+    getSlideOverlayPosition(ctx, srcBounds),
     withinGroup,
   );
 
