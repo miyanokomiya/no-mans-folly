@@ -106,7 +106,7 @@ const PanelItem: React.FC<PanelItemProps> = ({
   }, [index, onDelete]);
 
   return (
-    <div className="relative w-18 h-14 p-1 border-2 rounded-xs flex items-center justify-center">
+    <div className="relative w-18 h-14 border-2 rounded-xs bg-gray-300 flex items-center justify-center">
       {mockFrame ? (
         <>
           <button
@@ -124,7 +124,7 @@ const PanelItem: React.FC<PanelItemProps> = ({
             />
           </button>
           {index > 0 ? (
-            <button className="absolute top-0 right-0 p-0.5 hover:opacity-50" onClick={handleDelete}>
+            <button className="absolute top-0 right-0 p-0.5 rounded hover:bg-gray-200" onClick={handleDelete}>
               <img className="w-4 h-4" src={deleteIcon} alt="Delete viewport history" />
             </button>
           ) : undefined}

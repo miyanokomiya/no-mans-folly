@@ -29,6 +29,7 @@ import {
   websocketAssetCallback,
 } from "../../composables/realtime/websocketChannel";
 import { AssetAPI } from "../../composables/assetAPI";
+import { useLocalStorageAdopter } from "../../hooks/localStorage";
 
 export function useImageStore(shapeStore: ShapeStore, sheets: Sheet[]) {
   // Use the same store for all sheets to handle asyncronous processes properly.
@@ -176,7 +177,12 @@ export function useSetupStateContext({
 }) {
   const setSmctx = useContext(SetAppStateContext);
   fillArray(4, undefined);
-  const [viewportHistory, setViewportHistory] = useState<(IRectangle | undefined)[]>([undefined]);
+  const [viewportHistory, setViewportHistory] = useLocalStorageAdopter<(IRectangle | undefined)[]>({
+    key: "viewport-history",
+    version: "1",
+    initialValue: [undefined],
+    duration: 0,
+  });
 
   useEffect(() => {
     // TODO: Make each method via "useCallback" for consistency.
@@ -293,6 +299,7 @@ export function useSetupStateContext({
     getRenderCtx,
     setViewport,
     viewportHistory,
+    setViewportHistory,
     zoomView,
     setZoom,
     panView,
