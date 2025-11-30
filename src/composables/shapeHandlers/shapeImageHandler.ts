@@ -3,7 +3,7 @@ import { Sheet, StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { applyDefaultTextStyle, applyLocalSpace, renderArrowUnit, renderOutlinedCircle } from "../../utils/renderer";
+import { applyDefaultTextStyle, applyLocalSpace, renderLoopeIcon, renderOutlinedCircle } from "../../utils/renderer";
 import { SheetImageShape } from "../../shapes/sheetImage";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
@@ -67,7 +67,7 @@ export const newSheetImageHandler = defineShapeHandler<SheetImageHitResult, Opti
             : style.selectionPrimary,
       );
       applyFillStyle(ctx, { color: COLORS.WHITE });
-      renderArrowUnit(ctx, openAnchor[1], 0, thresholdJump * 0.6);
+      renderLoopeIcon(ctx, openAnchor[1], thresholdJump * 0.9);
 
       if (sheet) {
         applyDefaultTextStyle(ctx, 18 * scale, "left", true);

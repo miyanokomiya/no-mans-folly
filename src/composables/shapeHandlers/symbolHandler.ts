@@ -3,7 +3,7 @@ import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace, renderArrowUnit, renderOutlinedCircle, renderReloadIcon } from "../../utils/renderer";
+import { applyLocalSpace, renderLoopeIcon, renderOutlinedCircle, renderReloadIcon } from "../../utils/renderer";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
 import { CanvasCTX } from "../../utils/types";
@@ -68,7 +68,7 @@ export const newSymbolHandler = defineShapeHandler<SymbolHitResult, Option>((opt
           hitResult?.type === openAnchor[0] ? style.selectionSecondaly : style.selectionPrimary,
         );
         applyFillStyle(ctx, { color: COLORS.WHITE });
-        renderArrowUnit(ctx, openAnchor[1], 0, threshold * 0.6);
+        renderLoopeIcon(ctx, openAnchor[1], threshold * 0.9);
 
         const reloadAnchor = getReloadAnchor(scale);
         renderOutlinedCircle(
@@ -77,9 +77,8 @@ export const newSymbolHandler = defineShapeHandler<SymbolHitResult, Option>((opt
           threshold,
           hitResult?.type === reloadAnchor[0] ? style.selectionSecondaly : style.selectionPrimary,
         );
-        const iconSize = 0.9 * ANCHOR_SIZE_OPEN * scale;
         applyFillStyle(ctx, { color: COLORS.WHITE });
-        renderReloadIcon(ctx, reloadAnchor[1], iconSize);
+        renderReloadIcon(ctx, reloadAnchor[1], threshold * 0.9);
       }
     });
   }

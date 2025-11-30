@@ -300,6 +300,27 @@ export function renderReloadIcon(ctx: CanvasCTX, p: IVec2, size: number) {
   ctx.restore();
 }
 
+export function renderLoopeIcon(ctx: CanvasCTX, p: IVec2, size: number) {
+  ctx.save();
+  ctx.translate(p.x, p.y);
+
+  ctx.strokeStyle = ctx.fillStyle;
+  ctx.lineWidth = size * 0.3;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  ctx.beginPath();
+  ctx.arc(size * 0.16, -size * 0.16, size * 0.5, 0, 2 * Math.PI);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.3, size * 0.3);
+  ctx.lineTo(-size * 0.65, size * 0.65);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 export function renderPlusIcon(ctx: CanvasCTX, p: IVec2, size: number) {
   const half = size / 2;
   ctx.beginPath();
