@@ -24,6 +24,12 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
       description: i18n.t("term.lock.desc"),
     };
   },
+  get SYMBOL() {
+    return {
+      text: i18n.t("term.symbol"),
+      description: i18n.t("term.symbol.desc"),
+    };
+  },
   get LINE_JUMP() {
     return {
       text: i18n.t("term.linejump"),

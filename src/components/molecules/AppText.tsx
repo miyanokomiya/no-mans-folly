@@ -127,8 +127,10 @@ const TerminologyPopup = ({ item, parentRect, portal, onClose }: TerminologyPopu
       style={style}
       onClick={handleClick}
     >
-      <h3 className="font-bold text-lg">{item.text}</h3>
-      <p className="mt-2">{item.description}</p>
+      <h3 className="mb-2 font-bold text-lg capitalize">{item.text}</h3>
+      {item.description?.split(/\n/).map((line, i) => (
+        <p key={i}>{line}</p>
+      ))}
       <a href="#" className="absolute top-1 right-1 w-6 h-6 p-1" onClick={onClose}>
         <img src={iconDelete} alt="Close" />
       </a>
