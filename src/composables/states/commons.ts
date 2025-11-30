@@ -12,11 +12,16 @@ export interface CanvasStateContext extends ModeStateContextBase {
 
   redraw: () => void;
   getRenderCtx: () => CanvasCTX | undefined;
-  setViewport: (rect?: IRectangle) => void;
   zoomView: (step: number, center?: boolean) => number;
   setZoom: (value: number, center?: boolean) => number;
   getScale: () => number;
   getViewRect: () => IRectangle;
+  setViewport: (rect?: IRectangle) => void;
+  // The first item should be used as the latest viewport history and can be undefined.
+  // Rest items should be removed when they become undefined.
+  getViewportHistory: () => (IRectangle | undefined)[];
+  addViewportHistory: (rect: IRectangle, latest?: boolean) => void;
+  deleteViewportHistory: (index: number) => void;
   panView: (val: Omit<EditMovement, "startAbs">) => void;
   scrollView: (delta: IVec2) => void;
   startDragging: () => void;

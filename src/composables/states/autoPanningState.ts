@@ -17,6 +17,7 @@ export const newAutoPanningState = defineAsyncState((asyncCtx, option: Option) =
     getLabel: () => "AutoPanning",
     onStart: (ctx) => {
       const initialViewRect = ctx.getViewRect();
+      ctx.addViewportHistory(initialViewRect, true);
 
       if (duration === 0) {
         ctx.setViewport(option.viewRect);

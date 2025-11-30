@@ -21,7 +21,7 @@ import { DocDelta, DocOutput } from "../../models/document";
 import { getEntityPatchByDelete, getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
 import { getAllBranchIds, getTree } from "../../utils/tree";
 import { getDeleteTargetIds } from "../../composables/shapeComposite";
-import { patchPipe } from "../../utils/commons";
+import { fillArray, patchPipe } from "../../utils/commons";
 import { AppUndoManager } from "../../contexts/AppCanvasContext";
 import {
   getWebsocketClient,
@@ -175,17 +175,38 @@ export function useSetupStateContext({
   setLinkInfo: (val?: LinkInfo) => void;
 }) {
   const setSmctx = useContext(SetAppStateContext);
+  fillArray(4, undefined);
+  const [viewportHistory, setViewportHistory] = useState<(IRectangle | undefined)[]>([undefined]);
 
   useEffect(() => {
     // TODO: Make each method via "useCallback" for consistency.
     setSmctx({
       redraw,
       getRenderCtx,
-      setViewport,
       zoomView,
       setZoom,
       getScale: () => scale,
       getViewRect: () => viewCanvasRect,
+      setViewport,
+      addViewportHistory(val, latest = false) {
+        setViewportHistory((v) => {
+          const ret = v.concat();
+          if (latest) {
+            ret[0] = val;
+          } else {
+            ret.push(val);
+          }
+          return ret;
+        });
+      },
+      deleteViewportHistory(index) {
+        setViewportHistory((v) => {
+          const ret = v.concat();
+          ret.splice(index, 1);
+          return ret;
+        });
+      },
+      getViewportHistory: () => viewportHistory,
       panView,
       scrollView,
       startDragging,
@@ -271,6 +292,7 @@ export function useSetupStateContext({
     redraw,
     getRenderCtx,
     setViewport,
+    viewportHistory,
     zoomView,
     setZoom,
     panView,
