@@ -8,6 +8,12 @@ describe("immigrateShapeIds", () => {
     expect(struct.immigrateShapeIds!(shape, { b: "bb" }, false)).toEqual({ src: ["a", "bb"] });
     expect(struct.immigrateShapeIds!(shape, { b: "bb" }, true)).toEqual({ src: ["bb"] });
   });
+
+  test("should keep the original src regardless of removeNotFound when nothing is immigrated", () => {
+    const shape = struct.create({ src: ["a", "b"] });
+    expect(struct.immigrateShapeIds!(shape, {}, false)).toEqual({});
+    expect(struct.immigrateShapeIds!(shape, {}, true)).toEqual({});
+  });
 });
 
 describe("refreshRelation", () => {

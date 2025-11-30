@@ -28,13 +28,22 @@ export const struct: ShapeStruct<SymbolShape> = {
   },
   immigrateShapeIds(shape, oldToNewIdMap, removeNotFound) {
     const ret: string[] = [];
+    let immigrated = false;
     shape.src.forEach((id) => {
       if (oldToNewIdMap[id]) {
         ret.push(oldToNewIdMap[id]);
+        immigrated = true;
       } else if (!removeNotFound) {
         ret.push(id);
       }
     });
+
+    // When nothing is immigarated, this shape should keep the original "src" regardless of "removeNotFound" flag.
+    // This lets it have the reference to the original shapes.
+    if (!immigrated) {
+      return {};
+    }
+
     return { src: ret };
   },
   refreshRelation(shape, availableIdSet) {
