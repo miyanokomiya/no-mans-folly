@@ -38,8 +38,8 @@ export const newSheetImageHandler = defineShapeHandler<SheetImageHitResult, Opti
   const canOpenSheet = sheet && sheetId !== option.selectedSheetId;
 
   function getOpenAnchor(scale: number): HitAnchor {
-    const y = shapeRect.height + ANCHOR_SIZE_OPEN * 1.2 * scale;
-    return ["open", { x: ANCHOR_SIZE_OPEN * scale, y }];
+    const y = shapeRect.height + ANCHOR_SIZE_OPEN * 1.3 * scale;
+    return ["open", { x: 1.3 * ANCHOR_SIZE_OPEN * scale, y }];
   }
 
   function hitTest(p: IVec2, scale = 1): SheetImageHitResult | undefined {

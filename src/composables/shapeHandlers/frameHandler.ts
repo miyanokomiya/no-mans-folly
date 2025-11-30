@@ -34,10 +34,10 @@ export const newFrameHandler = defineShapeHandler<FrameHitResult, Option>((optio
   const canJumpNext = targetIndex < frameIds.length - 1;
 
   function getJumpAnchors(scale: number): HitAnchor[] {
-    const y = shapeRect.height + ANCHOR_SIZE_JUMP * 1.2 * scale;
+    const y = shapeRect.height + ANCHOR_SIZE_JUMP * 1.3 * scale;
     return [
-      ["jump-back", { x: ANCHOR_SIZE_JUMP * scale, y }],
-      ["jump-next", { x: ANCHOR_SIZE_JUMP * 3.5 * scale, y }],
+      ["jump-back", { x: 1.3 * ANCHOR_SIZE_JUMP * scale, y }],
+      ["jump-next", { x: 3.8 * ANCHOR_SIZE_JUMP * scale, y }],
     ];
   }
 

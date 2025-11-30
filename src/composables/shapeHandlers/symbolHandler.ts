@@ -3,7 +3,7 @@ import { StyleScheme } from "../../models";
 import { ShapeComposite } from "../shapeComposite";
 import { getRotateFn } from "../../utils/geometry";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace, renderArrowUnit, renderOutlinedCircle } from "../../utils/renderer";
+import { applyLocalSpace, renderArrowUnit, renderOutlinedCircle, renderReloadIcon } from "../../utils/renderer";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
 import { CanvasCTX } from "../../utils/types";
@@ -11,7 +11,7 @@ import { SymbolShape } from "../../shapes/symbol";
 
 const ANCHOR_SIZE_OPEN = 10;
 
-type HitAnchor = [type: "open", IVec2];
+type HitAnchor = [type: "open" | "reload", IVec2];
 
 export interface SymbolHitResult {
   type: HitAnchor[0];
@@ -30,35 +30,59 @@ export const newSymbolHandler = defineShapeHandler<SymbolHitResult, Option>((opt
   const canJump = shape.src.some((id) => shapeComposite.shapeMap[id]);
 
   function getOpenAnchor(scale: number): HitAnchor {
-    const y = shapeRect.height + ANCHOR_SIZE_OPEN * 1.2 * scale;
-    return ["open", { x: ANCHOR_SIZE_OPEN * scale, y }];
+    const y = shapeRect.height + ANCHOR_SIZE_OPEN * 1.3 * scale;
+    return ["open", { x: 1.3 * ANCHOR_SIZE_OPEN * scale, y }];
+  }
+
+  function getReloadAnchor(scale: number): HitAnchor {
+    const y = shapeRect.height + ANCHOR_SIZE_OPEN * 1.3 * scale;
+    return ["reload", { x: 3.8 * ANCHOR_SIZE_OPEN * scale, y }];
   }
 
   function hitTest(p: IVec2, scale = 1): SymbolHitResult | undefined {
-    if (!canJump) return;
-
     const adjustedP = sub(rotateFn(p, true), shape.p);
-    const thresholdJump = ANCHOR_SIZE_OPEN * scale;
-    const openAnchor = getOpenAnchor(scale);
-    if (getDistance(openAnchor[1], adjustedP) <= thresholdJump) {
-      return { type: openAnchor[0] };
+
+    if (canJump) {
+      const thresholdJump = ANCHOR_SIZE_OPEN * scale;
+      const openAnchor = getOpenAnchor(scale);
+      if (getDistance(openAnchor[1], adjustedP) <= thresholdJump) {
+        return { type: openAnchor[0] };
+      }
+    }
+
+    const threshold = ANCHOR_SIZE_OPEN * scale;
+    const reloadAnchor = getReloadAnchor(scale);
+    if (getDistance(reloadAnchor[1], adjustedP) <= threshold) {
+      return { type: reloadAnchor[0] };
     }
   }
 
   function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: SymbolHitResult) {
-    if (!canJump) return;
-
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
-      const thresholdJump = ANCHOR_SIZE_OPEN * scale;
-      const openAnchor = getOpenAnchor(scale);
+      if (canJump) {
+        const thresholdJump = ANCHOR_SIZE_OPEN * scale;
+        const openAnchor = getOpenAnchor(scale);
+        renderOutlinedCircle(
+          ctx,
+          openAnchor[1],
+          thresholdJump,
+          hitResult?.type === openAnchor[0] ? style.selectionSecondaly : style.selectionPrimary,
+        );
+        applyFillStyle(ctx, { color: COLORS.WHITE });
+        renderArrowUnit(ctx, openAnchor[1], 0, thresholdJump * 0.6);
+      }
+
+      const threshold = ANCHOR_SIZE_OPEN * scale;
+      const reloadAnchor = getReloadAnchor(scale);
       renderOutlinedCircle(
         ctx,
-        openAnchor[1],
-        thresholdJump,
-        hitResult?.type === openAnchor[0] ? style.selectionSecondaly : style.selectionPrimary,
+        reloadAnchor[1],
+        threshold,
+        hitResult?.type === reloadAnchor[0] ? style.selectionSecondaly : style.selectionPrimary,
       );
+      const iconSize = 0.9 * ANCHOR_SIZE_OPEN * scale;
       applyFillStyle(ctx, { color: COLORS.WHITE });
-      renderArrowUnit(ctx, openAnchor[1], 0, thresholdJump * 0.6);
+      renderReloadIcon(ctx, reloadAnchor[1], iconSize);
     });
   }
 

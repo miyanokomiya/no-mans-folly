@@ -25,6 +25,11 @@ export const newSymbolSelectedState = defineSingleSelectedHandlerState<SymbolSha
                     ctx.multiSelectShapes(ids);
                     return () => ctx.states.newPanToShapeState({ ids, duration: 150 });
                   }
+                  case "reload": {
+                    const shape = getters.getTargetShape();
+                    createSymbolAsset(ctx, shape.src);
+                    return ctx.states.newSelectionHubState;
+                  }
                 }
               }
             }

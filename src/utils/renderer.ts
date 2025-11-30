@@ -266,6 +266,40 @@ export function renderRotationArrow(ctx: CanvasCTX, p: IVec2, rotation: number, 
   ctx.restore();
 }
 
+export function renderReloadIcon(ctx: CanvasCTX, p: IVec2, size: number) {
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.strokeStyle = ctx.fillStyle;
+  ctx.lineWidth = size * 0.2;
+
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  function renderHalfArrow() {
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 0.6, -Math.PI * 0.7, -Math.PI * 0.05);
+    ctx.stroke();
+
+    ctx.beginPath();
+    applyPath(
+      ctx,
+      [
+        { x: size * 0.53, y: size * 0.15 },
+        { x: size * 0.21, y: -size * 0.2 },
+        { x: size * 0.85, y: -size * 0.2 },
+      ],
+      true,
+    );
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  renderHalfArrow();
+  ctx.rotate(Math.PI);
+  renderHalfArrow();
+
+  ctx.restore();
+}
+
 export function renderPlusIcon(ctx: CanvasCTX, p: IVec2, size: number) {
   const half = size / 2;
   ctx.beginPath();
