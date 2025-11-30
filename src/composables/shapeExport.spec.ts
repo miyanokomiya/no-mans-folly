@@ -67,6 +67,41 @@ describe("getExportParamsForSelectedShapes", () => {
     );
     expect(range).toEqualRect({ x: 0, y: 0, width: 10, height: 10 });
   });
+
+  test("should include shapes on target frames but shouldn't include them into range source", () => {
+    const shapeComposite = newShapeComposite({
+      getStruct: getCommonStruct,
+      shapes: [
+        createShape<RectangleShape>(getCommonStruct, "frame", {
+          id: "frame",
+          p: { x: 0, y: 0 },
+          width: 100,
+          height: 100,
+          stroke: createStrokeStyle({ disabled: true }),
+        }),
+        createShape<RectangleShape>(getCommonStruct, "rectangle", {
+          id: "shape1",
+          p: { x: 10, y: 10 },
+          width: 10,
+          height: 10,
+        }),
+        createShape<RectangleShape>(getCommonStruct, "rectangle", {
+          id: "shape2",
+          p: { x: 95, y: -5 },
+          width: 10,
+          height: 10,
+        }),
+      ],
+    });
+
+    const { targetShapeComposite, range } = getExportParamsForSelectedShapes(shapeComposite, [
+      shapeComposite.shapes[0].id,
+    ]);
+    expect(targetShapeComposite.shapeMap).toHaveProperty("shape1");
+    expect(targetShapeComposite.shapeMap).toHaveProperty("shape2");
+    expect(targetShapeComposite.shapeMap).toHaveProperty("shape2");
+    expect(range).toEqual({ x: 0, y: 0, width: 100, height: 100 });
+  });
 });
 
 describe("getExportParamsForSelectedRange", () => {

@@ -25,7 +25,6 @@ export function getExportParamsForSelectedShapes(
   withMeta = false,
 ) {
   // Get source shapes regarding frame shapes.
-  // Shapes sticking out frames can be cut off since the range is based on directly selected shapes.
   const sourceIdSet = new Set(targetIds);
   targetIds.forEach((id) => {
     const s = shapeComposite.shapeMap[id];
@@ -40,7 +39,11 @@ export function getExportParamsForSelectedShapes(
   const targetShapeCompositeRegardNoExport = shapeComposite.getSubShapeComposite(
     omitNoExportShapeIds(shapeComposite, Array.from(sourceIdSet)),
   );
-  const range = getIntRectFromFloatRect(getAllShapeRangeWithinComposite(targetShapeCompositeRegardNoExport, true));
+
+  // Get target range based on target shapes.
+  // Shapes sticking out frames can be cut off since the range is based on directly selected shapes.
+  const rangeShapeComposite = shapeComposite.getSubShapeComposite(omitNoExportShapeIds(shapeComposite, targetIds));
+  const range = getIntRectFromFloatRect(getAllShapeRangeWithinComposite(rangeShapeComposite, true));
 
   // Ignore "noExport" property when meta info is required.
   const targetShapeComposite = withMeta
