@@ -76,7 +76,7 @@ export function newImageStore(option?: Option) {
    * Returns error id list when there is any.
    */
   async function batchLoad(assetIds: (string | undefined)[], assetAPI: AssetAPI): Promise<string[] | undefined> {
-    const errors: string[] = [];
+    const errors: Set<string> = new Set();
 
     for (const assetId of assetIds) {
       if (assetId && !processing.has(assetId) && !imageMap.has(assetId)) {
@@ -86,18 +86,18 @@ export function newImageStore(option?: Option) {
           if (file) {
             await loadFromFile(assetId, file);
           } else {
-            errors.push(assetId);
+            errors.add(assetId);
           }
         } catch (e) {
           console.warn(e);
-          errors.push(assetId);
+          errors.add(assetId);
         } finally {
           processing.delete(assetId);
         }
       }
     }
 
-    return errors;
+    return Array.from(errors);
   }
 
   function getImage(assetId: string): HTMLImageElement | undefined {
