@@ -6,6 +6,7 @@ function getMockCtx() {
   return {
     setViewport: vi.fn(),
     getViewRect: vi.fn().mockReturnValue({ x: 0, y: 0, width: 100, height: 100 }),
+    addViewportHistory: vi.fn(),
   } as any;
 }
 
@@ -20,6 +21,8 @@ describe("newAutoPanningState", () => {
     expect(ctx.setViewport).toHaveBeenCalledTimes(2);
     await target._resolved;
     expect(ctx.setViewport).toHaveBeenCalledTimes(6);
+    expect(ctx.addViewportHistory).toHaveBeenCalledTimes(1);
+    expect(ctx.addViewportHistory).toHaveBeenCalledWith({ x: 0, y: 0, width: 100, height: 100 }, true);
   });
 
   test("should regard zero duration", async () => {
