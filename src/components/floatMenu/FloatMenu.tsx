@@ -151,7 +151,7 @@ export const FloatMenu: React.FC<Option> = ({
 };
 
 const TOP_LOCATED_KEY = "top-located";
-const rootBaseClassName = "fixed border rounded-xs rounded-tl-none shadow-xs w-max h-max bg-white top-0 left-0";
+const rootBaseClassName = "fixed border rounded-xs rounded-tl-none shadow-xs w-max h-max bg-white top-0 left-0 z-300";
 
 function getRootAttrs(
   targetRect: IRectangle,

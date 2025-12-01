@@ -82,31 +82,60 @@ export const TabPanelV: React.FC<Props> = ({ name, selected, items, onSelect }) 
     }
   }, [selected, floating, dragging, items, onSelect]);
 
+  const itemSet = new Map(items.map((item) => [item[0].name, item]));
+
+  const handlePointerEnter = useCallback(
+    (name: string) => {
+      setFloating((v) => {
+        // Rely on JSON key order for the floating dialog order.
+        // => It may be a bit unreliable but good enough for this usage.
+        const ret = { ...v };
+        delete ret[name];
+        ret[name] = true;
+        return ret;
+      });
+    },
+    [setFloating],
+  );
+
+  const selectedItem = itemSet.get(selected);
+
   return (
     <div className="w-full h-full">
       <div className="absolute top-0 left-0 w-0 h-0 select-none touch-none">
         <div className="origin-top-left rotate-90 flex gap-1">{tabs}</div>
       </div>
-      {items.map((item) =>
-        floating[item[0].name] ? (
-          <FloatPanel key={item[0].name} item={item} initialPosition={floatPosition} onClose={handleFloatClose} />
-        ) : item[0].name === selected || item[0].keepAlive ? (
-          <div
+      {selectedItem ? (
+        <div
+          key={selectedItem[0].name}
+          className={
+            "w-full h-full overflow-auto border border-l-gray-500" +
+            (selectedItem?.[2] ? "" : " p-2") +
+            (selectedItem[0].name !== selected && selectedItem?.[0].keepAlive ? " hidden" : "")
+          }
+        >
+          {selectedItem[1]}
+        </div>
+      ) : undefined}
+      {Object.entries(floating).map(([key, value], index) => {
+        const item = itemSet.get(key);
+        if (!value || !item) return;
+
+        return (
+          <FloatPanel
             key={item[0].name}
-            className={
-              "w-full h-full overflow-auto border border-l-gray-500" +
-              (item?.[2] ? "" : " p-2") +
-              (item[0].name !== selected && item?.[0].keepAlive ? " hidden" : "")
-            }
-          >
-            {item[1]}
-          </div>
-        ) : undefined,
-      )}
+            item={item}
+            initialPosition={floatPosition}
+            index={index}
+            onClose={handleFloatClose}
+            onPointerEnter={handlePointerEnter}
+          />
+        );
+      })}
       {dragging && floatPosition
         ? createPortal(
             <div
-              className="fixed -translate-x-1/2 -translate-y-1/2 z-101 p-1 rounded bg-gray-500"
+              className="fixed -translate-x-1/2 -translate-y-1/2 z-110 p-1 rounded bg-gray-500"
               style={{ left: `${floatPosition.x}px`, top: `${floatPosition.y}px` }}
             >
               <TabButton name={dragging} />
@@ -140,9 +169,10 @@ const TabButton: React.FC<TabButtonProps> = ({ name, selected, onClick, onDragSt
   return (
     <ClickOrDragHandler
       className={
-        "px-2 rounded-b flex items-center justify-center" +
+        "px-2 rounded-b flex items-center justify-center cursor-move" +
         (selected ? " bg-gray-500 text-white font-medium" : " bg-white ")
       }
+      threshold={20}
       onClick={handleClick}
       onDragStart={handleDragStart}
     >
@@ -156,18 +186,24 @@ const INITIAL_FLOAT_SIZE = { width: 300, height: 400 };
 interface FloatPanelProps {
   item: TabPanelItem;
   initialPosition: IVec2;
+  index: number;
   onClose?: (name: string) => void;
+  onPointerEnter?: (name: string) => void;
 }
 
-const FloatPanel: React.FC<FloatPanelProps> = ({ item, initialPosition, onClose }) => {
+const FloatPanel: React.FC<FloatPanelProps> = ({ item, initialPosition, onClose, onPointerEnter, index }) => {
   const handleClose = useCallback(() => {
     onClose?.(item[0].name);
   }, [item, onClose]);
 
+  const handlePointerEnter = useCallback(() => {
+    onPointerEnter?.(item[0].name);
+  }, [item, onPointerEnter]);
+
   const centeredP = useMemo(
     () => ({
       x: initialPosition.x - INITIAL_FLOAT_SIZE.width / 2,
-      y: initialPosition.y - 14,
+      y: initialPosition.y - 16,
     }),
     [initialPosition],
   );
@@ -175,6 +211,7 @@ const FloatPanel: React.FC<FloatPanelProps> = ({ item, initialPosition, onClose 
   return (
     <FloatDialog
       key={item[0].name}
+      title={item[0].name}
       boundsKey={item[0].name}
       open={true}
       initialPosition={centeredP}
@@ -182,6 +219,8 @@ const FloatPanel: React.FC<FloatPanelProps> = ({ item, initialPosition, onClose 
       portal
       noBoundsBack
       onClose={handleClose}
+      onPointerEnter={handlePointerEnter}
+      index={index}
     >
       <div className="bg-white h-full p-1 overflow-auto">{item[1]}</div>
     </FloatDialog>

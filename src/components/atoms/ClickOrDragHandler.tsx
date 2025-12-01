@@ -6,9 +6,10 @@ interface Props {
   onDragStart?: (e: React.PointerEvent) => void;
   children: React.ReactNode;
   className?: string;
+  threshold?: number;
 }
 
-export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, children, className }) => {
+export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, children, className, threshold = 6 }) => {
   const downRef = useRef<IVec2>(undefined);
 
   const handleDown = useCallback((e: React.PointerEvent) => {
@@ -23,12 +24,12 @@ export const ClickOrDragHandler: React.FC<Props> = ({ onClick, onDragStart, chil
       e.preventDefault();
       const p = { x: e.clientX, y: e.clientY };
       const d = getDistance(p, downRef.current);
-      if (d > 6) {
+      if (d > threshold) {
         onDragStart?.(e);
         downRef.current = undefined;
       }
     },
-    [onDragStart],
+    [onDragStart, threshold],
   );
 
   // Treat "leave" event as a trigger of dragging.

@@ -241,22 +241,17 @@ export const AppToolbar: React.FC = () => {
   }, [stateLabel, sm]);
 
   function renderPopup() {
+    const baseClassName = "bg-white absolute left-0 border p-1 rounded-xs shadow-xs";
     switch (popup) {
       case "shapes":
         return (
-          <div
-            className="bg-white absolute left-0 border p-1 rounded-xs shadow-xs w-max"
-            style={{ top: "50%", transform: "translate(-100%, -50%)" }}
-          >
+          <div className={baseClassName + " w-max"} style={{ top: "50%", transform: "translate(-100%, -50%)" }}>
             <ShapeListPanel onShapeTypeClick={handleShapeTypeClick} onShapeTypeDragStart={handleShapeTypeDragStart} />
           </div>
         );
       case "lines":
         return (
-          <div
-            className="bg-white absolute left-0 border p-1 rounded-xs shadow-xs"
-            style={{ top: "50%", transform: "translate(-100%, -50%)" }}
-          >
+          <div className={baseClassName} style={{ top: "50%", transform: "translate(-100%, -50%)" }}>
             {lineButtonTypeList.map((shape) => (
               <div
                 key={shape.type}
@@ -274,10 +269,7 @@ export const AppToolbar: React.FC = () => {
         );
       case "layouts":
         return (
-          <div
-            className="bg-white absolute left-0 border p-1 rounded-xs shadow-xs w-max"
-            style={{ top: "50%", transform: "translate(-100%, -50%)" }}
-          >
+          <div className={baseClassName + " w-max"} style={{ top: "50%", transform: "translate(-100%, -50%)" }}>
             <LayoutShapeListPanel
               onShapeTypeClick={handleShapeTypeClick}
               onShapeTypeDragStart={handleShapeTypeDragStart}

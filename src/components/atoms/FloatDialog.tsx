@@ -21,9 +21,11 @@ interface Props {
   portal?: boolean;
   noBoundsBack?: boolean;
   onClose?: () => void;
+  onPointerEnter?: () => void;
   title?: string;
   className?: string;
   boundsKey?: string;
+  index?: number; // Used to increment z-index
 }
 
 export const FloatDialog: React.FC<Props> = ({
@@ -34,9 +36,11 @@ export const FloatDialog: React.FC<Props> = ({
   portal,
   noBoundsBack,
   onClose,
+  onPointerEnter,
   title,
   className,
   boundsKey,
+  index,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const { size: windowSize } = useWindow();
@@ -57,7 +61,7 @@ export const FloatDialog: React.FC<Props> = ({
     left: position.x,
     top: position.y,
     margin: 0,
-    zIndex: 100,
+    zIndex: 100 + (index ?? 0),
   };
 
   const closeDialog = useCallback(() => {
@@ -156,9 +160,14 @@ export const FloatDialog: React.FC<Props> = ({
   if (!open) return;
 
   const content = (
-    <div ref={ref} className={"border-2 shadow-xs rounded-xs " + className} style={positionStyle}>
+    <div
+      ref={ref}
+      className={"border-2 shadow-xs rounded-xs " + className}
+      style={positionStyle}
+      onPointerEnter={onPointerEnter}
+    >
       <div
-        className="px-1 border rounded-xs bg-gray-200 flex items-center cursor-move select-none"
+        className="min-h-8 px-1 border rounded-xs bg-gray-200 flex items-center cursor-move select-none"
         onPointerDown={handleDown}
       >
         {title ? <AppText className="text-lg font-medium">{title}</AppText> : undefined}
