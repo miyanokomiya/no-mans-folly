@@ -78,7 +78,12 @@ export const TabPanelV: React.FC<Props> = ({ name, selected, items, onSelect }) 
   useEffect(() => {
     if (floating[selected] || dragging === selected) {
       const next = items.find((item) => !floating[item[0].name] && dragging !== item[0].name);
-      if (next) onSelect?.(next[0].name);
+      if (next) {
+        onSelect?.(next[0].name);
+      } else {
+        // There's no item.
+        onSelect?.(selected);
+      }
     }
   }, [selected, floating, dragging, items, onSelect]);
 
