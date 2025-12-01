@@ -6,7 +6,7 @@ interface Props {
 }
 
 export const InlineField: React.FC<Props> = ({ label, inert, fullBody, children }) => {
-  const bodyClass = fullBody ? "ml-2 w-full" : "ml-auto";
+  const bodyClass = fullBody ? "pl-2 w-full" : "ml-auto";
 
   if (inert) {
     return (

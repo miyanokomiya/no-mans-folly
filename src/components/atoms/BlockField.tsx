@@ -5,7 +5,7 @@ interface Props {
 }
 
 export const BlockField: React.FC<Props> = ({ label, fullBody, children }) => {
-  const bodyClass = fullBody ? "ml-2 w-full" : "ml-auto";
+  const bodyClass = fullBody ? "pl-2 w-full" : "ml-auto";
 
   return (
     <div className="flex flex-col gap-1">
