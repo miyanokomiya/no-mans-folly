@@ -1,4 +1,4 @@
-import { TabPanelV } from "./atoms/TabPanelV";
+import { TabPanelItem, TabPanelV } from "./atoms/TabPanelV";
 import { FramePanel } from "./framePanel/FramePanel";
 import { RealtimePanel } from "./RealtimePanel";
 import { ShapeTreeInspectorPanel } from "./shapeInspectorPanel/ShapeTreeInspectorPanel";
@@ -12,11 +12,11 @@ interface Props {
 }
 
 export const AppRightPanel: React.FC<Props> = ({ selected, onSelect }) => {
-  const items: [{ name: string }, React.ReactNode, noPadding?: boolean][] = [
+  const items: TabPanelItem[] = [
     [{ name: "Inspector" }, <ShapeTreeInspectorPanel />, true],
     [{ name: "Frames" }, <FramePanel />, true],
-    [{ name: "Icons" }, <ShapeLibraryPanel />],
-    [{ name: "Templates" }, <ShapeTemplatePanel />],
+    [{ name: "Icons", keepAlive: true }, <ShapeLibraryPanel />],
+    [{ name: "Templates", keepAlive: true }, <ShapeTemplatePanel />],
     [{ name: "Realtime" }, <RealtimePanel />],
     [{ name: "Settings" }, <UserSettingPanel />],
   ];
