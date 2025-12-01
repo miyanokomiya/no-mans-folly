@@ -7,6 +7,7 @@ import { useGlobalDrag, useWindow } from "../../hooks/window";
 import { Size } from "../../models";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
 import { isSameSize } from "../../utils/geometry";
+import { createPortal } from "react-dom";
 
 const ZERO_V = { x: 0, y: 0 };
 const INITIAL_SIZE = { width: 400, height: 400 };
@@ -17,6 +18,8 @@ interface Props {
   children: React.ReactNode;
   initialPosition?: IVec2;
   initialBodySize?: Size;
+  portal?: boolean;
+  noBoundsBack?: boolean;
   onClose?: () => void;
   title?: string;
   className?: string;
@@ -28,6 +31,8 @@ export const FloatDialog: React.FC<Props> = ({
   children,
   initialPosition = ZERO_V,
   initialBodySize = INITIAL_SIZE,
+  portal,
+  noBoundsBack,
   onClose,
   title,
   className,
@@ -148,14 +153,16 @@ export const FloatDialog: React.FC<Props> = ({
     height: bodySize.height,
   };
 
-  return open ? (
+  if (!open) return;
+
+  const content = (
     <div ref={ref} className={"border-2 shadow-xs rounded-xs " + className} style={positionStyle}>
       <div
         className="px-1 border rounded-xs bg-gray-200 flex items-center cursor-move select-none"
         onPointerDown={handleDown}
       >
         {title ? <AppText className="text-lg font-medium">{title}</AppText> : undefined}
-        {isBoundsChanged ? (
+        {isBoundsChanged && !noBoundsBack ? (
           <button type="button" className="ml-2 w-6 h-6 p-1" onClick={resetBounds}>
             <img src={iconRedo} alt="Reset" className="-scale-x-100" />
           </button>
@@ -175,5 +182,7 @@ export const FloatDialog: React.FC<Props> = ({
         </div>
       </div>
     </div>
-  ) : undefined;
+  );
+
+  return portal ? createPortal(content, document.body) : content;
 };
