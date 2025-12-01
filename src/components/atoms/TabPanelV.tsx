@@ -4,17 +4,24 @@ import { ClickOrDragHandler } from "./ClickOrDragHandler";
 import { IVec2 } from "okageo";
 import { useGlobalDrag } from "../../hooks/window";
 import { createPortal } from "react-dom";
+import { useLocalStorageAdopter } from "../../hooks/localStorage";
 
 export type TabPanelItem = [{ name: string; keepAlive?: boolean }, React.ReactNode, noPadding?: boolean];
 
 interface Props {
+  name: string;
   selected: string;
   items: TabPanelItem[];
   onSelect?: (name: string) => void;
 }
 
-export const TabPanelV: React.FC<Props> = ({ selected, items, onSelect }) => {
-  const [floating, setFloating] = useState<{ [name: string]: boolean }>({});
+export const TabPanelV: React.FC<Props> = ({ name, selected, items, onSelect }) => {
+  const [floating, setFloating] = useLocalStorageAdopter<{ [name: string]: boolean }>({
+    key: `${name}-floating`,
+    version: "1",
+    initialValue: {},
+    duration: 0,
+  });
   const [dragging, setDragging] = useState<string>();
   const [floatPosition, setFloatPosition] = useState<IVec2>({ x: 100, y: 100 });
 
@@ -26,7 +33,9 @@ export const TabPanelV: React.FC<Props> = ({ selected, items, onSelect }) => {
       return ret;
     });
     setDragging(undefined);
-  }, [dragging]);
+    // FIXME: There's no better way to clear the stored position.
+    localStorage.removeItem(`float-dialog_${dragging}_position`);
+  }, [dragging, setFloating]);
   const handleDrag = useCallback((e: PointerEvent) => {
     setFloatPosition({ x: e.pageX, y: e.pageY });
   }, []);
@@ -55,20 +64,23 @@ export const TabPanelV: React.FC<Props> = ({ selected, items, onSelect }) => {
       );
     });
 
-  const handleFloatClose = useCallback((name: string) => {
-    setFloating((v) => {
-      const ret = { ...v };
-      delete ret[name];
-      return ret;
-    });
-  }, []);
+  const handleFloatClose = useCallback(
+    (name: string) => {
+      setFloating((v) => {
+        const ret = { ...v };
+        delete ret[name];
+        return ret;
+      });
+    },
+    [setFloating],
+  );
 
   useEffect(() => {
-    if (floating[selected]) {
-      const next = items.find((item) => !floating[item[0].name]);
+    if (floating[selected] || dragging === selected) {
+      const next = items.find((item) => !floating[item[0].name] && dragging !== item[0].name);
       if (next) onSelect?.(next[0].name);
     }
-  }, [selected, floating, items, onSelect]);
+  }, [selected, floating, dragging, items, onSelect]);
 
   return (
     <div className="w-full h-full">
@@ -94,7 +106,7 @@ export const TabPanelV: React.FC<Props> = ({ selected, items, onSelect }) => {
       {dragging && floatPosition
         ? createPortal(
             <div
-              className="fixed -translate-x-1/2 -translate-y-1/2"
+              className="fixed -translate-x-1/2 -translate-y-1/2 z-101 p-1 rounded bg-gray-500"
               style={{ left: `${floatPosition.x}px`, top: `${floatPosition.y}px` }}
             >
               <TabButton name={dragging} />
@@ -163,6 +175,7 @@ const FloatPanel: React.FC<FloatPanelProps> = ({ item, initialPosition, onClose 
   return (
     <FloatDialog
       key={item[0].name}
+      boundsKey={item[0].name}
       open={true}
       initialPosition={centeredP}
       initialBodySize={INITIAL_FLOAT_SIZE}

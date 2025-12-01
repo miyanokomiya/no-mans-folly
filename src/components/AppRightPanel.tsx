@@ -20,5 +20,5 @@ export const AppRightPanel: React.FC<Props> = ({ selected, onSelect }) => {
     [{ name: "Realtime" }, <RealtimePanel />],
     [{ name: "Settings" }, <UserSettingPanel />],
   ];
-  return <TabPanelV selected={selected} onSelect={onSelect} items={items} />;
+  return <TabPanelV name="app-right-panel" selected={selected} onSelect={onSelect} items={items} />;
 };
