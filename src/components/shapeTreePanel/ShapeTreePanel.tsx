@@ -21,6 +21,7 @@ import { rednerRGBA } from "../../utils/color";
 import { getLabel, hasSpecialOrderPriority } from "../../shapes";
 import { newShapeRenderer, ShapeRenderer } from "../../composables/shapeRenderer";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
+import { LazyOnScreenRender } from "../atoms/LazyOnScreenRender";
 
 type DropOperation = "group" | "above" | "below";
 
@@ -268,11 +269,6 @@ const NodeHeader: React.FC<Omit<UITreeNodeProps, "childNode"> & { dropElm?: Reac
   }) => {
     const selectedClass = prime ? " bg-red-300 font-bold" : selected ? " bg-yellow-300 font-bold" : "";
 
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    useEffect(() => {
-      renderShape(id, canvasRef.current);
-    }, [id, renderShape]);
-
     const handleNodeClick = useCallback(
       (e: React.PointerEvent) => {
         if (isCtrlOrMeta(e) && primeSibling) {
@@ -306,25 +302,32 @@ const NodeHeader: React.FC<Omit<UITreeNodeProps, "childNode"> & { dropElm?: Reac
       onHover?.(id);
     }, [id, onHover]);
 
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const renderTargetShape = useCallback(() => {
+      renderShape(id, canvasRef.current);
+    }, [renderShape, id]);
+
     return (
-      <div data-anchor-root className="flex items-center relative">
-        <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
-        <ClickOrDragHandler
-          className={"px-1 rounded-xs w-full hover:bg-gray-200" + selectedClass}
-          onClick={handleNodeClick}
-          onDragStart={handleDragStart}
-        >
-          <button type="button" className="flex items-center gap-2" onPointerEnter={handleNodePointerEnter}>
-            <div className="border rounded-xs" style={{ backgroundColor: sheetColor, padding: 2 }}>
-              <canvas ref={canvasRef} width="24" height="24" />
-            </div>
-            {name}
-          </button>
-        </ClickOrDragHandler>
-        <div className={"ml-1 " + (primeSibling ? "" : "opacity-0")}>
-          <ToggleInput value={selected} onChange={handleNodeSelectDown} />
-        </div>
-        {dropElm}
+      <div data-anchor-root>
+        <LazyOnScreenRender className="flex items-center relative h-[30px]" onRender={renderTargetShape}>
+          <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
+          <ClickOrDragHandler
+            className={"px-1 rounded-xs w-full hover:bg-gray-200" + selectedClass}
+            onClick={handleNodeClick}
+            onDragStart={handleDragStart}
+          >
+            <button type="button" className="flex items-center gap-2" onPointerEnter={handleNodePointerEnter}>
+              <div className="border rounded-xs" style={{ backgroundColor: sheetColor, padding: 2 }}>
+                <canvas ref={canvasRef} width="24" height="24" />
+              </div>
+              {name}
+            </button>
+          </ClickOrDragHandler>
+          <div className={"ml-1 " + (primeSibling ? "" : "opacity-0")}>
+            <ToggleInput value={selected} onChange={handleNodeSelectDown} />
+          </div>
+          {dropElm}
+        </LazyOnScreenRender>
       </div>
     );
   },

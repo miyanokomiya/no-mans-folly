@@ -247,3 +247,25 @@ export function useResizeObserver(elm: Element | undefined | null, onResize: () 
     return () => resizeObserver.disconnect();
   }, [elm, onResize]);
 }
+
+export function useIsInViewport(ref: React.RefObject<HTMLElement | null>) {
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0 },
+    );
+    observer.observe(ref.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [ref]);
+
+  return isInView;
+}
