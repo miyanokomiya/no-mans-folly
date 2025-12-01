@@ -321,7 +321,7 @@ export function newLineBounding(option: Option) {
         const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
         arcAnchors.forEach((c) => {
           ctx.beginPath();
-          ctx.ellipse(c.x, c.y, size, size, 0, 0, TAU);
+          ctx.arc(c.x, c.y, size, 0, TAU);
           ctx.stroke();
         });
       }
@@ -332,14 +332,14 @@ export function newLineBounding(option: Option) {
         const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
         getAddAnchorBody(scale).forEach((c) => {
           ctx.beginPath();
-          ctx.ellipse(c.x, c.y, size, size, 0, 0, TAU);
+          ctx.arc(c.x, c.y, size, 0, TAU);
           ctx.fill();
           renderPlusIcon(ctx, c, size * 2);
         });
 
         [getAddAnchorP(scale), getAddAnchorQ(scale)].forEach((c) => {
           ctx.beginPath();
-          ctx.ellipse(c.x, c.y, size, size, 0, 0, TAU);
+          ctx.arc(c.x, c.y, size, 0, TAU);
           ctx.fill();
           renderPlusIcon(ctx, c, size * 2);
         });
@@ -354,7 +354,7 @@ export function newLineBounding(option: Option) {
         ctx.lineTo(a.c.x, a.c.y);
         ctx.stroke();
         ctx.beginPath();
-        ctx.ellipse(a.p.x, a.p.y, size, size, 0, 0, TAU);
+        ctx.arc(a.p.x, a.p.y, size, 0, TAU);
         ctx.fill();
       });
     }
@@ -369,9 +369,16 @@ export function newLineBounding(option: Option) {
         ctx.fillStyle = "#fff";
       }
       ctx.beginPath();
-      ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
+      ctx.arc(p.x, p.y, vertexSize, 0, TAU);
       ctx.fill();
       ctx.stroke();
+
+      if (connections[i]?.optimized) {
+        applyFillStyle(ctx, { color: style.selectionSecondaly });
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, vertexSize * 0.5, 0, TAU);
+        ctx.fill();
+      }
     });
 
     const moveAnchor = getMoveAnchor(scale);
@@ -411,7 +418,7 @@ export function newLineBounding(option: Option) {
           if (p) {
             applyFillStyle(ctx, { color: style.selectionSecondaly });
             ctx.beginPath();
-            ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
+            ctx.arc(p.x, p.y, vertexSize, 0, TAU);
             ctx.fill();
           }
           break;
@@ -478,7 +485,7 @@ export function newLineBounding(option: Option) {
 
           const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
           ctx.beginPath();
-          ctx.ellipse(p.x, p.y, size, size, 0, 0, TAU);
+          ctx.arc(p.x, p.y, size, 0, TAU);
           ctx.fill();
           renderPlusIcon(ctx, p, size * 2);
           break;
@@ -487,7 +494,7 @@ export function newLineBounding(option: Option) {
           applyFillStyle(ctx, { color: style.selectionSecondaly });
           const p = arcAnchors[hitResult.index];
           ctx.beginPath();
-          ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
+          ctx.arc(p.x, p.y, vertexSize, 0, TAU);
           ctx.fill();
           break;
         }
@@ -519,7 +526,7 @@ export function newLineBounding(option: Option) {
             applyFillStyle(ctx, { color: style.selectionSecondaly });
             const size = vertexSize * ADD_VERTEX_ANCHOR_RATE;
             ctx.beginPath();
-            ctx.ellipse(p.x, p.y, size, size, 0, 0, TAU);
+            ctx.arc(p.x, p.y, size, 0, TAU);
             ctx.fill();
           }
           break;
@@ -656,7 +663,7 @@ export function renderVertexAnchorHighlight(ctx: CanvasCTX, style: StyleScheme, 
   const vertexSize = VERTEX_R * scale;
   applyFillStyle(ctx, { color: style.selectionSecondaly });
   ctx.beginPath();
-  ctx.ellipse(p.x, p.y, vertexSize, vertexSize, 0, 0, TAU);
+  ctx.arc(p.x, p.y, vertexSize, 0, TAU);
   ctx.fill();
 }
 
