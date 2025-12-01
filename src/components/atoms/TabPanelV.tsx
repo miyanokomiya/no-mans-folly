@@ -6,7 +6,7 @@ import { useGlobalDrag } from "../../hooks/window";
 import { createPortal } from "react-dom";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
 
-export type TabPanelItem = [{ name: string; keepAlive?: boolean }, React.ReactNode, noPadding?: boolean];
+export type TabPanelItem = [{ name: string; keepAlive?: boolean }, React.ReactNode];
 
 interface Props {
   name: string;
@@ -109,8 +109,7 @@ export const TabPanelV: React.FC<Props> = ({ name, selected, items, onSelect }) 
         <div
           key={selectedItem[0].name}
           className={
-            "w-full h-full overflow-auto border border-l-gray-500" +
-            (selectedItem?.[2] ? "" : " p-2") +
+            "w-full h-full overflow-auto border border-l-gray-500 p-1" +
             (selectedItem[0].name !== selected && selectedItem?.[0].keepAlive ? " hidden" : "")
           }
         >
@@ -202,7 +201,7 @@ const FloatPanel: React.FC<FloatPanelProps> = ({ item, initialPosition, onClose,
 
   const centeredP = useMemo(
     () => ({
-      x: initialPosition.x - INITIAL_FLOAT_SIZE.width / 2,
+      x: initialPosition.x - 40,
       y: initialPosition.y - 16,
     }),
     [initialPosition],

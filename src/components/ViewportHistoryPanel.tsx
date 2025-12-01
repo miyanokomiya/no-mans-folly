@@ -9,7 +9,7 @@ import { useDocumentMapWithoutTmpInfo, useSelectedSheet, useStaticShapeComposite
 import { FrameShape } from "../shapes/frame";
 import { rednerRGBA } from "../utils/color";
 import emptyIcon from "../assets/icons/empty.svg";
-import plusIcon from "../assets/icons/plus.svg";
+import iconAdd from "../assets/icons/add_filled.svg";
 import deleteIcon from "../assets/icons/delete_filled.svg";
 
 export const ViewportHistoryPanel: React.FC = () => {
@@ -40,13 +40,39 @@ export const ViewportHistoryPanel: React.FC = () => {
     [setViewport],
   );
 
+  const [latest, ...others] = viewportHistory;
+
   return (
-    <div className="flex items-center">
-      <ul className="flex flex-row-reverse overflow-x-auto border-l" style={{ maxWidth: "calc(100vw - 340px)" }}>
-        {viewportHistory.map((v, i) => (
-          <li key={i}>
+    <div className="h-full grid grid-cols-1 grid-rows-[max-content_max-content_1fr]">
+      <div>
+        <h3>Latest</h3>
+        <PanelItem
+          index={0}
+          viewport={latest}
+          shapeComposite={shapeComposite}
+          documentMap={documentMap}
+          imageStore={imageStore}
+          backgroundColor={sheetColor}
+          onClick={handleJump}
+          onDelete={handleDelete}
+        />
+      </div>
+      <div className="mt-1 h-8 flex items-center justify-between gap-1">
+        <span>Saved</span>
+        <button
+          type="button"
+          className="w-12 h-8 border rounded-xs flex items-center justify-center"
+          title="Save viewport"
+          onClick={handleAdd}
+        >
+          <img className="w-4 h-4" src={iconAdd} alt="Add viewport" />
+        </button>
+      </div>
+      <ul className="overflow-auto">
+        {others.map((v, i) => (
+          <li key={i + 1}>
             <PanelItem
-              index={i}
+              index={i + 1}
               viewport={v}
               shapeComposite={shapeComposite}
               documentMap={documentMap}
@@ -58,14 +84,6 @@ export const ViewportHistoryPanel: React.FC = () => {
           </li>
         ))}
       </ul>
-      <button
-        type="button"
-        className="self-stretch border rounded-xs bg-white"
-        title="Save viewport"
-        onClick={handleAdd}
-      >
-        <img className="w-4 h-4" src={plusIcon} alt="Add viewport history" />
-      </button>
     </div>
   );
 };
@@ -106,7 +124,7 @@ const PanelItem: React.FC<PanelItemProps> = ({
   }, [index, onDelete]);
 
   return (
-    <div className="relative w-18 h-14 border-2 rounded-xs bg-gray-300 flex items-center justify-center">
+    <div className="relative w-full h-24 border rounded-xs bg-gray-300 flex items-center justify-center">
       {mockFrame ? (
         <>
           <button
@@ -124,7 +142,10 @@ const PanelItem: React.FC<PanelItemProps> = ({
             />
           </button>
           {index > 0 ? (
-            <button className="absolute top-0 right-0 p-0.5 rounded hover:bg-gray-200" onClick={handleDelete}>
+            <button
+              className="absolute top-0 right-0 p-0.5 w-6 h-6 flex items-center justify-center rounded-full bg-red-300 hover:bg-red-400"
+              onClick={handleDelete}
+            >
               <img className="w-4 h-4" src={deleteIcon} alt="Delete viewport history" />
             </button>
           ) : undefined}

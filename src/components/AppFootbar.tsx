@@ -12,7 +12,6 @@ import { AppCanvasContext } from "../contexts/AppCanvasContext";
 import { IconButton } from "./atoms/buttons/IconButton";
 import { useCanUndoRedo } from "../hooks/undoManager";
 import { useUserSetting } from "../hooks/storeHooks";
-import { ViewportHistoryPanel } from "./ViewportHistoryPanel";
 
 export const AppFootbar: React.FC = () => {
   const sm = useContext(AppStateMachineContext);
@@ -58,8 +57,7 @@ export const AppFootbar: React.FC = () => {
   const borderElm = <div className="h-6 border" />;
 
   return userSetting.displayMode === "no-hud" ? undefined : (
-    <div className="flex flex-col items-end gap-0.5">
-      <ViewportHistoryPanel />
+    <div>
       <div className="h-fit p-1 border rounded-xs bg-white flex gap-2 items-center select-none">
         <ZoomField
           scale={getScale()}

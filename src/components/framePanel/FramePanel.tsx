@@ -86,7 +86,7 @@ export const FramePanel: React.FC = () => {
   );
 
   return (
-    <div className="p-1 h-full grid grid-cols-1 grid-rows-[max-content_1fr_max-content] gap-1">
+    <div className="h-full grid grid-cols-1 grid-rows-[max-content_1fr_max-content] gap-1">
       <div className="h-8 flex items-center justify-between gap-1">
         <span>Frames</span>
         <OutsideObserver onClick={closePopup}>

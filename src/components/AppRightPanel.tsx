@@ -6,6 +6,7 @@ import { ShapeLibraryPanel } from "./ShapeLibraryPanel";
 import { ShapeTemplatePanel } from "./ShapeTemplatePanel";
 import { ShapeTreePanel } from "./shapeTreePanel/ShapeTreePanel";
 import { UserSettingPanel } from "./UserSettingPanel";
+import { ViewportHistoryPanel } from "./ViewportHistoryPanel";
 
 interface Props {
   selected: string;
@@ -15,8 +16,9 @@ interface Props {
 export const AppRightPanel: React.FC<Props> = ({ selected, onSelect }) => {
   const items: TabPanelItem[] = [
     [{ name: "Inspector" }, <ShapeInspectorPanel />],
-    [{ name: "Tree" }, <ShapeTreePanel />, true],
-    [{ name: "Frames" }, <FramePanel />, true],
+    [{ name: "Tree" }, <ShapeTreePanel />],
+    [{ name: "Frames" }, <FramePanel />],
+    [{ name: "Viewports" }, <ViewportHistoryPanel />],
     [{ name: "Icons", keepAlive: true }, <ShapeLibraryPanel />],
     [{ name: "Templates", keepAlive: true }, <ShapeTemplatePanel />],
     [{ name: "Realtime" }, <RealtimePanel />],

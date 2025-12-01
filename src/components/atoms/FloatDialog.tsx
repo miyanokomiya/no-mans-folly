@@ -11,7 +11,7 @@ import { createPortal } from "react-dom";
 
 const ZERO_V = { x: 0, y: 0 };
 const INITIAL_SIZE = { width: 400, height: 400 };
-const MIN_SIZE = 200;
+const MIN_SIZE = 140;
 
 interface Props {
   open: boolean;

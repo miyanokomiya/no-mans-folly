@@ -219,7 +219,7 @@ export const ShapeTreePanel: React.FC = () => {
   }, [dropTo, handleNodeHover, handleNodeSelect, handleStartDragging, rootNodeProps]);
 
   return (
-    <div ref={rootRef} className="h-full p-2 overflow-auto">
+    <div ref={rootRef} className="h-full overflow-auto">
       <ul className="relative flex flex-col items-start" style={{ gap: 1 }}>
         {rootNodeElms}
         {draggingTarget ? (
