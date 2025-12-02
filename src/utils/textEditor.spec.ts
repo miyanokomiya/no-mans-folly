@@ -4,8 +4,10 @@ import {
   DEFAULT_LINEHEIGHT,
   DocCompositionItem,
   DocCompositionLine,
+  LINK_STYLE_ATTRS,
   applyAttrInfoToDocOutput,
   applyRangeWidthToLineWord,
+  convertRawTextToDoc,
   getCursorLocationAt,
   getDeltaAndCursorByBackspace,
   getDeltaAndCursorByDelete,
@@ -73,6 +75,16 @@ describe("splitTextByURL", () => {
       { val: "http://example.com", isUrl: true },
       { val: " ", isUrl: false },
       { val: "http://example.com", isUrl: true },
+    ]);
+  });
+});
+
+describe("convertRawTextToDoc", () => {
+  test("should convert given text into a doc", () => {
+    expect(convertRawTextToDoc("multi\nlines")).toEqual([{ insert: "multi" }, { insert: "\n" }, { insert: "lines" }]);
+    expect(convertRawTextToDoc("with link http://example.com")).toEqual([
+      { insert: "with link " },
+      { insert: "http://example.com", attributes: { ...LINK_STYLE_ATTRS, link: "http://example.com" } },
     ]);
   });
 });

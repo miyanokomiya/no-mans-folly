@@ -7,6 +7,7 @@ import { newLineReadyState } from "./lines/lineReadyState";
 import { DocDelta, DocOutput } from "../../../models/document";
 import {
   calcOriginalDocSize,
+  convertRawTextToDoc,
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
@@ -319,7 +320,7 @@ export function startTextEditingIfPossible(
 const clipboardShapeSerializer = newClipboardSerializer<"shapes", ShapeTemplateInfo>("shapes");
 export function newShapeClipboard(ctx: AppCanvasStateContext) {
   function pasteTextAsShape(text: string) {
-    const delta: DocOutput = [{ insert: text }, { insert: "\n" }];
+    const delta = [...convertRawTextToDoc(text), { insert: "\n" }];
     const shape = createNewTextShapeForDocument(ctx, delta);
     ctx.pasteShapes([shape], [[shape.id, delta]]);
   }

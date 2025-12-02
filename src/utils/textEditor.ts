@@ -67,6 +67,29 @@ export function splitTextByURL(text: string): { val: string; isUrl: boolean }[] 
   return items.filter((val) => val !== "").map((val) => ({ val, isUrl: URL_TEXT_REG.test(val) }));
 }
 
+/**
+ * Returned doc doesn't have a line break at the end.
+ * => Make sure to put the line break if you want to make it a complete doc.
+ */
+export function convertRawTextToDoc(text: string, defaultAttrs?: DocAttributes): DocOutput {
+  const ret: DocOutput = [];
+  const list = text.split(LINEBREAK);
+  list.forEach((block, i) => {
+    if (block) {
+      splitTextByURL(block).forEach((item) => {
+        ret.push({
+          insert: item.val,
+          attributes: item.isUrl ? { ...defaultAttrs, ...LINK_STYLE_ATTRS, link: item.val } : defaultAttrs,
+        });
+      });
+    }
+    if (i !== list.length - 1) {
+      ret.push({ insert: "\n", attributes: defaultAttrs });
+    }
+  });
+  return ret;
+}
+
 const segmenter = new (Intl as any).Segmenter();
 const segmenterCache = newChronoCache<string, string[]>({ duration: 30000, getTimestamp: Date.now });
 

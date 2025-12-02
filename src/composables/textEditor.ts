@@ -4,7 +4,6 @@ import {
   DEFAULT_FONT_SIZE,
   DocCompositionItem,
   DocCompositionLine,
-  LINEBREAK,
   applyAttrInfoToDocOutput,
   getBoundsAtLocation,
   getCursorLocation,
@@ -278,20 +277,7 @@ export function newTextEditorController() {
     }
 
     const attrs = mergeDocAttrInfo(getCurrentAttributeInfo());
-    const list = text.split(LINEBREAK);
-    list.forEach((block, i) => {
-      if (block) {
-        textEditorUtil.splitTextByURL(block).forEach((item) => {
-          ret.push({
-            insert: item.val,
-            attributes: item.isUrl ? { ...attrs, ...textEditorUtil.LINK_STYLE_ATTRS, link: item.val } : attrs,
-          });
-        });
-      }
-      if (i !== list.length - 1) {
-        ret.push({ insert: "\n", attributes: attrs });
-      }
-    });
+    ret.push(...textEditorUtil.convertRawTextToDoc(text, attrs));
 
     if (_isDocEmpty) {
       ret.push(getInitialOutput()[0]);
