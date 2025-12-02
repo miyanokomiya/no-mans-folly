@@ -668,6 +668,21 @@ export const AppCanvas: React.FC = () => {
 
   const handlePreviewClose = useCallback(() => userSettingStore.patchState({ preview: "off" }), [userSettingStore]);
 
+  const gridElement = grid.disabled ? undefined : (
+    <div key="grid" className="absolute left-0 top-0 w-full h-full pointer-events-none">
+      <GridBackground
+        x={grid.range.x / scale}
+        y={grid.range.y / scale}
+        size={grid.size / scale}
+        type={userSetting.gridType}
+        color={userSetting.gridColor}
+      />
+    </div>
+  );
+  const canvasElement = <canvas key="canvas" ref={canvasRef} {...canvasAttrs}></canvas>;
+  const canvasContents =
+    userSetting.gridOrder === "front" ? [canvasElement, gridElement] : [gridElement, canvasElement];
+
   return (
     <>
       <div
@@ -684,18 +699,7 @@ export const AppCanvas: React.FC = () => {
         tabIndex={-1}
       >
         <FileDropArea typeRegs={DroppableFileRegs} onDrop={onDrop}>
-          <div className="absolute left-0 top-0 w-full h-full pointer-events-none">
-            {grid.disabled ? undefined : (
-              <GridBackground
-                x={grid.range.x / scale}
-                y={grid.range.y / scale}
-                size={grid.size / scale}
-                type={userSetting.gridType}
-                color={userSetting.gridColor}
-              />
-            )}
-          </div>
-          <canvas ref={canvasRef} {...canvasAttrs}></canvas>
+          {canvasContents}
         </FileDropArea>
       </div>
       {userSetting.debug === "on" ? (

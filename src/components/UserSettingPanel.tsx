@@ -96,6 +96,13 @@ export const UserSettingPanel: React.FC = () => {
     [patchUserSetting],
   );
 
+  const handleGridOrderChange = useCallback(
+    (val: boolean) => {
+      patchUserSetting({ gridOrder: val ? "front" : "back" });
+    },
+    [patchUserSetting],
+  );
+
   const handleAttachToLineChange = useCallback(
     (val: boolean) => {
       patchUserSetting({ attachToLine: val ? "on" : "off" });
@@ -157,6 +164,9 @@ export const UserSettingPanel: React.FC = () => {
         <BlockGroupField label="Grid">
           <InlineField label="On">
             <ToggleInput value={userSetting.grid !== "off"} onChange={handleGridChange} />
+          </InlineField>
+          <InlineField label="Overlay">
+            <ToggleInput value={userSetting.gridOrder === "front"} onChange={handleGridOrderChange} />
           </InlineField>
           <InlineField label="Size">
             <div className="w-24">
