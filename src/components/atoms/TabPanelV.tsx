@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import { FloatDialog } from "./FloatDialog";
 import { ClickOrDragHandler } from "./ClickOrDragHandler";
 import { IVec2 } from "okageo";
@@ -19,7 +19,7 @@ export const TabPanelV: React.FC<Props> = ({ name, selected, items, onSelect }) 
   const [floating, setFloating] = useLocalStorageAdopter<{ [name: string]: boolean }>({
     key: `${name}-floating`,
     version: "1",
-    initialValue: {},
+    initialValue: () => ({}),
     duration: 0,
   });
   const [dragging, setDragging] = useState<string>();
@@ -75,7 +75,7 @@ export const TabPanelV: React.FC<Props> = ({ name, selected, items, onSelect }) 
     [setFloating],
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (floating[selected] || dragging === selected) {
       const next = items.find((item) => !floating[item[0].name] && dragging !== item[0].name);
       if (next) {

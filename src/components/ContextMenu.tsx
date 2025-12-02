@@ -30,7 +30,7 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem, viewSi
   return createPortal(
     <div
       ref={ref}
-      className={"fixed border left-0 top-0 bg-white" + (diff ? "" : " opacity-0")}
+      className={"fixed border left-0 top-0 bg-white z-300" + (diff ? "" : " opacity-0")}
       style={{
         transform: `translate(${p.x}px, ${p.y}px)`,
       }}
