@@ -24,13 +24,13 @@ export function newEntitySelectable<T>(option: Option<T>) {
     }
   });
 
-  const selectedCallback = newCallback();
+  const selectedCallback = newCallback<[string | undefined, { [id: string]: true }]>();
   const selectable = okaselect.useItemSelectable(option.getEntityMap, {
     onUpdated: () => {
       const val = selectable.getSelected();
       selectedMap = isObjectEmpty(val) ? EMPTY_MAP : val;
       lastSelected = selectable.getLastSelected();
-      selectedCallback.dispatch();
+      selectedCallback.dispatch([lastSelected, selectedMap]);
     },
   });
 
