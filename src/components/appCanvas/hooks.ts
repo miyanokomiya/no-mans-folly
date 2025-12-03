@@ -21,7 +21,7 @@ import { DocDelta, DocOutput } from "../../models/document";
 import { getEntityPatchByDelete, getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
 import { getAllBranchIds, getTree } from "../../utils/tree";
 import { getDeleteTargetIds } from "../../composables/shapeComposite";
-import { fillArray, patchPipe } from "../../utils/commons";
+import { patchPipe } from "../../utils/commons";
 import { AppUndoManager } from "../../contexts/AppCanvasContext";
 import {
   getWebsocketClient,
@@ -176,7 +176,6 @@ export function useSetupStateContext({
   setLinkInfo: (val?: LinkInfo) => void;
 }) {
   const setSmctx = useContext(SetAppStateContext);
-  fillArray(4, undefined);
   const [viewportHistory, setViewportHistory] = useLocalStorageAdopter<(IRectangle | undefined)[]>({
     key: "viewport-history",
     version: "1",

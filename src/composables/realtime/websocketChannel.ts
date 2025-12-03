@@ -1,15 +1,23 @@
 import * as Y from "yjs";
-import { RealtimeHandler, RTMessageData } from "./core";
+import { RealtimeHandler, RTMessageData, UserAwareness } from "./core";
 import { encodeStateAsUpdateWithGC, stringToUint8Array, uint8ArrayToString } from "../../utils/yjs";
 import { newCallback } from "../../utils/stateful/reactives";
 import { base64ToBlob, blobToBase64 } from "../../utils/fileAccess";
+import { ChronoCache, newChronoCache } from "../../utils/stateful/cache";
+import { generateUIColorFromInteger } from "../../utils/color";
+import { generateSimpleIntegerHash } from "../../utils/hash";
 
 const WS_ENDPOINT = process.env.API_HOST!.replace(/^http(s?):/, "ws$1:") + "ws";
 export const WS_UPDATE_ORIGIN = "ws-update";
 // This is used to idenfity if the message is originated by this client
 let connectionId: string | undefined = undefined;
 
-export type WSClient = { client: WebSocket; id: string; count: number };
+export type WSClient = {
+  client: WebSocket;
+  id: string;
+  count: number;
+  awareness: ChronoCache<string, UserAwareness>;
+};
 let client: WSClient | undefined;
 export const websocketCallback = newCallback<WSClient | undefined>();
 export const websocketAssetCallback = newCallback<{ id: string; asset: Blob }>();
@@ -54,9 +62,13 @@ export async function initWSClient(props: { canHost: boolean; roomId: string; on
       "open",
       () => {
         preClient?.removeEventListener("error", reject);
-        const nextClient = { client: preClient, id: props.roomId, count: 0 };
+        const nextClient = {
+          client: preClient,
+          id: props.roomId,
+          count: 0,
+          awareness: newChronoCache<string, UserAwareness>({ duration: 90, getTimestamp: Date.now }),
+        };
         setClient(nextClient);
-        websocketCallback.dispatch(nextClient);
         preClient.addEventListener("message", messageCallback.dispatch);
         resolve();
       },
@@ -235,6 +247,20 @@ export const newWSChannel: RealtimeHandler = (props) => {
         const asset = base64ToBlob(data.asset, data.fileType);
         await props.assetAPI.saveAsset(data.id, asset);
         websocketAssetCallback.dispatch({ id: data.id, asset });
+        return;
+      }
+      case "awareness": {
+        if (!data.sender) return;
+
+        const current = client.awareness.getValue(data.sender);
+        const color = current?.color ?? generateUIColorFromInteger(generateSimpleIntegerHash(data.sender));
+        client.awareness.setValue(data.sender, {
+          id: data.sender,
+          sheetId: data.sheetId,
+          shapeIds: data.shapeIds,
+          color,
+        });
+        return;
       }
     }
   }
@@ -280,4 +306,14 @@ export function requestAssetSync(assetId: string) {
     type: "asset-req",
     id: assetId,
   });
+}
+
+export function sendAwareness(data: Omit<UserAwareness, "id" | "color">) {
+  console.log(data);
+  postWSMessage({
+    type: "awareness",
+    sheetId: data.sheetId,
+    shapeIds: data.shapeIds,
+  });
+  resetKeepAliveTimer();
 }

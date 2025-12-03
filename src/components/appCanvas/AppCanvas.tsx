@@ -35,6 +35,9 @@ import { FloatMenuOption } from "../../composables/states/commons";
 import { newDebounce } from "../../utils/stateful/debounce";
 import { saveSheetThumbnailAsSvg } from "../../composables/states/appCanvas/utils/shapeExport";
 import { isImageAssetShape } from "../../shapes/image";
+import { sendAwareness } from "../../composables/realtime/websocketChannel";
+import { useWebsocketAwareness } from "../../hooks/realtimeHooks";
+import { applyStrokeStyle } from "../../utils/strokeStyle";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -107,11 +110,12 @@ export const AppCanvas: React.FC = () => {
   }, [imageStore]);
 
   useEffect(() => {
-    return sheetStore.watchSelected(() => {
+    return sheetStore.watchSelected((id) => {
       sm.reset();
       setCanvasState({});
+      sendAwareness({ sheetId: id, shapeIds: Object.keys(shapeStore.getSelected()) });
     });
-  }, [sheetStore, sm]);
+  }, [sheetStore, shapeStore, sm]);
 
   useEffect(() => {
     // Flush the thumbnail save when the shape store changes.
@@ -157,12 +161,6 @@ export const AppCanvas: React.FC = () => {
       setCanvasState({});
     });
   }, [shapeStore, sm]);
-
-  useEffect(() => {
-    return shapeStore.watchSelected(() => {
-      setCanvasState({});
-    });
-  }, [shapeStore]);
 
   useEffect(() => {
     return documentStore.watch((keys) => {
@@ -292,12 +290,17 @@ export const AppCanvas: React.FC = () => {
   });
 
   useEffect(() => {
-    return shapeStore.watchSelected(() => {
+    const sheet = sheetStore.getSelectedSheet();
+    if (!sheet) return;
+
+    return shapeStore.watchSelected(([, selected]) => {
+      setCanvasState({});
+      sendAwareness({ sheetId: sheet.id, shapeIds: Object.keys(selected) });
       sm.handleEvent({
         type: "selection",
       });
     });
-  }, [shapeStore, sm]);
+  }, [sheetStore, shapeStore, sm]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -308,6 +311,26 @@ export const AppCanvas: React.FC = () => {
       height: viewSize.height,
     }),
     [viewSize.width, viewSize.height],
+  );
+
+  const awareness = useWebsocketAwareness();
+  const renderAwareness = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      for (const [, { value }] of awareness) {
+        applyStrokeStyle(ctx, { color: value.color, width: 2 * scale });
+
+        if (value.sheetId === sheetStore.getSelectedSheet()?.id && value.shapeIds) {
+          const shapes = value.shapeIds.map((id) => shapeStore.shapeComposite.mergedShapeMap[id]).filter((s) => !!s);
+
+          if (shapes.length > 0) {
+            const rect = shapeStore.shapeComposite.getWrapperRectForShapes(shapes);
+            ctx.beginPath();
+            ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+          }
+        }
+      }
+    },
+    [awareness, sheetStore, shapeStore, scale],
   );
 
   useEffect(() => {
@@ -331,11 +354,12 @@ export const AppCanvas: React.FC = () => {
       targetRect: viewCanvasRect,
     });
     renderer.render(ctx);
-
+    renderAwareness(ctx);
     renderFrameNames(ctx, shapeStore.shapeComposite, userSetting.frameLabelSize, scale);
     grid.renderAxisLabels(ctx, scale);
     sm.render(ctx);
   }, [
+    renderAwareness,
     shapeStore.shapeComposite,
     documentStore,
     sm,

@@ -1,5 +1,6 @@
 import * as Y from "yjs";
 import { AssetAPI } from "../assetAPI";
+import { Color } from "../../models";
 
 type RTData = {
   sender?: string; // Set by the server
@@ -41,11 +42,24 @@ type RTConnectionData = {
   canHost: boolean;
 };
 
+type RTAwareness = RTData & {
+  type: "awareness";
+  sheetId?: string;
+  shapeIds?: string[];
+};
+
 type RTPing = {
   type: "ping";
 };
 
-export type RTMessageData = RTPing | RTUpdateData | RTRoomData | RTConnectionData | RTInitialData | RTAssetData;
+export type RTMessageData =
+  | RTPing
+  | RTAwareness
+  | RTUpdateData
+  | RTRoomData
+  | RTConnectionData
+  | RTInitialData
+  | RTAssetData;
 
 export type RealtimeHandler = (props: {
   roomId: string;
@@ -58,3 +72,10 @@ export type RealtimeHandler = (props: {
   saveSheet: (sheetId: string, update: Uint8Array) => void;
   assetAPI: AssetAPI;
 }) => { close: () => void };
+
+export type UserAwareness = {
+  id: string;
+  color: Color;
+  sheetId?: string;
+  shapeIds?: string[];
+};
