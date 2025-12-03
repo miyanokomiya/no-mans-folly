@@ -159,6 +159,7 @@ export interface UserSetting {
   gridSize?: number; // should be 50 when it's undefined
   gridType?: "dot" | "line" | "dash"; // should be "dot" when it's undefined
   gridColor?: string; // should be "rgba(55,55,55,1)" when it's undefined
+  gridOrder?: "back" | "front"; // should be "back" when it's undefined
   debug?: "on" | "off"; // should be "off" when it's undefined
   virtualKeyboard?: "modifiers" | "off"; // should be "off" when it's undefined
   preview?: "on" | "off"; // should be "off" when it's undefined
