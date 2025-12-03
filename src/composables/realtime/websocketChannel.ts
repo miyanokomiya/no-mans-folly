@@ -309,7 +309,6 @@ export function requestAssetSync(assetId: string) {
 }
 
 export function sendAwareness(data: Omit<UserAwareness, "id" | "color">) {
-  console.log(data);
   postWSMessage({
     type: "awareness",
     sheetId: data.sheetId,
