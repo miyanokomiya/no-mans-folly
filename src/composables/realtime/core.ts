@@ -46,6 +46,7 @@ type RTAwareness = RTData & {
   type: "awareness";
   sheetId?: string;
   shapeIds?: string[];
+  closed?: boolean;
 };
 
 type RTPing = {

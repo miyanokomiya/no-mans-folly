@@ -38,6 +38,7 @@ import { isImageAssetShape } from "../../shapes/image";
 import { sendAwareness } from "../../composables/realtime/websocketChannel";
 import { useWebsocketAwareness } from "../../hooks/realtimeHooks";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
+import { applyDefaultTextStyle } from "../../utils/renderer";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -316,16 +317,21 @@ export const AppCanvas: React.FC = () => {
   const awareness = useWebsocketAwareness();
   const renderAwareness = useCallback(
     (ctx: CanvasRenderingContext2D) => {
+      ctx.fillStyle = "#333";
       for (const [, { value }] of awareness) {
-        applyStrokeStyle(ctx, { color: value.color, width: 2 * scale });
-
         if (value.sheetId === sheetStore.getSelectedSheet()?.id && value.shapeIds) {
           const shapes = value.shapeIds.map((id) => shapeStore.shapeComposite.mergedShapeMap[id]).filter((s) => !!s);
 
           if (shapes.length > 0) {
+            applyStrokeStyle(ctx, { color: value.color, width: 3 * scale, dash: "short" });
             const rect = shapeStore.shapeComposite.getWrapperRectForShapes(shapes);
             ctx.beginPath();
-            ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+            ctx.rect(rect.x, rect.y, rect.width, rect.height);
+            ctx.stroke();
+            ctx.beginPath();
+            applyDefaultTextStyle(ctx, 16 * scale, "left", true);
+            ctx.strokeText(value.id, rect.x, rect.y + rect.height);
+            ctx.fillText(value.id, rect.x, rect.y + rect.height);
           }
         }
       }

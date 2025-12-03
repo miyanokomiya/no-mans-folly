@@ -43,7 +43,7 @@ function resetKeepAliveTimer() {
 
   keepAliveTimer = setInterval(() => {
     postWSMessage({ type: "ping" });
-  }, 1000 * 60) as any;
+  }, 1000 * 70) as any;
 }
 
 export async function initWSClient(props: { canHost: boolean; roomId: string; onClose?: () => void }) {
@@ -66,7 +66,7 @@ export async function initWSClient(props: { canHost: boolean; roomId: string; on
           client: preClient,
           id: props.roomId,
           count: 0,
-          awareness: newChronoCache<string, UserAwareness>({ duration: 90, getTimestamp: Date.now }),
+          awareness: newChronoCache<string, UserAwareness>({ duration: 20 * 1000, getTimestamp: Date.now }),
         };
         setClient(nextClient);
         preClient.addEventListener("message", messageCallback.dispatch);
@@ -193,7 +193,9 @@ export const newWSChannel: RealtimeHandler = (props) => {
       }
       case "diagram-update": {
         if (!data.update) return;
+
         Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
+        keepAwarenessAlive(data.sender);
         return;
       }
       case "sheet-sync-req": {
@@ -225,6 +227,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
         } else {
           props.saveSheet(data.id, stringToUint8Array(data.update));
         }
+        keepAwarenessAlive(data.sender);
         return;
       }
       case "asset-req": {
@@ -253,6 +256,11 @@ export const newWSChannel: RealtimeHandler = (props) => {
         if (!data.sender) return;
 
         const current = client.awareness.getValue(data.sender);
+        if (current && data.closed) {
+          client.awareness.deleteValue(data.sender);
+          return;
+        }
+
         const color = current?.color ?? generateUIColorFromInteger(generateSimpleIntegerHash(data.sender));
         client.awareness.setValue(data.sender, {
           id: data.sender,
@@ -315,4 +323,11 @@ export function sendAwareness(data: Omit<UserAwareness, "id" | "color">) {
     shapeIds: data.shapeIds,
   });
   resetKeepAliveTimer();
+}
+
+function keepAwarenessAlive(id?: string) {
+  if (id) {
+    // Prolong the cache lifetime by getting the value.
+    client?.awareness.getValue(id);
+  }
 }
