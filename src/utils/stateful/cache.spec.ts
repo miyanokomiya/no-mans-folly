@@ -37,9 +37,18 @@ describe("newChronoCache", () => {
 
   test("should return cached value if it exists", () => {
     const target = newChronoCache<string, number>({ duration: 10, getTimestamp: () => 0 });
+    const watcher = vi.fn();
+    target.watch(watcher);
+
     target.setValue("b", 1);
     expect(target.getValue("a")).toEqual(undefined);
     expect(target.getValue("b")).toEqual(1);
+    expect(watcher).toHaveBeenCalledTimes(1);
+
+    target.deleteValue("b");
+    target.deleteValue("b");
+    expect(target.getValue("b")).toEqual(undefined);
+    expect(watcher).toHaveBeenCalledTimes(2);
   });
 
   test("should clear expired cache on get any value", () => {
