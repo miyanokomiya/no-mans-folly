@@ -45,20 +45,30 @@ describe("newChronoCache", () => {
   test("should clear expired cache on get any value", () => {
     let timestamp = 0;
     const target = newChronoCache<string, number>({ duration: 10, getTimestamp: () => timestamp });
+    const watcher = vi.fn();
+    target.watch(watcher);
+
     target.setValue("a", 1);
+    expect(watcher).toHaveBeenCalledTimes(1);
     target.setValue("b", 2);
     expect(target.getValue("a")).toEqual(1);
+    expect(watcher).toHaveBeenCalledTimes(2);
+
     timestamp = 9;
     vi.advanceTimersByTime(9);
     expect(target.getValue("a")).toEqual(1);
     expect(target.getValue("b")).toEqual(2);
+
     timestamp = 15;
     vi.advanceTimersByTime(15);
     expect(target.getValue("b")).toEqual(2);
+    expect(watcher).toHaveBeenCalledTimes(2);
+
     timestamp = 20;
     vi.advanceTimersByTime(20);
     expect(target.getValue("a")).toEqual(undefined);
     expect(target.getValue("b")).toEqual(2);
+    expect(watcher).toHaveBeenCalledTimes(3);
   });
 });
 
