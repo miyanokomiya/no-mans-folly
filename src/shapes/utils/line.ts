@@ -485,3 +485,17 @@ export function getPatchByReverseLine(line: LineShape): Partial<LineShape> {
     curves: line.curves?.toReversed().map((c) => reverseCurveControl(c)),
   };
 }
+
+/**
+ * Returns the moving vertex of the patched line.
+ * Elbow line may change the number of vertices by moving a vertex.
+ * => Just getting the vertex at the index can fail.
+ */
+export function getMovingLineVertex(patchedLine: LineShape, targetIndex: number): IVec2 | undefined {
+  const vertices = getLinePath(patchedLine);
+  if (patchedLine.lineType === "elbow") {
+    return targetIndex === 0 ? vertices.at(0) : vertices.at(-1);
+  } else {
+    return vertices.at(targetIndex);
+  }
+}

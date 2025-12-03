@@ -1,5 +1,5 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { LineShape, addNewVertex, getLinePath } from "../../../../shapes/line";
+import { LineShape, addNewVertex } from "../../../../shapes/line";
 import { IVec2 } from "okageo";
 import { applyFillStyle } from "../../../../utils/fillStyle";
 import {
@@ -21,6 +21,7 @@ import { getSnappableCandidates } from "../commons";
 import { newCacheWithArg } from "../../../../utils/stateful/cache";
 import { handleCommonWheel } from "../../commons";
 import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
+import { getMovingLineVertex } from "../../../../shapes/utils/line";
 
 interface Option {
   lineShape: LineShape;
@@ -161,7 +162,7 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
       const line = shapeComposite.mergedShapeMap[option.lineShape.id] as LineShape;
       if (!line) return;
 
-      const vertex = getLinePath(line)[option.index];
+      const vertex = getMovingLineVertex(line, option.index);
       if (!vertex) {
         return;
       }

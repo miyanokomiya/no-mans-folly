@@ -16,6 +16,7 @@ import {
   getShapePatchInfoBySplittingLineThrough,
   getPatchByReverseLine,
   getPatchByCombineLines,
+  getMovingLineVertex,
 } from "./line";
 import { createShape, getCommonStruct } from "..";
 import { getConnections, getLinePath, LineShape } from "../line";
@@ -716,5 +717,30 @@ describe("getPatchByReverseLine", () => {
     expect(getConnections(line).toReversed()).toEqual(getConnections(result));
     expect(line.pHead).toEqual(result.qHead);
     expect(line.qHead).toEqual(result.pHead);
+  });
+});
+
+describe("getMovingLineVertex", () => {
+  test("should return the vertex at the index when the line isn't elbow", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      q: { x: 100, y: 0 },
+    });
+    expect(getMovingLineVertex(line, 0)).toEqual(line.p);
+    expect(getMovingLineVertex(line, 1)).toEqual(line.body?.[0].p);
+    expect(getMovingLineVertex(line, 2)).toEqual(line.q);
+  });
+
+  test("should return either the head or the tail vertex when the line isn't elbow", () => {
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      body: [{ p: { x: 50, y: 0 } }],
+      q: { x: 100, y: 0 },
+      lineType: "elbow",
+    });
+    expect(getMovingLineVertex(line, 0)).toEqual(line.p);
+    expect(getMovingLineVertex(line, 1)).toEqual(line.q);
+    expect(getMovingLineVertex(line, 2)).toEqual(line.q);
   });
 });

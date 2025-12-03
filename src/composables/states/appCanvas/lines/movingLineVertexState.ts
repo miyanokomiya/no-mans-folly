@@ -23,6 +23,7 @@ import { add, IVec2, sub } from "okageo";
 import { newCacheWithArg } from "../../../../utils/stateful/cache";
 import { handleCommonWheel } from "../../commons";
 import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
+import { getMovingLineVertex } from "../../../../shapes/utils/line";
 
 interface Option {
   lineShape: LineShape;
@@ -171,7 +172,9 @@ export function newMovingLineVertexState(option: Option): AppCanvasState {
       const line = shapeComposite.mergedShapeMap[option.lineShape.id] as LineShape;
       if (!line) return;
 
-      const vertex = getLinePath(line)[option.index];
+      const vertex = getMovingLineVertex(line, option.index);
+      if (!vertex) return;
+
       coordinateRenderer.saveCoord(vertex);
       coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
 

@@ -23,6 +23,7 @@ import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { Shape } from "../../../../models";
 import { getSnappableCandidates } from "../commons";
 import { newCacheWithArg } from "../../../../utils/stateful/cache";
+import { getMovingLineVertex } from "../../../../shapes/utils/line";
 
 interface Option {
   // This state creates "body" for the line, so that the "body" value of this shape does nothing.
@@ -177,7 +178,9 @@ export function newLineDrawingState(option: Option): AppCanvasState {
       const vertexSize = 8 * scale;
 
       const shapeComposite = ctx.getShapeComposite();
-      const vertex = getLinePath(latestShape)[movingIndex];
+      const vertex = getMovingLineVertex(latestShape, movingIndex);
+      if (!vertex) return;
+
       coordinateRenderer.saveCoord(vertex);
       coordinateRenderer.render(renderCtx, ctx.getViewRect(), scale);
 
