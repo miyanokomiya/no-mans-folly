@@ -18,6 +18,11 @@ type RTUpdateData = RTData & {
     | "sheet-update";
   id: string; // ID of either the diagram or the sheet
   update?: string; // Encoded Uint8Array
+  awareness?: {
+    id: string;
+    sheetId?: string;
+    shapeIds?: string[];
+  }[]; // Sent by the host to new user with "diagram-sync-res" or "diagram-open"
 };
 
 type RTAssetData = RTData & {
@@ -79,5 +84,4 @@ export type UserAwareness = {
   color: Color;
   sheetId?: string;
   shapeIds?: string[];
-  timestamp: number;
 };

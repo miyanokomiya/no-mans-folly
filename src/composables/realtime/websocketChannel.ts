@@ -18,6 +18,8 @@ export type WSClient = {
   awareness: Map<string, UserAwareness>;
 };
 let client: WSClient | undefined;
+let myAwareness: Omit<UserAwareness, "id" | "color"> | undefined;
+
 export const websocketCallback = newCallback<WSClient | undefined>();
 export const websocketAssetCallback = newCallback<{ id: string; asset: Blob }>();
 const messageCallback = newCallback<MessageEvent>();
@@ -168,6 +170,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
             id: data.id,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(props.diagramDoc)),
             author: data.sender,
+            awareness: getAwarenessListWithMine(),
           } as RTMessageData);
         } else {
           // Discard the requester's diagram and let them open current one
@@ -176,6 +179,7 @@ export const newWSChannel: RealtimeHandler = (props) => {
             id: props.diagramDoc.meta.diagramId,
             update: uint8ArrayToString(Y.encodeStateAsUpdate(props.diagramDoc)),
             author: data.sender,
+            awareness: getAwarenessListWithMine(),
           } as RTMessageData);
         }
         return;
@@ -185,11 +189,14 @@ export const newWSChannel: RealtimeHandler = (props) => {
 
         Y.applyUpdate(props.diagramDoc, stringToUint8Array(data.update), WS_UPDATE_ORIGIN);
         requestSheetSync(props.sheetDoc.meta.sheetId, Y.encodeStateAsUpdate(props.sheetDoc));
+        setAwarenessList(data.awareness);
         return;
       }
       case "diagram-open": {
         if (!data.update) return;
+
         props.openDiagram(stringToUint8Array(data.update));
+        setAwarenessList(data.awareness);
         return;
       }
       case "diagram-update": {
@@ -269,7 +276,6 @@ export const newWSChannel: RealtimeHandler = (props) => {
           sheetId: data.sheetId,
           shapeIds: data.shapeIds,
           color,
-          timestamp: Date.now(),
         });
         awarenessCallback.dispatch();
         return;
@@ -320,11 +326,14 @@ export function requestAssetSync(assetId: string) {
   });
 }
 
-export function sendAwareness(data: Omit<UserAwareness, "id" | "color" | "timestamp">) {
-  postWSMessage({
-    type: "awareness",
+export function sendAwareness(data: Omit<UserAwareness, "id" | "color">) {
+  myAwareness = {
     sheetId: data.sheetId,
     shapeIds: data.shapeIds,
+  };
+  postWSMessage({
+    type: "awareness",
+    ...myAwareness,
   });
   resetKeepAliveTimer();
 }
@@ -334,7 +343,37 @@ function keepAwarenessAlive(id?: string) {
 
   const a = client.awareness.get(id);
   if (a) {
-    client.awareness.set(id, { ...a, timestamp: Date.now() });
+    client.awareness.set(id, a);
     awarenessCallback.dispatch();
   }
+}
+
+function getAwarenessListWithMine() {
+  if (!client || !connectionId) return;
+
+  const list = Array.from(client.awareness.values()).map<Omit<UserAwareness, "color">>((a) => ({
+    id: a.id,
+    sheetId: a.sheetId,
+    shapeIds: a.shapeIds,
+  }));
+  if (myAwareness) {
+    list.push({ ...myAwareness, id: connectionId });
+  }
+  return list;
+}
+
+function setAwarenessList(list?: Omit<UserAwareness, "color">[]) {
+  if (!client || !list || list.length === 0) return;
+
+  for (const a of list) {
+    const current = client.awareness.get(a.id);
+    const color = current?.color ?? generateUIColorFromInteger(generateSimpleIntegerHash(a.id));
+    client.awareness.set(a.id, {
+      id: a.id,
+      sheetId: a.sheetId,
+      shapeIds: a.shapeIds,
+      color,
+    });
+  }
+  awarenessCallback.dispatch();
 }
