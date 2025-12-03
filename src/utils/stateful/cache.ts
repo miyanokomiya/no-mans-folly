@@ -111,7 +111,7 @@ export function newChronoCache<Key, T>(option: { duration: number; getTimestamp:
     return cache;
   }
 
-  return { getCacheMap, getValue, setValue, deleteValue, watch: callback.bind, checkup: clearExpiredCache };
+  return { getCacheMap, getValue, setValue, deleteValue, watch: callback.bind, checkup: clearExpiredCacheThrottle };
 }
 
 export function newObjectWeakCache<K extends object, T extends object>() {
