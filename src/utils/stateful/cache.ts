@@ -56,6 +56,7 @@ export type ChronoCache<Key, T> = {
   setValue: (key: Key, value: T) => void;
   deleteValue: (key: Key) => void;
   watch: (fn: () => void) => () => void;
+  checkup: () => void;
 };
 
 /**
@@ -110,7 +111,7 @@ export function newChronoCache<Key, T>(option: { duration: number; getTimestamp:
     return cache;
   }
 
-  return { getCacheMap, getValue, setValue, deleteValue, watch: callback.bind };
+  return { getCacheMap, getValue, setValue, deleteValue, watch: callback.bind, checkup: clearExpiredCache };
 }
 
 export function newObjectWeakCache<K extends object, T extends object>() {

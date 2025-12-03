@@ -43,6 +43,7 @@ function resetKeepAliveTimer() {
 
   keepAliveTimer = setInterval(() => {
     postWSMessage({ type: "ping" });
+    client?.awareness.checkup();
   }, 1000 * 70) as any;
 }
 
