@@ -79,6 +79,7 @@ export function newChronoCache<Key, T>(option: { duration: number; getTimestamp:
   function setValue(key: Key, value: T) {
     cache.set(key, { value, timestamp: option.getTimestamp() });
     callback.dispatch();
+    clearExpiredCacheThrottle();
   }
 
   function deleteValue(key: Key) {
@@ -86,6 +87,7 @@ export function newChronoCache<Key, T>(option: { duration: number; getTimestamp:
       cache.delete(key);
       callback.dispatch();
     }
+    clearExpiredCacheThrottle();
   }
 
   function clearExpiredCache() {
@@ -103,7 +105,12 @@ export function newChronoCache<Key, T>(option: { duration: number; getTimestamp:
     }
   }
 
-  return { getCacheMap: () => cache, getValue, setValue, deleteValue, watch: callback.bind };
+  function getCacheMap() {
+    clearExpiredCacheThrottle();
+    return cache;
+  }
+
+  return { getCacheMap, getValue, setValue, deleteValue, watch: callback.bind };
 }
 
 export function newObjectWeakCache<K extends object, T extends object>() {
