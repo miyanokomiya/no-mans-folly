@@ -2,6 +2,7 @@ import { describe, test, expect } from "vitest";
 
 import {
   colorToHex,
+  generateUIColorFromInteger,
   hslaToHsva,
   hsvaToHsla,
   hsvaToRgba,
@@ -209,5 +210,16 @@ describe("toHexAndAlpha", () => {
   });
   test("should parse HEX format", () => {
     expect(toHexAndAlpha("#010203")).toEqual(["#010203", 1]);
+  });
+});
+
+describe("generateUIColorFromInteger", () => {
+  test("should return color based on the value", () => {
+    const res0 = generateUIColorFromInteger(0);
+    const res1 = generateUIColorFromInteger(1);
+    const res2 = generateUIColorFromInteger(2);
+    expect(res0).not.toEqual(res1);
+    expect(res0).not.toEqual(res2);
+    expect(res0).toEqual(generateUIColorFromInteger(0));
   });
 });

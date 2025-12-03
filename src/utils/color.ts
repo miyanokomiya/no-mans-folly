@@ -175,3 +175,10 @@ export function getMiddleColor(a: RGBA, b: RGBA): RGBA {
     a: (a.a + b.a) / 2,
   };
 }
+
+export function generateUIColorFromInteger(val: number): Color {
+  const h = Math.abs(val) % 360;
+  const s = 75 / 255; // High saturation for vivid colors
+  const l = 60 / 255; // Medium lightness for good contrast
+  return hsvaToRgba(hslaToHsva({ h, s, l, a: 1 }));
+}
