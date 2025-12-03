@@ -318,7 +318,7 @@ export const AppCanvas: React.FC = () => {
   const renderAwareness = useCallback(
     (ctx: CanvasRenderingContext2D) => {
       ctx.fillStyle = "#333";
-      for (const [, { value }] of awareness) {
+      for (const [, value] of awareness) {
         if (value.sheetId === sheetStore.getSelectedSheet()?.id && value.shapeIds) {
           const shapes = value.shapeIds.map((id) => shapeStore.shapeComposite.mergedShapeMap[id]).filter((s) => !!s);
 

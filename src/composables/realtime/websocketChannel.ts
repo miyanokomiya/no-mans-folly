@@ -3,7 +3,6 @@ import { RealtimeHandler, RTMessageData, UserAwareness } from "./core";
 import { encodeStateAsUpdateWithGC, stringToUint8Array, uint8ArrayToString } from "../../utils/yjs";
 import { newCallback } from "../../utils/stateful/reactives";
 import { base64ToBlob, blobToBase64 } from "../../utils/fileAccess";
-import { ChronoCache, newChronoCache } from "../../utils/stateful/cache";
 import { generateUIColorFromInteger } from "../../utils/color";
 import { generateSimpleIntegerHash } from "../../utils/hash";
 
@@ -16,17 +15,19 @@ export type WSClient = {
   client: WebSocket;
   id: string;
   count: number;
-  awareness: ChronoCache<string, UserAwareness>;
+  awareness: Map<string, UserAwareness>;
 };
 let client: WSClient | undefined;
 export const websocketCallback = newCallback<WSClient | undefined>();
 export const websocketAssetCallback = newCallback<{ id: string; asset: Blob }>();
 const messageCallback = newCallback<MessageEvent>();
+export const awarenessCallback = newCallback();
 let keepAliveTimer: number | undefined = undefined;
 
 function setClient(val: WSClient | undefined) {
   client = val;
   websocketCallback.dispatch(client);
+  awarenessCallback.dispatch();
   resetKeepAliveTimer();
 }
 
@@ -43,7 +44,6 @@ function resetKeepAliveTimer() {
 
   keepAliveTimer = setInterval(() => {
     postWSMessage({ type: "ping" });
-    client?.awareness.checkup();
   }, 1000 * 70) as any;
 }
 
@@ -67,7 +67,7 @@ export async function initWSClient(props: { canHost: boolean; roomId: string; on
           client: preClient,
           id: props.roomId,
           count: 0,
-          awareness: newChronoCache<string, UserAwareness>({ duration: 20 * 1000, getTimestamp: Date.now }),
+          awareness: new Map<string, UserAwareness>(),
         };
         setClient(nextClient);
         preClient.addEventListener("message", messageCallback.dispatch);
@@ -256,19 +256,22 @@ export const newWSChannel: RealtimeHandler = (props) => {
       case "awareness": {
         if (!data.sender) return;
 
-        const current = client.awareness.getValue(data.sender);
+        const current = client.awareness.get(data.sender);
         if (current && data.closed) {
-          client.awareness.deleteValue(data.sender);
+          client.awareness.delete(data.sender);
+          awarenessCallback.dispatch();
           return;
         }
 
         const color = current?.color ?? generateUIColorFromInteger(generateSimpleIntegerHash(data.sender));
-        client.awareness.setValue(data.sender, {
+        client.awareness.set(data.sender, {
           id: data.sender,
           sheetId: data.sheetId,
           shapeIds: data.shapeIds,
           color,
+          timestamp: Date.now(),
         });
+        awarenessCallback.dispatch();
         return;
       }
     }
@@ -317,7 +320,7 @@ export function requestAssetSync(assetId: string) {
   });
 }
 
-export function sendAwareness(data: Omit<UserAwareness, "id" | "color">) {
+export function sendAwareness(data: Omit<UserAwareness, "id" | "color" | "timestamp">) {
   postWSMessage({
     type: "awareness",
     sheetId: data.sheetId,
@@ -327,8 +330,11 @@ export function sendAwareness(data: Omit<UserAwareness, "id" | "color">) {
 }
 
 function keepAwarenessAlive(id?: string) {
-  if (id) {
-    // Prolong the cache lifetime by getting the value.
-    client?.awareness.getValue(id);
+  if (!client || !id) return;
+
+  const a = client.awareness.get(id);
+  if (a) {
+    client.awareness.set(id, { ...a, timestamp: Date.now() });
+    awarenessCallback.dispatch();
   }
 }

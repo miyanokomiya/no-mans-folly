@@ -79,4 +79,5 @@ export type UserAwareness = {
   color: Color;
   sheetId?: string;
   shapeIds?: string[];
+  timestamp: number;
 };
