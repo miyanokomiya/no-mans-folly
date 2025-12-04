@@ -8,6 +8,7 @@ import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult }
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 import { getSnappableCandidates } from "../commons";
 import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
+import { patchPipe } from "../../../../utils/commons";
 
 interface Option {
   lineShape: LineShape;
@@ -62,6 +63,7 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
 
       switch (event.type) {
         case "pointermove": {
+          const shapeComposite = ctx.getShapeComposite();
           const v = sub(event.data.current, event.data.startAbs);
           snappingResult = event.data.ctrl
             ? undefined
@@ -73,23 +75,31 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
 
           const vertices = getLinePath(option.lineShape);
           // Regard rounded elbow that has an extra vertex for each corner.
-          const prevIndex = option.lineShape.curveType === "auto" ? option.index - 2 : option.index - 1;
+          const isCurved = option.lineShape.curveType === "auto";
+          const prevIndex = isCurved ? option.index - 2 : option.index - 1;
           const prev = vertices[prevIndex];
           const origin = elbow?.p ?? targetSegment[0];
           const sign = Math.sign(getInner(sub(origin, prev), sub(p, pedal)));
           const d = sign * getDistance(pedal, p) + (elbow?.d ?? 0);
-
           const nextElbow = { ...elbow, d, p: origin };
-          let patch = patchBodyVertex(option.lineShape, option.index - 1, { ...srcBodyItem, elbow: nextElbow });
-          patch = { ...patch, body: elbowHandler.optimizeElbow({ ...option.lineShape, ...patch }) };
 
           preserveAttachmentHandler.setActive(!!event.data.alt);
-          const update = {
-            [option.lineShape.id]: patch,
-            ...preserveAttachmentHandler.getPatch(patch),
-          };
+          const update = patchPipe(
+            [
+              () => {
+                let linePatch = patchBodyVertex(option.lineShape, option.index - 1, {
+                  ...srcBodyItem,
+                  elbow: nextElbow,
+                });
+                linePatch = { ...linePatch, body: elbowHandler.optimizeElbow({ ...option.lineShape, ...linePatch }) };
+                return { [option.lineShape.id]: linePatch };
+              },
+              (_, patch) => preserveAttachmentHandler.getPatch(patch[option.lineShape.id]) ?? {},
+            ],
+            shapeComposite.shapeMap,
+          ).patch;
 
-          ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
+          ctx.setTmpShapeMap(getPatchAfterLayouts(shapeComposite, { update }));
           return;
         }
         case "pointerup": {
