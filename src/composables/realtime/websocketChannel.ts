@@ -5,6 +5,7 @@ import { newCallback } from "../../utils/stateful/reactives";
 import { base64ToBlob, blobToBase64 } from "../../utils/fileAccess";
 import { generateUIColorFromInteger } from "../../utils/color";
 import { generateSimpleIntegerHash } from "../../utils/hash";
+import { newThrottle } from "../../utils/stateful/throttle";
 
 const WS_ENDPOINT = process.env.API_HOST!.replace(/^http(s?):/, "ws$1:") + "ws";
 export const WS_UPDATE_ORIGIN = "ws-update";
@@ -117,15 +118,27 @@ export const newWSChannel: RealtimeHandler = (props) => {
       update: uint8ArrayToString(update),
     } as RTMessageData);
   }
-  function onSheetUpdate(update: Uint8Array, origin: string) {
-    if (closed || origin === WS_UPDATE_ORIGIN) return;
+
+  // Avoid frequent sheet update messagings especially for text editing.
+  let sheetUpdates: Uint8Array[] = [];
+  function postSheetUpdate() {
+    if (sheetUpdates.length === 0) return;
 
     postWSMessage({
       type: "sheet-update",
       id: props.sheetDoc.meta.sheetId,
-      update: uint8ArrayToString(update),
+      update: uint8ArrayToString(Y.mergeUpdates(sheetUpdates)),
     } as RTMessageData);
+    sheetUpdates = [];
   }
+  const postSheetUpdateThrottle = newThrottle(postSheetUpdate, 2000, true);
+  function onSheetUpdate(update: Uint8Array, origin: string) {
+    if (closed || origin === WS_UPDATE_ORIGIN) return;
+
+    sheetUpdates.push(update);
+    postSheetUpdateThrottle();
+  }
+
   props.diagramDoc.on("update", onDiagramUpdate);
   props.sheetDoc.on("update", onSheetUpdate);
 
