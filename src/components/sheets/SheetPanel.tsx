@@ -17,6 +17,7 @@ interface Props {
   index: number;
   canDeleteSheet?: boolean;
   thumbnail?: HTMLImageElement;
+  awarenessCount?: number;
   onClickSheet?: (id: string) => void;
   onChangeName?: (id: string, name: string) => void;
   onDelete?: (id: string) => void;
@@ -29,6 +30,7 @@ export const SheetPanel: React.FC<Props> = ({
   selected,
   index,
   thumbnail,
+  awarenessCount,
   onChangeName,
   onDelete,
   onAddSheetImage,
@@ -149,12 +151,17 @@ export const SheetPanel: React.FC<Props> = ({
           </FixedPopupButton>
         </OutsideObserver>
       </div>
-      <div className="w-full h-20 border flex items-center justify-center" data-anchor>
+      <div className="relative w-full h-20 border flex items-center justify-center" data-anchor>
         {thumbnail ? (
           <canvas ref={canvasRef} width="144" height="78" />
         ) : (
           <div className="select-none touch-none">No thumbnail</div>
         )}
+        {awarenessCount ? (
+          <div className="absolute left-0 bottom-0 px-1.5 rounded-lg bg-green-300 text-sm flex items-center justify-center">
+            {awarenessCount}
+          </div>
+        ) : undefined}
       </div>
     </div>
   );

@@ -15,6 +15,8 @@ import { getSheetThumbnailFileName } from "../../utils/fileAccess";
 import { createShape } from "../../shapes";
 import { SheetImageShape } from "../../shapes/sheetImage";
 import { Tooltip } from "../atoms/Tooltip";
+import { useWebsocketAwareness } from "../../hooks/realtimeHooks";
+import { UserAwareness } from "../../composables/realtime/core";
 
 export const SheetList: React.FC = () => {
   const { sheetStore } = useContext(AppCanvasContext);
@@ -25,6 +27,22 @@ export const SheetList: React.FC = () => {
   const canDeleteSheet = useMemo(() => sheets.length > 1, [sheets]);
   const imageStore = useContext(AppStateContext).getImageStore();
   const getSmctx = useContext(GetAppStateContext);
+  const awareness = useWebsocketAwareness();
+
+  const sheetAwareness = useMemo<Map<string, UserAwareness[]>>(() => {
+    const ret = new Map<string, UserAwareness[]>();
+    for (const [, v] of awareness) {
+      if (!v.sheetId) continue;
+
+      const s = ret.get(v.sheetId);
+      if (s) {
+        s.push(v);
+      } else {
+        ret.set(v.sheetId, [v]);
+      }
+    }
+    return ret;
+  }, [awareness]);
 
   const [thumbnails, setThumbnails] = useState<Record<string, HTMLImageElement>>({});
   useEffect(() => {
@@ -125,6 +143,7 @@ export const SheetList: React.FC = () => {
           index={i + 1}
           canDeleteSheet={canDeleteSheet}
           thumbnail={thumbnails[s.id]}
+          awarenessCount={sheetAwareness.get(s.id)?.length}
           onChangeName={handleNameChange}
           onDelete={handleSheetDeleteConfirm}
           onAddSheetImage={handleAddSheetImage}
@@ -137,6 +156,7 @@ export const SheetList: React.FC = () => {
     sheets,
     canDeleteSheet,
     thumbnails,
+    sheetAwareness,
     handleNameChange,
     handleSheetDeleteConfirm,
     handleSheetSelect,
