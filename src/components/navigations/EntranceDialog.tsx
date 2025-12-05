@@ -103,7 +103,7 @@ export const EntranceDialog: React.FC<Props> = ({
   const buttonStyle = "w-60 py-2 px-4 rounded-xs flex items-center justify-center hover:opacity-70";
 
   return (
-    <Dialog open={open} title={t("open_workspace")} hideClose required>
+    <Dialog open={open} title={t("open_workspace")} onClose={onNoWorkspaceClick}>
       <div className="w-96">
         {updateAvailable ? (
           <div className="mb-4 p-2 bg-green-100 border-2 rounded-xs">
