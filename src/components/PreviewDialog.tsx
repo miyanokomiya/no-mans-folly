@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FloatDialog } from "./atoms/FloatDialog";
 import { useDocumentMap, useSelectedTmpSheet, useShapeComposite } from "../hooks/storeHooks";
 import { newShapeRenderer } from "../composables/shapeRenderer";
@@ -142,11 +142,12 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
   ]);
 
   const previewCtxRef = useRef(previewCtx);
-  previewCtxRef.current = previewCtx;
+  useLayoutEffect(() => {
+    previewCtxRef.current = previewCtx;
+  }, [previewCtx]);
   const sm = useMemo(() => {
-    return newStateMachine(() => {
-      return previewCtxRef.current;
-    }, newPreviewState);
+    // eslint-disable-next-line react-hooks/refs
+    return newStateMachine(() => previewCtxRef.current, newPreviewState);
   }, []);
 
   const { handlePointerDown, handlePointerUp, isValidPointer } = useClickable({

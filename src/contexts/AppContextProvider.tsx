@@ -39,6 +39,7 @@ export const AppCanvasProvider: React.FC<AppCanvasProviderProps> = ({
   const stateContextRef = useRef(stateContext);
 
   const stateMachine = useMemo(() => {
+    // eslint-disable-next-line react-hooks/refs
     return newStateMachine(() => stateContextRef.current, stateContext.states.newSelectionHubState);
   }, [stateContext.states.newSelectionHubState]);
 

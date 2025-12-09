@@ -47,6 +47,7 @@ export const FrameThumbnail: React.FC<Props> = ({
   useEffect(() => {
     updateCanvasSize();
   }, [updateCanvasSize]);
+  // eslint-disable-next-line react-hooks/refs
   useResizeObserver(wrapperRef.current, updateCanvasSize);
 
   useEffect(() => {

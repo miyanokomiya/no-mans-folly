@@ -1,6 +1,6 @@
 import { IVec2 } from "okageo";
 import { NumberInput } from "../atoms/inputs/NumberInput";
-import { useCallback, useRef } from "react";
+import { useCallback, useLayoutEffect, useRef } from "react";
 import iconSwap from "../../assets/icons/swap.svg";
 
 interface Props {
@@ -25,7 +25,9 @@ export const PointField: React.FC<Props> = ({
   swappable,
 }) => {
   const latestValue = useRef(value);
-  latestValue.current = value;
+  useLayoutEffect(() => {
+    latestValue.current = value;
+  }, [value]);
 
   const commit = useCallback(() => {
     onChange?.(latestValue.current);

@@ -48,3 +48,4 @@ export function newDebounce<T extends (...args: any[]) => void>(fn: T, interval:
 
   return debounce;
 }
+export type Debounce = ReturnType<typeof newDebounce>;

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { newDebounce } from "../utils/stateful/debounce";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Debounce, newDebounce } from "../utils/stateful/debounce";
 
 type StoredData<T> = {
   version?: string;
@@ -17,44 +17,39 @@ export function useLocalStorageAdopter<T>({
   initialValue: T | (() => T);
   duration?: number;
 }) {
-  const initialRef = useRef<T>(undefined);
-  const [state, setState] = useState<T>();
-
-  useEffect(() => {
-    // Restore the value at the first occation without delay.
-    if (!initialRef.current) {
-      const value: T = typeof initialValue === "function" ? (initialValue as any)() : initialValue;
-      if (key) {
-        initialRef.current = getFromLocalStorage<T>(key, version) ?? value;
-      } else {
-        initialRef.current = value;
-      }
-    }
-  }, [initialValue, key, version]);
-
+  const [state, setState] = useState(initialValue);
+  const [saveDebounce, setSaveDebounce] = useState<Debounce>();
   const stateRef = useRef(state);
+
+  // Retrieve the value from the storage at first.
+  useLayoutEffect(() => {
+    if (!key) return;
+
+    const storedValue = getFromLocalStorage<T>(key, version);
+    if (storedValue) {
+      setState(storedValue);
+    }
+  }, [key, version]);
+
+  // Let the debounce function always see the latest state value without depending on it.
+  useEffect(() => {
+    const debounce = newDebounce(() => {
+      if (!key) return;
+      localStorage.setItem(key, JSON.stringify({ value: stateRef.current, version: version } as StoredData<T>));
+    }, duration);
+    setSaveDebounce(() => debounce);
+  }, [key, version, duration]);
+
   useEffect(() => {
     stateRef.current = state;
-  }, [state]);
-
-  const saveThrottle = useMemo(
-    () =>
-      newDebounce(() => {
-        if (!key) return;
-        localStorage.setItem(key, JSON.stringify({ value: stateRef.current, version: version } as StoredData<T>));
-      }, duration),
-    [key, version, duration],
-  );
-
-  useEffect(() => {
-    saveThrottle();
-  }, [state, saveThrottle]);
+    saveDebounce?.();
+  }, [state, saveDebounce]);
 
   useEffect(() => {
     return () => {
-      saveThrottle.flush();
+      saveDebounce?.flush();
     };
-  }, [saveThrottle]);
+  }, [saveDebounce]);
 
   return [state, setState] as const;
 }

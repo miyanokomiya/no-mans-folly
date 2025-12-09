@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { ListButton } from "../atoms/buttons/ListButton";
 import { PopupButton } from "../atoms/PopupButton";
@@ -96,12 +96,14 @@ const ZoomButton: React.FC<ZoomButtonProps> = ({ children, onZoom }) => {
 
   const animRef = useRef(0);
   const handleZoomRef = useRef((_delta?: number) => {});
-  handleZoomRef.current = (timestamp = 0) => {
-    if (timestamp) {
-      onZoom?.();
-    }
-    animRef.current = requestAnimationFrame(handleZoomRef.current);
-  };
+  useLayoutEffect(() => {
+    handleZoomRef.current = (timestamp = 0) => {
+      if (timestamp) {
+        onZoom?.();
+      }
+      animRef.current = requestAnimationFrame(handleZoomRef.current);
+    };
+  }, [onZoom]);
   useEffect(() => {
     if (!down) return;
 

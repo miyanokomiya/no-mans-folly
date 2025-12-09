@@ -12,10 +12,6 @@ import { FloatMenuSmartBranch } from "./FloatMenuSmartBranch";
 import { FloatMenuLineSegment } from "./FloatMenuLineSegment";
 import { FloatMenuOption } from "../../composables/states/commons";
 
-// Use default root height until it's derived from actual element.
-// => It's useful to prevent the menu from slightly translating at the first appearance.
-const ROOT_HEIGHT = 44;
-
 // Keep and restore the fixed location.
 let rootFixedCache: IVec2 | undefined;
 
@@ -46,7 +42,6 @@ export const FloatMenu: React.FC<Option> = ({
   const draggable = useDraggable();
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const [rootSize, setRootSize] = useState<Size>({ width: 0, height: ROOT_HEIGHT });
   // Once the menu was dragged, stick it to the location.
   // This point refers to the drag-anchor.
   const [rootFixed, setRootFixed] = useState<IVec2 | undefined>(rootFixedCache);
@@ -67,34 +62,38 @@ export const FloatMenu: React.FC<Option> = ({
   }, [viewOrigin, scale, targetRect, shapeComposite, selectedMap]);
 
   useEffect(() => {
-    if (!rootRef.current) return;
-
-    const bounds = rootRef.current.getBoundingClientRect();
-    setRootSize({ width: bounds.width, height: bounds.height });
-  }, [adjustedTargetRect]);
-
-  useEffect(() => {
     if (!dragOrigin || !draggable.v) return;
 
     const p = add(dragOrigin, draggable.v);
     setRootFixed(p);
   }, [dragOrigin, draggable.v]);
 
-  const rootAttrs = useMemo(() => {
+  const [rootAttrs, setRootAttrs] = useState<{ className?: string; style?: React.CSSProperties }>({
+    className: rootBaseClassName + " invisible",
+  });
+  const updateRootAttrs = useCallback(() => {
     if (!adjustedTargetRect || !rootRef.current) {
       // Need to render the menu to get its size, but make it invisible until everything's ready.
-      return { className: rootBaseClassName + " invisible" };
+      setRootAttrs({ className: rootBaseClassName + " invisible" });
+      return;
     }
 
-    return getRootAttrs(
-      adjustedTargetRect,
-      rootSize.width,
-      rootSize.height,
-      viewSize.width,
-      viewSize.height,
-      rootFixed ? { x: rootFixed.x + rootSize.width / 2, y: rootFixed.y } : undefined,
+    const bounds = rootRef.current.getBoundingClientRect();
+    setRootAttrs(
+      getRootAttrs(
+        adjustedTargetRect,
+        bounds.width,
+        bounds.height,
+        viewSize.width,
+        viewSize.height,
+        rootFixed ? { x: rootFixed.x + bounds.width / 2, y: rootFixed.y } : undefined,
+      ),
     );
-  }, [adjustedTargetRect, viewSize, rootSize.width, rootSize.height, rootFixed]);
+  }, [adjustedTargetRect, viewSize, rootFixed]);
+
+  useEffect(() => {
+    updateRootAttrs();
+  }, [updateRootAttrs]);
 
   const handleMenuAnchorDrag = useCallback(
     (e: React.PointerEvent) => {

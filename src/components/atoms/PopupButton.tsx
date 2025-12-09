@@ -90,62 +90,49 @@ export const FixedPopupButton: React.FC<FixedPopupButtonOption> = ({
 
   const ref = useRef<HTMLDivElement>(null);
   const refPopup = useRef<HTMLDivElement>(null);
-  const [boundsState, setBoundsState] = useState<any>();
-  const [translateY, setTranslateY] = useState<number>();
+  const [popupAttrs, setPopupAttrs] = useState<{ className: string; style: React.CSSProperties }>();
 
-  const onGlobalScroll = useCallback(() => {
-    if (!opened || !ref.current) return;
-    setBoundsState({});
-  }, [opened]);
-  useGlobalScroll(onGlobalScroll);
-
-  const popupAttrs = useMemo(() => {
-    if (!ref.current || !opened) return;
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    boundsState; // For exhaustive-deps
+  const updatePopupAttrs = useCallback(() => {
+    if (!ref.current || !opened || !refPopup.current) {
+      setPopupAttrs(undefined);
+      return;
+    }
 
     const bounds = ref.current.getBoundingClientRect();
+    const popupBounds = refPopup.current.getBoundingClientRect();
+    const translateY =
+      bounds.bottom + popupBounds.height > window.innerHeight ? -bounds.height - popupBounds.height : 0;
     const classBase =
       "z-10 fixed bg-white border rounded-xs drop-shadow-md " + (translateY === undefined ? "opacity-0 " : "");
     const translateAdjustment = translateY ? ` translateY(${translateY}px)` : "";
 
     switch (popupPosition) {
       case "right":
-        return {
+        setPopupAttrs({
           className: classBase,
           style: { left: bounds.left, top: bounds.bottom, transform: translateAdjustment },
-        };
+        });
+        return;
       case "left":
-        return {
+        setPopupAttrs({
           className: classBase,
           style: { transform: "translateX(-100%)" + translateAdjustment, left: bounds.right, top: bounds.bottom },
-        };
+        });
+        return;
       default:
-        return {
+        setPopupAttrs({
           className: classBase,
           style: {
             transform: "translateX(-50%)" + translateAdjustment,
             left: bounds.left + bounds.width / 2,
             top: bounds.bottom,
           },
-        };
+        });
+        return;
     }
-  }, [popupPosition, opened, boundsState, translateY]);
-
-  useEffect(() => {
-    if (opened && ref.current && refPopup.current) {
-      const buttonBounds = ref.current.getBoundingClientRect();
-      const popupBounds = refPopup.current.getBoundingClientRect();
-      if (buttonBounds.bottom + popupBounds.height > window.innerHeight) {
-        setTranslateY(-buttonBounds.height - popupBounds.height);
-      } else {
-        setTranslateY(0);
-      }
-    } else {
-      setTranslateY(undefined);
-    }
-  }, [opened, boundsState]);
+  }, [popupPosition, opened]);
+  useGlobalScroll(updatePopupAttrs);
+  useEffect(updatePopupAttrs, [updatePopupAttrs]);
 
   return (
     <div ref={ref}>

@@ -44,7 +44,6 @@ export default [
       "no-redeclare": "off",
 
       // TODO: Remove these workarounds and follow the recommended rules for react-hooks
-      "react-hooks/refs": "off",
       "react-hooks/set-state-in-effect": "off",
 
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],

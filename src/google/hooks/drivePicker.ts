@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useLayoutEffect, useRef } from "react";
 import useGoogleDrivePicker from "react-google-drive-picker";
 import { GoogleDriveFolder } from "../types";
 
@@ -11,7 +11,9 @@ interface Props {
 export function useDrivePicker({ token, onFolderPick, onClose }: Props) {
   const [_openPicker] = useGoogleDrivePicker();
   const pickerRef = useRef(_openPicker);
-  pickerRef.current = _openPicker;
+  useLayoutEffect(() => {
+    pickerRef.current = _openPicker;
+  }, [_openPicker]);
 
   const openPicker = useCallback(() => {
     if (!token) return;
