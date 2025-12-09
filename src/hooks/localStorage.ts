@@ -1,5 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Debounce, newDebounce } from "../utils/stateful/debounce";
+import { useEffect, useMemo, useState } from "react";
+import { newDebounce } from "../utils/stateful/debounce";
 
 type StoredData<T> = {
   version?: string;
@@ -17,39 +17,27 @@ export function useLocalStorageAdopter<T>({
   initialValue: T | (() => T);
   duration?: number;
 }) {
-  const [state, setState] = useState(initialValue);
-  const [saveDebounce, setSaveDebounce] = useState<Debounce>();
-  const stateRef = useRef(state);
+  const [state, setState] = useState(() => {
+    let v = key ? getFromLocalStorage<T>(key, version) : undefined;
+    if (v) return v;
+    return typeof initialValue === "function" ? (initialValue as () => T)() : initialValue;
+  });
 
-  // Retrieve the value from the storage at first.
-  useLayoutEffect(() => {
-    if (!key) return;
-
-    const storedValue = getFromLocalStorage<T>(key, version);
-    if (storedValue) {
-      setState(storedValue);
-    }
-  }, [key, version]);
-
-  // Let the debounce function always see the latest state value without depending on it.
-  useEffect(() => {
-    const debounce = newDebounce(() => {
+  const saveDebounce = useMemo(() => {
+    return newDebounce((v: T) => {
       if (!key) return;
-      localStorage.setItem(key, JSON.stringify({ value: stateRef.current, version: version } as StoredData<T>));
+      localStorage.setItem(key, JSON.stringify({ value: v, version: version } as StoredData<T>));
     }, duration);
-    setSaveDebounce(() => debounce);
   }, [key, version, duration]);
-
-  useEffect(() => {
-    stateRef.current = state;
-    saveDebounce?.();
-  }, [state, saveDebounce]);
-
   useEffect(() => {
     return () => {
       saveDebounce?.flush();
     };
   }, [saveDebounce]);
+
+  useEffect(() => {
+    saveDebounce?.(state);
+  }, [state, saveDebounce]);
 
   return [state, setState] as const;
 }

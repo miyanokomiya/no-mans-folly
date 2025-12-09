@@ -44,23 +44,33 @@ export const SheetList: React.FC = () => {
     return ret;
   }, [awareness]);
 
-  const [thumbnails, setThumbnails] = useState<Record<string, HTMLImageElement>>({});
+  const sheetIdByThumbnail = useMemo(
+    () => new Map(sheets.map((s) => [getSheetThumbnailFileName(s.id), s.id])),
+    [sheets],
+  );
+
+  const initialThumbnails = useMemo(() => {
+    return sheetIdByThumbnail.entries().reduce<Record<string, HTMLImageElement>>((acc, [imageId, sheetId]) => {
+      const image = imageStore.getImage(imageId);
+      if (image) acc[sheetId] = image;
+      return acc;
+    }, {});
+  }, [imageStore, sheetIdByThumbnail]);
+
+  const [lazyLoadedThumbnails, setLazyLoadedThumbnails] = useState<Record<string, HTMLImageElement>>({});
   useEffect(() => {
-    const imageIdToSheetIdMap = new Map(sheets.map((s) => [getSheetThumbnailFileName(s.id), s.id]));
-    setThumbnails(
-      imageIdToSheetIdMap.entries().reduce<Record<string, HTMLImageElement>>((acc, [imageId, sheetId]) => {
-        const image = imageStore.getImage(imageId);
-        if (image) acc[sheetId] = image;
-        return acc;
-      }, {}),
-    );
     return imageStore.watch(([id, image]) => {
-      const sheetId = imageIdToSheetIdMap.get(id);
+      const sheetId = sheetIdByThumbnail.get(id);
       if (sheetId) {
-        setThumbnails((val) => ({ ...val, [sheetId]: image }));
+        setLazyLoadedThumbnails((val) => ({ ...val, [sheetId]: image }));
       }
     });
-  }, [imageStore, sheets]);
+  }, [imageStore, sheetIdByThumbnail]);
+
+  const getThumbnail = useCallback<(id: string) => HTMLImageElement | undefined>(
+    (id: string) => initialThumbnails[id] ?? lazyLoadedThumbnails[id],
+    [initialThumbnails, lazyLoadedThumbnails],
+  );
 
   const handleSheetSelect = useCallback(
     (id: string) => {
@@ -142,7 +152,7 @@ export const SheetList: React.FC = () => {
           selected={s.id === selectedSheet?.id}
           index={i + 1}
           canDeleteSheet={canDeleteSheet}
-          thumbnail={thumbnails[s.id]}
+          thumbnail={getThumbnail(s.id)}
           awarenessCount={sheetAwareness.get(s.id)?.length}
           onChangeName={handleNameChange}
           onDelete={handleSheetDeleteConfirm}
@@ -155,7 +165,7 @@ export const SheetList: React.FC = () => {
     selectedSheet,
     sheets,
     canDeleteSheet,
-    thumbnails,
+    getThumbnail,
     sheetAwareness,
     handleNameChange,
     handleSheetDeleteConfirm,
