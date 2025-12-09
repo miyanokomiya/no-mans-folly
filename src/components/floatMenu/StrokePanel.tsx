@@ -80,14 +80,14 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
         <InlineField label="Cap:">
           <RadioSelectInput
             value={getLineCap(stroke.lineCap)}
-            options={useMemo(getLineCapOptions, [])}
+            options={useMemo(() => getLineCapOptions(), [])}
             onChange={onCapChanged}
           />
         </InlineField>
         <InlineField label="Join:">
           <RadioSelectInput
             value={getLineJoin(stroke.lineJoin)}
-            options={useMemo(getLineJoinOptions, [])}
+            options={useMemo(() => getLineJoinOptions(), [])}
             onChange={onJoinChanged}
           />
         </InlineField>
@@ -164,7 +164,7 @@ const LineDashField: React.FC<LineDashFieldProps> = ({ stroke, onChange }) => {
   return (
     <BlockGroupField label="Dash">
       <div className="flex justify-end">
-        <RadioSelectInput value={lineDash} options={useMemo(getLineDashOptions, [])} onChange={onDashChanged} />
+        <RadioSelectInput value={lineDash} options={useMemo(() => getLineDashOptions(), [])} onChange={onDashChanged} />
       </div>
       <InlineField label="Array:" inert={lineDash !== "custom"}>
         <div className="w-24">

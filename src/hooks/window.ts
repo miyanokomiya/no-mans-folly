@@ -40,11 +40,13 @@ export function useGlobalClickEffect(fn: (e: MouseEvent) => void, capture = fals
 
 export function useGlobalMousemoveEffect(fn: (e: PointerEvent) => void) {
   const fnRef = useRef(fn);
-  fnRef.current = fn;
   const handle = useCallback((e: PointerEvent) => {
     fnRef.current?.(e);
   }, []);
 
+  useEffect(() => {
+    fnRef.current = fn;
+  }, [fn]);
   useEffect(() => {
     window.addEventListener("pointermove", handle);
     return () => {
@@ -55,11 +57,13 @@ export function useGlobalMousemoveEffect(fn: (e: PointerEvent) => void) {
 
 export function useGlobalMouseupEffect(fn: (e: PointerEvent) => void) {
   const fnRef = useRef(fn);
-  fnRef.current = fn;
   const handle = useCallback((e: PointerEvent) => {
     fnRef.current?.(e);
   }, []);
 
+  useEffect(() => {
+    fnRef.current = fn;
+  }, [fn]);
   useEffect(() => {
     window.addEventListener("pointerup", handle);
     return () => {
@@ -221,8 +225,10 @@ export function useUnloadWarning(active: boolean) {
  */
 export function usePageShowBackEffect(fn: () => void) {
   const fnRef = useRef(fn);
-  fnRef.current = fn;
 
+  useEffect(() => {
+    fnRef.current = fn;
+  }, [fn]);
   useEffect(() => {
     const handler = (e: PageTransitionEvent) => {
       if (e.persisted) {

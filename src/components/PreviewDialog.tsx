@@ -281,6 +281,8 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
     setViewport(smctx.getViewRect());
   }, [setViewport, smctx]);
 
+  const [popupKey, setPopupKey] = useState("");
+
   const handleScaleFit = useCallback(() => {
     setPopupKey("");
     if (shapeComposite.shapes.length === 0) return;
@@ -289,7 +291,6 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
     setViewport(rect);
   }, [shapeComposite, setViewport]);
 
-  const [popupKey, setPopupKey] = useState("");
   const handlePopupClick = useCallback(
     (value: string) => {
       setPopupKey((key) => (key === value ? "" : value));

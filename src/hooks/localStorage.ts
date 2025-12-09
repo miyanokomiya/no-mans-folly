@@ -18,21 +18,25 @@ export function useLocalStorageAdopter<T>({
   duration?: number;
 }) {
   const initialRef = useRef<T>(undefined);
+  const [state, setState] = useState<T>();
 
-  // Restore the value at the first occation without delay.
-  if (!initialRef.current) {
-    const value: T = typeof initialValue === "function" ? (initialValue as any)() : initialValue;
-    if (key) {
-      initialRef.current = getFromLocalStorage<T>(key, version) ?? value;
-    } else {
-      initialRef.current = value;
+  useEffect(() => {
+    // Restore the value at the first occation without delay.
+    if (!initialRef.current) {
+      const value: T = typeof initialValue === "function" ? (initialValue as any)() : initialValue;
+      if (key) {
+        initialRef.current = getFromLocalStorage<T>(key, version) ?? value;
+      } else {
+        initialRef.current = value;
+      }
     }
-  }
-
-  const [state, setState] = useState<T>(initialRef.current);
+  }, [initialValue, key, version]);
 
   const stateRef = useRef(state);
-  stateRef.current = state;
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
   const saveThrottle = useMemo(
     () =>
       newDebounce(() => {

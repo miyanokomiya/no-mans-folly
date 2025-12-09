@@ -1282,7 +1282,7 @@ function getDocItemUnitRange(
     let x = location.x;
     let y = location.y;
     let current = item;
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
       if (x === 0) {
         if (y === 0) {
@@ -1309,7 +1309,7 @@ function getDocItemUnitRange(
     let x = location.x;
     let y = location.y;
     let current = item;
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
       if (x === lines[y].outputs.length - 1) {
         if (y === lines.length - 1) {
