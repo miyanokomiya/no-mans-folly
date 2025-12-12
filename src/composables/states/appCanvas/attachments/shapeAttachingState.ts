@@ -10,7 +10,6 @@ import { Shape } from "../../../../models";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { IVec2 } from "okageo";
 import { TAU } from "../../../../utils/geometry";
-import { canAttachToShape } from "../../../shapeAttachmentHandler";
 
 interface Option {
   targetIds: string[];
@@ -23,9 +22,7 @@ export function newShapeAttachingState(option: Option): AppCanvasState {
 
   function getTargets(ctx: AppCanvasStateContext): Shape[] {
     const shapeComposite = ctx.getShapeComposite();
-    return option.targetIds
-      .map((id) => shapeComposite.shapeMap[id])
-      .filter((s) => !!s && canAttachToShape(shapeComposite, s));
+    return option.targetIds.map((id) => shapeComposite.shapeMap[id]).filter((s) => !!s && shapeComposite.canAttach(s));
   }
 
   return {

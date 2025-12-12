@@ -153,6 +153,7 @@ function getUpdatedAttachedMap(
   mapEach(shapeMap, (s, id) => {
     const lineId = s.attachment?.id ?? updatedMap[id]?.attachment?.id;
     if (!lineId || !targetLineIdSet.has(lineId)) return;
+    if (!shapeMap[lineId] || !isLineShape(shapeMap[lineId])) return;
 
     const idSet = attachedMap.get(lineId);
     if (idSet) {
@@ -170,6 +171,7 @@ function getUpdatedAttachedMap(
 
     const lineId = s.attachment.id;
     if (targetLineIdSet.has(lineId)) return;
+    if (!shapeMap[lineId] || !isLineShape(shapeMap[lineId])) return;
 
     const idSet = attachedMap.get(lineId);
     if (idSet) {
