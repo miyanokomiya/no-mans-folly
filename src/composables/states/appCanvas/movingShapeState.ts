@@ -28,6 +28,7 @@ import { getFrameShapeIdsInBranches, getRootShapeIdsByFrame } from "../../frame"
 import { ModifierOptions } from "../../../utils/devices";
 import { newCacheWithArg } from "../../../utils/stateful/cache";
 import { handleCommonWheel } from "../commons";
+import { isLineShape } from "../../../shapes/line";
 
 interface Option extends ModifierOptions {
   boundingBox?: BoundingBox;
@@ -159,8 +160,14 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
             const s = shapeMap[id];
             if (s) {
               m[id] = shapeComposite.transformShape(s, affine);
-              // When the shape is attached and attaching target isn't moving together, it should be detached.
-              if (s.attachment && !targetIdSet.has(s.attachment.id)) m[id].attachment = undefined;
+              // When the shape is attached to a line and attaching target isn't moving together, it should be detached.
+              if (
+                s.attachment &&
+                !targetIdSet.has(s.attachment.id) &&
+                shapeMap[s.attachment.id] &&
+                isLineShape(shapeMap[s.attachment.id])
+              )
+                m[id].attachment = undefined;
             }
             return m;
           }, {});

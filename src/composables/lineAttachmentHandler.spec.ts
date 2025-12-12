@@ -41,6 +41,16 @@ describe("getLineAttachmentPatch", () => {
       rotation: Math.PI / 2,
     },
   });
+  const shapeC = createShape(getCommonStruct, "rectangle", {
+    id: "c",
+    attachment: {
+      id: shapeB.id,
+      to: { x: 0.2, y: 0 },
+      anchor: { x: 0.5, y: 0.5 },
+      rotationType: "relative",
+      rotation: Math.PI / 2,
+    },
+  });
 
   test("should return shape patch to move shapes to the attached points", () => {
     const shapeComposite = newShapeComposite({
@@ -68,9 +78,9 @@ describe("getLineAttachmentPatch", () => {
     expect(result1[shapeB.id].rotation).toBeCloseTo(Math.PI / 2);
   });
 
-  test("should clear attachment when attached line is missing", () => {
+  test("should ignore attachments to non-line shapes", () => {
     const shapeComposite = newShapeComposite({
-      shapes: [shapeA, shapeB],
+      shapes: [shapeA, shapeB, shapeC],
       getStruct: getCommonStruct,
     });
 
@@ -79,8 +89,8 @@ describe("getLineAttachmentPatch", () => {
         [shapeB.id]: { width: 200 } as Partial<RectangleShape>,
       },
     });
-    expect(result1[shapeB.id]).toHaveProperty("attachment");
-    expect(result1[shapeB.id].attachment).toBe(undefined);
+    expect(result1[shapeB.id]).toBe(undefined);
+    expect(result1[shapeC.id]).toBe(undefined);
   });
 
   test("should detach unattachable shapes", () => {

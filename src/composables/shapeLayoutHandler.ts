@@ -11,6 +11,7 @@ import { getCurveLinePatch } from "./curveLineHandler";
 import { getFrameAlignLayoutPatch } from "./frameGroups/frameAlignGroupHandler";
 import { getLineAttachmentPatch } from "./lineAttachmentHandler";
 import { getLineLabelPatch } from "./lineLabelHandler";
+import { getShapeAttachmentPatch } from "./shapeAttachmentHandler";
 import { ShapeComposite, getDeleteTargetIds, getNextShapeComposite } from "./shapeComposite";
 import { getTreeLayoutPatchFunctions } from "./shapeHandlers/treeHandler";
 import { getLineRelatedDependantMap } from "./shapeRelation";
@@ -197,6 +198,7 @@ function getLineRelatedLayoutPatch(
         (_, patch) => getCurveLinePatch(sc, { update: patch }),
         (_, patch) => getLineLabelPatch(sc, { update: patch }),
         (_, patch) => getLineAttachmentPatch(sc, { update: patch }),
+        (_, patch) => getShapeAttachmentPatch(sc, { update: patch }),
       ],
       sc.shapeMap,
       currentPatch,
