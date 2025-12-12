@@ -34,6 +34,7 @@ import { AlignBoxShape } from "../../../shapes/align/alignBox";
 import { isSymbolShape, SymbolShape } from "../../../shapes/symbol";
 import { generateSymbolAssetId, getAssetIdSrcStr } from "../../../shapes/utils/symbol";
 import { getSlideOverlayPosition } from "./commons";
+import { getAttachmentOption, getPatchByDetachFromShape } from "../../shapeAttachmentHandler";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get GRID_ON() {
@@ -83,6 +84,18 @@ export const CONTEXT_MENU_ITEM_SRC = {
     return {
       label: i18n.t("contextmenu.duplicate_as_path"),
       key: "DUPLICATE_AS_PATH",
+    };
+  },
+  get ATTACH_TO_SHAPE() {
+    return {
+      label: i18n.t("contextmenu.attach_to_shape"),
+      key: "ATTACH_TO_SHAPE",
+    };
+  },
+  get DETACH_FROM_SHAPE() {
+    return {
+      label: i18n.t("contextmenu.detach_from_shape"),
+      key: "DETACH_FROM_SHAPE",
     };
   },
   get GROUP() {
@@ -304,12 +317,24 @@ export function getMenuItemsForSelectedShapes(
     lockItems.push(CONTEXT_MENU_ITEM_SRC.SEPARATOR);
   }
 
+  const unlockedIds = unlocked.map((s) => s.id);
+  const attachmentItems: ContextMenuItem[] = [];
+  switch (getAttachmentOption(shapeComposite, unlockedIds)) {
+    case "attach":
+      attachmentItems.push(CONTEXT_MENU_ITEM_SRC.ATTACH_TO_SHAPE);
+      break;
+    case "detach":
+      attachmentItems.push(CONTEXT_MENU_ITEM_SRC.DETACH_FROM_SHAPE);
+      break;
+  }
+
   return [
     ...lockItems,
     CONTEXT_MENU_ITEM_SRC.CREATE_SYMBOL,
     CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE,
     ...(shapes[0].parentId ? [CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE_WITHIN_GROUP] : []),
     CONTEXT_MENU_ITEM_SRC.DUPLICATE_AS_PATH,
+    ...attachmentItems,
     CONTEXT_MENU_ITEM_SRC.SEPARATOR,
     ...(shapes.some((s) => isSvgImageShape(s)) ? [CONTEXT_MENU_ITEM_SRC.PARSE_SVG] : []),
     CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
@@ -360,6 +385,14 @@ export function handleContextItemEvent(
     case CONTEXT_MENU_ITEM_SRC.DUPLICATE_AS_PATH.key: {
       duplicateSelectedShapesAsPaths(ctx);
       return;
+    }
+    case CONTEXT_MENU_ITEM_SRC.ATTACH_TO_SHAPE.key: {
+      const ids = Object.keys(ctx.getSelectedShapeIdMap());
+      return () => ctx.states.newShapeAttachingState({ targetIds: ids });
+    }
+    case CONTEXT_MENU_ITEM_SRC.DETACH_FROM_SHAPE.key: {
+      detachFromShape(ctx);
+      return ctx.states.newSelectionHubState;
     }
     case CONTEXT_MENU_ITEM_SRC.GROUP.key: {
       groupShapes(ctx);
@@ -569,6 +602,11 @@ export async function exportAsSVG(ctx: AppCanvasStateContext, builder: SVGImageB
 
 function generateShapeFileName(): string {
   return `shapes_${Date.now()}`;
+}
+
+function detachFromShape(ctx: AppCanvasStateContext) {
+  const shapeComposite = ctx.getShapeComposite();
+  ctx.patchShapes(getPatchByDetachFromShape(shapeComposite, Object.keys(ctx.getSelectedShapeIdMap())));
 }
 
 export function groupShapes(ctx: AppCanvasStateContext): boolean {
