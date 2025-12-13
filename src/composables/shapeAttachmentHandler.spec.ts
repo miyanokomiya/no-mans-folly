@@ -79,4 +79,19 @@ describe("getShapeAttachmentPatch", () => {
     const res1 = getShapeAttachmentPatch(shapeComposite, { update: { [rotated.id]: { rotation: 0 } } });
     expect(res1[source.id]).toEqual({ p: { x: 20, y: -200 } });
   });
+
+  test("should initialize relative angle when it's newly set", () => {
+    const source = { ...shape, rotation: Math.PI, attachment: { ...attachment, rotationType: "absolute" as const } };
+    const shapeComposite = newShapeComposite({
+      shapes: [{ ...attached, rotation: Math.PI / 2 }, source],
+      getStruct: getCommonStruct,
+    });
+
+    const res0 = getShapeAttachmentPatch(shapeComposite, {
+      update: {
+        [source.id]: { attachment: { ...attachment, rotationType: "relative" } },
+      },
+    });
+    expect(res0[source.id]).toEqual({ rotation: Math.PI / 2 });
+  });
 });
