@@ -292,7 +292,7 @@ function renderShapeAttachmentAnchors(
   applyFillStyle(ctx, { color: style.selectionPrimary });
   anchors.forEach(([anchorP]) => {
     ctx.beginPath();
-    ctx.arc(anchorP.x, anchorP.y, 6 * scale, 0, TAU);
+    ctx.arc(anchorP.x, anchorP.y, 3 * scale, 0, TAU);
     ctx.fill();
   });
 

@@ -16,6 +16,11 @@ import { MultipleSelectedHandler, newMultipleSelectedHandler } from "../../shape
 import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { getShapeStatusColor } from "./utils/style";
 import { canShapesJoinAlignBox } from "../../alignHandler";
+import {
+  getPatchByDetachFromShape,
+  newShapeAttachmentHandler,
+  ShapeAttachmentHandler,
+} from "../../shapeAttachmentHandler";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -28,6 +33,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
   let boundingBox: BoundingBox;
   let scode: ShapeSelectionScope | undefined;
   let handler: MultipleSelectedHandler;
+  let shapeAttachmentHandler: ShapeAttachmentHandler;
 
   function initHandlers(ctx: AppCanvasStateContext, rotation = 0) {
     const shapeComposite = ctx.getShapeComposite();
@@ -61,6 +67,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
     });
 
     boundingBox.render(renderCtx, ctx.getStyleScheme(), scale);
+    shapeAttachmentHandler.render(renderCtx, style, scale);
     handler.render(renderCtx, style, scale);
   };
 
@@ -101,6 +108,11 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
       ctx.showFloatMenu();
       ctx.setCommandExams(getCommonCommandExams(ctx));
 
+      shapeAttachmentHandler = newShapeAttachmentHandler({
+        getShapeComposite: ctx.getShapeComposite,
+        targetIds: selectedIds,
+      });
+
       // Recalculate the bounding because shapes aren't always transformed along with the bounding box.
       // => Also, need to conserve the rotation.
       initHandlers(ctx, option?.boundingBox?.getRotation() ?? 0);
@@ -120,6 +132,23 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
 
           switch (event.data.options.button) {
             case 0: {
+              const handlerHitResult = handler.hitTest(event.data.point, ctx.getScale());
+              if (handlerHitResult) {
+                switch (handlerHitResult.type) {
+                  case "rotation": {
+                    initHandlers(ctx, handlerHitResult.info[1]);
+                    ctx.redraw();
+                    return;
+                  }
+                }
+              }
+
+              const attachmentResult = shapeAttachmentHandler.hitTest(event.data.point, ctx.getScale());
+              if (attachmentResult) {
+                ctx.patchShapes(getPatchByDetachFromShape(ctx.getShapeComposite(), [attachmentResult.id]));
+                return ctx.states.newSelectionHubState;
+              }
+
               const hitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
               if (hitResult) {
                 switch (hitResult.type) {
@@ -130,17 +159,6 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
                     return () => newRotatingState({ boundingBox });
                   case "move":
                     return () => ctx.states.newMovingHubState({ boundingBox });
-                }
-              }
-
-              const handlerHitResult = handler.hitTest(event.data.point, ctx.getScale());
-              if (handlerHitResult) {
-                switch (handlerHitResult.type) {
-                  case "rotation": {
-                    initHandlers(ctx, handlerHitResult.info[1]);
-                    ctx.redraw();
-                    return;
-                  }
                 }
               }
 
@@ -198,13 +216,23 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
               return;
           }
         case "pointerhover": {
-          const hitResult = boundingBox.hitTest(event.data.current, ctx.getScale());
-          if (boundingBox.saveHitResult(hitResult)) {
+          const handerHitResult = handler.hitTest(event.data.current, ctx.getScale());
+          if (handler.saveHitResult(handerHitResult)) {
             ctx.redraw();
           }
 
-          const handerHitResult = handler.hitTest(event.data.current, ctx.getScale());
-          if (handler.saveHitResult(handerHitResult)) {
+          const attachmentHitResult = handerHitResult
+            ? undefined
+            : shapeAttachmentHandler.hitTest(event.data.current, ctx.getScale());
+          if (shapeAttachmentHandler.saveHitResult(attachmentHitResult)) {
+            ctx.redraw();
+          }
+
+          const hitResult =
+            handerHitResult || attachmentHitResult
+              ? undefined
+              : boundingBox.hitTest(event.data.current, ctx.getScale());
+          if (boundingBox.saveHitResult(hitResult)) {
             ctx.redraw();
           }
 

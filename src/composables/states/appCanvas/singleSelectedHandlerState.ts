@@ -52,7 +52,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
     let shapeHandler: H;
     let boundingBox: BoundingBox;
     let smartBranchHandler: SmartBranchHandler | undefined;
-    let shapeAttachmentHandler: ShapeAttachmentHandler | undefined;
+    let shapeAttachmentHandler: ShapeAttachmentHandler;
 
     const src = createFn(
       {
@@ -78,9 +78,9 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
           renderCtx.fill();
         });
       }
-      shapeAttachmentHandler?.render(renderCtx, style, scale);
       smartBranchHandler?.render(renderCtx, style, scale);
       boundingBox.render(renderCtx, style, scale);
+      shapeAttachmentHandler.render(renderCtx, style, scale);
       shapeHandler.render(renderCtx, style, scale);
       src.render?.(ctx, renderCtx);
     };
@@ -143,6 +143,12 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
 
             switch (event.data.options.button) {
               case 0: {
+                const attachmentResult = shapeAttachmentHandler.hitTest(event.data.point, ctx.getScale());
+                if (attachmentResult) {
+                  ctx.patchShapes(getPatchByDetachFromShape(ctx.getShapeComposite(), [attachmentResult.id]));
+                  return ctx.states.newSelectionHubState;
+                }
+
                 const boundingHitResult = boundingBox.hitTest(event.data.point, ctx.getScale());
                 if (boundingHitResult) {
                   switch (boundingHitResult.type) {
@@ -158,21 +164,11 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
 
                 if (smartBranchHandler) {
                   const smartBranchHitResult = smartBranchHandler.hitTest(event.data.point, ctx.getScale());
-                  smartBranchHandler.saveHitResult(smartBranchHitResult);
                   if (smartBranchHitResult) {
                     return () =>
                       ctx.states.newSmartBranchPointerDownState({
                         smartBranchHandler: smartBranchHandler!,
                       });
-                  }
-                }
-
-                if (shapeAttachmentHandler) {
-                  const result = shapeAttachmentHandler.hitTest(event.data.point, ctx.getScale());
-                  shapeAttachmentHandler.saveHitResult(result);
-                  if (result) {
-                    ctx.patchShapes(getPatchByDetachFromShape(ctx.getShapeComposite(), [result.id]));
-                    return ctx.states.newSelectionHubState;
                   }
                 }
 
@@ -206,11 +202,20 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
             if (shapeHandler.saveHitResult(nextHitResult)) {
               ctx.redraw();
             }
-
             if (nextHitResult) {
+              shapeAttachmentHandler.saveHitResult();
               boundingBox.saveHitResult();
               smartBranchHandler?.saveHitResult();
-              shapeAttachmentHandler?.saveHitResult();
+              return;
+            }
+
+            const attachmentResult = shapeAttachmentHandler.hitTest(event.data.current, ctx.getScale());
+            if (shapeAttachmentHandler.saveHitResult(attachmentResult)) {
+              ctx.redraw();
+            }
+            if (attachmentResult) {
+              boundingBox.saveHitResult();
+              smartBranchHandler?.saveHitResult();
               return;
             }
 
@@ -218,10 +223,8 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
             if (boundingBox.saveHitResult(hitBounding)) {
               ctx.redraw();
             }
-
             if (hitBounding) {
               smartBranchHandler?.saveHitResult();
-              shapeAttachmentHandler?.saveHitResult();
               return;
             }
 
@@ -235,15 +238,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
               }
 
               if (smartBranchHitResult) {
-                shapeAttachmentHandler?.saveHitResult();
-                return;
-              }
-            }
-
-            if (shapeAttachmentHandler) {
-              const result = shapeAttachmentHandler.hitTest(event.data.current, ctx.getScale());
-              if (shapeAttachmentHandler.saveHitResult(result)) {
-                ctx.redraw();
+                shapeAttachmentHandler.saveHitResult();
                 return;
               }
             }
