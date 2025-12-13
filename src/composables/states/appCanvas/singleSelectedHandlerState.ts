@@ -63,12 +63,12 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
       ...o,
     );
 
+    // Should render in reversed order of handing priority
     const render: AppCanvasState["render"] = (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
       const shapeComposite = ctx.getShapeComposite();
 
-      // Render in reversed order of handing priority
       if (shapeComposite.attached(targetShape, "line")) {
         const anchorP = getAttachmentAnchorPoint(shapeComposite, targetShape);
         scaleGlobalAlpha(renderCtx, 0.7, () => {
