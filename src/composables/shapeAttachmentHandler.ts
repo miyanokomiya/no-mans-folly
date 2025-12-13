@@ -1,11 +1,17 @@
-import { add, getRectCenter, rotate, sub } from "okageo";
-import { EntityPatchInfo, Shape } from "../models";
+import { add, getCenter, getDistance, getRadian, getRectCenter, IVec2, rotate, sub } from "okageo";
+import { EntityPatchInfo, Shape, StyleScheme } from "../models";
 import { isLineShape } from "../shapes/line";
-import { mapEach, mapReduce, patchPipe, toMap } from "../utils/commons";
-import { getLocationFromRateOnRectPath, getRotationAffine } from "../utils/geometry";
+import { findBackward, mapEach, mapReduce, patchPipe, toMap } from "../utils/commons";
+import { getLocationFromRateOnRectPath, getRotationAffine, TAU } from "../utils/geometry";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { getAffineByMoveToAttachedPoint } from "./lineAttachmentHandler";
+import { CanvasCTX } from "../utils/types";
+import { applyFillStyle } from "../utils/fillStyle";
+import { applyStrokeStyle } from "../utils/strokeStyle";
+import { defineShapeHandler } from "./shapeHandlers/core";
+import { renderOutlinedCircle } from "../utils/renderer";
+import { COLORS } from "../utils/color";
 
 export function getAttachmentOption(
   shapeComposite: ShapeComposite,
@@ -45,15 +51,15 @@ export function getPatchByDetachFromShape(
   );
 }
 
-export interface ShapeAttachmentHandler {
+interface ShapeAttachmentLayoutHandler {
   onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> };
 }
 
-interface Option {
+interface ShapeAttachmentLayoutHandlerOption {
   ctx: Pick<AppCanvasStateContext, "getShapeComposite">;
 }
 
-function newShapeAttachmentHandler(option: Option): ShapeAttachmentHandler {
+function newShapeAttachmentLayoutHandler(option: ShapeAttachmentLayoutHandlerOption): ShapeAttachmentLayoutHandler {
   function onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> } {
     const shapeComposite = option.ctx.getShapeComposite();
     const shapeMap = shapeComposite.shapeMap;
@@ -184,8 +190,135 @@ export function getShapeAttachmentPatch(
 ): { [id: string]: Partial<Shape> } {
   if (!patchInfo.update) return {};
 
-  const handler = newShapeAttachmentHandler({
+  const handler = newShapeAttachmentLayoutHandler({
     ctx: { getShapeComposite: () => srcComposite },
   });
   return handler.onModified(patchInfo.update);
 }
+
+function renderShapeAttachments(
+  ctx: CanvasCTX,
+  option: {
+    scale: number;
+    style: StyleScheme;
+    shapeComposite: ShapeComposite;
+    targets: Shape[];
+  },
+) {
+  const { shapeComposite, scale, style } = option;
+  const infoList = option.targets.map((s) => getAttachmentPoints(shapeComposite, s)).filter((info) => !!info);
+  if (infoList.length === 0) return;
+
+  applyStrokeStyle(ctx, {
+    color: style.selectionPrimary,
+    width: 3 * scale,
+    dash: "dot",
+  });
+  ctx.beginPath();
+  infoList.forEach(([anchorP, toP]) => {
+    ctx.moveTo(anchorP.x, anchorP.y);
+    ctx.lineTo(toP.x, toP.y);
+  });
+  ctx.stroke();
+
+  applyFillStyle(ctx, { color: style.selectionPrimary });
+  infoList.forEach(([anchorP]) => {
+    ctx.beginPath();
+    ctx.arc(anchorP.x, anchorP.y, 6 * scale, 0, TAU);
+    ctx.fill();
+  });
+
+  applyFillStyle(ctx, { color: style.selectionPrimary });
+  infoList.forEach(([, toP]) => {
+    ctx.beginPath();
+    ctx.arc(toP.x, toP.y, 6 * scale, 0, TAU);
+    ctx.fill();
+  });
+}
+
+function getAttachmentPoints(shapeComposite: ShapeComposite, shape: Shape): [anchorP: IVec2, toP: IVec2] | undefined {
+  if (!shape.attachment) return;
+
+  const target = shapeComposite.shapeMap[shape.attachment.id];
+  if (!target || !shapeComposite.canBeShapeAttached(target)) return;
+
+  const sourcePath = shapeComposite.getLocalRectPolygon(shape);
+  const anchorP = getLocationFromRateOnRectPath(sourcePath, shape.rotation, shape.attachment.anchor);
+  const targetPath = shapeComposite.getLocalRectPolygon(target);
+  const toP = getLocationFromRateOnRectPath(targetPath, target.rotation, shape.attachment.to);
+  return [anchorP, toP];
+}
+
+const ANCHOR_SIZE = 8;
+
+type HitAnchor = Readonly<[type: "detach", p: IVec2, id: string, rotation: number]>;
+
+export interface ShapeAttachmentHitResult {
+  type: HitAnchor[0];
+  id: string;
+}
+
+interface ShapeAttachmentHandlerOption {
+  getShapeComposite: () => ShapeComposite;
+  targetIds: string[];
+}
+
+export const newShapeAttachmentHandler = defineShapeHandler<ShapeAttachmentHitResult, ShapeAttachmentHandlerOption>(
+  (option) => {
+    function getDetachAnchors(): HitAnchor[] {
+      const shapeComposite = option.getShapeComposite();
+      return option.targetIds
+        .map((id) => {
+          const s = shapeComposite.shapeMap[id];
+          const info = getAttachmentPoints(shapeComposite, s);
+          if (!info) return;
+          return ["detach", getCenter(info[0], info[1]), id, getRadian(info[0], info[1])] as const;
+        })
+        .filter((info) => !!info);
+    }
+
+    function hitTest(p: IVec2, scale = 1): ShapeAttachmentHitResult | undefined {
+      const threshold = ANCHOR_SIZE * scale;
+      const hit = findBackward(getDetachAnchors(), (a) => getDistance(a[1], p) <= threshold);
+      if (hit) {
+        return { type: hit[0], id: hit[2] };
+      }
+    }
+
+    function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: ShapeAttachmentHitResult) {
+      const shapeComposite = option.getShapeComposite();
+      renderShapeAttachments(ctx, {
+        scale,
+        style,
+        shapeComposite,
+        targets: option.targetIds.map((id) => shapeComposite.shapeMap[id]).filter((s) => !!s),
+      });
+
+      const threshold = ANCHOR_SIZE * scale;
+      const anchors = getDetachAnchors();
+
+      applyStrokeStyle(ctx, { color: COLORS.BLACK, width: 2 * scale });
+      anchors.forEach((anchor) => {
+        if (hitResult?.type === anchor[0] && hitResult?.id === anchor[2]) {
+          renderOutlinedCircle(ctx, anchor[1], threshold, style.selectionSecondaly);
+        } else {
+          renderOutlinedCircle(ctx, anchor[1], threshold, style.alert);
+        }
+        ctx.beginPath();
+        const v = rotate({ x: threshold, y: 0 }, anchor[3] + Math.PI / 2);
+        ctx.moveTo(anchor[1].x + v.x, anchor[1].y + v.y);
+        ctx.lineTo(anchor[1].x - v.x, anchor[1].y - v.y);
+        ctx.stroke();
+      });
+    }
+
+    return {
+      hitTest,
+      render,
+      isSameHitResult: (a, b) => {
+        return a?.type === b?.type && a?.id === b?.id;
+      },
+    };
+  },
+);
+export type ShapeAttachmentHandler = ReturnType<typeof newShapeAttachmentHandler>;

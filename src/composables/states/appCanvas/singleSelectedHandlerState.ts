@@ -21,6 +21,12 @@ import { applyFillStyle } from "../../../utils/fillStyle";
 import { TAU } from "../../../utils/geometry";
 import { scaleGlobalAlpha } from "../../../utils/renderer";
 import { COMMAND_EXAM_SRC } from "./commandExams";
+import { isLineShape } from "../../../shapes/line";
+import {
+  getPatchByDetachFromShape,
+  newShapeAttachmentHandler,
+  ShapeAttachmentHandler,
+} from "../../shapeAttachmentHandler";
 
 interface SingleSelectedHandlerStateGetters<S extends Shape, H extends ShapeHandler> {
   getTargetShape: () => S;
@@ -47,6 +53,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
     let shapeHandler: H;
     let boundingBox: BoundingBox;
     let smartBranchHandler: SmartBranchHandler | undefined;
+    let shapeAttachmentHandler: ShapeAttachmentHandler | undefined;
 
     const src = createFn(
       {
@@ -60,21 +67,25 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
     const render: AppCanvasState["render"] = (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
       const scale = ctx.getScale();
-      boundingBox.render(renderCtx, style, scale);
-      smartBranchHandler?.render(renderCtx, style, scale);
-      shapeHandler.render(renderCtx, style, scale);
-
       const shapeComposite = ctx.getShapeComposite();
-      if (shapeComposite.attached(targetShape)) {
-        const anchorP = getAttachmentAnchorPoint(shapeComposite, targetShape);
-        scaleGlobalAlpha(renderCtx, 0.7, () => {
-          applyFillStyle(renderCtx, { color: style.selectionSecondaly });
-          renderCtx.beginPath();
-          renderCtx.arc(anchorP.x, anchorP.y, 6 * scale, 0, TAU);
-          renderCtx.fill();
-        });
-      }
 
+      // Render in reversed order of handing priority
+      if (shapeComposite.attached(targetShape)) {
+        const attached = shapeComposite.shapeMap[targetShape.id];
+        if (isLineShape(attached)) {
+          const anchorP = getAttachmentAnchorPoint(shapeComposite, targetShape);
+          scaleGlobalAlpha(renderCtx, 0.7, () => {
+            applyFillStyle(renderCtx, { color: style.selectionSecondaly });
+            renderCtx.beginPath();
+            renderCtx.arc(anchorP.x, anchorP.y, 6 * scale, 0, TAU);
+            renderCtx.fill();
+          });
+        }
+      }
+      shapeAttachmentHandler?.render(renderCtx, style, scale);
+      smartBranchHandler?.render(renderCtx, style, scale);
+      boundingBox.render(renderCtx, style, scale);
+      shapeHandler.render(renderCtx, style, scale);
       src.render?.(ctx, renderCtx);
     };
 
@@ -108,6 +119,11 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
             branchTemplate: ctx.getUserSetting(),
           });
         }
+
+        shapeAttachmentHandler = newShapeAttachmentHandler({
+          getShapeComposite: ctx.getShapeComposite,
+          targetIds: [targetShape.id],
+        });
 
         src.onStart?.(ctx);
       },
@@ -155,6 +171,17 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
                   }
                 }
 
+                if (shapeAttachmentHandler) {
+                  const result = shapeAttachmentHandler.hitTest(event.data.point, ctx.getScale());
+                  shapeAttachmentHandler.saveHitResult(result);
+                  if (result) {
+                    ctx.patchShapes(
+                      getPatchByDetachFromShape(ctx.getShapeComposite(), Object.keys(ctx.getSelectedShapeIdMap())),
+                    );
+                    return ctx.states.newSelectionHubState;
+                  }
+                }
+
                 return handleCommonPointerDownLeftOnSingleSelection(
                   ctx,
                   event,
@@ -189,6 +216,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
             if (nextHitResult) {
               boundingBox.saveHitResult();
               smartBranchHandler?.saveHitResult();
+              shapeAttachmentHandler?.saveHitResult();
               return;
             }
 
@@ -199,6 +227,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
 
             if (hitBounding) {
               smartBranchHandler?.saveHitResult();
+              shapeAttachmentHandler?.saveHitResult();
               return;
             }
 
@@ -208,6 +237,18 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
                 ctx.setCommandExams(
                   smartBranchHitResult ? [COMMAND_EXAM_SRC.SMART_BRANCH_SETTING] : getCommonCommandExams(ctx),
                 );
+                ctx.redraw();
+              }
+
+              if (smartBranchHitResult) {
+                shapeAttachmentHandler?.saveHitResult();
+                return;
+              }
+            }
+
+            if (shapeAttachmentHandler) {
+              const result = shapeAttachmentHandler.hitTest(event.data.current, ctx.getScale());
+              if (shapeAttachmentHandler.saveHitResult(result)) {
                 ctx.redraw();
                 return;
               }
