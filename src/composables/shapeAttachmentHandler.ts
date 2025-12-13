@@ -2,14 +2,14 @@ import { add, getRectCenter, rotate, sub } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import { isLineShape } from "../shapes/line";
 import { mapEach, mapReduce, patchPipe, toMap } from "../utils/commons";
-import { getLocationFromRateOnRectPath, getLocationRateOnRectPath, getRotationAffine } from "../utils/geometry";
+import { getLocationFromRateOnRectPath, getRotationAffine } from "../utils/geometry";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { getAffineByMoveToAttachedPoint } from "./lineAttachmentHandler";
 
 export function getAttachmentOption(
   shapeComposite: ShapeComposite,
-  targetIds: string[]
+  targetIds: string[],
 ): "attach" | "detach" | undefined {
   const canAttach = canAttachToShapeByIds(shapeComposite, targetIds);
   if (!canAttach) return;
@@ -35,13 +35,13 @@ export function canDetachFromShape(shapeComposite: ShapeComposite, shape: Shape)
 
 export function getPatchByDetachFromShape(
   shapeComposite: ShapeComposite,
-  targetIds: string[]
+  targetIds: string[],
 ): Record<string, Partial<Shape>> {
   return mapReduce(
     toMap(
-      targetIds.map((id) => shapeComposite.shapeMap[id]).filter((s) => !!s && canDetachFromShape(shapeComposite, s))
+      targetIds.map((id) => shapeComposite.shapeMap[id]).filter((s) => !!s && canDetachFromShape(shapeComposite, s)),
     ),
-    () => ({ attachment: undefined })
+    () => ({ attachment: undefined }),
   );
 }
 
@@ -95,7 +95,7 @@ function newShapeAttachmentHandler(option: Option): ShapeAttachmentHandler {
         const orgAnchorP = getLocationFromRateOnRectPath(
           orgSourceRect,
           sourceShape.rotation,
-          sourceShape.attachment.anchor
+          sourceShape.attachment.anchor,
         );
         const orgToP = getLocationFromRateOnRectPath(orgTargetRect, target.rotation, sourceShape.attachment.to);
         const v = sub(orgAnchorP, orgToP);
@@ -117,7 +117,7 @@ function newShapeAttachmentHandler(option: Option): ShapeAttachmentHandler {
 
               const rotateAffine = getRotationAffine(
                 nextRotation - sourceShape.rotation,
-                getRectCenter(shapeComposite.getWrapperRect(sourceShape))
+                getRectCenter(shapeComposite.getWrapperRect(sourceShape)),
               );
               return mapReduce(src, (s) => shapeComposite.transformShape(s, rotateAffine));
             },
@@ -128,12 +128,12 @@ function newShapeAttachmentHandler(option: Option): ShapeAttachmentHandler {
                 rotatedShapeComposite,
                 rotatedShapeComposite.mergedShapeMap[sourceId],
                 nextAttachment.anchor,
-                nextAnchorP
+                nextAnchorP,
               );
               return mapReduce(src, (s) => shapeComposite.transformShape(s, translateAffine));
             },
           ],
-          toMap(allTargetShapes)
+          toMap(allTargetShapes),
         ).patch;
 
         for (const id in patch) {
@@ -156,7 +156,7 @@ function newShapeAttachmentHandler(option: Option): ShapeAttachmentHandler {
  */
 function getUpdatedAttachedMap(
   shapeComposite: ShapeComposite,
-  updatedMap: { [id: string]: Partial<Shape> }
+  updatedMap: { [id: string]: Partial<Shape> },
 ): Map<string, Set<string>> {
   const shapeMap = shapeComposite.shapeMap;
   const updatedIdSet = new Set(Object.keys(updatedMap).filter((id) => shapeMap[id] && !isLineShape(shapeMap[id])));
@@ -180,7 +180,7 @@ function getUpdatedAttachedMap(
 
 export function getShapeAttachmentPatch(
   srcComposite: ShapeComposite,
-  patchInfo: EntityPatchInfo<Shape>
+  patchInfo: EntityPatchInfo<Shape>,
 ): { [id: string]: Partial<Shape> } {
   if (!patchInfo.update) return {};
 

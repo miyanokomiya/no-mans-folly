@@ -22,14 +22,14 @@ import { getLineRelatedDependantMap } from "./shapeRelation";
 export function getEntityPatchByDelete(
   shapeComposite: ShapeComposite,
   deleteIds: string[],
-  patch?: { [id: string]: Partial<Shape> }
+  patch?: { [id: string]: Partial<Shape> },
 ): EntityPatchInfo<Shape> {
   // Apply patch before getting branch ids in case tree structure changes by the patch.
   // => e.g. ungrouping
   const updatedShapeMap = patch ? patchPipe([() => patch], shapeComposite.shapeMap).result : shapeComposite.shapeMap;
   const deleteAllIds = getDeleteTargetIds(
     shapeComposite,
-    getAllBranchIds(getTree(Object.values(updatedShapeMap)), deleteIds)
+    getAllBranchIds(getTree(Object.values(updatedShapeMap)), deleteIds),
   );
 
   const availableIdSet = new Set(shapeComposite.shapes.map((s) => s.id));
@@ -37,7 +37,7 @@ export function getEntityPatchByDelete(
   const patchByRefreshRelation = refreshShapeRelations(
     shapeComposite.getShapeStruct,
     toList(updatedShapeMap),
-    availableIdSet
+    availableIdSet,
   );
   const refreshedPatch = patch ? mergeMap(patch, patchByRefreshRelation) : patchByRefreshRelation;
   const deleteAllIdSet = new Set(deleteAllIds);
@@ -52,7 +52,7 @@ export function getEntityPatchByDelete(
  */
 export function getPatchByLayouts(
   shapeComposite: ShapeComposite,
-  patchInfo: EntityPatchInfo<Shape>
+  patchInfo: EntityPatchInfo<Shape>,
 ): { [id: string]: Partial<Shape> } {
   const updatedComposite = getNextShapeComposite(shapeComposite, patchInfo);
 
@@ -68,15 +68,15 @@ export function getPatchByLayouts(
           getAlignLayoutPatchFunctions(
             shapeComposite,
             getNextShapeComposite(shapeComposite, nextPatchInfo),
-            nextPatchInfo
+            nextPatchInfo,
           ),
-          {}
+          {},
         ).patch;
       },
       // Use the composite from here that contains newly added shapes.
       (_, patch) => getLineRelatedLayoutPatch(applyAddAndDelete(shapeComposite, patchInfo), patch),
     ],
-    shapeComposite.shapeMap
+    shapeComposite.shapeMap,
   );
 
   return result.patch;
@@ -88,7 +88,7 @@ export function getPatchByLayouts(
  */
 export function getPatchInfoByLayouts(
   shapeComposite: ShapeComposite,
-  patchInfo: EntityPatchInfo<Shape>
+  patchInfo: EntityPatchInfo<Shape>,
 ): EntityPatchInfo<Shape> {
   const updatedCompositeBeforeDelete = getNextShapeComposite(shapeComposite, patchInfo);
   const shouldDeleteIds = updatedCompositeBeforeDelete.shapes
@@ -132,14 +132,14 @@ export function getPatchInfoByLayouts(
           getAlignLayoutPatchFunctions(
             shapeComposite,
             getNextShapeComposite(shapeComposite, nextPatchInfo),
-            nextPatchInfo
+            nextPatchInfo,
           ),
-          {}
+          {},
         ).patch;
       },
       (_, patch) => getLineRelatedLayoutPatch(applyAddAndDelete(shapeComposite, adjustedPatchInfo), patch),
     ],
-    shapeComposite.shapeMap
+    shapeComposite.shapeMap,
   );
 
   // Hoist new shapes from the patch to "add" list.
@@ -165,7 +165,7 @@ export function getPatchInfoByLayouts(
  */
 export function getPatchAfterLayouts(
   shapeComposite: ShapeComposite,
-  patchInfo: EntityPatchInfo<Shape>
+  patchInfo: EntityPatchInfo<Shape>,
 ): { [id: string]: Partial<Shape> } {
   const result = patchPipe(
     [
@@ -173,7 +173,7 @@ export function getPatchAfterLayouts(
       // Use the composite from here that contains newly added shapes.
       (_, patch) => getLineRelatedLayoutPatch(applyAddAndDelete(shapeComposite, patchInfo), patch),
     ],
-    shapeComposite.shapeMap
+    shapeComposite.shapeMap,
   );
 
   return result.patch;
@@ -185,7 +185,7 @@ export function getPatchAfterLayouts(
  */
 function getLineRelatedLayoutPatch(
   shapeComposite: ShapeComposite,
-  initialPatch: { [id: string]: Partial<Shape> }
+  initialPatch: { [id: string]: Partial<Shape> },
 ): { [id: string]: Partial<Shape> } {
   // When target id is in this set, its patch will be merged into "nextSC" and won't be in "nextPatch".
   const finishedSet = new Set<string>();
@@ -203,7 +203,7 @@ function getLineRelatedLayoutPatch(
         (_, patch) => getShapeAttachmentPatch(sc, { update: patch }),
       ],
       sc.shapeMap,
-      currentPatch
+      currentPatch,
     );
 
     latestPatch = mergeMap(latestPatch, result.patch);

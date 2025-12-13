@@ -36,6 +36,7 @@
     "yjs": "^13.6.27"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.3.0",
     "@types/gapi": "^0.0.47",
