@@ -30,6 +30,12 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
       description: i18n.t("term.symbol.desc"),
     };
   },
+  get PIN_TO_SHAPE() {
+    return {
+      text: i18n.t("term.pin_to_shape"),
+      description: i18n.t("term.pin_to_shape.desc"),
+    };
+  },
   get LINE_JUMP() {
     return {
       text: i18n.t("term.linejump"),

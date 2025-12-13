@@ -86,16 +86,16 @@ export const CONTEXT_MENU_ITEM_SRC = {
       key: "DUPLICATE_AS_PATH",
     };
   },
-  get ATTACH_TO_SHAPE() {
+  get PIN_TO_SHAPE() {
     return {
-      label: i18n.t("contextmenu.attach_to_shape"),
-      key: "ATTACH_TO_SHAPE",
+      label: i18n.t("contextmenu.pin_to_shape"),
+      key: "PIN_TO_SHAPE",
     };
   },
-  get DETACH_FROM_SHAPE() {
+  get UNPIN_FROM_SHAPE() {
     return {
-      label: i18n.t("contextmenu.detach_from_shape"),
-      key: "DETACH_FROM_SHAPE",
+      label: i18n.t("contextmenu.unpin_from_shape"),
+      key: "UNPIN_FROM_SHAPE",
     };
   },
   get GROUP() {
@@ -304,37 +304,35 @@ export function getMenuItemsForSelectedShapes(
   const shapeComposite = ctx.getShapeComposite();
   const shapes = ids.map((id) => shapeComposite.shapeMap[id]);
   const [unlocked, locked] = splitList(shapes, (s) => !s.locked);
-
-  const lockItems: ContextMenuItem[] = [];
-
-  if (unlocked.length > 0) {
-    lockItems.push(CONTEXT_MENU_ITEM_SRC.LOCK);
-  }
-  if (locked.length > 0) {
-    lockItems.push(CONTEXT_MENU_ITEM_SRC.UNLOCK);
-  }
-  if (lockItems.length > 0) {
-    lockItems.push(CONTEXT_MENU_ITEM_SRC.SEPARATOR);
-  }
-
   const unlockedIds = unlocked.map((s) => s.id);
-  const attachmentItems: ContextMenuItem[] = [];
+
+  const topItems: ContextMenuItem[] = [];
+
   switch (getAttachmentOption(shapeComposite, unlockedIds)) {
     case "attach":
-      attachmentItems.push(CONTEXT_MENU_ITEM_SRC.ATTACH_TO_SHAPE);
+      topItems.push(CONTEXT_MENU_ITEM_SRC.PIN_TO_SHAPE);
       break;
     case "detach":
-      attachmentItems.push(CONTEXT_MENU_ITEM_SRC.DETACH_FROM_SHAPE);
+      topItems.push(CONTEXT_MENU_ITEM_SRC.UNPIN_FROM_SHAPE);
       break;
+  }
+
+  if (unlocked.length > 0) {
+    topItems.push(CONTEXT_MENU_ITEM_SRC.LOCK);
+  }
+  if (locked.length > 0) {
+    topItems.push(CONTEXT_MENU_ITEM_SRC.UNLOCK);
+  }
+  if (topItems.length > 0) {
+    topItems.push(CONTEXT_MENU_ITEM_SRC.SEPARATOR);
   }
 
   return [
-    ...lockItems,
+    ...topItems,
     CONTEXT_MENU_ITEM_SRC.CREATE_SYMBOL,
     CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE,
     ...(shapes[0].parentId ? [CONTEXT_MENU_ITEM_SRC.DUPLICATE_SHAPE_WITHIN_GROUP] : []),
     CONTEXT_MENU_ITEM_SRC.DUPLICATE_AS_PATH,
-    ...attachmentItems,
     CONTEXT_MENU_ITEM_SRC.SEPARATOR,
     ...(shapes.some((s) => isSvgImageShape(s)) ? [CONTEXT_MENU_ITEM_SRC.PARSE_SVG] : []),
     CONTEXT_MENU_ITEM_SRC.COPY_AS_PNG,
@@ -386,11 +384,11 @@ export function handleContextItemEvent(
       duplicateSelectedShapesAsPaths(ctx);
       return;
     }
-    case CONTEXT_MENU_ITEM_SRC.ATTACH_TO_SHAPE.key: {
+    case CONTEXT_MENU_ITEM_SRC.PIN_TO_SHAPE.key: {
       const ids = Object.keys(ctx.getSelectedShapeIdMap());
       return () => ctx.states.newShapeAttachingState({ targetIds: ids });
     }
-    case CONTEXT_MENU_ITEM_SRC.DETACH_FROM_SHAPE.key: {
+    case CONTEXT_MENU_ITEM_SRC.UNPIN_FROM_SHAPE.key: {
       detachFromShape(ctx);
       return ctx.states.newSelectionHubState;
     }
