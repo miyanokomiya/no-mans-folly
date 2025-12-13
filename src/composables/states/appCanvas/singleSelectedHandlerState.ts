@@ -21,7 +21,6 @@ import { applyFillStyle } from "../../../utils/fillStyle";
 import { TAU } from "../../../utils/geometry";
 import { scaleGlobalAlpha } from "../../../utils/renderer";
 import { COMMAND_EXAM_SRC } from "./commandExams";
-import { isLineShape } from "../../../shapes/line";
 import {
   getPatchByDetachFromShape,
   newShapeAttachmentHandler,
@@ -70,17 +69,14 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
       const shapeComposite = ctx.getShapeComposite();
 
       // Render in reversed order of handing priority
-      if (shapeComposite.attached(targetShape)) {
-        const attached = shapeComposite.shapeMap[targetShape.id];
-        if (isLineShape(attached)) {
-          const anchorP = getAttachmentAnchorPoint(shapeComposite, targetShape);
-          scaleGlobalAlpha(renderCtx, 0.7, () => {
-            applyFillStyle(renderCtx, { color: style.selectionSecondaly });
-            renderCtx.beginPath();
-            renderCtx.arc(anchorP.x, anchorP.y, 6 * scale, 0, TAU);
-            renderCtx.fill();
-          });
-        }
+      if (shapeComposite.attached(targetShape, "line")) {
+        const anchorP = getAttachmentAnchorPoint(shapeComposite, targetShape);
+        scaleGlobalAlpha(renderCtx, 0.7, () => {
+          applyFillStyle(renderCtx, { color: style.selectionSecondaly });
+          renderCtx.beginPath();
+          renderCtx.arc(anchorP.x, anchorP.y, 6 * scale, 0, TAU);
+          renderCtx.fill();
+        });
       }
       shapeAttachmentHandler?.render(renderCtx, style, scale);
       smartBranchHandler?.render(renderCtx, style, scale);
