@@ -39,6 +39,7 @@ import { sendAwareness } from "../../composables/realtime/websocketChannel";
 import { useWebsocketAwareness } from "../../hooks/realtimeHooks";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { applyDefaultTextStyle } from "../../utils/renderer";
+import { renderAllShapeAttachmentAnchors } from "../../composables/shapeAttachmentHandler";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -360,6 +361,14 @@ export const AppCanvas: React.FC = () => {
       targetRect: viewCanvasRect,
     });
     renderer.render(ctx);
+    if (userSetting.showAttachment === "on") {
+      renderAllShapeAttachmentAnchors(ctx, {
+        shapeComposite: shapeStore.shapeComposite,
+        scale,
+        style: smctx.getStyleScheme(),
+        targetIds: shapeStore.shapeComposite.shapes.map((s) => s.id),
+      });
+    }
     renderAwareness(ctx);
     renderFrameNames(ctx, shapeStore.shapeComposite, userSetting.frameLabelSize, scale);
     grid.renderAxisLabels(ctx, scale);

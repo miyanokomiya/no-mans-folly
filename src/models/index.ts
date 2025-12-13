@@ -172,6 +172,7 @@ export interface UserSetting {
   smartBranchSiblingMargin?: number; // should be 25 when it's undefined
   lineSegmentRelativeAngle?: "on" | "off"; // should be "off" when it's undefined
   displayMode?: "default" | "no-hud"; // should be "default" when it's undefined
+  showAttachment?: "on" | "off"; // should be "off" when it's undefined
 }
 
 /**

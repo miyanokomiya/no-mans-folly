@@ -131,6 +131,13 @@ export const UserSettingPanel: React.FC = () => {
     [patchUserSetting],
   );
 
+  const handleShowAttachmentChange = useCallback(
+    (val: boolean) => {
+      patchUserSetting({ showAttachment: val ? "on" : "off" });
+    },
+    [patchUserSetting],
+  );
+
   const virtualKeyboardValue = userSetting.virtualKeyboard ?? "off";
 
   return (
@@ -225,6 +232,9 @@ export const UserSettingPanel: React.FC = () => {
         </BlockGroupField>
         <InlineField label="Attach to line">
           <ToggleInput value={userSetting.attachToLine === "on"} onChange={handleAttachToLineChange} />
+        </InlineField>
+        <InlineField label="Show pinned relation">
+          <ToggleInput value={userSetting.showAttachment === "on"} onChange={handleShowAttachmentChange} />
         </InlineField>
         <InlineField label="Preview dialog">
           <ToggleInput value={userSetting.preview === "on"} onChange={handlePreviewChange} />

@@ -10,7 +10,7 @@ import { CanvasCTX } from "../utils/types";
 import { applyFillStyle } from "../utils/fillStyle";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { defineShapeHandler } from "./shapeHandlers/core";
-import { renderOutlinedCircle } from "../utils/renderer";
+import { renderOutlinedCircle, scaleGlobalAlpha } from "../utils/renderer";
 import { COLORS } from "../utils/color";
 
 export function getAttachmentOption(
@@ -202,6 +202,24 @@ function getUpdatedAttachedMap(
   return attachedMap;
 }
 
+function getShapeAttachedMap(shapeComposite: ShapeComposite, targetIds: string[]): Map<string, Set<string>> {
+  const attachedMap = new Map<string, Set<string>>();
+  const shapeMap = shapeComposite.mergedShapeMap;
+  targetIds.forEach((id) => {
+    const s = shapeMap[id];
+    if (!s || !shapeComposite.attached(s, "shape")) return;
+
+    const target = shapeMap[s.attachment.id];
+    const idSet = attachedMap.get(target.id);
+    if (idSet) {
+      idSet.add(s.id);
+    } else {
+      attachedMap.set(target.id, new Set([s.id]));
+    }
+  });
+  return attachedMap;
+}
+
 export function getShapeAttachmentPatch(
   srcComposite: ShapeComposite,
   patchInfo: EntityPatchInfo<Shape>,
@@ -212,6 +230,40 @@ export function getShapeAttachmentPatch(
     ctx: { getShapeComposite: () => srcComposite },
   });
   return handler.onModified(patchInfo.update);
+}
+
+export function renderAllShapeAttachmentAnchors(
+  ctx: CanvasCTX,
+  option: {
+    scale: number;
+    style: StyleScheme;
+    shapeComposite: ShapeComposite;
+    targetIds: string[];
+  },
+) {
+  const { shapeComposite, scale, style } = option;
+  const attachedMap = getShapeAttachedMap(shapeComposite, option.targetIds);
+  const shapeMap = shapeComposite.mergedShapeMap;
+  const anchors: [anchorP: IVec2, toP: IVec2][] = [];
+  for (const [targetId, sourceIdSet] of attachedMap) {
+    const target = shapeMap[targetId];
+    const targetRect = shapeComposite.getLocalRectPolygon(target);
+
+    for (const sourceId of sourceIdSet) {
+      const source = shapeMap[sourceId];
+      if (source.attachment) {
+        const sourceRect = shapeComposite.getLocalRectPolygon(source);
+        const toP = getLocationFromRateOnRectPath(targetRect, target.rotation, source.attachment.to);
+        const anchorP = getLocationFromRateOnRectPath(sourceRect, source.rotation, source.attachment.anchor);
+        anchors.push([anchorP, toP]);
+      }
+    }
+  }
+  if (anchors.length === 0) return;
+
+  scaleGlobalAlpha(ctx, 0.4, () => {
+    renderShapeAttachmentAnchors(ctx, { scale, style, anchors });
+  });
 }
 
 function renderShapeAttachmentAnchors(
