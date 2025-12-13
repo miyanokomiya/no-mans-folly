@@ -170,6 +170,33 @@ describe("getPatchInfoByLayouts", () => {
     const result0 = getPatchInfoByLayouts(shapeComposite, { add: [line1] });
     expect(result0.add).toEqual([{ ...line1, q: { x: 50, y: 50 } }]);
   });
+
+  test("should apply line related layouts", () => {
+    const rect1 = createShape(getCommonStruct, "rectangle", {
+      id: "rect1",
+    });
+    const rect2 = createShape(getCommonStruct, "rectangle", {
+      id: "rect2",
+      p: { x: 100, y: 200 },
+      attachment: {
+        id: rect1.id,
+        to: { x: 0.5, y: 0.5 },
+        anchor: { x: 0.5, y: 0.5 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [rect1, rect2],
+      getStruct: getCommonStruct,
+    });
+
+    const result0 = getPatchInfoByLayouts(shapeComposite, { update: { [rect1.id]: { p: { x: 10, y: 20 } } } });
+    expect(result0.update).toEqual({
+      [rect1.id]: { p: { x: 10, y: 20 } },
+      [rect2.id]: { p: { x: 110, y: 220 } },
+    });
+  });
 });
 
 describe("getPatchAfterLayouts", () => {
