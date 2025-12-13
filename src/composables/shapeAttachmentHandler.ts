@@ -2,7 +2,7 @@ import { getRectCenter } from "okageo";
 import { EntityPatchInfo, Shape } from "../models";
 import { isLineShape } from "../shapes/line";
 import { mapEach, mapReduce, patchPipe, toMap } from "../utils/commons";
-import { getLocationFromRateOnRectPath, getRotationAffine } from "../utils/geometry";
+import { getLocationFromRateOnRectPath, getLocationRateOnRectPath, getRotationAffine } from "../utils/geometry";
 import { ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { getAffineByMoveToAttachedPoint } from "./lineAttachmentHandler";
@@ -89,10 +89,20 @@ function newShapeAttachmentHandler(option: Option): ShapeAttachmentHandler {
         const nextAttachment = nextSource.attachment;
         if (!nextAttachment) return;
 
+        const orgAnchorP = getLocationFromRateOnRectPath(
+          shapeComposite.getLocalRectPolygon(sourceShape),
+          sourceShape.rotation,
+          sourceShape.attachment.anchor,
+        );
+        const orgAnchorRateOnTarget = getLocationRateOnRectPath(
+          shapeComposite.getLocalRectPolygon(target),
+          target.rotation,
+          orgAnchorP,
+        );
         const nextToP = getLocationFromRateOnRectPath(
           nextTargetShapeComposite.getLocalRectPolygon(nextTarget),
           nextTarget.rotation,
-          nextAttachment.to,
+          orgAnchorRateOnTarget,
         );
 
         let nextRotation = nextSource.rotation;
@@ -143,36 +153,20 @@ function newShapeAttachmentHandler(option: Option): ShapeAttachmentHandler {
 /**
  * Returns Map<target id, Set<source id>>
  * Ignores line attachments
+ * Attachment handling is required only when target shapes are updated.
+ * => When source shapes are updated, their positions don't change.
  */
 function getUpdatedAttachedMap(
   shapeComposite: ShapeComposite,
   updatedMap: { [id: string]: Partial<Shape> },
 ): Map<string, Set<string>> {
   const shapeMap = shapeComposite.shapeMap;
-  const targetIdSet = new Set(Object.keys(updatedMap).filter((id) => shapeMap[id] && !isLineShape(shapeMap[id])));
+  const updatedIdSet = new Set(Object.keys(updatedMap).filter((id) => shapeMap[id] && !isLineShape(shapeMap[id])));
   const attachedMap = new Map<string, Set<string>>();
 
-  mapEach(shapeMap, (s, id) => {
-    const targetId = s.attachment?.id ?? updatedMap[id]?.attachment?.id;
-    if (!targetId || !targetIdSet.has(targetId)) return;
-    if (!shapeMap[targetId] || isLineShape(shapeMap[targetId])) return;
-
-    const idSet = attachedMap.get(targetId);
-    if (idSet) {
-      idSet.add(s.id);
-    } else {
-      attachedMap.set(targetId, new Set([s.id]));
-    }
-  });
-
-  mapEach(updatedMap, (patch, id) => {
-    if (targetIdSet.has(id)) return;
-
-    const s = { ...shapeMap[id], ...patch };
-    if (!s.attachment) return;
-
-    const targetId = s.attachment.id;
-    if (targetIdSet.has(targetId)) return;
+  mapEach(shapeMap, (s) => {
+    const targetId = s.attachment?.id;
+    if (!targetId || !updatedIdSet.has(targetId)) return;
     if (!shapeMap[targetId] || isLineShape(shapeMap[targetId])) return;
 
     const idSet = attachedMap.get(targetId);

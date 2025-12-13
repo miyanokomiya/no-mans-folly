@@ -50,23 +50,26 @@ describe("canDetachFromShape", () => {
 
 describe("getShapeAttachmentPatch", () => {
   test("should return patch info regarding shape attachments", () => {
-    const source = { ...shape, attachment: { ...attachment, to: { x: 0.75, y: 0.25 } } };
+    const source = { ...shape, attachment, p: { x: 200, y: 20 } };
     const shapeComposite = newShapeComposite({
       shapes: [attached, source],
       getStruct: getCommonStruct,
     });
-    const res0 = getShapeAttachmentPatch(shapeComposite, { update: { [attached.id]: { p: { x: 100, y: 0 } } } });
-    expect(res0[source.id]).toEqual({ p: { x: 125, y: -25 } });
+    const res0 = getShapeAttachmentPatch(shapeComposite, { update: { [attached.id]: { p: { x: 100, y: 10 } } } });
+    expect(res0[source.id]).toEqual({ p: { x: 300, y: 30 } });
   });
 
   test("should regard rotation", () => {
     const rotated = { ...attached, rotation: Math.PI / 2 };
-    const source = { ...shape, attachment: { ...attachment, to: { x: 0.75, y: 0.25 } } };
+    const source = { ...shape, attachment, p: { x: 200, y: 20 } };
     const shapeComposite = newShapeComposite({
       shapes: [rotated, source],
       getStruct: getCommonStruct,
     });
-    const res0 = getShapeAttachmentPatch(shapeComposite, { update: { [rotated.id]: { p: { x: 100, y: 0 } } } });
-    expect(res0[source.id]).toEqual({ p: { x: 125, y: 25 }, rotation: Math.PI / 2 });
+    const res0 = getShapeAttachmentPatch(shapeComposite, { update: { [rotated.id]: { p: { x: 100, y: 10 } } } });
+    expect(res0[source.id]).toEqual({ p: { x: 300, y: 30 }, rotation: Math.PI / 2 });
+
+    const res1 = getShapeAttachmentPatch(shapeComposite, { update: { [rotated.id]: { rotation: 0 } } });
+    expect(res1[source.id]).toEqual({ p: { x: 20, y: -200 } });
   });
 });
