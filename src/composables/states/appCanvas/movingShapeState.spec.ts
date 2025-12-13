@@ -74,7 +74,7 @@ describe("newMovingShapeState", () => {
       expect(result).toBe(undefined);
     });
 
-    test("should clear attachment when exists and attaching target isn't moving", () => {
+    test("should clear line attachment when exists and attaching target isn't moving", () => {
       const ctx = getMockCtx();
       ctx.getShapeComposite = () =>
         newShapeComposite({
@@ -90,6 +90,9 @@ describe("newMovingShapeState", () => {
                 rotationType: "relative",
                 rotation: 0,
               },
+            }),
+            createShape(getCommonStruct, "line", {
+              id: "line",
             }),
           ],
           getStruct: getCommonStruct,
@@ -108,7 +111,7 @@ describe("newMovingShapeState", () => {
       expect(tmpMap["a"]).toHaveProperty("attachment");
     });
 
-    test("should not clear attachment when attaching target is moving together", () => {
+    test("should not clear line attachment when attaching target is moving together", () => {
       const ctx = getMockCtx();
       ctx.getShapeComposite = () =>
         newShapeComposite({
@@ -142,6 +145,43 @@ describe("newMovingShapeState", () => {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
+      expect(tmpMap["a"]).not.toHaveProperty("attachment");
+    });
+
+    test("should not clear shape attachment when exists and attaching target isn't moving", () => {
+      const ctx = getMockCtx();
+      ctx.getShapeComposite = () =>
+        newShapeComposite({
+          shapes: [
+            createShape<RectangleShape>(getCommonStruct, "rectangle", {
+              id: "a",
+              width: 50,
+              height: 50,
+              attachment: {
+                id: "b",
+                to: { x: 0.5, y: 0 },
+                anchor: { x: 0.5, y: 0.5 },
+                rotationType: "relative",
+                rotation: 0,
+              },
+            }),
+            createShape(getCommonStruct, "rectangle", {
+              id: "b",
+            }),
+          ],
+          getStruct: getCommonStruct,
+        });
+      let tmpMap: any = {};
+      ctx.setTmpShapeMap.mockImplementation((v) => {
+        tmpMap = v;
+      });
+      const target = newMovingShapeState();
+      target.onStart?.(ctx as any);
+      target.handleEvent(ctx as any, {
+        type: "pointermove",
+        data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
+      });
+      expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, { a: { p: { x: 10, y: 0 } } });
       expect(tmpMap["a"]).not.toHaveProperty("attachment");
     });
 
