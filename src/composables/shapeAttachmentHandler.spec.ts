@@ -73,7 +73,7 @@ describe("getShapeAttachmentPatch", () => {
       shapes: [rotated, source],
       getStruct: getCommonStruct,
     });
-      const res0 = getShapeAttachmentPatch(shapeComposite, { update: { [rotated.id]: { p: { x: 100, y: 10 } } } });
+    const res0 = getShapeAttachmentPatch(shapeComposite, { update: { [rotated.id]: { p: { x: 100, y: 10 } } } });
     expect(res0[source.id]).toEqual({ p: { x: 300, y: 30 }, rotation: Math.PI / 2 });
 
     const res1 = getShapeAttachmentPatch(shapeComposite, { update: { [rotated.id]: { rotation: 0 } } });
