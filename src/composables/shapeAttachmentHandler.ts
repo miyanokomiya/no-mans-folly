@@ -63,10 +63,13 @@ function newShapeAttachmentLayoutHandler(option: ShapeAttachmentLayoutHandlerOpt
   function onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> } {
     const shapeComposite = option.ctx.getShapeComposite();
     const shapeMap = shapeComposite.shapeMap;
-    const attachedMap = getUpdatedAttachedMap(shapeComposite, updatedMap);
+
+    // Attachment handling is required only when target shapes are updated.
+    // => When source shapes are updated, their positions shouldn't be changed by attachment calculation.
+    const attachmentMap = getShapeAttachmentTargetMap(shapeComposite, Object.keys(updatedMap));
 
     const ret: { [id: string]: Partial<Shape> } = {};
-    attachedMap.forEach((attachedIdSet, targetId) => {
+    attachmentMap.forEach((attachedIdSet, targetId) => {
       if (attachedIdSet.size === 0) return;
 
       const target = shapeMap[targetId];
@@ -173,23 +176,18 @@ function newShapeAttachmentLayoutHandler(option: ShapeAttachmentLayoutHandlerOpt
 }
 
 /**
- * Returns Map<target id, Set<source id>>
- * Ignores line attachments
- * Attachment handling is required only when target shapes are updated.
- * => When source shapes are updated, their positions shouldn't be changed by attachment calculation.
+ * Returns
+ *   - key: target id
+ *   - value: source ids that attach to the key shape
  */
-function getUpdatedAttachedMap(
-  shapeComposite: ShapeComposite,
-  updatedMap: { [id: string]: Partial<Shape> },
-): Map<string, Set<string>> {
+function getShapeAttachmentTargetMap(shapeComposite: ShapeComposite, targetIds: string[]): Map<string, Set<string>> {
   const shapeMap = shapeComposite.shapeMap;
-  const updatedIdSet = new Set(Object.keys(updatedMap).filter((id) => shapeMap[id] && !isLineShape(shapeMap[id])));
+  const targetIdSet = new Set(targetIds.filter((id) => shapeMap[id] && shapeComposite.canAttach(shapeMap[id])));
   const attachedMap = new Map<string, Set<string>>();
 
   mapEach(shapeMap, (s) => {
     const targetId = s.attachment?.id;
-    if (!targetId || !updatedIdSet.has(targetId)) return;
-    if (!shapeMap[targetId] || isLineShape(shapeMap[targetId])) return;
+    if (!targetId || !targetIdSet.has(targetId)) return;
 
     const idSet = attachedMap.get(targetId);
     if (idSet) {
@@ -202,10 +200,15 @@ function getUpdatedAttachedMap(
   return attachedMap;
 }
 
-function getShapeAttachedMap(shapeComposite: ShapeComposite, targetIds: string[]): Map<string, Set<string>> {
+/**
+ * Returns
+ *   - key: target id
+ *   - value: source ids that attach to the key shape
+ */
+function getShapeAttachmentSourceMap(shapeComposite: ShapeComposite, sourceIds: string[]): Map<string, Set<string>> {
   const attachedMap = new Map<string, Set<string>>();
   const shapeMap = shapeComposite.mergedShapeMap;
-  targetIds.forEach((id) => {
+  sourceIds.forEach((id) => {
     const s = shapeMap[id];
     if (!s || !shapeComposite.attached(s, "shape")) return;
 
@@ -242,7 +245,7 @@ export function renderAllShapeAttachmentAnchors(
   },
 ) {
   const { shapeComposite, scale, style } = option;
-  const attachedMap = getShapeAttachedMap(shapeComposite, option.targetIds);
+  const attachedMap = getShapeAttachmentSourceMap(shapeComposite, option.targetIds);
   const shapeMap = shapeComposite.mergedShapeMap;
   const anchors: [anchorP: IVec2, toP: IVec2][] = [];
   for (const [targetId, sourceIdSet] of attachedMap) {
@@ -336,6 +339,7 @@ export interface ShapeAttachmentHitResult {
 interface ShapeAttachmentHandlerOption {
   getShapeComposite: () => ShapeComposite;
   targetIds: string[];
+  readOnly?: boolean;
 }
 
 export const newShapeAttachmentHandler = defineShapeHandler<ShapeAttachmentHitResult, ShapeAttachmentHandlerOption>(
@@ -351,9 +355,9 @@ export const newShapeAttachmentHandler = defineShapeHandler<ShapeAttachmentHitRe
         }
       });
 
-      const depMap = getUpdatedAttachedMap(
+      const depMap = getShapeAttachmentTargetMap(
         shapeComposite,
-        mapReduce(toMap(targets), () => ({})),
+        targets.map((s) => s.id),
       );
       targets.map((target) => {
         const dep = depMap.get(target.id);
@@ -372,6 +376,8 @@ export const newShapeAttachmentHandler = defineShapeHandler<ShapeAttachmentHitRe
     }
 
     function hitTest(p: IVec2, scale = 1): ShapeAttachmentHitResult | undefined {
+      if (option.readOnly) return;
+
       const threshold = ANCHOR_SIZE * scale;
       const hit = findBackward(getDetachAnchors(), (a) => getDistance(a[1], p) <= threshold);
       if (hit) {
@@ -380,15 +386,15 @@ export const newShapeAttachmentHandler = defineShapeHandler<ShapeAttachmentHitRe
     }
 
     function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: ShapeAttachmentHitResult) {
-      const threshold = ANCHOR_SIZE * scale;
       const anchors = getDetachAnchors();
-
       renderShapeAttachmentAnchors(ctx, {
         scale,
         style,
         anchors: anchors.map((a) => [a[3], a[4]]),
       });
+      if (option.readOnly) return;
 
+      const threshold = ANCHOR_SIZE * scale;
       applyStrokeStyle(ctx, { color: COLORS.BLACK, width: 2 * scale, lineCap: "round" });
       anchors.forEach((anchor) => {
         if (hitResult?.type === anchor[0] && hitResult?.id === anchor[2]) {
