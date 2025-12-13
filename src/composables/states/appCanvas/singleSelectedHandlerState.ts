@@ -175,9 +175,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
                   const result = shapeAttachmentHandler.hitTest(event.data.point, ctx.getScale());
                   shapeAttachmentHandler.saveHitResult(result);
                   if (result) {
-                    ctx.patchShapes(
-                      getPatchByDetachFromShape(ctx.getShapeComposite(), Object.keys(ctx.getSelectedShapeIdMap())),
-                    );
+                    ctx.patchShapes(getPatchByDetachFromShape(ctx.getShapeComposite(), [result.id]));
                     return ctx.states.newSelectionHubState;
                   }
                 }
