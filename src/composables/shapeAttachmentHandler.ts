@@ -148,6 +148,24 @@ function newShapeAttachmentLayoutHandler(option: ShapeAttachmentLayoutHandlerOpt
       });
     });
 
+    // Need to initialize relative angle of the shapes that are changed to relative angle.
+    // => Because they are excluded from above attachment calculation
+    mapEach(updatedMap, (patch, id) => {
+      const orgShape = shapeMap[id];
+      if (!orgShape || ret[id] || !patch.attachment) return;
+      if (
+        orgShape.attachment?.rotationType === patch.attachment.rotationType ||
+        patch.attachment.rotationType !== "relative"
+      )
+        return;
+
+      ret[id] = {
+        rotation:
+          updatedMap[patch.attachment.id]?.rotation ??
+          shapeMap[patch.attachment.id]?.rotation + patch.attachment.rotation,
+      };
+    });
+
     return ret;
   }
 
@@ -158,7 +176,7 @@ function newShapeAttachmentLayoutHandler(option: ShapeAttachmentLayoutHandlerOpt
  * Returns Map<target id, Set<source id>>
  * Ignores line attachments
  * Attachment handling is required only when target shapes are updated.
- * => When source shapes are updated, their positions don't change.
+ * => When source shapes are updated, their positions shouldn't be changed by attachment calculation.
  */
 function getUpdatedAttachedMap(
   shapeComposite: ShapeComposite,
