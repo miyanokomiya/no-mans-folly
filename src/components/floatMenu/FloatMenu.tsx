@@ -11,9 +11,7 @@ import { useShapeComposite, useShapeSelectedMap } from "../../hooks/storeHooks";
 import { FloatMenuSmartBranch } from "./FloatMenuSmartBranch";
 import { FloatMenuLineSegment } from "./FloatMenuLineSegment";
 import { FloatMenuOption } from "../../composables/states/commons";
-
-// Keep and restore the fixed location.
-let rootFixedCache: IVec2 | undefined;
+import { useLocalStorageAdopter } from "../../hooks/localStorage";
 
 type Option = FloatMenuOption & {
   canvasState: any;
@@ -44,7 +42,12 @@ export const FloatMenu: React.FC<Option> = ({
   const rootRef = useRef<HTMLDivElement>(null);
   // Once the menu was dragged, stick it to the location.
   // This point refers to the drag-anchor.
-  const [rootFixed, setRootFixed] = useState<IVec2 | undefined>(rootFixedCache);
+  const [rootFixed, setRootFixed] = useLocalStorageAdopter<IVec2 | undefined>({
+    key: "float-menu-fixed",
+    version: "1",
+    initialValue: undefined,
+    duration: 1000,
+  });
   const [dragOrigin, setDragOrigin] = useState<IVec2 | undefined>();
 
   const shapeComposite = useShapeComposite();
@@ -66,7 +69,7 @@ export const FloatMenu: React.FC<Option> = ({
 
     const p = add(dragOrigin, draggable.v);
     setRootFixed(p);
-  }, [dragOrigin, draggable.v]);
+  }, [dragOrigin, draggable.v, setRootFixed]);
 
   const [rootAttrs, setRootAttrs] = useState<{ className?: string; style?: React.CSSProperties }>({
     className: rootBaseClassName + " invisible",
@@ -111,11 +114,7 @@ export const FloatMenu: React.FC<Option> = ({
     draggable.clear();
     setDragOrigin(undefined);
     setRootFixed(undefined);
-  }, [draggable]);
-
-  useEffect(() => {
-    rootFixedCache = rootFixed;
-  }, [rootFixed]);
+  }, [draggable, setRootFixed]);
 
   if (!adjustedTargetRect) return;
   return createPortal(
