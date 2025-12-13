@@ -9,6 +9,7 @@ import { getShapeTextBounds, isRigidMoveShape } from "../../../shapes";
 import { getLinkAt } from "../../../utils/textEditor";
 import { getRectPoints } from "../../../utils/geometry";
 import { isShapeInteratctiveWithinViewport } from "./commons";
+import { newShapeAttachmentHandler } from "../../shapeAttachmentHandler";
 
 /**
  * Event flow specifications.
@@ -91,6 +92,12 @@ export function defineIntransientState<A extends any[]>(
               dash: "short",
             });
             renderCtx.stroke();
+            const shapeAttachmentHandler = newShapeAttachmentHandler({
+              getShapeComposite: ctx.getShapeComposite,
+              targetIds: [shape.id],
+              readOnly: true,
+            });
+            shapeAttachmentHandler.render(renderCtx, style, scale);
           }
         }
 
