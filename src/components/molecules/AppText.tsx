@@ -123,7 +123,7 @@ const TerminologyPopup = ({ item, parentRect, portal, onClose }: TerminologyPopu
   const elm = (
     <div
       ref={ref}
-      className="z-100 p-2 border rounded-xs bg-white shadow-xs fixed max-w-60 select-none touch-none"
+      className="z-400 p-2 border rounded-xs bg-white shadow-xs fixed max-w-60 select-none touch-none"
       style={style}
       onClick={handleClick}
     >
