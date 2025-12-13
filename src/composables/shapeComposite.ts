@@ -347,6 +347,15 @@ export function newShapeComposite(option: Option) {
     return isGroupShape(shapeMap[shape.parentId]);
   }
 
+  /**
+   * Returns if the shape can be the target of "attachment"
+   * Returns when the shape is a line
+   */
+  function canBeShapeAttached(shape: Shape): boolean {
+    if (shapeModule.hasSpecialOrderPriority(getStruct, shape)) return false;
+    return !isLineShape(shape);
+  }
+
   function setDocCompositeCache(id: string, val: DocCompositionInfo, src: DocOutput) {
     docCompositeCacheMap[id] = [val, src];
   }
@@ -453,6 +462,7 @@ export function newShapeComposite(option: Option) {
     hasParent,
     attached,
     canAttach,
+    canBeShapeAttached,
     getBranchPathTo,
 
     setDocCompositeCache,

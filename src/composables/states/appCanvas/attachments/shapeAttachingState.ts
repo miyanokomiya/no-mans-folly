@@ -1,24 +1,35 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { getCommonAcceptableEvents, getSnappableCandidates, handleStateEvent } from "../commons";
-import { isLineShape } from "../../../../shapes/line";
 import { handleCommonWheel } from "../../commons";
 import { findBackward, mapReduce, toMap } from "../../../../utils/commons";
-import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
-import { applyStrokeStyle } from "../../../../utils/strokeStyle";
-import { applyFillStyle } from "../../../../utils/fillStyle";
 import { Shape } from "../../../../models";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { newCacheWithArg } from "../../../../utils/stateful/cache";
+import { ConnectionResult, newLineSnapping, renderConnectionResult } from "../../../lineSnapping";
+import { getLocationFromRateOnRectPath, TAU } from "../../../../utils/geometry";
+import { applyFillStyle } from "../../../../utils/fillStyle";
+import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { IVec2 } from "okageo";
-import { TAU } from "../../../../utils/geometry";
+import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 
 interface Option {
   targetIds: string[];
 }
 
 export function newShapeAttachingState(option: Option): AppCanvasState {
-  let snappableIdSet = new Set<string>();
-  let candidateId: string | undefined;
-  let point: IVec2 | undefined;
+  const defaultAnchor = { x: 0.5, y: 0.5 };
+  let snappingResult: ConnectionResult | undefined;
+
+  const lineSnappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
+    const shapeComposite = ctx.getShapeComposite();
+    const snappableCandidates = getSnappableCandidates(ctx, option.targetIds).filter((s) =>
+      shapeComposite.canBeShapeAttached(s),
+    );
+    return newLineSnapping({
+      snappableShapes: snappableCandidates,
+      getShapeStruct: ctx.getShapeStruct,
+    });
+  });
 
   function getTargets(ctx: AppCanvasStateContext): Shape[] {
     const shapeComposite = ctx.getShapeComposite();
@@ -31,8 +42,6 @@ export function newShapeAttachingState(option: Option): AppCanvasState {
       if (getTargets(ctx).length === 0) return ctx.states.newSelectionHubState;
 
       ctx.setCommandExams([COMMAND_EXAM_SRC.ATTACH_LINE_VERTEX]);
-      const snappableCandidates = getSnappableCandidates(ctx, option.targetIds).filter((s) => !isLineShape(s));
-      snappableIdSet = new Set(snappableCandidates.map((s) => s.id));
     },
     onEnd: (ctx) => {
       ctx.setCommandExams();
@@ -42,19 +51,20 @@ export function newShapeAttachingState(option: Option): AppCanvasState {
         case "pointerdown":
           switch (event.data.options.button) {
             case 0: {
+              if (!snappingResult?.connection) return ctx.states.newSelectionHubState;
+
               const shapeComposite = ctx.getShapeComposite();
-              const candidate = candidateId ? shapeComposite.shapeMap[candidateId] : undefined;
+              const candidate = shapeComposite.shapeMap[snappingResult.connection.id];
               if (!candidate) return ctx.states.newSelectionHubState;
 
-              const to = point ? shapeComposite.getLocationRateOnShape(candidate, point) : { x: 0.5, y: 0.5 };
-              const anchor = { x: 0.5, y: 0.5 };
+              const to = shapeComposite.getLocationRateOnShape(candidate, snappingResult.p);
               ctx.patchShapes(
                 mapReduce(toMap(getTargets(ctx)), () => ({
                   attachment: {
                     id: candidate.id,
                     to,
-                    anchor,
-                    rotationType: "relative",
+                    anchor: defaultAnchor,
+                    rotationType: "absolute",
                     rotation: 0,
                   },
                 })),
@@ -69,13 +79,27 @@ export function newShapeAttachingState(option: Option): AppCanvasState {
           }
         case "pointerhover": {
           const p = event.data.current;
-          const shapeComposite = ctx.getShapeComposite();
-          const candidate = findBackward(shapeComposite.shapes, (s) => {
-            if (!snappableIdSet.has(s.id)) return false;
-            return shapeComposite.isPointOn(s, p);
-          });
-          candidateId = candidate?.id;
-          point = p;
+          const result = lineSnappingCache.getValue(ctx).testConnection(p, ctx.getScale());
+
+          if (result?.connection) {
+            snappingResult = result;
+          } else {
+            snappingResult = undefined;
+            const shapeComposite = ctx.getShapeComposite();
+            const candidate = findBackward(lineSnappingCache.getValue(ctx).snappableShapes, (s) => {
+              return shapeComposite.isPointOn(s, p);
+            });
+            if (candidate) {
+              snappingResult = {
+                connection: {
+                  id: candidate.id,
+                  rate: shapeComposite.getLocationRateOnShape(candidate, p),
+                },
+                p,
+                outlineSrc: candidate.id,
+              };
+            }
+          }
           ctx.redraw();
           return;
         }
@@ -95,6 +119,7 @@ export function newShapeAttachingState(option: Option): AppCanvasState {
           }
         case "wheel":
           handleCommonWheel(ctx, event);
+          lineSnappingCache.update();
           return;
         case "history":
           return ctx.states.newSelectionHubState;
@@ -105,37 +130,60 @@ export function newShapeAttachingState(option: Option): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
+      const shapeComposite = ctx.getShapeComposite();
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
+      const anchors: IVec2[] = [];
 
-      const shapeComposite = ctx.getShapeComposite();
-      const candidate = candidateId ? shapeComposite.shapeMap[candidateId] : undefined;
-      if (candidate) {
-        const path = shapeComposite.getLocalRectPolygon(candidate);
-        renderCtx.beginPath();
-        applyPath(renderCtx, path, true);
-        scaleGlobalAlpha(renderCtx, 0.1, () => {
-          applyFillStyle(renderCtx, {
-            color: style.selectionPrimary,
-          });
-          renderCtx.fill();
-        });
-        applyStrokeStyle(renderCtx, {
+      renderCtx.beginPath();
+      scaleGlobalAlpha(renderCtx, 0.1, () => {
+        applyFillStyle(renderCtx, {
           color: style.selectionPrimary,
-          width: 3 * scale,
-          dash: "short",
         });
-        renderCtx.stroke();
+        getTargets(ctx).forEach((s) => {
+          const rectPath = shapeComposite.getLocalRectPolygon(s);
+          const anchorP = getLocationFromRateOnRectPath(rectPath, s.rotation, s.attachment?.anchor ?? defaultAnchor);
+          applyPath(renderCtx, rectPath, true);
+          anchors.push(anchorP);
+        });
+        renderCtx.fill();
+      });
+      applyStrokeStyle(renderCtx, {
+        color: style.selectionPrimary,
+        width: 3 * scale,
+        dash: "short",
+      });
+      renderCtx.stroke();
 
-        if (point) {
-          applyFillStyle(renderCtx, {
-            color: style.selectionSecondaly,
-          });
-          renderCtx.beginPath();
-          renderCtx.arc(point.x, point.y, 8 * scale, 0, TAU);
-          renderCtx.fill();
-        }
-      }
+      applyFillStyle(renderCtx, { color: style.selectionPrimary });
+      anchors.forEach((p) => {
+        renderCtx.beginPath();
+        renderCtx.arc(p.x, p.y, 6 * scale, 0, TAU);
+        renderCtx.fill();
+      });
+
+      if (!snappingResult?.connection) return;
+
+      const candidate = shapeComposite.shapeMap[snappingResult.connection.id];
+      if (!candidate) return;
+
+      applyStrokeStyle(renderCtx, {
+        color: style.selectionPrimary,
+        width: 3 * scale,
+        dash: "dot",
+      });
+      renderCtx.beginPath();
+      anchors.forEach((p) => {
+        renderCtx.moveTo(p.x, p.y);
+        renderCtx.lineTo(snappingResult!.p.x, snappingResult!.p.y);
+      });
+      renderCtx.stroke();
+      renderConnectionResult(renderCtx, {
+        result: snappingResult,
+        scale,
+        style,
+        shapeComposite,
+      });
     },
   };
 }

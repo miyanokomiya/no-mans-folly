@@ -574,6 +574,35 @@ describe("newShapeComposite", () => {
     });
   });
 
+  describe("canBeShapeAttached", () => {
+    test("should return true when a shape can be shape-attached target", () => {
+      const group = createShape(getCommonStruct, "group", {
+        id: "group",
+      });
+      const a = createShape(getCommonStruct, "rectangle", {
+        id: "a",
+        parentId: group.id,
+      });
+      const line = createShape(getCommonStruct, "line", {
+        id: "line",
+      });
+      const frame = createShape(getCommonStruct, "frame", {
+        id: "frame",
+      });
+
+      const shapes = [group, a, line, frame];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+
+      expect(target.canAttach(group)).toBe(true);
+      expect(target.canAttach(a)).toBe(true);
+      expect(target.canAttach(line)).toBe(false);
+      expect(target.canAttach(frame)).toBe(false);
+    });
+  });
+
   describe("getShapeCompositeWithoutTmpInfo", () => {
     const group0 = createShape(getCommonStruct, "group", { id: "group0" });
     const child0 = createShape(getCommonStruct, "rectangle", {
