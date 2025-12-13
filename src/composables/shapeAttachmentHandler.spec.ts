@@ -3,8 +3,9 @@ import { canDetachFromShape, getAttachmentOption, getShapeAttachmentPatch } from
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { ShapeAttachment } from "../models";
+import { RectangleShape } from "../shapes/rectangle";
 
-const shape = createShape(getCommonStruct, "rectangle", { id: "a" });
+const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "a" });
 const line = createShape(getCommonStruct, "line", { id: "line" });
 const frame = createShape(getCommonStruct, "frame", { id: "frame" });
 const group = createShape(getCommonStruct, "group", { id: "group" });
@@ -55,8 +56,14 @@ describe("getShapeAttachmentPatch", () => {
       shapes: [attached, source],
       getStruct: getCommonStruct,
     });
+
     const res0 = getShapeAttachmentPatch(shapeComposite, { update: { [attached.id]: { p: { x: 100, y: 10 } } } });
     expect(res0[source.id]).toEqual({ p: { x: 300, y: 30 } });
+
+    const res1 = getShapeAttachmentPatch(shapeComposite, {
+      update: { [attached.id]: { width: 200, height: 300 } as Partial<RectangleShape> },
+    });
+    expect(res1[source.id]).toEqual({ p: { x: 250, y: 120 } });
   });
 
   test("should regard rotation", () => {
@@ -66,7 +73,7 @@ describe("getShapeAttachmentPatch", () => {
       shapes: [rotated, source],
       getStruct: getCommonStruct,
     });
-    const res0 = getShapeAttachmentPatch(shapeComposite, { update: { [rotated.id]: { p: { x: 100, y: 10 } } } });
+      const res0 = getShapeAttachmentPatch(shapeComposite, { update: { [rotated.id]: { p: { x: 100, y: 10 } } } });
     expect(res0[source.id]).toEqual({ p: { x: 300, y: 30 }, rotation: Math.PI / 2 });
 
     const res1 = getShapeAttachmentPatch(shapeComposite, { update: { [rotated.id]: { rotation: 0 } } });
