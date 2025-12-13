@@ -334,8 +334,21 @@ export function newShapeComposite(option: Option) {
     return !!shapeMap[shape.parentId ?? ""];
   }
 
-  function attached(shape: Shape): shape is Shape & Required<Pick<Shape, "attachment">> {
-    return !!shapeMap[shape.attachment?.id ?? ""];
+  function attached(
+    shape: Shape,
+    attachmentType?: "line" | "shape",
+  ): shape is Shape & Required<Pick<Shape, "attachment">> {
+    const target = shapeMap[shape.attachment?.id ?? ""];
+    if (!target) return false;
+
+    switch (attachmentType) {
+      case "line":
+        return isLineShape(target);
+      case "shape":
+        return canBeShapeAttached(target);
+      default:
+        return true;
+    }
   }
 
   function canAttach(shape: Shape): boolean {

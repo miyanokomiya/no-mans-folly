@@ -11,6 +11,7 @@ import { normalizeRadian } from "../../utils/geometry";
 interface Props {
   targetShape: Shape;
   targetTmpShape: Shape;
+  lineAttached?: boolean;
   updateAttachment: (patch: Partial<ShapeAttachment>, draft?: boolean) => void;
   readyState: () => void;
   commit: () => void;
@@ -19,6 +20,7 @@ interface Props {
 export const AttachmentInspector: React.FC<Props> = ({
   targetShape,
   targetTmpShape,
+  lineAttached,
   updateAttachment,
   readyState,
   commit,
@@ -38,10 +40,18 @@ export const AttachmentInspector: React.FC<Props> = ({
     [updateAttachment, readyState, commit],
   );
 
-  const handleAnchorRateChange = useCallback(
+  const handleToXChange = useCallback(
     (val: number, draft = false) => {
       if (!attachment) return;
       updateAttchment({ to: { x: val, y: attachment.to.y } }, draft);
+    },
+    [attachment, updateAttchment],
+  );
+
+  const handleToYChange = useCallback(
+    (val: number, draft = false) => {
+      if (!attachment) return;
+      updateAttchment({ to: { x: attachment.to.x, y: val } }, draft);
     },
     [attachment, updateAttchment],
   );
@@ -84,16 +94,20 @@ export const AttachmentInspector: React.FC<Props> = ({
 
   return (
     <BlockGroupField label="Attachment" accordionKey="attachment-inspector">
-      <InlineField label="Rate" fullBody>
-        <SliderInput
-          value={tmpAttachment.to.x}
-          onChanged={handleAnchorRateChange}
-          min={0}
-          max={1}
-          step={0.01}
-          showValue
-        />
-      </InlineField>
+      {lineAttached ? (
+        <InlineField label="Rate" fullBody>
+          <SliderInput value={tmpAttachment.to.x} onChanged={handleToXChange} min={0} max={1} step={0.01} showValue />
+        </InlineField>
+      ) : (
+        <BlockField label="To" fullBody>
+          <InlineField label="Left" fullBody>
+            <SliderInput value={tmpAttachment.to.x} onChanged={handleToXChange} min={0} max={1} step={0.01} showValue />
+          </InlineField>
+          <InlineField label="Top" fullBody>
+            <SliderInput value={tmpAttachment.to.y} onChanged={handleToYChange} min={0} max={1} step={0.01} showValue />
+          </InlineField>
+        </BlockField>
+      )}
       <BlockGroupField label="Rotation">
         <InlineField label="Relative">
           <ToggleInput value={tmpAttachment.rotationType === "relative"} onChange={handleRelativeRotationChange} />
@@ -112,28 +126,30 @@ export const AttachmentInspector: React.FC<Props> = ({
           </InlineField>
         ) : undefined}
       </BlockGroupField>
-      <BlockField label="Anchor" fullBody>
-        <InlineField label="Left" fullBody>
-          <SliderInput
-            value={tmpAttachment.anchor.x}
-            onChanged={handleAnchorXChange}
-            min={0}
-            max={1}
-            step={0.01}
-            showValue
-          />
-        </InlineField>
-        <InlineField label="Top" fullBody>
-          <SliderInput
-            value={tmpAttachment.anchor.y}
-            onChanged={handleAnchorYChange}
-            min={0}
-            max={1}
-            step={0.01}
-            showValue
-          />
-        </InlineField>
-      </BlockField>
+      {lineAttached ? (
+        <BlockField label="Anchor" fullBody>
+          <InlineField label="Left" fullBody>
+            <SliderInput
+              value={tmpAttachment.anchor.x}
+              onChanged={handleAnchorXChange}
+              min={0}
+              max={1}
+              step={0.01}
+              showValue
+            />
+          </InlineField>
+          <InlineField label="Top" fullBody>
+            <SliderInput
+              value={tmpAttachment.anchor.y}
+              onChanged={handleAnchorYChange}
+              min={0}
+              max={1}
+              step={0.01}
+              showValue
+            />
+          </InlineField>
+        </BlockField>
+      ) : undefined}
     </BlockGroupField>
   );
 };

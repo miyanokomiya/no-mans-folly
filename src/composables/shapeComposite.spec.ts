@@ -517,9 +517,10 @@ describe("newShapeComposite", () => {
       });
       const shape1 = { ...shape0, attachment: { ...shape0.attachment, id: "unknown" } } as Shape;
       const shape2 = { ...shape0, attachment: undefined } as Shape;
+      const shape3 = { ...shape0, attachment: { ...shape0.attachment, id: shape2.id } } as Shape;
       const line = createShape(getCommonStruct, "line", { id: "line" });
 
-      const shapes = [shape0, shape1, shape2, line];
+      const shapes = [shape0, shape1, shape2, shape3, line];
       const target = newShapeComposite({
         shapes,
         getStruct: getCommonStruct,
@@ -528,6 +529,11 @@ describe("newShapeComposite", () => {
       expect(target.attached(shape0)).toBe(true);
       expect(target.attached(shape1)).toBe(false);
       expect(target.attached(shape2)).toBe(false);
+      expect(target.attached(shape3)).toBe(true);
+      expect(target.attached(shape0, "line")).toBe(true);
+      expect(target.attached(shape0, "shape")).toBe(false);
+      expect(target.attached(shape3, "line")).toBe(false);
+      expect(target.attached(shape3, "shape")).toBe(true);
     });
   });
 

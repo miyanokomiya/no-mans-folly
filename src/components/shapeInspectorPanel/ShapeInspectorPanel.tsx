@@ -162,13 +162,17 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [targetShapes, getShapeComposite, patchShapes],
   );
 
+  const lineAttached = shapeComposite.attached(targetShape, "line");
+
   // Only shapes already having "attachment" will be updated.
+  // Either shapes having line attachments or shape attachments will be udpated.
   const updateAttachmentBySamePatch = useCallback(
     (val: Partial<ShapeAttachment>, draft = false) => {
       const shapeComposite = getShapeComposite();
 
+      const updateTargets = targetShapes.filter((s) => shapeComposite.attached(s, lineAttached ? "line" : "shape"));
       const layoutPatch = getPatchByLayouts(shapeComposite, {
-        update: targetShapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
+        update: updateTargets.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
           if (s.attachment) {
             p[s.id] = patchByPartialProperties(s, { attachment: val });
           }
@@ -183,7 +187,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
         patchShapes(layoutPatch);
       }
     },
-    [targetShapes, getShapeComposite, patchShapes, setTmpShapeMap],
+    [targetShapes, getShapeComposite, patchShapes, setTmpShapeMap, lineAttached],
   );
 
   const handleNoExportChange = useCallback(
@@ -274,6 +278,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
       <AttachmentInspector
         targetShape={targetShape}
         targetTmpShape={targetTmpShape}
+        lineAttached={lineAttached}
         updateAttachment={updateAttachmentBySamePatch}
         commit={commit}
         readyState={readyState}
