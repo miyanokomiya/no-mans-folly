@@ -392,7 +392,14 @@ export function newShapeComposite(option: Option) {
   }
 
   function getSubShapeComposite(ids: string[], update?: { [id: string]: Partial<Shape> }): ShapeComposite {
-    const allIds = getAllBranchIds(mergedShapeTree, ids);
+    const idSet = new Set(ids);
+    // Pick top shapes in the given IDs as root ones
+    // e.g. When a child and its parent are in "ids", pick the parent only.
+    const topIds = ids.filter((id) => {
+      const branchPath = getBranchPath(mergedShapeTreeMap, id);
+      return branchPath.every((a) => a === id || !idSet.has(a));
+    });
+    const allIds = getAllBranchIds(mergedShapeTree, topIds);
     const shouldSort = shouldEntityOrderUpdate({ update });
     const shouldResetTree = shouldSort || shouldEntityTreeUpdate({ update }, (_, patch) => "parentId" in patch);
 
@@ -400,7 +407,7 @@ export function newShapeComposite(option: Option) {
     if (!shouldResetTree) {
       const allIdSet = new Set(allIds);
       shapeTreeInfo = {
-        mergedShapeTree: ids.filter((id) => allIdSet.has(id)).map((id) => mergedShapeTreeMap[id]),
+        mergedShapeTree: topIds.filter((id) => allIdSet.has(id)).map((id) => mergedShapeTreeMap[id]),
         mergedShapeTreeMap: allIds.reduce<{ [id: string]: TreeNode }>((p, id) => {
           p[id] = mergedShapeTreeMap[id];
           return p;

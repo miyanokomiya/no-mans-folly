@@ -739,6 +739,17 @@ describe("newShapeComposite", () => {
       expect(sub2.mergedShapeTree.map((t) => t.id)).toEqual([group0.id]);
       expect(sub2.shapeMap[child0.id]).toEqual({ ...child0, p: { x: 1, y: 2 } });
     });
+
+    test("should pick top shapes in the given IDs as root ones", () => {
+      const shapes = [group0, child0, child1, group10, child10, child11];
+      const composite = newShapeComposite({ shapes, getStruct: getCommonStruct });
+
+      const sub1 = composite.getSubShapeComposite([group0.id, child0.id, group10.id, child10.id]);
+      expect(sub1.mergedShapeTree.map((t) => t.id)).toEqual([group0.id]);
+
+      const sub2 = composite.getSubShapeComposite([child0.id, group10.id, child10.id]);
+      expect(sub2.mergedShapeTree.map((t) => t.id)).toEqual([child0.id, group10.id]);
+    });
   });
 
   describe("getBranchPathTo", () => {
