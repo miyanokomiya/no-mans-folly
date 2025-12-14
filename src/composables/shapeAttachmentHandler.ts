@@ -182,7 +182,9 @@ function newShapeAttachmentLayoutHandler(option: ShapeAttachmentLayoutHandlerOpt
  */
 function getShapeAttachmentTargetMap(shapeComposite: ShapeComposite, targetIds: string[]): Map<string, Set<string>> {
   const shapeMap = shapeComposite.shapeMap;
-  const targetIdSet = new Set(targetIds.filter((id) => shapeMap[id] && shapeComposite.canAttach(shapeMap[id])));
+  const targetIdSet = new Set(
+    targetIds.filter((id) => shapeMap[id] && shapeComposite.canBeShapeAttached(shapeMap[id])),
+  );
   const attachedMap = new Map<string, Set<string>>();
 
   mapEach(shapeMap, (s) => {
