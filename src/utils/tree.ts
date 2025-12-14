@@ -139,14 +139,17 @@ export function getAllBranchIdsByMap(treeNodeMap: { [id: string]: TreeNode }, ta
   return Array.from(retIdSet);
 }
 
+/**
+ * Returns [root, ..., parent, targetId]
+ */
 export function getBranchPath(nodeMap: { [id: string]: TreeNode }, targetId: string): string[] {
   const ret: string[] = [];
 
   let node: TreeNode | undefined = nodeMap[targetId];
   while (node) {
-    ret.push(node.id);
+    ret.unshift(node.id);
     node = node.parentId ? nodeMap[node.parentId] : undefined;
   }
 
-  return ret.reverse();
+  return ret;
 }
