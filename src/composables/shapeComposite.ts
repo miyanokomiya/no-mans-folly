@@ -14,7 +14,15 @@ import { EntityPatchInfo, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
-import { flatTree, getAllBranchIds, getBranchPath, getParentRefMap, getTree, TreeNode } from "../utils/tree";
+import {
+  flatTree,
+  getAllBranchIds,
+  getBranchPath,
+  getParentRefMap,
+  getTopNodeIds,
+  getTree,
+  TreeNode,
+} from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import {
   LineJumpMap,
@@ -392,13 +400,7 @@ export function newShapeComposite(option: Option) {
   }
 
   function getSubShapeComposite(ids: string[], update?: { [id: string]: Partial<Shape> }): ShapeComposite {
-    const idSet = new Set(ids);
-    // Pick top shapes in the given IDs as root ones
-    // e.g. When a child and its parent are in "ids", pick the parent only.
-    const topIds = ids.filter((id) => {
-      const branchPath = getBranchPath(mergedShapeTreeMap, id);
-      return branchPath.every((a) => a === id || !idSet.has(a));
-    });
+    const topIds = getTopNodeIds(mergedShapeTreeMap, ids);
     const allIds = getAllBranchIds(mergedShapeTree, topIds);
     const shouldSort = shouldEntityOrderUpdate({ update });
     const shouldResetTree = shouldSort || shouldEntityTreeUpdate({ update }, (_, patch) => "parentId" in patch);

@@ -209,3 +209,23 @@ describe("getBranchPath", () => {
     expect(target.getBranchPath(nodeMap, "cc")).toEqual([]);
   });
 });
+
+describe("getTopNodeIds", () => {
+  test("should return ids of top nodes", () => {
+    const tree = target.getTree([
+      { id: "a", parentId: "" },
+      { id: "aa", parentId: "a" },
+      { id: "ab", parentId: "a" },
+      { id: "aaa", parentId: "aa" },
+      { id: "aab", parentId: "aa" },
+      { id: "b", parentId: "" },
+      { id: "bb", parentId: "b" },
+    ]);
+    const nodeMap = toMap(target.flatTree(tree));
+    expect(target.getTopNodeIds(nodeMap, ["a"])).toEqual(["a"]);
+    expect(target.getTopNodeIds(nodeMap, ["ab", "a", "aa"])).toEqual(["a"]);
+    expect(target.getTopNodeIds(nodeMap, ["ab", "aa"])).toEqual(["ab", "aa"]);
+    expect(target.getTopNodeIds(nodeMap, ["aaa", "aa"])).toEqual(["aa"]);
+    expect(target.getTopNodeIds(nodeMap, ["aaa", "aa", "a"])).toEqual(["a"]);
+  });
+});

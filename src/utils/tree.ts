@@ -153,3 +153,16 @@ export function getBranchPath(nodeMap: { [id: string]: TreeNode }, targetId: str
 
   return ret;
 }
+
+/**
+ * Pick top nodes in the given IDs as root ones
+ * e.g. When a child and its parent are in "ids", pick the parent only.
+ */
+export function getTopNodeIds(nodeMap: { [id: string]: TreeNode }, targetIds: string[]): string[] {
+  const idSet = new Set(targetIds);
+  return targetIds.filter((id) => {
+    const branchPath = getBranchPath(nodeMap, id);
+    branchPath.pop();
+    return branchPath.every((a) => !idSet.has(a));
+  });
+}
