@@ -13,27 +13,6 @@ import { defineShapeHandler } from "./shapeHandlers/core";
 import { renderOutlinedCircle, scaleGlobalAlpha } from "../utils/renderer";
 import { COLORS } from "../utils/color";
 
-export function getAttachmentOption(
-  shapeComposite: ShapeComposite,
-  targetIds: string[],
-): "attach" | "detach" | undefined {
-  const canAttach = canAttachToShapeByIds(shapeComposite, targetIds);
-  if (!canAttach) return;
-
-  // Retruns "detach" when all shapes have "attachment"
-  const attachableShapes = targetIds
-    .map((id) => shapeComposite.shapeMap[id])
-    .filter((s) => !!s && shapeComposite.canAttach(s));
-  return attachableShapes.some((s) => !s.attachment) ? "attach" : "detach";
-}
-
-function canAttachToShapeByIds(shapeComposite: ShapeComposite, targetIds: string[]): boolean {
-  return targetIds.some((id) => {
-    const s = shapeComposite.shapeMap[id];
-    return !!s && shapeComposite.canAttach(s);
-  });
-}
-
 export function canDetachFromShape(shapeComposite: ShapeComposite, shape: Shape): boolean {
   if (!shapeComposite.canAttach(shape)) return false;
   return !!shape.attachment;

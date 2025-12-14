@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { canDetachFromShape, getAttachmentOption, getShapeAttachmentPatch } from "./shapeAttachmentHandler";
+import { canDetachFromShape, getShapeAttachmentPatch } from "./shapeAttachmentHandler";
 import { newShapeComposite } from "./shapeComposite";
 import { createShape, getCommonStruct } from "../shapes";
 import { ShapeAttachment } from "../models";
@@ -19,21 +19,6 @@ const attachment: ShapeAttachment = {
   rotationType: "relative",
   rotation: 0,
 };
-
-describe("getAttachmentOption", () => {
-  test("should return attachment option for the targets", () => {
-    const shapeComposite = newShapeComposite({
-      shapes: [shape, line, frame, group, { ...child, attachment }, label],
-      getStruct: getCommonStruct,
-    });
-    expect(getAttachmentOption(shapeComposite, [])).toBe(undefined);
-    expect(getAttachmentOption(shapeComposite, [shape.id])).toBe("attach");
-    expect(getAttachmentOption(shapeComposite, [shape.id, line.id])).toBe("attach");
-    expect(getAttachmentOption(shapeComposite, [line.id])).toBe(undefined);
-    expect(getAttachmentOption(shapeComposite, [child.id])).toBe("detach");
-    expect(getAttachmentOption(shapeComposite, [shape.id, child.id])).toBe("attach");
-  });
-});
 
 describe("canDetachFromShape", () => {
   test("should return true when the shape can detach from a shape", () => {

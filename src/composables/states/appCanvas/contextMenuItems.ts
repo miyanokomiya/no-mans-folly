@@ -34,7 +34,7 @@ import { AlignBoxShape } from "../../../shapes/align/alignBox";
 import { isSymbolShape, SymbolShape } from "../../../shapes/symbol";
 import { generateSymbolAssetId, getAssetIdSrcStr } from "../../../shapes/utils/symbol";
 import { getSlideOverlayPosition } from "./commons";
-import { getAttachmentOption, getPatchByDetachFromShape } from "../../shapeAttachmentHandler";
+import { getPatchByDetachFromShape } from "../../shapeAttachmentHandler";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get GRID_ON() {
@@ -304,17 +304,14 @@ export function getMenuItemsForSelectedShapes(
   const shapeComposite = ctx.getShapeComposite();
   const shapes = ids.map((id) => shapeComposite.shapeMap[id]);
   const [unlocked, locked] = splitList(shapes, (s) => !s.locked);
-  const unlockedIds = unlocked.map((s) => s.id);
 
   const topItems: ContextMenuItem[] = [];
 
-  switch (getAttachmentOption(shapeComposite, unlockedIds)) {
-    case "attach":
-      topItems.push(CONTEXT_MENU_ITEM_SRC.PIN_TO_SHAPE);
-      break;
-    case "detach":
-      topItems.push(CONTEXT_MENU_ITEM_SRC.UNPIN_FROM_SHAPE);
-      break;
+  if (unlocked.some((s) => shapeComposite.canAttach(s))) {
+    topItems.push(CONTEXT_MENU_ITEM_SRC.PIN_TO_SHAPE);
+  }
+  if (unlocked.some((s) => shapeComposite.attached(s, "shape"))) {
+    topItems.push(CONTEXT_MENU_ITEM_SRC.UNPIN_FROM_SHAPE);
   }
 
   if (unlocked.length > 0) {
