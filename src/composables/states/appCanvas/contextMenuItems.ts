@@ -19,6 +19,8 @@ import { newShapeSVGRenderer } from "../../shapeSVGRenderer";
 import iconRefinement from "../../../assets/icons/refinement.svg";
 import iconVnNode from "../../../assets/icons/vnnode.svg";
 import iconDustbinRed from "../../../assets/icons/dustbin_red.svg";
+import iconPin from "../../../assets/icons/pin.svg";
+import iconUnpin from "../../../assets/icons/unpin.svg";
 import { RectPolygonShape } from "../../../shapes/rectPolygon";
 import { expandRect } from "../../../utils/geometry";
 import { LineShape } from "../../../shapes/line";
@@ -90,12 +92,14 @@ export const CONTEXT_MENU_ITEM_SRC = {
     return {
       label: i18n.t("contextmenu.pin_to_shape"),
       key: "PIN_TO_SHAPE",
+      icon: iconPin,
     };
   },
   get UNPIN_FROM_SHAPE() {
     return {
       label: i18n.t("contextmenu.unpin_from_shape"),
       key: "UNPIN_FROM_SHAPE",
+      icon: iconUnpin,
     };
   },
   get GROUP() {
