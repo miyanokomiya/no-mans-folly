@@ -1,4 +1,4 @@
-import { getRectCenter } from "okageo";
+import { add, IVec2 } from "okageo";
 import { LineShape, isLineShape } from "../line";
 import { TextShape, isTextShape, patchPosition } from "../text";
 import { getRotateFn } from "../../utils/geometry";
@@ -6,40 +6,13 @@ import { Shape } from "../../models";
 import { ShapeComposite } from "../../composables/shapeComposite";
 import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "./line";
 
-export function attachLabelToLine(
-  line: LineShape,
-  label: TextShape,
-  margin = 0,
-  autoAlign = false,
-): Partial<TextShape> {
-  const labelBounds = { x: label.p.x, y: label.p.y, width: label.width, height: label.height };
-  const labelCenter = getRectCenter(labelBounds);
-  const rotateFn = getRotateFn(-label.rotation, labelCenter);
-
-  const closestInfo = getClosestOutlineInfoOfLine(line, labelCenter, Infinity);
+export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0): Partial<TextShape> {
+  const anchorP = getLineLabelAnchorPoint(label, margin);
+  const closestInfo = getClosestOutlineInfoOfLine(line, anchorP, Infinity);
   if (!closestInfo) return { p: line.p };
 
   const [closestPedal, rate] = closestInfo;
   let patch: Partial<TextShape> = {};
-
-  if (autoAlign) {
-    const rotatedClosestPedal = rotateFn(closestPedal);
-    if (rotatedClosestPedal.x <= labelBounds.x) {
-      patch.hAlign = "left";
-    } else if (labelBounds.x + labelBounds.width <= rotatedClosestPedal.x) {
-      patch.hAlign = "right";
-    } else {
-      patch.hAlign = "center";
-    }
-
-    if (rotatedClosestPedal.y <= labelBounds.y) {
-      patch.vAlign = "top";
-    } else if (labelBounds.y + labelBounds.height <= rotatedClosestPedal.y) {
-      patch.vAlign = "bottom";
-    } else {
-      patch.vAlign = "center";
-    }
-  }
 
   patch.lineAttached = rate;
 
@@ -67,4 +40,37 @@ export function isLineLabelShape(
 ): shape is TextShape & Required<Pick<Shape, "parentId">> {
   const parent = shapeComposite.shapeMap[shape.parentId ?? ""];
   return !!parent && isLineShape(parent) && isTextShape(shape) && shape.lineAttached !== undefined;
+}
+
+export function getLineLabelAnchorPoint(label: TextShape, margin = 0): IVec2 {
+  const center = { x: label.width / 2, y: label.height / 2 };
+  const rotateFn = getRotateFn(label.rotation, center);
+
+  let x: number;
+  switch (label.hAlign) {
+    case "center":
+      x = label.width / 2;
+      break;
+    case "right":
+      x = label.width + margin;
+      break;
+    default:
+      x = -margin;
+      break;
+  }
+
+  let y: number;
+  switch (label.vAlign) {
+    case "center":
+      y = label.height / 2;
+      break;
+    case "bottom":
+      y = label.height + margin;
+      break;
+    default:
+      y = -margin;
+      break;
+  }
+
+  return add(rotateFn({ x, y }), label.p);
 }

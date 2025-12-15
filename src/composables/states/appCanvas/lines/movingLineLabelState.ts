@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "../core";
 import { AffineMatrix, IDENTITY_AFFINE, sub } from "okageo";
-import { getPatchByUpdateLabelAlign, newLineLabelHandler, renderParentLineRelation } from "../../../lineLabelHandler";
+import { getPatchByUpdateLabelAlign, renderParentLineRelation } from "../../../lineLabelHandler";
 import { BoundingBox } from "../../../boundingBox";
 import { LineShape } from "../../../../shapes/line";
 import { TextShape } from "../../../../shapes/text";
@@ -32,8 +32,6 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
 
       parentLineShape = shapeMap[labelShape.parentId ?? ""] as LineShape;
       if (!parentLineShape) return ctx.states.newSelectionHubState;
-
-      lineLabelHandler = newLineLabelHandler({ ctx });
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
