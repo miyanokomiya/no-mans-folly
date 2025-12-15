@@ -82,14 +82,16 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
       const nextSubSC = shapeComposite.getSubShapeComposite(Array.from(attachedIdSet), updatedMap);
       attachedIdSet.forEach((attachedId) => {
         const shape = shapeMap[attachedId];
-        const nextAttached = nextSubSC.shapeMap[attachedId];
-        if (!nextSubSC.canAttach(nextAttached)) {
+
+        // This check shouldn't be done with "nextSubSC" because it doesn't have the parent of "shape".
+        if (!shapeComposite.canAttach({ ...shape, ...updatedMap[attachedId] })) {
           if (shape.attachment) {
             ret[attachedId] = { attachment: undefined };
           }
           return;
         }
 
+        const nextAttached = nextSubSC.shapeMap[attachedId];
         const nextAttachment = nextAttached.attachment;
         if (!nextAttachment) return;
 
@@ -109,8 +111,8 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
             (src) => {
               // Apply next rotation at first.
               const rotateAffine = getRotationAffine(
-                nextRotation - shape.rotation,
-                getRectCenter(nextSubSC.getWrapperRect(shape)),
+                nextRotation - nextAttached.rotation,
+                getRectCenter(nextSubSC.getWrapperRect(nextAttached)),
               );
               return mapReduce(src, (s) => nextSubSC.transformShape(s, rotateAffine));
             },

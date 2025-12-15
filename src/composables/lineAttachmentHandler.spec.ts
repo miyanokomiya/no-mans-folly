@@ -74,7 +74,7 @@ describe("getLineAttachmentPatch", () => {
       },
     });
     expect(result1).not.toHaveProperty(shapeA.id);
-    expect(result1[shapeB.id].p).toEqualPoint({ x: -30, y: -50 });
+    expect(result1[shapeB.id].p).toEqualPoint({ x: -80, y: -50 });
     expect(result1[shapeB.id].rotation).toBeCloseTo(Math.PI / 2);
   });
 
