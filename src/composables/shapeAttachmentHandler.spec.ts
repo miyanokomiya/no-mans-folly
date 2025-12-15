@@ -65,18 +65,33 @@ describe("getShapeAttachmentPatch", () => {
     expect(res1[source.id]).toEqual({ p: { x: 20, y: -200 } });
   });
 
-  test("should initialize relative angle when it's newly set", () => {
-    const source = { ...shape, rotation: Math.PI, attachment: { ...attachment, rotationType: "absolute" as const } };
+  test("should update rotation when relative rotation changes", () => {
+    const source0 = { ...shape, rotation: Math.PI, attachment };
+    const source1 = { ...shape, rotation: Math.PI, attachment: { ...attachment, rotationType: "absolute" as const } };
     const shapeComposite = newShapeComposite({
-      shapes: [{ ...attached, rotation: Math.PI / 2 }, source],
+      shapes: [{ ...attached, rotation: Math.PI / 2 }, source0, source1],
       getStruct: getCommonStruct,
     });
 
     const res0 = getShapeAttachmentPatch(shapeComposite, {
       update: {
-        [source.id]: { attachment: { ...attachment, rotationType: "relative" } },
+        [source0.id]: { attachment: { ...attachment, rotationType: "absolute" } },
       },
     });
-    expect(res0[source.id]).toEqual({ rotation: Math.PI / 2 });
+    expect(res0[source0.id]).toEqual(undefined);
+
+    const res1 = getShapeAttachmentPatch(shapeComposite, {
+      update: {
+        [source0.id]: { attachment: { ...attachment, rotation: Math.PI / 4 } },
+      },
+    });
+    expect(res1[source0.id]).toEqual({ rotation: Math.PI * 0.75 });
+
+    const res2 = getShapeAttachmentPatch(shapeComposite, {
+      update: {
+        [source1.id]: { attachment: { ...attachment, rotationType: "relative" } },
+      },
+    });
+    expect(res2[source1.id]).toEqual({ rotation: Math.PI / 2 });
   });
 });
