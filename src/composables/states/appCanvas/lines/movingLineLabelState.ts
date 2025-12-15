@@ -4,7 +4,6 @@ import { getPatchByUpdateLabelAlign, renderParentLineRelation } from "../../../l
 import { BoundingBox } from "../../../boundingBox";
 import { LineShape } from "../../../../shapes/line";
 import { TextShape } from "../../../../shapes/text";
-import { Shape } from "../../../../models";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
@@ -43,7 +42,7 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const shapeComposite = ctx.getShapeComposite();
-          let patch: { [id: string]: Partial<Shape> };
+          let patch: { [id: string]: Partial<TextShape> };
 
           if (event.data.shift) {
             // Keep the latest label position.
@@ -65,6 +64,16 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
             const d = sub(event.data.current, event.data.startAbs);
             const affineSrc: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
             patch = { [labelShape.id]: shapeComposite.transformShape(labelShape, affineSrc) };
+
+            // Inherit the latest alignment in this state
+            const tmpPatch = shapeComposite.tmpShapeMap[labelShape.id] as Partial<TextShape>;
+            if (tmpPatch?.vAlign) {
+              patch[labelShape.id].vAlign = tmpPatch.vAlign;
+            }
+            if (tmpPatch?.hAlign) {
+              patch[labelShape.id].hAlign = tmpPatch.hAlign;
+            }
+
             patch = getPatchByLayouts(shapeComposite, { update: patch });
           }
 
