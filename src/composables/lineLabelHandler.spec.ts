@@ -39,7 +39,7 @@ describe("newLineLabelHandler", () => {
       });
 
       expect(target.onModified({ label0: { p: { x: 50, y: -100 } } })).toEqual({
-        label0: { p: { x: 50, y: -17 }, hAlign: "center", vAlign: "bottom", lineAttached: 0.6 },
+        label0: { p: { x: 50, y: -5 }, lineAttached: 0.43 },
       });
 
       expect(
@@ -48,7 +48,7 @@ describe("newLineLabelHandler", () => {
           label0: { p: { x: 50, y: -100 } },
         }),
       ).toEqual({
-        label0: { p: { x: 50, y: -17 }, hAlign: "center", vAlign: "bottom", lineAttached: 0.3 },
+        label0: { p: { x: 50, y: -5 }, lineAttached: 0.215 },
       });
     });
 
