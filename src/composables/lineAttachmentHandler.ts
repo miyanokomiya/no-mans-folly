@@ -20,6 +20,7 @@ import { getNextShapeComposite, ShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import {
   fillArray,
+  isObjectEmpty,
   mapEach,
   mapReduce,
   patchPipe,
@@ -78,10 +79,11 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
 
       const nextLine = { ...line, ...updatedMap[lineId] } as LineShape;
       const nextLineLerpFn = getLineEdgeInfo(nextLine).lerpFn;
+      const nextSubSC = shapeComposite.getSubShapeComposite(Array.from(attachedIdSet), updatedMap);
       attachedIdSet.forEach((attachedId) => {
         const shape = shapeMap[attachedId];
-        const nextAttached = { ...shape, ...updatedMap[attachedId] };
-        if (!shapeComposite.canAttach(nextAttached)) {
+        const nextAttached = nextSubSC.shapeMap[attachedId];
+        if (!nextSubSC.canAttach(nextAttached)) {
           if (shape.attachment) {
             ret[attachedId] = { attachment: undefined };
           }
@@ -100,7 +102,7 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
           nextRotation = nextAttachment.rotation + baseRotation;
         }
 
-        const allTargetShapes = shapeComposite.getAllTransformTargets([attachedId]);
+        const allTargetShapes = nextSubSC.getAllTransformTargets([attachedId]);
 
         const patch = patchPipe(
           [
@@ -108,27 +110,29 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
               // Apply next rotation at first.
               const rotateAffine = getRotationAffine(
                 nextRotation - shape.rotation,
-                getRectCenter(shapeComposite.getWrapperRect(shape)),
+                getRectCenter(nextSubSC.getWrapperRect(shape)),
               );
-              return mapReduce(src, (s) => shapeComposite.transformShape(s, rotateAffine));
+              return mapReduce(src, (s) => nextSubSC.transformShape(s, rotateAffine));
             },
             (src, update) => {
               // Derive translation affine based on the anchors of rotated shapes.
-              const rotatedShapeComposite = shapeComposite.getSubShapeComposite([attachedId], update);
+              const rotatedShapeComposite = nextSubSC.getSubShapeComposite([attachedId], update);
               const translateAffine = getAffineByMoveToAttachedPoint(
                 rotatedShapeComposite,
                 rotatedShapeComposite.mergedShapeMap[attachedId],
                 nextAttachment.anchor,
                 toP,
               );
-              return mapReduce(src, (s) => shapeComposite.transformShape(s, translateAffine));
+              return mapReduce(src, (s) => nextSubSC.transformShape(s, translateAffine));
             },
           ],
           toMap(allTargetShapes),
         ).patch;
 
         for (const id in patch) {
-          ret[id] = patch[id];
+          if (!isObjectEmpty(patch[id])) {
+            ret[id] = patch[id];
+          }
         }
       });
     });
