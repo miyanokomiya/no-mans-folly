@@ -6,6 +6,7 @@ import { LineShape } from "../../../../shapes/line";
 import { TextShape } from "../../../../shapes/text";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
+import { isObjectEmpty } from "../../../../utils/commons";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -42,24 +43,42 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           const shapeComposite = ctx.getShapeComposite();
-          let patch: { [id: string]: Partial<TextShape> };
+          let patch: { [id: string]: Partial<TextShape> } | undefined;
 
           if (event.data.shift) {
             // Keep the latest label position.
-            const lineAttached =
-              (ctx.getTmpShapeMap()[labelShape.id] as TextShape)?.lineAttached ?? labelShape.lineAttached;
-            patch = {
-              [labelShape.id]: {
-                lineAttached,
-                ...getPatchByUpdateLabelAlign(
-                  parentLineShape,
-                  { ...labelShape, lineAttached },
-                  event.data.current,
-                  ctx.getScale(),
-                ),
-              },
-            };
-            // TODO: Should apply "getPatchByLayouts" but "LineLabelHandler" doesn't work well with this operation
+            const tmpLabel = ctx.getTmpShapeMap()[labelShape.id] as TextShape;
+            if (tmpLabel) {
+              patch = {
+                [labelShape.id]: {
+                  ...tmpLabel,
+                  ...getPatchByUpdateLabelAlign(
+                    parentLineShape,
+                    { ...labelShape, ...tmpLabel },
+                    event.data.current,
+                    ctx.getScale(),
+                  ),
+                },
+              };
+            } else {
+              const labelPatch = getPatchByUpdateLabelAlign(
+                parentLineShape,
+                labelShape,
+                event.data.current,
+                ctx.getScale(),
+              );
+              if (!isObjectEmpty(labelPatch)) {
+                patch = { [labelShape.id]: labelPatch };
+              }
+            }
+
+            if (patch) {
+              const layoutPatch = getPatchByLayouts(shapeComposite, { update: patch });
+              // Discard layout patch for the target label
+              // => The layout logic doesn't work well with this state when the state changes both position and alignments of the label.
+              // => This case happens because this state updates both of them as single patch and accumulates tmp patches.
+              patch = { ...layoutPatch, [labelShape.id]: patch[labelShape.id] };
+            }
           } else {
             const d = sub(event.data.current, event.data.startAbs);
             const affineSrc: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
@@ -73,8 +92,13 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
             if (tmpPatch?.hAlign) {
               patch[labelShape.id].hAlign = tmpPatch.hAlign;
             }
-
             patch = getPatchByLayouts(shapeComposite, { update: patch });
+          }
+
+          if (!patch) {
+            ctx.setTmpShapeMap({});
+            affine = IDENTITY_AFFINE;
+            return;
           }
 
           ctx.setTmpShapeMap(patch);
