@@ -94,4 +94,14 @@ describe("getShapeAttachmentPatch", () => {
     });
     expect(res2[source1.id]).toEqual({ rotation: Math.PI / 2 });
   });
+
+  test("should ignore shapes attaching to a line", () => {
+    const source = { ...shape, rotation: Math.PI / 2, attachment: { ...attachment, id: line.id } };
+    const shapeComposite = newShapeComposite({
+      shapes: [line, source],
+      getStruct: getCommonStruct,
+    });
+    const res0 = getShapeAttachmentPatch(shapeComposite, { update: { [source.id]: { p: { x: 100, y: 10 } } } });
+    expect(res0[source.id]).toBeUndefined();
+  });
 });

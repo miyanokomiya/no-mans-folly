@@ -136,6 +136,9 @@ function newShapeAttachmentLayoutHandler(option: ShapeAttachmentLayoutHandlerOpt
     mapEach(updatedMap, (patch, id) => {
       const orgShape = shapeMap[id];
       if (!orgShape || ret[id] || !patch.attachment) return;
+
+      const orgTarget = shapeMap[patch.attachment.id];
+      if (!orgTarget || !shapeComposite.canBeShapeAttached(orgTarget)) return;
       if (patch.attachment.rotationType !== "relative") return;
       if (
         orgShape.attachment?.rotationType === patch.attachment.rotationType &&
@@ -144,9 +147,7 @@ function newShapeAttachmentLayoutHandler(option: ShapeAttachmentLayoutHandlerOpt
         return;
 
       ret[id] = {
-        rotation:
-          (updatedMap[patch.attachment.id]?.rotation ?? shapeMap[patch.attachment.id]?.rotation) +
-          patch.attachment.rotation,
+        rotation: (updatedMap[patch.attachment.id]?.rotation ?? orgTarget.rotation) + patch.attachment.rotation,
       };
     });
 
