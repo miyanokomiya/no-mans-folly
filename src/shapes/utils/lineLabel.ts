@@ -6,7 +6,12 @@ import { Shape } from "../../models";
 import { ShapeComposite } from "../../composables/shapeComposite";
 import { getClosestOutlineInfoOfLine, getLineEdgeInfo } from "./line";
 
-export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0): Partial<TextShape> {
+export function attachLabelToLine(
+  line: LineShape,
+  label: TextShape,
+  margin = 0,
+  autoAlign = false,
+): Partial<TextShape> {
   const labelBounds = { x: label.p.x, y: label.p.y, width: label.width, height: label.height };
   const labelCenter = getRectCenter(labelBounds);
   const rotateFn = getRotateFn(-label.rotation, labelCenter);
@@ -17,21 +22,23 @@ export function attachLabelToLine(line: LineShape, label: TextShape, margin = 0)
   const [closestPedal, rate] = closestInfo;
   let patch: Partial<TextShape> = {};
 
-  const rotatedClosestPedal = rotateFn(closestPedal);
-  if (rotatedClosestPedal.x <= labelBounds.x) {
-    patch.hAlign = "left";
-  } else if (labelBounds.x + labelBounds.width <= rotatedClosestPedal.x) {
-    patch.hAlign = "right";
-  } else {
-    patch.hAlign = "center";
-  }
+  if (autoAlign) {
+    const rotatedClosestPedal = rotateFn(closestPedal);
+    if (rotatedClosestPedal.x <= labelBounds.x) {
+      patch.hAlign = "left";
+    } else if (labelBounds.x + labelBounds.width <= rotatedClosestPedal.x) {
+      patch.hAlign = "right";
+    } else {
+      patch.hAlign = "center";
+    }
 
-  if (rotatedClosestPedal.y <= labelBounds.y) {
-    patch.vAlign = "top";
-  } else if (labelBounds.y + labelBounds.height <= rotatedClosestPedal.y) {
-    patch.vAlign = "bottom";
-  } else {
-    patch.vAlign = "center";
+    if (rotatedClosestPedal.y <= labelBounds.y) {
+      patch.vAlign = "top";
+    } else if (labelBounds.y + labelBounds.height <= rotatedClosestPedal.y) {
+      patch.vAlign = "bottom";
+    } else {
+      patch.vAlign = "center";
+    }
   }
 
   patch.lineAttached = rate;

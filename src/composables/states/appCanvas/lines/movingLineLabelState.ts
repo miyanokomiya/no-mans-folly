@@ -1,17 +1,12 @@
 import type { AppCanvasState } from "../core";
 import { AffineMatrix, IDENTITY_AFFINE, sub } from "okageo";
-import { mapReduce, patchPipe } from "../../../../utils/commons";
-import {
-  LineLabelHandler,
-  getPatchByUpdateLabelAlign,
-  newLineLabelHandler,
-  renderParentLineRelation,
-} from "../../../lineLabelHandler";
+import { getPatchByUpdateLabelAlign, newLineLabelHandler, renderParentLineRelation } from "../../../lineLabelHandler";
 import { BoundingBox } from "../../../boundingBox";
 import { LineShape } from "../../../../shapes/line";
 import { TextShape } from "../../../../shapes/text";
 import { Shape } from "../../../../models";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 
 interface Option {
   boundingBox: BoundingBox;
@@ -21,7 +16,6 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
   const boundingBox = option.boundingBox;
   let labelShape: TextShape;
   let parentLineShape: LineShape;
-  let lineLabelHandler: LineLabelHandler;
   let affine = IDENTITY_AFFINE;
 
   return {
@@ -50,6 +44,7 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "pointermove": {
+          const shapeComposite = ctx.getShapeComposite();
           let patch: { [id: string]: Partial<Shape> };
 
           if (event.data.shift) {
@@ -67,17 +62,12 @@ export function newMovingLineLabelState(option: Option): AppCanvasState {
                 ),
               },
             };
+            // TODO: Should apply "getPatchByLayouts" but "LineLabelHandler" doesn't work well with this operation
           } else {
             const d = sub(event.data.current, event.data.startAbs);
             const affineSrc: AffineMatrix = [1, 0, 0, 1, d.x, d.y];
-            const shapeComposite = ctx.getShapeComposite();
-            patch = patchPipe(
-              [
-                (src) => mapReduce(src, (s) => shapeComposite.transformShape(s, affineSrc)),
-                (_src, patch) => lineLabelHandler.onModified(patch),
-              ],
-              { [labelShape.id]: labelShape },
-            ).patch;
+            patch = { [labelShape.id]: shapeComposite.transformShape(labelShape, affineSrc) };
+            patch = getPatchByLayouts(shapeComposite, { update: patch });
           }
 
           ctx.setTmpShapeMap(patch);

@@ -33,8 +33,9 @@ export function newLineLabelHandler(option: Option) {
         (s): s is TextShape => isLineLabelShape(shapeComposite, s) && s.parentId === lineId,
       );
       labels.forEach((label) => {
-        const origin = getRelativePointOn(patchedLine, label.lineAttached ?? 0.5);
-        const labelPatch = patchPosition(label, origin, getLabelMargin(patchedLine));
+        const nextLabel = updatedMap[label.id] ? { ...label, ...updatedMap[label.id] } : label;
+        const origin = getRelativePointOn(patchedLine, nextLabel.lineAttached ?? 0.5);
+        const labelPatch = patchPosition(nextLabel, origin, getLabelMargin(patchedLine));
         if (labelPatch) {
           ret[label.id] = labelPatch;
         }
@@ -45,9 +46,13 @@ export function newLineLabelHandler(option: Option) {
       const shape = shapeMap[labelId];
       if (!shape || !isLineLabelShape(shapeComposite, shape) || !shape.parentId) return;
 
-      const label = { ...shape, ...patch } as TextShape;
-      const line = { ...shapeMap[shape.parentId], ...(updatedMap[shape.parentId] ?? {}) } as LineShape;
-      ret[labelId] = attachLabelToLine(line, label, getLabelMargin(line));
+      const nextLabel = { ...shape, ...patch } as TextShape;
+      const nextLine = (
+        updatedMap[shape.parentId]
+          ? { ...shapeMap[shape.parentId], ...(updatedMap[shape.parentId] ?? {}) }
+          : shapeMap[shape.parentId]
+      ) as LineShape;
+      ret[labelId] = attachLabelToLine(nextLine, nextLabel, getLabelMargin(nextLine));
     });
 
     return ret;
