@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { struct as textStruct } from "../text";
 import { struct as lineStruct } from "../line";
-import { attachLabelToLine, getLineLabelAnchorPoint, isLineLabelShape } from "./lineLabel";
+import { attachLabelToLine, getLabelMargin, isLineLabelShape } from "./lineLabel";
 import { newShapeComposite } from "../../composables/shapeComposite";
 import { getCommonStruct } from "..";
 
@@ -97,13 +97,11 @@ describe("attachLabelToLine", () => {
   test("should add margin when it's supplied", () => {
     const line0 = lineStruct.create({ q: { x: 100, y: 0 } });
     const label0 = textStruct.create({ p: { x: 20, y: 20 }, width: 20, height: 10 });
-    expect(attachLabelToLine(line0, label0, 10)).toEqual({
-      p: expect.anything(),
-      lineAttached: 0.1,
-    });
-    expect(attachLabelToLine(line0, label0, 10).p).toEqualPoint({
-      x: 17.0710678,
-      y: 7.07106781,
+    const res0 = attachLabelToLine(line0, label0, 10);
+    expect(res0.lineAttached).toBeCloseTo(0.12928932);
+    expect(res0.p).toEqualPoint({
+      x: 20,
+      y: 7.071067811,
     });
   });
 
@@ -156,36 +154,10 @@ describe("isLineLabelShape", () => {
     expect(isLineLabelShape(shapeComposite, label4), "no parent").toBe(false);
   });
 
-  test("should not change vAlign and hAlign when autoAlign isn't set true", () => {
-    const line0 = lineStruct.create({ q: { x: 100, y: 100 } });
-    const label0 = textStruct.create({ p: { x: 20, y: 0 }, width: 10, height: 10 });
-    expect(attachLabelToLine(line0, label0, 0)).toEqual({
-      p: { x: 10, y: 10 },
-      lineAttached: 0.1,
-    });
-
-    const label1 = textStruct.create({ p: { x: 0, y: 20 }, width: 10, height: 10 });
-    expect(attachLabelToLine(line0, label1, 0)).toEqual({
-      p: { x: 10, y: 10 },
-      lineAttached: 0.1,
-    });
-  });
-});
-
-describe("getLineLabelAnchorPoint", () => {
-  test("should return anchor point", () => {
-    const label = textStruct.create({ p: { x: 10, y: 20 }, width: 100, height: 200 });
-    expect(getLineLabelAnchorPoint({ ...label, vAlign: "top", hAlign: "left" }, 2)).toEqualPoint({ x: 8, y: 18 });
-    expect(getLineLabelAnchorPoint({ ...label, vAlign: "center", hAlign: "center" }, 2)).toEqualPoint({
-      x: 60,
-      y: 120,
-    });
-    expect(getLineLabelAnchorPoint({ ...label, vAlign: "bottom", hAlign: "right" }, 2)).toEqualPoint({
-      x: 112,
-      y: 222,
-    });
-    expect(getLineLabelAnchorPoint({ ...label, vAlign: "top", hAlign: "left", rotation: Math.PI / 2 }, 2)).toEqualPoint(
-      { x: 162, y: 68 },
-    );
+  test("should return consistent anchor", () => {
+    const line0 = lineStruct.create({ p: { x: 710, y: 2766 }, q: { x: 935, y: 2766 } });
+    const label0 = textStruct.create({ p: { x: 785, y: 2771 }, width: 68, height: 22, vAlign: "top", hAlign: "left" });
+    const patch = attachLabelToLine(line0, label0, getLabelMargin(line0));
+    expect(attachLabelToLine(line0, { ...label0, ...patch }, getLabelMargin(line0))).toEqual({});
   });
 });

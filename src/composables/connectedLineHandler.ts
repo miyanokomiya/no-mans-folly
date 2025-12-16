@@ -53,10 +53,10 @@ export function newConnectedLineHandler(option: Option) {
         let currentLine = latestLine;
         connections.forEach((c, index) => {
           if (!c?.id) return;
-          const target = updatedShapeMap[c.id] ?? shapeMap[c.id];
+          const target = updatedShapeComposite.shapeMap[c.id];
           if (!target) return;
 
-          const rectPath = shapeComposite.getLocalRectPolygon(target);
+          const rectPath = updatedShapeComposite.getLocalRectPolygon(target);
           const rotation = target.rotation;
           const p = getLocationFromRateOnRectPath(rectPath, rotation, c.rate);
           const vertexPatch = patchVertex(currentLine, index, p, c);
@@ -67,7 +67,7 @@ export function newConnectedLineHandler(option: Option) {
         return;
       }
 
-      const rectPath = shapeComposite.getLocalRectPolygon(shape);
+      const rectPath = updatedShapeComposite.getLocalRectPolygon(shape);
       const rotation = shape.rotation;
 
       const lines = option.connectedLinesMap[id] ?? [];

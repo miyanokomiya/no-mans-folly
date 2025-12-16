@@ -4,7 +4,7 @@ import { LineShape, getLinePath, getRelativePointOn, isLineShape } from "../shap
 import { TextShape, patchPosition } from "../shapes/text";
 import { applyFillStyle } from "../utils/fillStyle";
 import { TAU } from "../utils/geometry";
-import { attachLabelToLine, isLineLabelShape } from "../shapes/utils/lineLabel";
+import { attachLabelToLine, getLabelMargin, isLineLabelShape } from "../shapes/utils/lineLabel";
 import { applyCurvePath } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { ShapeComposite } from "./shapeComposite";
@@ -78,10 +78,6 @@ export function renderParentLineRelation(
   renderCtx.beginPath();
   renderCtx.arc(origin.x, origin.y, 3 * ctx.getScale(), 0, TAU);
   renderCtx.fill();
-}
-
-function getLabelMargin(line: LineShape): number {
-  return (line.stroke.width ?? 1) / 2 + 6;
 }
 
 /**

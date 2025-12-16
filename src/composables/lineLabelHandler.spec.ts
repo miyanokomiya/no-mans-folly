@@ -105,14 +105,12 @@ describe("getPatchByUpdateLabelAlign", () => {
     const ret1 = getPatchByUpdateLabelAlign(line0, label0, { x: 20, y: 20 });
     expect(ret1.hAlign).toBe("right");
     expect(ret1.vAlign).toBe("bottom");
-    expect(ret1.p?.x).toBeCloseTo(35.05, 3);
-    expect(ret1.p?.y).toBeCloseTo(35.05, 3);
+    expect(ret1.p).toEqualPoint({ x: 35.0502525, y: 35.0502525 });
 
     const ret2 = getPatchByUpdateLabelAlign(line0, label0, { x: 80, y: 80 });
     expect(ret2.hAlign).toBe("left");
     expect(ret2.vAlign).toBe("top");
-    expect(ret2.p?.x).toBeCloseTo(54.95, 3);
-    expect(ret2.p?.y).toBeCloseTo(54.95, 3);
+    expect(ret2.p).toEqualPoint({ x: 54.9497474, y: 54.9497474 });
   });
 
   test("should drop attributes that are same to the originals", () => {

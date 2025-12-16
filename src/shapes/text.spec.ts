@@ -1,5 +1,5 @@
 import { expect, describe, test } from "vitest";
-import { struct, isTextShape, patchPosition } from "./text";
+import { struct, isTextShape, patchPosition, getLineLabelAnchorPoint } from "./text";
 
 describe("resize", () => {
   test("should update maxWidth when width changes", () => {
@@ -121,5 +121,26 @@ describe("patchPosition", () => {
     const shape = struct.create({ p: { x: 0, y: 0 }, width: 100, height: 200 });
     expect(patchPosition({ ...shape, hAlign: "center" }, { x: 0, y: 0 }, 10)).toEqual({ p: { x: -50, y: 10 } });
     expect(patchPosition({ ...shape, vAlign: "center" }, { x: 0, y: 0 }, 10)).toEqual({ p: { x: 10, y: -100 } });
+  });
+});
+
+describe("getLineLabelAnchorPoint", () => {
+  test("should return anchor point", () => {
+    const label = struct.create({ p: { x: 10, y: 20 }, width: 100, height: 200 });
+    expect(getLineLabelAnchorPoint({ ...label, vAlign: "top", hAlign: "left" }, Math.SQRT2)).toEqualPoint({
+      x: 9,
+      y: 19,
+    });
+    expect(getLineLabelAnchorPoint({ ...label, vAlign: "center", hAlign: "center" }, Math.SQRT2)).toEqualPoint({
+      x: 60,
+      y: 120,
+    });
+    expect(getLineLabelAnchorPoint({ ...label, vAlign: "bottom", hAlign: "right" }, Math.SQRT2)).toEqualPoint({
+      x: 111,
+      y: 221,
+    });
+    expect(
+      getLineLabelAnchorPoint({ ...label, vAlign: "top", hAlign: "left", rotation: Math.PI / 2 }, Math.SQRT2),
+    ).toEqualPoint({ x: 161, y: 69 });
   });
 });
