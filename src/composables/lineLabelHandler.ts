@@ -36,9 +36,7 @@ export function newLineLabelHandler(option: Option) {
         const nextLabel = updatedMap[label.id] ? { ...label, ...updatedMap[label.id] } : label;
         const origin = getRelativePointOn(patchedLine, nextLabel.lineAttached ?? 0.5);
         const labelPatch = patchPosition(nextLabel, origin, getLabelMargin(patchedLine));
-        if (labelPatch) {
-          ret[label.id] = labelPatch;
-        }
+        ret[label.id] = labelPatch ?? {};
       });
     });
 

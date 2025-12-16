@@ -187,6 +187,12 @@ function getLineRelatedLayoutPatch(
   shapeComposite: ShapeComposite,
   initialPatch: { [id: string]: Partial<Shape> },
 ): { [id: string]: Partial<Shape> } {
+  // Get dependency hierarchy of initial patch.
+  // => Proc "step" in this order.
+  const depMap = getLineRelatedDependantMap(shapeComposite, Object.keys(initialPatch));
+  const sorted = topSortHierarchy(depMap);
+  const allDepIdSet = new Set(sorted.flat());
+
   // When target id is in this set, its patch will be merged into "nextSC" and won't be in "nextPatch".
   const finishedSet = new Set<string>();
   let latestPatch: { [id: string]: Partial<Shape> } = initialPatch;
@@ -212,7 +218,21 @@ function getLineRelatedLayoutPatch(
     const finishedNextPatch: typeof nextPatch = {};
     nextPatch = {};
     mapEach(rawNextPatch, (p, id) => {
-      if (isObjectEmpty(p, true)) return;
+      if (isObjectEmpty(p)) {
+        if (!finishedSet.has(id) && allDepIdSet.has(id) && latestPatch[id]) {
+          // When a patch for unfinished-dep shape is empty, discard the current patch for it.
+          // => It should be evaluated with its original attributes when it's in "finishedSet".
+          //
+          // Note: Resizing a shape that is connected by a line with a label with "Preserve connection" needs this treatment.
+          //    In this case, the label won't move but its dependencies will move as if the label moved.
+          //    The label moves in intermediate steps and these patches are stored in "latestPatch".
+          //    However, the label ends up remaining at the original position when it's in "finishedSet" and this step returns empty patch since nothing changes from the original label.
+          //    Therefore, the patch made by "step" for the label in "latestPatch" has to be discarded.
+          latestPatch[id] = initialPatch[id] ?? {};
+        }
+        return;
+      }
+
       if (finishedSet.has(id)) {
         finishedNextPatch[id] = p;
       } else {
@@ -225,10 +245,6 @@ function getLineRelatedLayoutPatch(
     });
   };
 
-  // Get dependency hierarchy of initial patch.
-  // => Proc "step" in this order.
-  const depMap = getLineRelatedDependantMap(shapeComposite, Object.keys(initialPatch));
-  const sorted = topSortHierarchy(depMap);
   sorted.forEach((ids) => {
     if (ids.length === 0) return;
 

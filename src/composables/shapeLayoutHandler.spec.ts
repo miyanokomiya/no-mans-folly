@@ -10,6 +10,8 @@ import { BoardCardShape } from "../shapes/board/boardCard";
 import { newShapeComposite } from "./shapeComposite";
 import { generateKeyBetween } from "../utils/findex";
 import { LineShape } from "../shapes/line";
+import { TextShape } from "../shapes/text";
+import { RectangleShape } from "../shapes/rectangle";
 
 describe("getEntityPatchByDelete", () => {
   test("should return entity patch to delete child shapes", () => {
@@ -90,6 +92,53 @@ describe("getPatchByLayouts", () => {
     });
     const result = getPatchByLayouts(shapeComposite, { add: [new_card] });
     expect(result[new_card.id]).toHaveProperty("p");
+  });
+
+  test("practical case: Preserve connection with line label", () => {
+    const shape = createShape(getCommonStruct, "rectangle", {
+      id: "shape",
+    });
+    const line = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line",
+      p: { x: -100, y: 0 },
+      q: { x: 100, y: 50 },
+      qConnection: { id: shape.id, rate: { x: 0, y: 0.5 } },
+    });
+    const label = createShape<TextShape>(getCommonStruct, "text", {
+      id: "text",
+      p: { x: -55, y: 18 },
+      lineAttached: 0.5,
+      parentId: line.id,
+      vAlign: "center",
+      hAlign: "center",
+    });
+    const labelAttached = createShape(getCommonStruct, "rectangle", {
+      id: "labelAttached",
+      attachment: {
+        id: label.id,
+        to: { x: 0.5, y: 0.5 },
+        anchor: { x: 0.5, y: 0.5 },
+        rotationType: "absolute",
+        rotation: 0,
+      },
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [shape, line, label, labelAttached],
+      getStruct: getCommonStruct,
+    });
+    const result = getPatchByLayouts(shapeComposite, {
+      update: {
+        [shape.id]: { height: 200 } as Partial<RectangleShape>,
+        [line.id]: { qConnection: { id: shape.id, rate: { x: 0, y: 0.25 } } } as Partial<LineShape>,
+        [label.id]: { findex: "aA" },
+      },
+    });
+    expect(result, "the label and its dep don't change").toEqual({
+      [shape.id]: { height: 200 },
+      [line.id]: { q: { x: 0, y: 50 }, qConnection: { id: shape.id, rate: { x: 0, y: 0.25 } } },
+      [label.id]: { findex: "aA" },
+      [labelAttached.id]: {},
+    });
   });
 });
 
