@@ -195,7 +195,6 @@ export function newTextEditorController() {
     // When the selection exists, target cursor location should be in the selection: right side of the cursor.
     // Otherwise: left side of the cursor.
     const location = getCursorLocation(_compositionLines, cursor + (selection > 0 ? 1 : 0));
-    const line = _compositionLines[location.y];
 
     // Cursor attributes should be picked from the left side of the cursor.
     // When there's no left side item in the line, pick the right side item.
@@ -203,7 +202,12 @@ export function newTextEditorController() {
       _compositionLines.map((l) => l.outputs),
       location,
     );
-    const lineEnd = line.outputs[line.outputs.length - 1];
+
+    // Seek the line end
+    const lineEndIndex = getLineEndIndex(_composition, cursor);
+    const lineEndLocation = getCursorLocation(_compositionLines, lineEndIndex);
+    const lineEnd = _compositionLines[lineEndLocation.y].outputs[lineEndLocation.x];
+
     const docEnd = _doc[_doc.length - 1];
     return {
       cursor: cursorLeft,

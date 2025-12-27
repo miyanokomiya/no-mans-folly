@@ -1002,10 +1002,10 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
   let word: WordItem = [];
   let listIndexPath: ListIndexItem[] = [];
 
-  lineWord.forEach((lineUnit) => {
+  lineWord.forEach((wordItems) => {
     let left = 0;
 
-    const lineEndOutput = lineUnit.at(-1)?.at(-1);
+    const lineEndOutput = wordItems.at(-1)?.at(-1);
     if (!lineEndOutput) return;
 
     listIndexPath = createListIndexPath(listIndexPath, lineEndOutput[2]);
@@ -1021,19 +1021,26 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
     }
 
     const lineRangeWidth = rangeWidth - (listInfo?.padding ?? 0);
+    let lineHead = true; // Flag to detect if the unit is the line head.
 
-    lineUnit.forEach((wordUnit, wordIndex) => {
+    wordItems.forEach((wordItem, wordIndex) => {
+      const emptyListInfo: ListInfo | undefined = listInfo
+        ? { ...listInfo, head: " ".repeat(listInfo.head.length) }
+        : undefined;
       let broken = false;
 
-      wordUnit.forEach((unit) => {
+      wordItem.forEach((unit) => {
+        const currentListInfo = lineHead ? listInfo : emptyListInfo;
+
         if (isLinebreak(unit[0])) {
           if (word.length > 0) words.push(word);
           words.push([unit]);
-          lines.push([words, listInfo]);
+          lines.push([words, currentListInfo]);
           blocks.push([lines, unit[2]]);
           word = [];
           words = [];
           lines = [];
+          lineHead = true;
           return;
         }
 
@@ -1044,14 +1051,22 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
           if (broken || wordIndex === 0) {
             // This word must be longer than the range width
             // => Break it into some parts
-            words.push(word);
-            lines.push([words, listInfo]);
+            if (word.length > 0) words.push(word);
+            if (words.length > 0) {
+              lines.push([words, currentListInfo]);
+              lineHead = false;
+            }
+
             words = [];
             word = [unit];
             left = unit[1];
           } else {
             // Place the word in the next line
-            lines.push([words, listInfo]);
+            if (words.length > 0) {
+              lines.push([words, currentListInfo]);
+              lineHead = false;
+            }
+
             words = [];
             word.push(unit);
             left = word.reduce((p, u) => p + u[1], 0);
