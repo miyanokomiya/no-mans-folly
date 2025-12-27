@@ -21,7 +21,7 @@ import {
   getRawCursor,
   getDocRawLength,
 } from "../utils/textEditor";
-import { DEFAULT_FONT_SIZE, DocCompositionItem, DocCompositionLine } from "../utils/textEditorCore";
+import { DEFAULT_FONT_SIZE, DocCompositionItem, DocCompositionLine, LINK_STYLE_ATTRS } from "../utils/textEditorCore";
 import * as textEditorUtil from "../utils/textEditor";
 import { Size } from "../models";
 import { CanvasCTX } from "../utils/types";
@@ -230,7 +230,7 @@ export function newTextEditorController() {
         return {
           delta: [
             { retain: getOutputCursor() },
-            { retain: selection, attributes: { ...textEditorUtil.LINK_STYLE_ATTRS, link: text } },
+            { retain: selection, attributes: { ...LINK_STYLE_ATTRS, link: text } },
           ],
           cursor: getCursor(),
           selection: getSelection(),
