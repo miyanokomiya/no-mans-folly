@@ -6,44 +6,26 @@ import { newChronoCache } from "./stateful/cache";
 import { SVGElementInfo, getColorAttributes } from "./svgElements";
 import { toHexAndAlpha } from "./color";
 import { CanvasCTX } from "./types";
-
-export const DEFAULT_FONT_SIZE = 14;
-export const DEFAULT_LINEHEIGHT = 1.2;
-
-const WORDBREAK = /\n|\t|[ -/]|[:-@]|[[-`]/;
-export const LINEBREAK = /\n|\r\n/;
-
-export interface DocCompositionItem {
-  char: string; // A grapheme character
-  bounds: IRectangle;
-}
-
-export interface DocCompositionLine {
-  y: number;
-  // refers line's height
-  height: number;
-  // refers font's height
-  // When this is smaller than "height", this line has extra padding and its content needs to be centralized.
-  fontheight: number;
-  outputs: DocOutput;
-  listInfo?: ListInfo;
-}
-
-export interface DocCompositionInfo {
-  composition: DocCompositionItem[];
-  lines: DocCompositionLine[];
-}
-
-type ListInfo = { head: string; padding: number };
-
-/**
- * A letter refers to a graphme
- */
-type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
-type LineItem = [words: WordItem[], ListInfo?];
-type BlockItem = [lines: LineItem[], attrs?: DocAttributes];
-
-export const LINK_STYLE_ATTRS: DocAttributes = { underline: true, color: "#3b82f6" };
+import {
+  DocCompositionItem,
+  DocCompositionLine,
+  DocCompositionInfo,
+  DEFAULT_FONT_SIZE,
+  DEFAULT_LINEHEIGHT,
+  BULLET_PREFIXES,
+  LINK_STYLE_ATTRS,
+  LINEBREAK,
+  LOD_THRESHOLD,
+  URL_TEXT_EXACT_REG,
+  URL_TEXT_REG,
+  WORDBREAK,
+  InlineGroupItem,
+  ListIndexItem,
+  ListInfo,
+  WordItem,
+  LineItem,
+  BlockItem,
+} from "./textEditorCore";
 
 /**
  * "char" must be a character.
@@ -59,8 +41,6 @@ export function isLinebreak(char: string): boolean {
   return LINEBREAK.test(char);
 }
 
-const URL_TEXT_REG = /https?:\/\/[^\s]+/;
-const URL_TEXT_EXACT_REG = /^https?:\/\/[^\s]+/;
 export function isUrlText(text: string, exact = false): boolean {
   return (exact ? URL_TEXT_EXACT_REG : URL_TEXT_REG).test(text);
 }
@@ -137,8 +117,6 @@ export function renderDoc(ctx: CanvasCTX, doc: DocOutput, range: IRectangle) {
   const composition = info.composition;
   renderDocByComposition(ctx, composition, lines);
 }
-
-const LOD_THRESHOLD = 6;
 
 export function renderDocByComposition(
   ctx: CanvasCTX,
@@ -366,8 +344,6 @@ export function renderSVGDocByComposition(
 
   return rootElement;
 }
-
-type InlineGroupItem = { bounds: IRectangle; text: string; attributes: DocAttributes };
 
 function getInlineGroups(
   line: DocCompositionLine,
@@ -1423,8 +1399,6 @@ export function detectListFormatting(text: string): {
   return { type: null, indent: 0, content: text };
 }
 
-const BULLET_PREFIXES = ["•", "◦", "▪"];
-
 /**
  * Generates bullet or number text based on list type and context
  */
@@ -1439,8 +1413,6 @@ export function getListBulletText(type: DocListValue, indent: number, index: num
     }
   }
 }
-
-type ListIndexItem = [list: DocListValue, index: number];
 
 /**
  * Updates list counters based on current line's list attributes

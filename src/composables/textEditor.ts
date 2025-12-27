@@ -1,9 +1,6 @@
 import { IRectangle, IVec2 } from "okageo";
 import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../models/document";
 import {
-  DEFAULT_FONT_SIZE,
-  DocCompositionItem,
-  DocCompositionLine,
   applyAttrInfoToDocOutput,
   getBoundsAtLocation,
   getCursorLocation,
@@ -24,6 +21,7 @@ import {
   getRawCursor,
   getDocRawLength,
 } from "../utils/textEditor";
+import { DEFAULT_FONT_SIZE, DocCompositionItem, DocCompositionLine } from "../utils/textEditorCore";
 import * as textEditorUtil from "../utils/textEditor";
 import { Size } from "../models";
 import { CanvasCTX } from "../utils/types";

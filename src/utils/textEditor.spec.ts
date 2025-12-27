@@ -1,10 +1,5 @@
 import { expect, describe, test } from "vitest";
 import {
-  DEFAULT_FONT_SIZE,
-  DEFAULT_LINEHEIGHT,
-  DocCompositionItem,
-  DocCompositionLine,
-  LINK_STYLE_ATTRS,
   applyAttrInfoToDocOutput,
   applyRangeWidthToLineWord,
   convertRawTextToDoc,
@@ -36,6 +31,13 @@ import {
   splitTextByURL,
   splitToSegments,
 } from "./textEditor";
+import {
+  DocCompositionItem,
+  DocCompositionLine,
+  LINK_STYLE_ATTRS,
+  DEFAULT_FONT_SIZE,
+  DEFAULT_LINEHEIGHT,
+} from "./textEditorCore";
 
 describe("isLinebreak", () => {
   test("should return true when the character is line break", () => {

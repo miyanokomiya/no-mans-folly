@@ -33,7 +33,7 @@ import {
   isSameShapeSelectionScope,
 } from "../shapes/core";
 import { isGroupShape } from "../shapes/group";
-import { DocCompositionInfo } from "../utils/textEditor";
+import { DocCompositionInfo } from "../utils/textEditorCore";
 import { SVGElementInfo } from "../utils/svgElements";
 import { compareByFindex, generateNKeysBetweenAllowSame } from "../utils/findex";
 import { newCache, newObjectWeakCache } from "../utils/stateful/cache";
