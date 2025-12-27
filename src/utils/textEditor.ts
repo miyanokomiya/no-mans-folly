@@ -277,7 +277,7 @@ export function renderSVGDocByComposition(
     };
     textElement.children!.push(lineElement);
 
-    groups.forEach((group) => {
+    groups.forEach((group, i) => {
       if (group.attributes.background) {
         bgElement.children?.push({
           tag: "rect",
@@ -332,6 +332,21 @@ export function renderSVGDocByComposition(
         },
         children: [group.text],
       };
+
+      if (line.listInfo && i === 0) {
+        lineElement.children!.push({
+          tag: "tspan",
+          attributes: {
+            x: group.bounds.x,
+            ...getColorAttributes("fill", toHexAndAlpha(group.attributes.color)),
+            "font-size": group.attributes?.size ?? undefined,
+            "font-weight": group.attributes?.bold ? "bold" : undefined,
+            "font-style": group.attributes?.italic ? "italic" : undefined,
+            "text-anchor": "end",
+          },
+          children: [`${line.listInfo.head} `],
+        });
+      }
 
       if (group.attributes.link) {
         lineElement.children!.push({
