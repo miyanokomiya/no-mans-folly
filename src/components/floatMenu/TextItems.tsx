@@ -8,6 +8,12 @@ import iconDirectionTop from "../../assets/icons/direction_top.svg";
 import iconDirectionMiddle from "../../assets/icons/direction_middle.svg";
 import iconDirectionBottom from "../../assets/icons/direction_bottom.svg";
 import iconLineheight from "../../assets/icons/lineheight.svg";
+import iconListNone from "../../assets/icons/list_none.svg";
+import iconListEmpty from "../../assets/icons/list_empty.svg";
+import iconListBullet from "../../assets/icons/list_bullet.svg";
+import iconListOrdered from "../../assets/icons/list_ordered.svg";
+import iconListIndentPlus from "../../assets/icons/list_indent_plus.svg";
+import iconListIndentMinus from "../../assets/icons/list_indent_minus.svg";
 import { NumberCombobox } from "../atoms/inputs/NumberCombobox";
 import { TextColorPanel } from "./texts/TextColorPanel";
 import { TextDecoration } from "./texts/TextDecoration";
@@ -17,8 +23,61 @@ import { DEFAULT_FONT_SIZE, DEFAULT_LINEHEIGHT } from "../../utils/textEditorCor
 import { TextColorBgIcon, TextColorIcon } from "../atoms/icons/TextColorIcon";
 import { TextLink } from "./texts/TextLink";
 import { RadioSelectInput } from "../atoms/inputs/RadioSelectInput";
+import { IconButton } from "../atoms/buttons/IconButton";
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42].map((v) => ({ value: v, label: `${v}` }));
+
+interface ListPanelProps {
+  listValue: string;
+  onListClick?: (value: string) => void;
+  onIndentClick?: (value: number) => void;
+}
+
+const ListPanel: React.FC<ListPanelProps> = ({ listValue, onListClick, onIndentClick }) => {
+  const onClickButton = useCallback(
+    (val: string) => {
+      onListClick?.(val);
+    },
+    [onListClick],
+  );
+  const onIndentPlusClick = useCallback(() => {
+    onIndentClick?.(1);
+  }, [onIndentClick]);
+  const onIndentMinusClick = useCallback(() => {
+    onIndentClick?.(-1);
+  }, [onIndentClick]);
+
+  const options = useMemo(
+    () => [
+      { value: "none", element: <img src={iconListNone} alt="List None" className="w-8 h-8 p-1" /> },
+      { value: "empty", element: <img src={iconListEmpty} alt="List Empty" className="w-8 h-8 p-1" /> },
+      { value: "bullet", element: <img src={iconListBullet} alt="List Bullet" className="w-8 h-8 p-1" /> },
+      { value: "ordered", element: <img src={iconListOrdered} alt="List Ordered" className="w-8 h-8 p-1" /> },
+    ],
+    [],
+  );
+
+  const hasList = listValue !== "none";
+
+  return (
+    <div className="p-1 flex flex-col gap-1">
+      <RadioSelectInput value={listValue} options={options} onChange={onClickButton} />
+      <div className="flex justify-between items-center">
+        <span>Indent</span>
+        <div className="flex gap-1">
+          <IconButton icon={iconListIndentPlus} alt="Indent Plus" size={8} onClick={onIndentPlusClick} />
+          <IconButton
+            icon={iconListIndentMinus}
+            alt="Indent Minus"
+            size={8}
+            disabled={!hasList}
+            onClick={onIndentMinusClick}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface AlignPanelProps {
   value: string;
@@ -118,6 +177,33 @@ export const TextItems: React.FC<Props> = ({
   docAttrInfo,
   textEditing,
 }) => {
+  const onListClick = useCallback(() => {
+    setPopupedKey("list");
+  }, [setPopupedKey]);
+
+  const listIcon = useMemo(() => getListIcon(docAttrInfo), [docAttrInfo]);
+
+  const onListChanged = useCallback(
+    (value: string) => {
+      onBlockChanged?.(value === "none" ? { list: null, indent: null } : { list: value as any });
+    },
+    [onBlockChanged],
+  );
+
+  const onIndentChanged = useCallback(
+    (value: number) => {
+      if (!docAttrInfo.block?.list) {
+        onBlockChanged?.({ list: "empty", indent: 0 });
+        return;
+      }
+
+      const current = docAttrInfo.block?.indent ?? 0;
+      const indent = current + value;
+      onBlockChanged?.(indent < 0 ? { list: null, indent: null } : { indent });
+    },
+    [onBlockChanged, docAttrInfo],
+  );
+
   const onAlignClick = useCallback(() => {
     setPopupedKey("align");
   }, [setPopupedKey]);
@@ -236,6 +322,19 @@ export const TextItems: React.FC<Props> = ({
         />
       ) : undefined}
       <PopupButton
+        name="list"
+        opened={popupedKey === "list"}
+        popup={
+          <ListPanel listValue={getList(docAttrInfo)} onListClick={onListChanged} onIndentClick={onIndentChanged} />
+        }
+        onClick={onListClick}
+        defaultDirection={defaultDirection}
+      >
+        <div className="w-8 h-8 p-1">
+          <img src={listIcon} alt="List" />
+        </div>
+      </PopupButton>
+      <PopupButton
         name="align"
         opened={popupedKey === "align"}
         popup={<AlignPanel value={getAlign(docAttrInfo)} onClick={onAlignChanged} />}
@@ -273,6 +372,23 @@ export const TextItems: React.FC<Props> = ({
     </div>
   );
 };
+
+function getList(docAttrInfo: DocAttrInfo): string {
+  return docAttrInfo.block?.list ?? "none";
+}
+
+function getListIcon(docAttrInfo: DocAttrInfo) {
+  switch (docAttrInfo.block?.list) {
+    case "empty":
+      return iconListEmpty;
+    case "bullet":
+      return iconListBullet;
+    case "ordered":
+      return iconListOrdered;
+    default:
+      return iconListNone;
+  }
+}
 
 function getAlign(docAttrInfo: DocAttrInfo): string {
   return docAttrInfo.block?.align ?? "left";

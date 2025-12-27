@@ -2,6 +2,7 @@ import { useCallback } from "react";
 
 interface Props {
   value?: string;
+  alt?: string;
   icon: string;
   size: 8 | 10;
   highlight?: boolean;
@@ -10,7 +11,7 @@ interface Props {
   onClick?: (value: string) => void;
 }
 
-export const IconButton: React.FC<Props> = ({ value, icon, size, highlight, flipH, disabled, onClick }) => {
+export const IconButton: React.FC<Props> = ({ value, alt, icon, size, highlight, flipH, disabled, onClick }) => {
   const className = [
     ...[{ 8: "w-8 h-8", 10: "w-10 h-10" }[size]],
     ...[flipH ? "-scale-x-100" : ""],
@@ -28,7 +29,7 @@ export const IconButton: React.FC<Props> = ({ value, icon, size, highlight, flip
       disabled={disabled}
       onClick={handleClick}
     >
-      <img src={icon} alt={value} />
+      <img src={icon} alt={alt ?? value} />
     </button>
   );
 };
