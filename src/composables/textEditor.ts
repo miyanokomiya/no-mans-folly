@@ -322,7 +322,7 @@ export function newTextEditorController() {
 
     // Apply list style
     const lineEndIndexRaw = getRawCursor(_composition, getLineEndIndex(_composition, cursor));
-    ret.push({ retain: lineEndIndexRaw - rawCursor - 1 }, { retain: 1, attributes: { list: detection.type, indent } });
+    ret.push({ retain: lineEndIndexRaw - rawCursor }, { retain: 1, attributes: { list: detection.type, indent } });
     return [ret, nextCursor];
   }
 
