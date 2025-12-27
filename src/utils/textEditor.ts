@@ -1,5 +1,5 @@
 import { IRectangle, IVec2 } from "okageo";
-import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocOutput } from "../models/document";
+import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocListValue, DocOutput } from "../models/document";
 import { Size } from "../models";
 import { applyDefaultStrokeStyle } from "./strokeStyle";
 import { newChronoCache } from "./stateful/cache";
@@ -26,6 +26,7 @@ export interface DocCompositionLine {
   // When this is smaller than "height", this line has extra padding and its content needs to be centralized.
   fontheight: number;
   outputs: DocOutput;
+  listInfo?: ListInfo;
 }
 
 export interface DocCompositionInfo {
@@ -33,11 +34,13 @@ export interface DocCompositionInfo {
   lines: DocCompositionLine[];
 }
 
+type ListInfo = { head: string; padding: number };
+
 /**
  * A letter refers to a graphme
  */
 type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
-type LineItem = WordItem[];
+type LineItem = [words: WordItem[], ListInfo?];
 type BlockItem = [lines: LineItem[], attrs?: DocAttributes];
 
 export const LINK_STYLE_ATTRS: DocAttributes = { underline: true, color: "#3b82f6" };
@@ -161,7 +164,7 @@ export function renderDocByComposition(
       (a, b) => a === b, // Make sure to keep the original reference as much as possible.
     );
 
-    groups.forEach((group) => {
+    groups.forEach((group, i) => {
       const fontSize = group.attributes.size ?? DEFAULT_FONT_SIZE;
       if (scale !== undefined && fontSize / scale < LOD_THRESHOLD) {
         ctx.fillStyle = group.attributes.color ?? "#000";
@@ -188,6 +191,13 @@ export function renderDocByComposition(
       // TODO: "0.8" isn't after any rule or theory but just a seem-good value for locating letters to the center.
       ctx.fillText(group.text, group.bounds.x, fontTop + fontHeight * 0.8);
 
+      if (line.listInfo && i === 0) {
+        const srcAlign = ctx.textAlign;
+        ctx.textAlign = "right";
+        ctx.fillText(`${line.listInfo.head} `, group.bounds.x, fontTop + fontHeight * 0.8);
+        ctx.textAlign = srcAlign;
+      }
+
       if (group.attributes.underline || group.attributes.strike) {
         applyDefaultStrokeStyle(ctx);
         ctx.lineWidth = fontHeight * 0.07;
@@ -213,9 +223,9 @@ export function renderDocByComposition(
       }
 
       // For debug
-      // ctx.strokeStyle = "red";
-      // ctx.beginPath();
-      // ctx.strokeRect(group.bounds.x, lineTop, group.bounds.width, lineHeight);
+      ctx.strokeStyle = "red";
+      ctx.beginPath();
+      ctx.strokeRect(group.bounds.x, lineTop, group.bounds.width, lineHeight);
     });
 
     index += line.outputs.length;
@@ -805,6 +815,8 @@ export function mergeDocAttrInfo(info: DocAttrInfo): DocAttributes | undefined {
   // block specific
   if (info?.block?.align) ret.align = info.block.align;
   if (info?.block?.lineheight) ret.lineheight = info.block.lineheight;
+  if (info?.block?.list) ret.list = info.block.list;
+  if (info?.block?.indent) ret.indent = info.block.indent;
 
   // doc specific
   if (info?.doc?.direction) ret.direction = info.doc.direction;
@@ -955,43 +967,61 @@ export function splitOutputsIntoLineWord(doc: DocOutput, widthMap?: Map<number, 
 export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: number): BlockItem[] {
   const blocks: BlockItem[] = [];
   let lines: LineItem[] = [];
-  let line: LineItem = [];
+  let words: WordItem[] = [];
   let word: WordItem = [];
+  let listIndexPath: ListIndexItem[] = [];
 
   lineWord.forEach((lineUnit) => {
     let left = 0;
+
+    const lineEndOutput = lineUnit.at(-1)?.at(-1);
+    if (!lineEndOutput) return;
+
+    listIndexPath = createListIndexPath(listIndexPath, lineEndOutput[2]);
+    const listIndexItem = listIndexPath.at(-1);
+    let listInfo: ListInfo | undefined = undefined;
+    if (listIndexItem) {
+      const indent = listIndexPath.length - 1;
+      const index = listIndexItem[1];
+      const bulletText = getListBulletText(listIndexItem[0], indent, index);
+      const size = lineEndOutput[2]?.size ?? DEFAULT_FONT_SIZE;
+      const listPadding = size * bulletText.length;
+      listInfo = { head: bulletText, padding: listPadding };
+    }
+
+    const lineRangeWidth = rangeWidth - (listInfo?.padding ?? 0);
 
     lineUnit.forEach((wordUnit, wordIndex) => {
       let broken = false;
 
       wordUnit.forEach((unit) => {
         if (isLinebreak(unit[0])) {
-          if (word.length > 0) line.push(word);
-          line.push([unit]);
-          lines.push(line);
+          if (word.length > 0) words.push(word);
+          words.push([unit]);
+          lines.push([words, listInfo]);
           blocks.push([lines, unit[2]]);
           word = [];
-          line = [];
+          words = [];
           lines = [];
           return;
         }
 
-        if (left + unit[1] <= rangeWidth) {
+        if (left + unit[1] <= lineRangeWidth) {
           word.push(unit);
           left += unit[1];
         } else {
           if (broken || wordIndex === 0) {
             // This word must be longer than the range width
             // => Break it into some parts
-            line.push(word);
-            lines.push(line);
-            line = [];
+            words.push(word);
+            lines.push([words, listInfo]);
+            words = [];
             word = [unit];
             left = unit[1];
           } else {
             // Place the word in the next line
-            lines.push(line);
-            line = [];
+            lines.push([words, listInfo]);
+            words = [];
             word.push(unit);
             left = word.reduce((p, u) => p + u[1], 0);
           }
@@ -1000,12 +1030,12 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
         }
       });
 
-      if (word.length > 0) line.push(word);
+      if (word.length > 0) words.push(word);
       word = [];
     });
 
-    if (line.length > 0) lines.push(line);
-    line = [];
+    if (words.length > 0) lines.push([words, listInfo]);
+    words = [];
     word = [];
   });
 
@@ -1037,7 +1067,7 @@ export function convertLineWordToComposition(
       lineWord.forEach((lineUnit) => {
         let height = 0;
         let fontheight = 0;
-        lineUnit.forEach((wordUnit) =>
+        lineUnit[0].forEach((wordUnit) =>
           wordUnit.forEach((unit) => {
             const h = getLineHeight(unit[2], blockAttrs);
             if (height < h) {
@@ -1061,13 +1091,13 @@ export function convertLineWordToComposition(
       lineWord.forEach((lineUnit) => {
         const outputs: DocOutput = [];
         const [height, fontheight] = heightList[lineIndex];
-        lineUnit.forEach((wordUnit) =>
+        lineUnit[0].forEach((wordUnit) =>
           wordUnit.forEach((unit) => {
             outputs.push({ insert: unit[0], attributes: unit[2] });
           }),
         );
 
-        lines.push({ y, height, fontheight, outputs });
+        lines.push({ y, height, fontheight, outputs, listInfo: lineUnit[1] });
         y += height;
         lineIndex += 1;
       });
@@ -1082,11 +1112,11 @@ export function convertLineWordToComposition(
         const line = lines[lineIndex];
         const y = line.y;
         const height = line.height;
-        const lineWidth = lineUnit.reduce((n, w) => n + w.reduce((m, u) => m + u[1], 0), 0);
+        const lineWidth =
+          lineUnit[0].reduce((n, w) => n + w.reduce((m, u) => m + u[1], 0), 0) + (lineUnit[1]?.padding ?? 0);
         const xMargin = (rangeWidth - lineWidth) * getAlignGapRate(blockAttrs);
-
-        let x = xMargin;
-        lineUnit.forEach((wordUnit) =>
+        let x = xMargin + (lineUnit[1]?.padding ?? 0);
+        lineUnit[0].forEach((wordUnit) =>
           wordUnit.forEach((unit) => {
             composition.push({ char: unit[0], bounds: { x, y, width: unit[1], height } });
             x += unit[1];
@@ -1175,8 +1205,8 @@ export function calcOriginalDocSize(doc: DocOutput, ctx: CanvasCTX, rangeWidth: 
   let width = 1;
   blocks.some(([lines]) => {
     lines.some((line) => {
-      const lineWidth = line.reduce((p, words) => p + words.reduce((q, [, w]) => q + w, 0), 0);
-      width = Math.max(width, Math.ceil(lineWidth));
+      const lineWidth = line[0].reduce((p, words) => p + words.reduce((q, [, w]) => q + w, 0), 0);
+      width = Math.max(width, Math.ceil(lineWidth + (line[1]?.padding ?? 0)));
 
       return width >= rangeWidth;
     });
@@ -1360,4 +1390,116 @@ export function clearLinkRelatedAttrubites(src?: DocAttributes): DocAttributes {
   const ret = { ...src, link: null };
   keys.forEach((key) => ((ret as any)[key] = null));
   return ret;
+}
+
+// Bullet list functionality
+const ORDERED_LIST_PATTERN = /^(\s*)(\d+\.)\s/;
+const BULLET_LIST_PATTERN = /^(\s*)([-*•])\s/;
+
+/**
+ * Detects if text starts with list formatting (- item, * item, 1. item)
+ */
+export function detectListFormatting(text: string): {
+  type: "bullet" | "ordered" | null;
+  indent: number;
+  content: string;
+} {
+  const orderedMatch = text.match(ORDERED_LIST_PATTERN);
+  if (orderedMatch) {
+    const indentSpaces = orderedMatch[1].length;
+    const indent = Math.floor(indentSpaces / 2); // 2 spaces per indent level
+    const content = text.slice(orderedMatch[0].length);
+    return { type: "ordered", indent, content };
+  }
+
+  const bulletMatch = text.match(BULLET_LIST_PATTERN);
+  if (bulletMatch) {
+    const indentSpaces = bulletMatch[1].length;
+    const indent = Math.floor(indentSpaces / 2); // 2 spaces per indent level
+    const content = text.slice(bulletMatch[0].length);
+    return { type: "bullet", indent, content };
+  }
+
+  return { type: null, indent: 0, content: text };
+}
+
+const BULLET_PREFIXES = ["•", "◦", "▪"];
+
+/**
+ * Generates bullet or number text based on list type and context
+ */
+export function getListBulletText(type: DocListValue, indent: number, index: number): string {
+  switch (type) {
+    case "ordered": {
+      return `${index + 1}.`.padStart(2 + 2 * indent, " ");
+    }
+    default: {
+      const bullet = BULLET_PREFIXES[indent % BULLET_PREFIXES.length];
+      return `${bullet}`.padStart(2 + 2 * indent, " ");
+    }
+  }
+}
+
+type ListIndexItem = [list: DocListValue, index: number];
+
+/**
+ * Updates list counters based on current line's list attributes
+ */
+export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttributes): [DocListValue, number][] {
+  if (!attrs?.list) return current.slice(0, -1);
+
+  const currentItem = current.at(-1);
+  if (!currentItem) return [[attrs.list, 0]];
+
+  const ret = current.slice();
+  const indent = attrs.indent ?? 0;
+  const currentIndent = current.length - 1;
+
+  if (currentIndent === indent) {
+    // Same level - increment counter with new list type
+    ret[ret.length - 1] = [attrs.list, currentItem[1] + 1];
+  } else if (currentIndent < indent) {
+    // Deeper level - add new counter
+    for (let i = currentIndent; i < indent - 1; i++) {
+      ret.push([currentItem[0], 0]);
+    }
+    ret.push([attrs.list, 0]);
+  } else {
+    // Shallower level - discard up to the level
+    for (let i = indent; i < currentIndent; i++) {
+      ret.pop();
+    }
+    // Then increment counter with new list type
+    ret[ret.length - 1] = [attrs.list, currentItem[1] + 1];
+  }
+
+  return ret;
+}
+
+/**
+ * Applies list formatting attributes to doc output
+ */
+export function applyListFormatting(
+  text: string,
+  defaultAttrs?: DocAttributes,
+): { output: DocOutput; hasListFormatting: boolean } {
+  const detection = detectListFormatting(text);
+
+  if (detection.type) {
+    const attrs = {
+      ...defaultAttrs,
+      list: detection.type,
+      indent: detection.indent,
+    };
+
+    return {
+      output: convertRawTextToDoc(detection.content, attrs),
+      hasListFormatting: true,
+    };
+  }
+
+  return {
+    output: convertRawTextToDoc(text, defaultAttrs),
+    hasListFormatting: false,
+  };
 }

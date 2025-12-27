@@ -157,12 +157,12 @@ export function newTextEditingState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "text-input": {
-          const cursor = textEditorController.getCursor();
-          const inputLength = splitToSegments(event.data.value).length;
-          patchDocument(ctx, textEditorController.getDeltaByInput(event.data.value));
-          textEditorController.setCursor(cursor + inputLength);
+          const [delta, nextCursor] = textEditorController.getDeltaByInputWithListDetection(event.data.value);
+          patchDocument(ctx, delta);
+          textEditorController.setCursor(nextCursor);
 
           if (event.data.composition) {
+            const inputLength = splitToSegments(event.data.value).length;
             textEditorController.startIME(inputLength);
           } else {
             textEditorController.stopIME();
@@ -421,6 +421,16 @@ function handleKeydown(
         ctx.setShowEmojiPicker(true);
       }
       return;
+    case "Tab": {
+      // Handle list indentation
+      event.data.prevent?.();
+      const delta = textEditorController.getDeltaByChangeIndent(!event.data.shift);
+      if (delta.length > 0) {
+        patchDocument(ctx, delta);
+        onCursorUpdated(ctx);
+      }
+      return;
+    }
     case "ArrowLeft":
       if (event.data.shift) {
         textEditorController.shiftSelectionBy(-1);

@@ -36,12 +36,15 @@ export type DocAttributes = {
   // block
   align?: "left" | "center" | "right" | null;
   lineheight?: number | null; // equivalent to unitless value in CSS
+  list?: DocListValue | null;
+  indent?: number | null; // 0-based indentation level
 
   // doc
   direction?: DocDirection | null;
 };
 
 export type DocDirection = "top" | "middle" | "bottom";
+export type DocListValue = "bullet" | "ordered" | "empty";
 
 export interface DocAttrInfo {
   cursor?: DocAttributes;
