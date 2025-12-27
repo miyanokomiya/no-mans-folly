@@ -49,5 +49,6 @@ export const URL_TEXT_EXACT_REG = /^https?:\/\/[^\s]+/;
 export const ORDERED_LIST_PATTERN = /^(\d+\.)\s/;
 export const BULLET_LIST_PATTERN = /^([-*•])\s/;
 
+export const BLOCK_MARKER_TRIGGER = / |\t/;
 export const WORDBREAK = /\n|\t|[ -/]|[:-@]|[[-`]/;
 export const LINEBREAK = /\n|\r\n/;

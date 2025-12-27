@@ -294,6 +294,59 @@ export function newTextEditorController() {
     return [ret, nextCursor];
   }
 
+  function getDeltaByInputForSpace(text: string): [DocDelta, nextCursor: number] {
+    // Get current line content to check for list patterns
+    const cursor = getCursor();
+    const location = getCursorLocation(_compositionLines, cursor);
+    const currentLine = _compositionLines[location.y];
+    if (!currentLine) return getDeltaByInputForPlainText(text);
+
+    // Check for list pattern
+    const currentLineText = textEditorUtil.getLineTextUpToX(currentLine, location.x);
+    const potentialListText = currentLineText + text;
+    const detection = textEditorUtil.detectListFormatting(potentialListText);
+    if (!detection.type) return getDeltaByInputForPlainText(text);
+
+    const lineHeadIndexRaw = getRawCursor(_composition, getLineHeadIndex(_composition, cursor));
+    const rawCursor = getOutputCursor();
+
+    // Next cursor is at the head of the line
+    const nextCursor = cursor - location.x;
+
+    // Remove a part of list marker that exists from the head to the cursor.
+    const ret: DocDelta = [{ retain: lineHeadIndexRaw }, { delete: rawCursor - lineHeadIndexRaw }];
+
+    const blockAttrs = getCurrentAttributeInfo().block;
+    // Inherit current indent or set 0.
+    const indent = blockAttrs?.indent ?? 0;
+
+    // Apply list style
+    const lineEndIndexRaw = getRawCursor(_composition, getLineEndIndex(_composition, cursor));
+    ret.push({ retain: lineEndIndexRaw - rawCursor - 1 }, { retain: 1, attributes: { list: detection.type, indent } });
+    return [ret, nextCursor];
+  }
+
+  function getDeltaByInputForLineBreak(text: string): [DocDelta, nextCursor: number] {
+    const blockAttrs = getCurrentAttributeInfo().block;
+    if (!blockAttrs?.list) return getDeltaByInputForPlainText(text);
+
+    const cursor = getCursor();
+    const location = getCursorLocation(_compositionLines, cursor);
+    if (location.x > 0) return getDeltaByInputForPlainText(text);
+
+    const currentLine = _compositionLines[location.y];
+    if (!currentLine) return getDeltaByInputForPlainText(text);
+
+    const hasLineText = !!textEditorUtil.getLineTextUpToX(currentLine, location.x + 1);
+    if (hasLineText) return getDeltaByInputForPlainText(text);
+
+    // Clear list style
+    return [
+      getDeltaByApplyBlockStyle(_composition, cursor, getOutputSelection(), { list: null, indent: null }),
+      cursor,
+    ];
+  }
+
   function getDeltaAndCursorByBackspace(): { delta: DocDelta; cursor: number } {
     if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
 
@@ -386,48 +439,20 @@ export function newTextEditorController() {
     const listType = currentInfo.block?.list;
     if (!listType) return [];
 
-    const currentIndent = currentInfo.block?.indent ?? 0;
-    const newIndent = Math.max(currentIndent + Math.round(val), 0);
-    if (newIndent === currentIndent) return [];
-
     const cursor = getCursor();
     const selection = getSelection();
+    const currentIndent = currentInfo.block?.indent ?? 0;
+    if (currentIndent === 0 && val < 0)
+      return getDeltaByApplyBlockStyle(_composition, cursor, selection, { list: null, indent: null });
+
+    const newIndent = Math.max(currentIndent + Math.round(val), 0);
     return getDeltaByApplyBlockStyle(_composition, cursor, selection, { indent: newIndent });
   }
 
   function getDeltaByInput(text: string): [DocDelta, nextCursor: number] {
-    // List can be detected only when new input is space.
-    if (text !== " ") return getDeltaByInputForPlainText(text);
-
-    // Get current line content to check for list patterns
-    const cursor = getCursor();
-    const location = getCursorLocation(_compositionLines, cursor);
-    const currentLine = _compositionLines[location.y];
-    if (!currentLine) return getDeltaByInputForPlainText(text);
-
-    // Check for list pattern
-    const currentLineText = textEditorUtil.getLineTextUpToX(currentLine, location.x);
-    const potentialListText = currentLineText + text;
-    const detection = textEditorUtil.detectListFormatting(potentialListText);
-    if (!detection.type) return getDeltaByInputForPlainText(text);
-
-    const lineHeadIndexRaw = getRawCursor(_composition, getLineHeadIndex(_composition, cursor));
-    const rawCursor = getOutputCursor();
-
-    // Next cursor is at the head of the line
-    const nextCursor = cursor - location.x;
-
-    // Remove a part of list marker that exists from the head to the cursor.
-    const ret: DocDelta = [{ retain: lineHeadIndexRaw }, { delete: rawCursor - lineHeadIndexRaw }];
-
-    const blockAttrs = getCurrentAttributeInfo().block;
-    // Inherit current indent or set 0.
-    const indent = blockAttrs?.indent ?? 0;
-
-    // Apply list style
-    const lineEndIndexRaw = getRawCursor(_composition, getLineEndIndex(_composition, cursor));
-    ret.push({ retain: lineEndIndexRaw - rawCursor - 1 }, { retain: 1, attributes: { list: detection.type, indent } });
-    return [ret, nextCursor];
+    if (isLinebreak(text)) return getDeltaByInputForLineBreak(text);
+    if (textEditorUtil.isBlockMarkerTrigger(text)) return getDeltaByInputForSpace(text);
+    return getDeltaByInputForPlainText(text);
   }
 
   function getBoundsAtIME(): IRectangle | undefined {

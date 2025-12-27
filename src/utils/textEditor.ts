@@ -35,7 +35,12 @@ import {
   BlockItem,
   ORDERED_LIST_PATTERN,
   BULLET_LIST_PATTERN,
+  BLOCK_MARKER_TRIGGER,
 } from "./textEditorCore";
+
+export function isBlockMarkerTrigger(char: string): boolean {
+  return BLOCK_MARKER_TRIGGER.test(char);
+}
 
 /**
  * "char" must be a character.

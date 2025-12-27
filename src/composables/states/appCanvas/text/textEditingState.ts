@@ -422,13 +422,18 @@ function handleKeydown(
       }
       return;
     case "Tab": {
-      const delta = textEditorController.getDeltaByChangeIndent(event.data.shift ? -1 : 1);
-      if (delta.length === 0) return;
-
-      // Cancel tab input and update list indent
       event.data.prevent?.();
+
+      const deltaForIndent = textEditorController.getDeltaByChangeIndent(event.data.shift ? -1 : 1);
+      if (deltaForIndent.length > 0) {
+        patchDocument(ctx, deltaForIndent);
+        onCursorUpdated(ctx);
+        return;
+      }
+
+      const [delta, nextCursor] = textEditorController.getDeltaByInput("\t");
       patchDocument(ctx, delta);
-      onCursorUpdated(ctx);
+      textEditorController.setCursor(nextCursor);
       return;
     }
     case "ArrowLeft":
