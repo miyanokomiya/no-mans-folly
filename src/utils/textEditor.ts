@@ -1533,7 +1533,7 @@ function getListBulletText(type: DocListValue, indent: number, index: number): s
  * Updates list counters based on current line's list attributes
  */
 export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttributes): [DocListValue, number][] {
-  if (!attrs?.list) return current.slice(0, -1);
+  if (!attrs?.list) return [];
 
   const currentItem = current.at(-1);
   if (!currentItem) return [[attrs.list, 0]];

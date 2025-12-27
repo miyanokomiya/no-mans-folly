@@ -1757,6 +1757,16 @@ describe("createListIndexPath", () => {
         { list: "ordered", indent: 0 },
       ),
     ).toEqual([["ordered", 2]]);
+    expect(
+      createListIndexPath(
+        [
+          ["bullet", 0],
+          ["bullet", 0],
+          ["bullet", 0],
+        ],
+        undefined,
+      ),
+    ).toEqual([]);
   });
 });
 
