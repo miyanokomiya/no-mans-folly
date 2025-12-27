@@ -2,6 +2,7 @@ import { expect, describe, test } from "vitest";
 import {
   applyAttrInfoToDocOutput,
   applyRangeWidthToLineWord,
+  convertLineWordToComposition,
   convertRawTextToDoc,
   createListIndexPath,
   getCursorLocationAt,
@@ -1747,5 +1748,73 @@ describe("createListIndexPath", () => {
         { list: "ordered", indent: 0 },
       ),
     ).toEqual([["ordered", 1]]);
+  });
+});
+
+describe("convertLineWordToComposition", () => {
+  test("should align lines with regarding list style", () => {
+    const res0 = convertLineWordToComposition(
+      [
+        [
+          [
+            [
+              [
+                [
+                  ["a", 10],
+                  ["b", 10],
+                  ["\n", 0],
+                ],
+              ],
+              { head: "-", padding: 30 },
+            ],
+          ],
+          { list: "bullet", align: "center" },
+        ],
+        [
+          [
+            [
+              [
+                [
+                  ["a", 10],
+                  ["\n", 0],
+                ],
+              ],
+              { head: "-", padding: 30 },
+            ],
+          ],
+          { list: "bullet", align: "center" },
+        ],
+        [
+          [
+            [
+              [
+                [
+                  ["a", 10],
+                  ["\n", 0],
+                ],
+              ],
+            ],
+          ],
+          { align: "center" },
+        ],
+        [
+          [
+            [
+              [
+                [
+                  ["a", 10],
+                  ["\n", 0],
+                ],
+              ],
+              { head: "-", padding: 30 },
+            ],
+          ],
+          { list: "bullet", align: "center" },
+        ],
+      ],
+      100,
+      100,
+    );
+    expect(res0.composition.map((c) => c.bounds.x)).toEqual([55, 65, 75, 55, 65, 45, 55, 60, 70]);
   });
 });

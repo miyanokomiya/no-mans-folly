@@ -211,9 +211,9 @@ export function renderDocByComposition(
       }
 
       // For debug
-      ctx.strokeStyle = "red";
-      ctx.beginPath();
-      ctx.strokeRect(group.bounds.x, lineTop, group.bounds.width, lineHeight);
+      // ctx.strokeStyle = "red";
+      // ctx.beginPath();
+      // ctx.strokeRect(group.bounds.x, lineTop, group.bounds.width, lineHeight);
     });
 
     index += line.outputs.length;
@@ -1115,29 +1115,55 @@ export function convertLineWordToComposition(
     });
   }
 
-  const composition: DocCompositionItem[] = [];
+  type ByListInfo = { items: DocCompositionItem[]; attrs?: DocAttributes; width: number; list?: boolean };
+  // Left aligned
+  const compositionsByList: ByListInfo[] = [];
   {
+    let compositionByList: ByListInfo = { items: [], width: 0 };
     let lineIndex = 0;
-    blockLineWord.forEach(([lineWord, blockAttrs]) => {
-      lineWord.forEach((lineUnit) => {
+    blockLineWord.forEach(([lineItems, blockAttrs]) => {
+      if (!blockAttrs?.list || !compositionByList.list) {
+        if (compositionByList.items.length > 0) {
+          compositionsByList.push(compositionByList);
+        }
+        compositionByList = { items: [], attrs: blockAttrs, width: 0, list: !!blockAttrs?.list };
+      }
+
+      lineItems.forEach((lineItem) => {
         const line = lines[lineIndex];
         const y = line.y;
         const height = line.height;
         const lineWidth =
-          lineUnit[0].reduce((n, w) => n + w.reduce((m, u) => m + u[1], 0), 0) + (lineUnit[1]?.padding ?? 0);
-        const xMargin = (rangeWidth - lineWidth) * getAlignGapRate(blockAttrs);
-        let x = xMargin + (lineUnit[1]?.padding ?? 0);
-        lineUnit[0].forEach((wordUnit) =>
+          lineItem[0].reduce((n, w) => n + w.reduce((m, u) => m + u[1], 0), 0) + (lineItem[1]?.padding ?? 0);
+        let x = lineItem[1]?.padding ?? 0;
+        lineItem[0].forEach((wordUnit) =>
           wordUnit.forEach((unit) => {
-            composition.push({ char: unit[0], bounds: { x, y, width: unit[1], height } });
+            compositionByList.items.push({ char: unit[0], bounds: { x, y, width: unit[1], height } });
+            compositionByList.width = Math.max(compositionByList.width, lineWidth);
             x += unit[1];
           }),
         );
         lineIndex += 1;
       });
     });
+
+    if (compositionByList.items.length > 0) {
+      compositionsByList.push(compositionByList);
+    }
   }
 
+  compositionsByList.forEach((compositionByList) => {
+    const lineWidth = compositionByList.width;
+    const xMargin = (rangeWidth - lineWidth) * getAlignGapRate(compositionByList.attrs);
+    if (xMargin === 0) return;
+
+    for (let i = 0; i < compositionByList.items.length; i++) {
+      const item = compositionByList.items[i];
+      item.bounds = { ...item.bounds, x: item.bounds.x + xMargin };
+    }
+  });
+
+  const composition = compositionsByList.flatMap((c) => c.items);
   return { lines, composition };
 }
 

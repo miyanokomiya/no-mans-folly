@@ -28,7 +28,7 @@ export type ListIndexItem = [list: DocListValue, index: number];
 export type ListInfo = { head: string; padding: number };
 
 /**
- * A letter refers to a graphme
+ * A letter refers to a grapheme
  */
 export type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
 export type LineItem = [words: WordItem[], ListInfo?];
