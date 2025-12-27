@@ -1116,7 +1116,8 @@ export function convertLineWordToComposition(
   }
 
   type ByListInfo = { items: DocCompositionItem[]; attrs?: DocAttributes; width: number; list?: boolean };
-  // Left aligned
+
+  // Get left aligned information
   const compositionsByList: ByListInfo[] = [];
   {
     let compositionByList: ByListInfo = { items: [], width: 0 };
@@ -1152,6 +1153,8 @@ export function convertLineWordToComposition(
     }
   }
 
+  // Apply x-margin with regarding list style
+  // => Lines in the same list group should be aligned as a whole.
   compositionsByList.forEach((compositionByList) => {
     const lineWidth = compositionByList.width;
     const xMargin = (rangeWidth - lineWidth) * getAlignGapRate(compositionByList.attrs);
@@ -1554,7 +1557,9 @@ export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttribu
       ret.pop();
     }
     // Then increment counter with new list type
-    ret[ret.length - 1] = [attrs.list, currentItem[1] + 1];
+    if (ret.length > 0) {
+      ret[ret.length - 1] = [attrs.list, ret[ret.length - 1][1] + 1];
+    }
   }
 
   return ret;

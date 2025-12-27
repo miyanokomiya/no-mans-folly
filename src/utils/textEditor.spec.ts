@@ -1748,6 +1748,15 @@ describe("createListIndexPath", () => {
         { list: "ordered", indent: 0 },
       ),
     ).toEqual([["ordered", 1]]);
+    expect(
+      createListIndexPath(
+        [
+          ["bullet", 1],
+          ["bullet", 0],
+        ],
+        { list: "ordered", indent: 0 },
+      ),
+    ).toEqual([["ordered", 2]]);
   });
 });
 
