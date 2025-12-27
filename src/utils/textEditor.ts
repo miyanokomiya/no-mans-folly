@@ -824,12 +824,17 @@ export function mergeDocAttrInfo(info: DocAttrInfo): DocAttributes | undefined {
   const ret = info.cursor ? { ...info.cursor } : {};
 
   // block specific
+  delete ret.align;
+  delete ret.lineheight;
+  delete ret.list;
+  delete ret.indent;
   if (info?.block?.align) ret.align = info.block.align;
   if (info?.block?.lineheight) ret.lineheight = info.block.lineheight;
   if (info?.block?.list) ret.list = info.block.list;
-  if (info?.block?.indent) ret.indent = info.block.indent;
+  if (info?.block?.indent || info?.block?.indent === 0) ret.indent = info.block.indent;
 
   // doc specific
+  delete ret.direction;
   if (info?.doc?.direction) ret.direction = info.doc.direction;
 
   return ret;
@@ -1295,6 +1300,8 @@ export function getDeltaAndCursorByBackspace(
       ],
     };
   } else {
+    if (cursor === 0) return { delta: [], cursor: 0 };
+
     const cursorMinus1 = Math.max(cursor - 1, 0);
     const outputCursorMinus1 = getRawCursor(composition, cursorMinus1);
 

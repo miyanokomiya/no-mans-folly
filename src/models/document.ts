@@ -39,7 +39,7 @@ export type DocAttributesBlock = {
   align?: "left" | "center" | "right" | null;
   lineheight?: number | null; // equivalent to unitless value in CSS
   list?: DocListValue | null;
-  indent?: number | null; // 0-based indentation level
+  indent?: number | null; // 0-based indentation level. "undefined" should mean "0"
 };
 
 export type DocAttributesDoc = {

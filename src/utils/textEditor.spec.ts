@@ -576,11 +576,11 @@ describe("mergeDocAttrInfo", () => {
   test("should return merge attribute info with certain priority", () => {
     expect(
       mergeDocAttrInfo({
-        cursor: { size: 1, align: "left", direction: "top" },
-        block: { size: 2, align: "center", direction: "middle" },
+        cursor: { size: 1, align: "left", direction: "top", indent: 1 },
+        block: { size: 2, align: "center", direction: "middle", indent: 0 },
         doc: { size: 3, align: "right", direction: "bottom" },
       }),
-    ).toEqual({ size: 1, align: "center", direction: "bottom" });
+    ).toEqual({ size: 1, align: "center", direction: "bottom", indent: 0 });
   });
 });
 
