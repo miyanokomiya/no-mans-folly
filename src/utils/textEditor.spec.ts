@@ -1690,6 +1690,13 @@ describe("createListIndexPath", () => {
     expect(createListIndexPath([["bullet", 0]], {})).toEqual([]);
     expect(createListIndexPath([], { list: "bullet", indent: 0 })).toEqual([["bullet", 0]]);
 
+    // Skip level
+    expect(createListIndexPath([], { list: "bullet", indent: 2 })).toEqual([
+      ["bullet", 0],
+      ["bullet", 0],
+      ["bullet", 0],
+    ]);
+
     // Same level
     expect(createListIndexPath([["bullet", 0]], { list: "bullet", indent: 0 })).toEqual([["bullet", 1]]);
     expect(createListIndexPath([["bullet", 0]], { list: "ordered", indent: 0 })).toEqual([["ordered", 1]]);

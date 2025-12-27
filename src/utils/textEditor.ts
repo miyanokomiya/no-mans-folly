@@ -1577,11 +1577,18 @@ function getListBulletText(type: DocListValue, indent: number, index: number): s
 export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttributes): [DocListValue, number][] {
   if (!attrs?.list) return [];
 
-  const currentItem = current.at(-1);
-  if (!currentItem) return [[attrs.list, 0]];
-
   const ret = current.slice();
   const indent = attrs.indent ?? 0;
+
+  const currentItem = current.at(-1);
+  if (!currentItem) {
+    // Fulfil up to the index
+    for (let i = 0; i <= indent; i++) {
+      ret.push([attrs.list, 0]);
+    }
+    return ret;
+  }
+
   const currentIndent = current.length - 1;
 
   if (currentIndent === indent) {
