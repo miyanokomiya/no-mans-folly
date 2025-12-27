@@ -25,6 +25,8 @@ import {
   WordItem,
   LineItem,
   BlockItem,
+  ORDERED_LIST_PATTERN,
+  BULLET_LIST_PATTERN,
 } from "./textEditorCore";
 
 /**
@@ -1393,41 +1395,32 @@ export function clearLinkRelatedAttrubites(src?: DocAttributes): DocAttributes {
   return ret;
 }
 
-// Bullet list functionality
-const ORDERED_LIST_PATTERN = /^(\s*)(\d+\.)\s/;
-const BULLET_LIST_PATTERN = /^(\s*)([-*•])\s/;
-
 /**
  * Detects if text starts with list formatting (- item, * item, 1. item)
  */
 export function detectListFormatting(text: string): {
   type: "bullet" | "ordered" | null;
-  indent: number;
   content: string;
 } {
   const orderedMatch = text.match(ORDERED_LIST_PATTERN);
   if (orderedMatch) {
-    const indentSpaces = orderedMatch[1].length;
-    const indent = Math.floor(indentSpaces / 2); // 2 spaces per indent level
     const content = text.slice(orderedMatch[0].length);
-    return { type: "ordered", indent, content };
+    return { type: "ordered", content };
   }
 
   const bulletMatch = text.match(BULLET_LIST_PATTERN);
   if (bulletMatch) {
-    const indentSpaces = bulletMatch[1].length;
-    const indent = Math.floor(indentSpaces / 2); // 2 spaces per indent level
     const content = text.slice(bulletMatch[0].length);
-    return { type: "bullet", indent, content };
+    return { type: "bullet", content };
   }
 
-  return { type: null, indent: 0, content: text };
+  return { type: null, content: text };
 }
 
 /**
  * Generates bullet or number text based on list type and context
  */
-export function getListBulletText(type: DocListValue, indent: number, index: number): string {
+function getListBulletText(type: DocListValue, indent: number, index: number): string {
   switch (type) {
     case "ordered": {
       return `${index + 1}.`.padStart(2 + 2 * indent, " ");
@@ -1471,32 +1464,4 @@ export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttribu
   }
 
   return ret;
-}
-
-/**
- * Applies list formatting attributes to doc output
- */
-export function applyListFormatting(
-  text: string,
-  defaultAttrs?: DocAttributes,
-): { output: DocOutput; hasListFormatting: boolean } {
-  const detection = detectListFormatting(text);
-
-  if (detection.type) {
-    const attrs = {
-      ...defaultAttrs,
-      list: detection.type,
-      indent: detection.indent,
-    };
-
-    return {
-      output: convertRawTextToDoc(detection.content, attrs),
-      hasListFormatting: true,
-    };
-  }
-
-  return {
-    output: convertRawTextToDoc(text, defaultAttrs),
-    hasListFormatting: false,
-  };
 }

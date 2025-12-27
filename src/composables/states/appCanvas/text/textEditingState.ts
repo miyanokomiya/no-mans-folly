@@ -157,7 +157,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "text-input": {
-          const [delta, nextCursor] = textEditorController.getDeltaByInputWithListDetection(event.data.value);
+          const [delta, nextCursor] = textEditorController.getDeltaByInput(event.data.value);
           patchDocument(ctx, delta);
           textEditorController.setCursor(nextCursor);
 
