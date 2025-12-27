@@ -424,7 +424,7 @@ function handleKeydown(
     case "Tab": {
       // Handle list indentation
       event.data.prevent?.();
-      const delta = textEditorController.getDeltaByChangeIndent(!event.data.shift);
+      const delta = textEditorController.getDeltaByChangeIndent(event.data.shift ? -1 : 1);
       if (delta.length > 0) {
         patchDocument(ctx, delta);
         onCursorUpdated(ctx);

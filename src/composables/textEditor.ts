@@ -347,23 +347,19 @@ export function newTextEditorController() {
     return getDeltaByApplyBlockStyle(_composition, cursor, selection, { list: listType, indent });
   }
 
-  function getDeltaByChangeIndent(increase: boolean): DocDelta {
+  function getDeltaByChangeIndent(val = 1): DocDelta {
     if (_isDocEmpty) return [];
+
+    const currentInfo = getCurrentAttributeInfo();
+    const listType = currentInfo.block?.list;
+    if (!listType) return [];
+
+    const currentIndent = currentInfo.block?.indent ?? 0;
+    const newIndent = Math.max(currentIndent + Math.round(val), 0);
+    if (newIndent === currentIndent) return [];
 
     const cursor = getCursor();
     const selection = getSelection();
-    const currentInfo = getCurrentAttributeInfo();
-    const currentIndent = currentInfo.block?.indent ?? 0;
-    const listType = currentInfo.block?.list;
-
-    if (!listType) return []; // Can't indent non-list items
-
-    const newIndent = increase
-      ? Math.min(currentIndent + 1, 5) // Max 5 levels
-      : Math.max(currentIndent - 1, 0); // Min 0 levels
-
-    if (newIndent === currentIndent) return []; // No change needed
-
     return getDeltaByApplyBlockStyle(_composition, cursor, selection, { indent: newIndent });
   }
 
