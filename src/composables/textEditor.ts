@@ -309,26 +309,33 @@ export function newTextEditorController() {
 
     const lineHeadIndexRaw = getRawCursor(_composition, getLineHeadIndex(_composition, cursor));
     const rawCursor = getOutputCursor();
+    const rawSelection = getOutputSelection();
+    const rawCursorEnd = rawCursor + rawSelection;
 
     // Next cursor is at the head of the line
     const nextCursor = cursor - location.x;
 
-    // Remove a part of list marker that exists from the head to the cursor.
-    const ret: DocDelta = [{ retain: lineHeadIndexRaw }, { delete: rawCursor - lineHeadIndexRaw }];
+    // Remove from the top of the line to the selection end
+    // => This will remove the prefix of the list marker as well.
+    const ret: DocDelta = [{ retain: lineHeadIndexRaw }, { delete: rawCursorEnd - lineHeadIndexRaw }];
 
     const blockAttrs = getCurrentAttributeInfo().block;
     // Inherit current indent or set 0.
     const indent = blockAttrs?.indent ?? 0;
 
     // Apply list style
-    const lineEndIndexRaw = getRawCursor(_composition, getLineEndIndex(_composition, cursor));
-    ret.push({ retain: lineEndIndexRaw - rawCursor }, { retain: 1, attributes: { list: detection.type, indent } });
+    const selection = getSelection();
+    const lineEndIndexRaw = getRawCursor(_composition, getLineEndIndex(_composition, cursor + selection));
+    ret.push({ retain: lineEndIndexRaw - rawCursorEnd }, { retain: 1, attributes: { list: detection.type, indent } });
     return [ret, nextCursor];
   }
 
   function getDeltaByInputForLineBreak(text: string): [DocDelta, nextCursor: number] {
     const blockAttrs = getCurrentAttributeInfo().block;
     if (!blockAttrs?.list) return getDeltaByInputForPlainText(text);
+
+    const selection = getSelection();
+    if (selection > 0) return getDeltaByInputForPlainText(text);
 
     const cursor = getCursor();
     const location = getCursorLocation(_compositionLines, cursor);
