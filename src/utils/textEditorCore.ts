@@ -43,6 +43,17 @@ export const DEFAULT_LINEHEIGHT = 1.2;
 
 export const LOD_THRESHOLD = 6;
 
+/**
+ * Don't change these values casually, or the result of text rendering changes.
+ */
+export const TEXT_ADJUSTMENTS = {
+  // This isn't after any rule or theory but just a look-good value for locating letters to the center.
+  textTop: 0.8,
+  lineWidth: 0.07,
+  underlineTop: 0.9,
+  strikeTop: 0.5,
+};
+
 export const URL_TEXT_REG = /https?:\/\/[^\s]+/;
 export const URL_TEXT_EXACT_REG = /^https?:\/\/[^\s]+/;
 

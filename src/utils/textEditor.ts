@@ -36,6 +36,7 @@ import {
   ORDERED_LIST_PATTERN,
   BULLET_LIST_PATTERN,
   BLOCK_MARKER_TRIGGER,
+  TEXT_ADJUSTMENTS,
 } from "./textEditorCore";
 
 export function isBlockMarkerTrigger(char: string): boolean {
@@ -181,26 +182,26 @@ export function renderDocByComposition(
         // Need to reset fill style for background at least.
         ctx.fillStyle = group.attributes.color ?? "#000";
       }
-      // TODO: "0.8" isn't after any rule or theory but just a seem-good value for locating letters to the center.
-      ctx.fillText(group.text, group.bounds.x, fontTop + fontHeight * 0.8);
+      const textY = fontTop + fontHeight * TEXT_ADJUSTMENTS.textTop;
+      ctx.fillText(group.text, group.bounds.x, textY);
 
       if (line.listInfo && i === 0) {
         const srcAlign = ctx.textAlign;
         ctx.textAlign = "right";
-        ctx.fillText(`${line.listInfo.head} `, group.bounds.x, fontTop + fontHeight * 0.8);
+        ctx.fillText(`${line.listInfo.head} `, group.bounds.x, textY);
         ctx.textAlign = srcAlign;
       }
 
       if (group.attributes.underline || group.attributes.strike) {
         applyDefaultStrokeStyle(ctx);
-        ctx.lineWidth = fontHeight * 0.07;
+        ctx.lineWidth = fontHeight * TEXT_ADJUSTMENTS.lineWidth;
         if (group.attributes.color) {
           ctx.strokeStyle = group.attributes.color;
         }
       }
 
       if (group.attributes.underline) {
-        const y = fontTop + fontHeight * 0.9;
+        const y = fontTop + fontHeight * TEXT_ADJUSTMENTS.underlineTop;
         ctx.beginPath();
         ctx.moveTo(group.bounds.x, y);
         ctx.lineTo(group.bounds.x + group.bounds.width, y);
@@ -208,7 +209,7 @@ export function renderDocByComposition(
       }
 
       if (group.attributes.strike) {
-        const y = fontTop + fontHeight * 0.5;
+        const y = fontTop + fontHeight * TEXT_ADJUSTMENTS.strikeTop;
         ctx.beginPath();
         ctx.moveTo(group.bounds.x, y);
         ctx.lineTo(group.bounds.x + group.bounds.width, y);
@@ -276,7 +277,7 @@ export function renderSVGDocByComposition(
     const lineElement: SVGElementInfo = {
       tag: "tspan",
       attributes: {
-        y: fontTop + fontHeight * 0.8,
+        y: fontTop + fontHeight * TEXT_ADJUSTMENTS.textTop,
       },
       children: [],
     };
@@ -297,7 +298,7 @@ export function renderSVGDocByComposition(
       }
 
       if (group.attributes.underline) {
-        const y = fontTop + fontHeight * 0.9;
+        const y = fontTop + fontHeight * TEXT_ADJUSTMENTS.underlineTop;
         fwElement.children?.push({
           tag: "line",
           attributes: {
@@ -306,13 +307,13 @@ export function renderSVGDocByComposition(
             x2: group.bounds.x + group.bounds.width,
             y2: y,
             ...getColorAttributes("stroke", toHexAndAlpha(group.attributes.color)),
-            "stroke-width": fontHeight * 0.07,
+            "stroke-width": fontHeight * TEXT_ADJUSTMENTS.lineWidth,
           },
         });
       }
 
       if (group.attributes.strike) {
-        const y = fontTop + fontHeight * 0.5;
+        const y = fontTop + fontHeight * TEXT_ADJUSTMENTS.strikeTop;
         fwElement.children?.push({
           tag: "line",
           attributes: {
@@ -321,7 +322,7 @@ export function renderSVGDocByComposition(
             x2: group.bounds.x + group.bounds.width,
             y2: y,
             ...getColorAttributes("stroke", toHexAndAlpha(group.attributes.color)),
-            "stroke-width": fontHeight * 0.07,
+            "stroke-width": fontHeight * TEXT_ADJUSTMENTS.lineWidth,
           },
         });
       }
