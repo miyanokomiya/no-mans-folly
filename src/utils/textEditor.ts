@@ -1,5 +1,13 @@
 import { IRectangle, IVec2 } from "okageo";
-import { DocAttrInfo, DocAttributes, DocDelta, DocDeltaInsert, DocListValue, DocOutput } from "../models/document";
+import {
+  DocAttrInfo,
+  DocAttributes,
+  DocAttributesBlock,
+  DocDelta,
+  DocDeltaInsert,
+  DocListValue,
+  DocOutput,
+} from "../models/document";
 import { Size } from "../models";
 import { applyDefaultStrokeStyle } from "./strokeStyle";
 import { newChronoCache } from "./stateful/cache";
@@ -1226,24 +1234,80 @@ export function getOutputSelection(composition: DocCompositionItem[], cursor: nu
 }
 
 export function getDeltaAndCursorByBackspace(
-  composition: DocCompositionItem[],
+  compositionInfo: DocCompositionInfo,
   cursor: number,
   selection: number,
 ): { delta: DocDelta; cursor: number } {
+  const { composition, lines } = compositionInfo;
   if (composition.length <= 1) return { delta: [], cursor: 0 };
 
   const outputCursor = getRawCursor(composition, cursor);
   const outputSelection = getOutputSelection(composition, cursor, selection);
   if (outputSelection > 0) {
-    return { cursor, delta: [{ retain: outputCursor }, { delete: outputSelection }] };
+    const cursorLocation = getCursorLocation(lines, cursor);
+    const selectionLocation = getCursorLocation(lines, cursor + selection);
+    if (cursorLocation.y === selectionLocation.y)
+      return { cursor, delta: [{ retain: outputCursor }, { delete: outputSelection }] };
+
+    // Retain block attrs of the cursor line
+    const cursorLine = lines[cursorLocation.y];
+    const deletedAttrs = cursorLine.outputs.at(-1)?.attributes;
+    const selectionLine = lines[selectionLocation.y];
+    const remainedAttrs = selectionLine.outputs.at(-1)?.attributes;
+    const inheritedBlockAttrs = inheritBlockAttrsByDelete(deletedAttrs, remainedAttrs);
+    const selectionLineEndIndexRaw = getRawCursor(composition, getLineEndIndex(composition, cursor + selection));
+    return {
+      cursor,
+      delta: [
+        { retain: outputCursor },
+        { delete: outputSelection },
+        { retain: selectionLineEndIndexRaw - (outputCursor + outputSelection) },
+        { retain: 1, attributes: inheritedBlockAttrs },
+      ],
+    };
   } else {
     const cursorMinus1 = Math.max(cursor - 1, 0);
     const outputCursorMinus1 = getRawCursor(composition, cursorMinus1);
+
+    if (!isLinebreak(composition[cursor - 1].char))
+      return {
+        cursor: cursorMinus1,
+        delta: [{ retain: outputCursorMinus1 }, { delete: outputCursor - outputCursorMinus1 }],
+      };
+
+    // Retain block attrs of the previous line
+    const cursorPrevLocation = getCursorLocation(lines, cursor - 1);
+    const cursorPrevLine = lines[cursorPrevLocation.y];
+    const deletedAttrs = cursorPrevLine.outputs.at(-1)?.attributes;
+    const cursorLocation = getCursorLocation(lines, cursor);
+    const cursorLine = lines[cursorLocation.y];
+    const remainedAttrs = cursorLine.outputs.at(-1)?.attributes;
+    const inheritedBlockAttrs = inheritBlockAttrsByDelete(deletedAttrs, remainedAttrs);
+    const cursorLineEndIndexRaw = getRawCursor(composition, getLineEndIndex(composition, cursor));
     return {
       cursor: cursorMinus1,
-      delta: [{ retain: outputCursorMinus1 }, { delete: outputCursor - outputCursorMinus1 }],
+      delta: [
+        { retain: outputCursorMinus1 },
+        { delete: outputCursor - outputCursorMinus1 },
+        { retain: cursorLineEndIndexRaw - outputCursor },
+        { retain: 1, attributes: inheritedBlockAttrs },
+      ],
     };
   }
+}
+
+/**
+ * Returns attrs that only has inherited ones from "deleted".
+ */
+function inheritBlockAttrsByDelete(deleted?: DocAttributes, remained?: DocAttributesBlock) {
+  if (!deleted) return remained;
+
+  const ret: DocAttributesBlock = {};
+  if (deleted.align) ret.align = deleted.align;
+  if (deleted.lineheight) ret.lineheight = deleted.lineheight;
+  if (deleted.list) ret.list = deleted.list;
+  if (deleted.indent) ret.indent = deleted.indent;
+  return ret;
 }
 
 export function getDeltaAndCursorByDelete(
@@ -1421,13 +1485,17 @@ export function detectListFormatting(text: string): {
  * Generates bullet or number text based on list type and context
  */
 function getListBulletText(type: DocListValue, indent: number, index: number): string {
+  const spaceCount = 2 + 2 * indent;
   switch (type) {
     case "ordered": {
-      return `${index + 1}.`.padStart(2 + 2 * indent, " ");
+      return `${index + 1}.`.padStart(spaceCount, " ");
+    }
+    case "empty": {
+      return " ".repeat(spaceCount);
     }
     default: {
       const bullet = BULLET_PREFIXES[indent % BULLET_PREFIXES.length];
-      return `${bullet}`.padStart(2 + 2 * indent, " ");
+      return `${bullet}`.padStart(spaceCount, " ");
     }
   }
 }

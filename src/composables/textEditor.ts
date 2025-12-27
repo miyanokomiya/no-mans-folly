@@ -188,8 +188,10 @@ export function newTextEditorController() {
   }
 
   function getCurrentAttributeInfo(): DocAttrInfo {
-    const cursor = getCursor();
-    const selection = getSelection();
+    return getAttributeInfoAt(getCursor(), getSelection());
+  }
+
+  function getAttributeInfoAt(cursor: number, selection = 0): DocAttrInfo {
     // When the selection exists, target cursor location should be in the selection: right side of the cursor.
     // Otherwise: left side of the cursor.
     const location = getCursorLocation(_compositionLines, cursor + (selection > 0 ? 1 : 0));
@@ -290,7 +292,33 @@ export function newTextEditorController() {
 
   function getDeltaAndCursorByBackspace(): { delta: DocDelta; cursor: number } {
     if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
-    return textEditorUtil.getDeltaAndCursorByBackspace(_composition, getCursor(), getSelection());
+
+    const getPlainResult = () =>
+      textEditorUtil.getDeltaAndCursorByBackspace(
+        { composition: _composition, lines: _compositionLines },
+        getCursor(),
+        getSelection(),
+      );
+
+    const cursor = getCursor();
+    const location = getCursorLocation(_compositionLines, cursor);
+    if (location.x !== 0) return getPlainResult();
+
+    const blockAttrs = getCurrentAttributeInfo().block;
+    if (!blockAttrs?.list) return getPlainResult();
+
+    // The deletion should be intended for clearing list style.
+    return {
+      delta: textEditorUtil.getDeltaByApplyBlockStyle(
+        _composition,
+        cursor,
+        0,
+        blockAttrs.indent === 0 || blockAttrs.list === "empty"
+          ? { list: null, indent: null } // Clear list style when it's top level or has no list marker
+          : { ...blockAttrs, list: "empty" }, // Set empty otherwise
+      ),
+      cursor,
+    };
   }
 
   function getDeltaAndCursorByDelete(): { delta: DocDelta; cursor: number } {
@@ -373,9 +401,8 @@ export function newTextEditorController() {
     const currentLine = _compositionLines[location.y];
     if (!currentLine) return getDeltaByInputForPlainText(text);
 
-    const currentLineText = textEditorUtil.getLineTextUpToX(currentLine, location.x);
-
     // Check for list pattern
+    const currentLineText = textEditorUtil.getLineTextUpToX(currentLine, location.x);
     const potentialListText = currentLineText + text;
     const detection = textEditorUtil.detectListFormatting(potentialListText);
     if (!detection.type) return getDeltaByInputForPlainText(text);

@@ -1405,55 +1405,110 @@ describe("getDeltaAndCursorByBackspace", () => {
   const empty: DocCompositionItem[] = [];
 
   test("should return delta and next cursor: no target", () => {
-    expect(getDeltaAndCursorByBackspace(empty, 0, 0)).toEqual({
+    expect(getDeltaAndCursorByBackspace({ composition: empty, lines: [] }, 0, 0)).toEqual({
       delta: [],
       cursor: 0,
     });
-    expect(getDeltaAndCursorByBackspace(nocontent, 0, 0)).toEqual({
+    expect(getDeltaAndCursorByBackspace({ composition: nocontent, lines: [] }, 0, 0)).toEqual({
       delta: [],
       cursor: 0,
     });
   });
 
   test("should return delta and next cursor", () => {
-    expect(getDeltaAndCursorByBackspace(composition, 1, 0)).toEqual({
+    expect(getDeltaAndCursorByBackspace({ composition, lines: [] }, 1, 0)).toEqual({
       delta: [{ retain: 0 }, { delete: 1 }],
       cursor: 0,
     });
-    expect(getDeltaAndCursorByBackspace(composition, 2, 0)).toEqual({
+    expect(getDeltaAndCursorByBackspace({ composition, lines: [] }, 2, 0)).toEqual({
       delta: [{ retain: 1 }, { delete: 1 }],
       cursor: 1,
     });
-    expect(getDeltaAndCursorByBackspace(composition, 1, 1)).toEqual({
+    expect(getDeltaAndCursorByBackspace({ composition, lines: [] }, 1, 1)).toEqual({
       delta: [{ retain: 1 }, { delete: 1 }],
       cursor: 1,
     });
-    expect(getDeltaAndCursorByBackspace(composition, 0, 2)).toEqual({
+    expect(getDeltaAndCursorByBackspace({ composition, lines: [] }, 0, 2)).toEqual({
       delta: [{ retain: 0 }, { delete: 2 }],
       cursor: 0,
     });
   });
 
   test("should return delta and next cursor: emoji", () => {
-    expect(getDeltaAndCursorByBackspace(composition, 3, 0)).toEqual({
+    expect(getDeltaAndCursorByBackspace({ composition, lines: [] }, 3, 0)).toEqual({
       delta: [{ retain: 2 }, { delete: 2 }],
       cursor: 2,
     });
-    expect(getDeltaAndCursorByBackspace(composition, 4, 0)).toEqual({
+    expect(getDeltaAndCursorByBackspace({ composition, lines: [] }, 4, 0)).toEqual({
       delta: [{ retain: 4 }, { delete: 2 }],
       cursor: 3,
     });
-    expect(getDeltaAndCursorByBackspace(composition, 2, 1)).toEqual({
+    expect(getDeltaAndCursorByBackspace({ composition, lines: [] }, 2, 1)).toEqual({
       delta: [{ retain: 2 }, { delete: 2 }],
       cursor: 2,
     });
-    expect(getDeltaAndCursorByBackspace(composition, 2, 2)).toEqual({
+    expect(getDeltaAndCursorByBackspace({ composition, lines: [] }, 2, 2)).toEqual({
       delta: [{ retain: 2 }, { delete: 4 }],
       cursor: 2,
     });
-    expect(getDeltaAndCursorByBackspace(composition, 1, 2)).toEqual({
+    expect(getDeltaAndCursorByBackspace({ composition, lines: [] }, 1, 2)).toEqual({
       delta: [{ retain: 1 }, { delete: 3 }],
       cursor: 1,
+    });
+  });
+
+  describe("Regarding retain block attrs", () => {
+    const composition: DocCompositionItem[] = [
+      { char: "a", bounds },
+      { char: "b", bounds },
+      { char: "\n", bounds },
+      { char: "c", bounds },
+      { char: "d", bounds },
+      { char: "\n", bounds },
+    ];
+    const lines: DocCompositionLine[] = [
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "ab" }, { insert: "\n", attributes: { list: "bullet", indent: 1 } }],
+      },
+      {
+        y: 10,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "cd" }, { insert: "\n", attributes: { list: "ordered", indent: 2 } }],
+      },
+    ];
+
+    test("should retain previous line attrs when nothing selected", () => {
+      expect(getDeltaAndCursorByBackspace({ composition, lines }, 2, 0)).toEqual({
+        delta: [{ retain: 1 }, { delete: 1 }],
+        cursor: 1,
+      });
+      expect(getDeltaAndCursorByBackspace({ composition, lines }, 3, 0)).toEqual({
+        delta: [{ retain: 2 }, { delete: 1 }, { retain: 2 }, { retain: 1, attributes: { list: "bullet", indent: 1 } }],
+        cursor: 2,
+      });
+      expect(getDeltaAndCursorByBackspace({ composition, lines }, 4, 0)).toEqual({
+        delta: [{ retain: 3 }, { delete: 1 }],
+        cursor: 3,
+      });
+    });
+
+    test("should retain current line attrs when multiple lines selected", () => {
+      expect(getDeltaAndCursorByBackspace({ composition, lines }, 1, 1)).toEqual({
+        delta: [{ retain: 1 }, { delete: 1 }],
+        cursor: 1,
+      });
+      expect(getDeltaAndCursorByBackspace({ composition, lines }, 1, 2)).toEqual({
+        delta: [{ retain: 1 }, { delete: 2 }, { retain: 2 }, { retain: 1, attributes: { list: "bullet", indent: 1 } }],
+        cursor: 1,
+      });
+      expect(getDeltaAndCursorByBackspace({ composition, lines }, 1, 3)).toEqual({
+        delta: [{ retain: 1 }, { delete: 3 }, { retain: 1 }, { retain: 1, attributes: { list: "bullet", indent: 1 } }],
+        cursor: 1,
+      });
     });
   });
 });
