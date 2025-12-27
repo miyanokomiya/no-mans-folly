@@ -364,54 +364,34 @@ export function newTextEditorController() {
   }
 
   function getDeltaByInputWithListDetection(text: string): [DocDelta, nextCursor: number] {
+    // List can be detected only when new input is space.
     if (text !== " ") return getDeltaByInput(text);
 
     // Get current line content to check for list patterns
     const cursor = getCursor();
     const location = getCursorLocation(_compositionLines, cursor);
     const currentLine = _compositionLines[location.y];
+    if (!currentLine) return getDeltaByInput(text);
 
-    if (!currentLine) {
-      return getDeltaByInput(text);
-    }
-
-    // Get text content of current line up to cursor position
-    let currentLineText = "";
-    let charCount = 0;
-
-    for (const output of currentLine.outputs) {
-      if (charCount >= location.x) break;
-
-      const segments = textEditorUtil.splitToSegments(output.insert);
-      for (let i = 0; i < segments.length && charCount < location.x; i++) {
-        const char = segments[i];
-        if (!textEditorUtil.isLinebreak(char)) {
-          currentLineText += char;
-        }
-        charCount++;
-      }
-    }
-
-    const inputLength = textEditorUtil.splitToSegments(text).length;
-    let nextCursor = cursor + inputLength;
+    const currentLineText = textEditorUtil.getLineTextUpToX(currentLine, location.x);
 
     // Check for list pattern
     const potentialListText = currentLineText + text;
     const detection = textEditorUtil.detectListFormatting(potentialListText);
     if (!detection.type) return getDeltaByInput(text);
 
-    // Remove the detected list marker from the text
-    const ret: DocDelta = [{ retain: getOutputCursor() - 1 }, { delete: 1 }];
-    nextCursor -= 1;
+    const lineHeadIndexRaw = getRawCursor(_composition, getLineHeadIndex(_composition, cursor));
+    const rawCursor = getOutputCursor();
 
-    // Insert list-format
-    const lineHeadIndex = getLineHeadIndex(_composition, cursor);
-    const lineHeadIndexRaw = getRawCursor(_composition, lineHeadIndex);
-    const lineEndIndex = getLineEndIndex(_composition, cursor);
-    const lineEndIndexRaw = getRawCursor(_composition, lineEndIndex);
-    ret.push({ retain: lineEndIndexRaw - lineHeadIndexRaw - 1 });
-    const listAttrs = { list: detection.type, indent: detection.indent };
-    ret.push({ retain: 1, attributes: listAttrs });
+    // Next cursor is at the head of the line
+    const nextCursor = cursor - location.x;
+    // Remove a part of list marker that exists from the head to the cursor.
+    const ret: DocDelta = [{ retain: lineHeadIndexRaw }, { delete: rawCursor - lineHeadIndexRaw }];
+
+    // Apply list style
+    const lineEndIndexRaw = getRawCursor(_composition, getLineEndIndex(_composition, cursor));
+    ret.push({ retain: lineEndIndexRaw - rawCursor - 1 });
+    ret.push({ retain: 1, attributes: { list: detection.type, indent: detection.indent } });
     return [ret, nextCursor];
   }
 

@@ -15,6 +15,7 @@ import {
   getLineEndIndex,
   getLineHeadIndex,
   getLineHeight,
+  getLineTextUpToX,
   getLinkAt,
   getNewInlineAttributesAt,
   getOutputSelection,
@@ -146,6 +147,24 @@ describe("getRawCursor", () => {
         3,
       ),
     ).toBe(4);
+  });
+});
+
+describe("getLineTextUpToX", () => {
+  test("should return text up to given x", () => {
+    const line: DocCompositionLine = {
+      y: 0,
+      height: 10,
+      fontheight: 10,
+      outputs: [{ insert: "a" }, { insert: "b😄" }, { insert: "c" }, { insert: "\n" }],
+    };
+    expect(getLineTextUpToX(line, 0)).toBe("");
+    expect(getLineTextUpToX(line, 1)).toBe("a");
+    expect(getLineTextUpToX(line, 2)).toBe("ab");
+    expect(getLineTextUpToX(line, 3)).toBe("ab😄");
+    expect(getLineTextUpToX(line, 4)).toBe("ab😄c");
+    expect(getLineTextUpToX(line, 5)).toBe("ab😄c");
+    expect(getLineTextUpToX(line, 6)).toBe("ab😄c");
   });
 });
 
@@ -754,20 +773,36 @@ describe("applyRangeWidthToLineWord", () => {
         [
           [
             [
-              ["a", 3],
-              ["b", 3],
-              ["c", 3],
+              [
+                ["a", 3],
+                ["b", 3],
+                ["c", 3],
+              ],
             ],
+            undefined,
           ],
           [
             [
-              ["d", 3],
-              ["e", 3],
+              [
+                ["d", 3],
+                ["e", 3],
+              ],
+              [
+                [
+                  "\n",
+                  0,
+                  {
+                    align: "right",
+                  },
+                ],
+              ],
             ],
-            [["\n", 0, { align: "right" }]],
+            undefined,
           ],
         ],
-        { align: "right" },
+        {
+          align: "right",
+        },
       ],
     ]);
 
@@ -789,16 +824,29 @@ describe("applyRangeWidthToLineWord", () => {
     ).toEqual([
       [
         [
-          [[["a", 3]], [[" ", 3]]],
+          [[[["a", 3]], [[" ", 3]]], undefined],
           [
             [
-              ["c", 3],
-              ["d", 3],
+              [
+                ["c", 3],
+                ["d", 3],
+              ],
+              [
+                [
+                  "\n",
+                  0,
+                  {
+                    align: "right",
+                  },
+                ],
+              ],
             ],
-            [["\n", 0, { align: "right" }]],
+            undefined,
           ],
         ],
-        { align: "right" },
+        {
+          align: "right",
+        },
       ],
     ]);
 
@@ -825,20 +873,36 @@ describe("applyRangeWidthToLineWord", () => {
         [
           [
             [
-              ["a", 3],
-              ["b", 3],
+              [
+                ["a", 3],
+                ["b", 3],
+              ],
+              [[" ", 3]],
             ],
-            [[" ", 3]],
+            undefined,
           ],
           [
             [
-              ["d", 1],
-              ["e", 3],
+              [
+                ["d", 1],
+                ["e", 3],
+              ],
+              [
+                [
+                  "\n",
+                  0,
+                  {
+                    align: "right",
+                  },
+                ],
+              ],
             ],
-            [["\n", 0, { align: "right" }]],
+            undefined,
           ],
         ],
-        { align: "right" },
+        {
+          align: "right",
+        },
       ],
     ]);
 
@@ -865,20 +929,36 @@ describe("applyRangeWidthToLineWord", () => {
         [
           [
             [
-              ["a", 3],
-              ["b", 3],
+              [
+                ["a", 3],
+                ["b", 3],
+              ],
             ],
+            undefined,
           ],
-          [[[" ", 7]]],
+          [[[[" ", 7]]], undefined],
           [
             [
-              ["d", 1],
-              ["e", 3],
+              [
+                ["d", 1],
+                ["e", 3],
+              ],
+              [
+                [
+                  "\n",
+                  0,
+                  {
+                    align: "right",
+                  },
+                ],
+              ],
             ],
-            [["\n", 0, { align: "right" }]],
+            undefined,
           ],
         ],
-        { align: "right" },
+        {
+          align: "right",
+        },
       ],
     ]);
 
@@ -905,21 +985,43 @@ describe("applyRangeWidthToLineWord", () => {
         [
           [
             [
-              ["a", 3],
-              ["b", 3],
-              ["c", 3],
+              [
+                ["a", 3],
+                ["b", 3],
+                ["c", 3],
+              ],
             ],
+            undefined,
           ],
           [
             [
-              ["d", 3],
-              ["e", 3],
-              ["f", 3],
+              [
+                ["d", 3],
+                ["e", 3],
+                ["f", 3],
+              ],
             ],
+            undefined,
           ],
-          [[["g", 3]], [["\n", 0, { align: "right" }]]],
+          [
+            [
+              [["g", 3]],
+              [
+                [
+                  "\n",
+                  0,
+                  {
+                    align: "right",
+                  },
+                ],
+              ],
+            ],
+            undefined,
+          ],
         ],
-        { align: "right" },
+        {
+          align: "right",
+        },
       ],
     ]);
   });
@@ -983,59 +1085,81 @@ describe("applyRangeWidthToLineWord", () => {
         [
           [
             [
-              ["c", 1],
-              ["r", 1],
-              ["e", 1],
-              ["a", 1],
-              ["t", 1],
-              ["e", 1],
+              [
+                ["c", 1],
+                ["r", 1],
+                ["e", 1],
+                ["a", 1],
+                ["t", 1],
+                ["e", 1],
+              ],
+              [[" ", 1]],
+              [["a", 1]],
+              [[" ", 1]],
             ],
-            [[" ", 1]],
-            [["a", 1]],
-            [[" ", 1]],
+            undefined,
           ],
           [
             [
-              ["r", 1],
-              ["e", 1],
-              ["l", 1],
-              ["a", 1],
-              ["t", 1],
-              ["i", 1],
-              ["v", 1],
-              ["e", 1],
+              [
+                ["r", 1],
+                ["e", 1],
+                ["l", 1],
+                ["a", 1],
+                ["t", 1],
+                ["i", 1],
+                ["v", 1],
+                ["e", 1],
+              ],
+              [[" ", 1]],
             ],
-            [[" ", 1]],
+            undefined,
           ],
           [
             [
-              ["p", 1],
-              ["o", 1],
-              ["s", 1],
-              ["i", 1],
-              ["t", 1],
+              [
+                ["p", 1],
+                ["o", 1],
+                ["s", 1],
+                ["i", 1],
+                ["t", 1],
+              ],
+              [[" ", 1]],
             ],
-            [[" ", 1]],
+            undefined,
           ],
           [
             [
-              ["f", 1],
-              ["i", 1],
-              ["x", 1],
-              ["a", 1],
-              ["t", 1],
-              ["e", 1],
-              ["d", 1],
+              [
+                ["f", 1],
+                ["i", 1],
+                ["x", 1],
+                ["a", 1],
+                ["t", 1],
+                ["e", 1],
+                ["d", 1],
+              ],
+              [[" ", 1]],
+              [
+                ["t", 1],
+                ["o", 1],
+              ],
+              [
+                [
+                  "\n",
+                  0,
+                  {
+                    align: "right",
+                  },
+                ],
+              ],
             ],
-            [[" ", 1]],
-            [
-              ["t", 1],
-              ["o", 1],
-            ],
-            [["\n", 0, { align: "right" }]],
+            undefined,
           ],
         ],
-        { align: "right" },
+        {
+          align: "right",
+        },
       ],
     ]);
   });
@@ -1059,13 +1183,26 @@ describe("applyRangeWidthToLineWord", () => {
         [
           [
             [
-              ["a", 3],
-              ["b", 3],
+              [
+                ["a", 3],
+                ["b", 3],
+              ],
+              [
+                [
+                  "\n",
+                  0,
+                  {
+                    align: "right",
+                  },
+                ],
+              ],
             ],
-            [["\n", 0, { align: "right" }]],
+            undefined,
           ],
         ],
-        { align: "right" },
+        {
+          align: "right",
+        },
       ],
     ]);
 
@@ -1088,15 +1225,48 @@ describe("applyRangeWidthToLineWord", () => {
         [
           [
             [
-              ["a", 3],
-              ["b", 3],
+              [
+                ["a", 3],
+                ["b", 3],
+              ],
+              [
+                [
+                  "\n",
+                  0,
+                  {
+                    align: "right",
+                  },
+                ],
+              ],
             ],
-            [["\n", 0, { align: "right" }]],
+            undefined,
           ],
         ],
-        { align: "right" },
+        {
+          align: "right",
+        },
       ],
-      [[[[["\n", 0, { align: "right" }]]]], { align: "right" }],
+      [
+        [
+          [
+            [
+              [
+                [
+                  "\n",
+                  0,
+                  {
+                    align: "right",
+                  },
+                ],
+              ],
+            ],
+            undefined,
+          ],
+        ],
+        {
+          align: "right",
+        },
+      ],
     ]);
   });
 
@@ -1120,11 +1290,14 @@ describe("applyRangeWidthToLineWord", () => {
         [
           [
             [
-              ["a", 1],
-              ["b", 1],
-              ["c", 1],
+              [
+                ["a", 1],
+                ["b", 1],
+                ["c", 1],
+              ],
+              [["\n", 0]],
             ],
-            [["\n", 0]],
+            undefined,
           ],
         ],
         undefined,
@@ -1150,11 +1323,14 @@ describe("applyRangeWidthToLineWord", () => {
         [
           [
             [
-              ["a", 1],
-              ["b", 1],
+              [
+                ["a", 1],
+                ["b", 1],
+              ],
             ],
+            undefined,
           ],
-          [[["c", 1]], [["\n", 0]]],
+          [[[["c", 1]], [["\n", 0]]], undefined],
         ],
         undefined,
       ],

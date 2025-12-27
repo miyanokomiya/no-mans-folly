@@ -384,6 +384,31 @@ export function getRawCursor(composition: DocCompositionItem[], cursor: number):
   }, 0);
 }
 
+/**
+ * Returns text from the line top to given location.
+ * The location should be segment based.
+ * Returned value doesn't contain the line break.
+ */
+export function getLineTextUpToX(line: DocCompositionLine, locationX: number) {
+  let currentLineText = "";
+  let charCount = 0;
+
+  for (const output of line.outputs) {
+    if (charCount >= locationX) break;
+
+    const segments = splitToSegments(output.insert);
+    for (let i = 0; i < segments.length && charCount < locationX; i++) {
+      const char = segments[i];
+      if (!isLinebreak(char)) {
+        currentLineText += char;
+      }
+      charCount++;
+    }
+  }
+
+  return currentLineText;
+}
+
 export function getCursorLocation(compositionLines: DocCompositionLine[], cursor: number): IVec2 {
   let x = 0;
   let y = 0;
