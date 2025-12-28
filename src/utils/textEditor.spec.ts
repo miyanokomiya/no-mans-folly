@@ -19,6 +19,7 @@ import {
   getLineTextUpToX,
   getLinkAt,
   getNewInlineAttributesAt,
+  getNextListIndent,
   getOutputSelection,
   getRawCursor,
   getWordRangeAtCursor,
@@ -1681,6 +1682,17 @@ describe("getLinkAt", () => {
       docRange: [1, 3],
     });
     expect(getLinkAt({ composition, lines }, { x: 5, y: 11 })).toEqual(undefined);
+  });
+});
+
+describe("getNextListIndent", () => {
+  test("should increment the indent when the current line has list type and next type is quote", () => {
+    expect(getNextListIndent({}, "bullet")).toBe(0);
+    expect(getNextListIndent({}, "quote")).toBe(0);
+    expect(getNextListIndent({ list: "bullet", indent: 1 }, "bullet")).toBe(1);
+    expect(getNextListIndent({ list: "bullet", indent: 1 }, "quote")).toBe(2);
+    expect(getNextListIndent({ list: "quote", indent: 1 }, "bullet")).toBe(1);
+    expect(getNextListIndent({ list: "quote", indent: 1 }, "quote")).toBe(2);
   });
 });
 

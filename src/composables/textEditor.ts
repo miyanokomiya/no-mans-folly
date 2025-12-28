@@ -320,8 +320,7 @@ export function newTextEditorController() {
     const ret: DocDelta = [{ retain: lineHeadIndexRaw }, { delete: rawCursorEnd - lineHeadIndexRaw }];
 
     const blockAttrs = getCurrentAttributeInfo().block;
-    // Inherit current indent or set 0.
-    const indent = blockAttrs?.indent ?? 0;
+    const indent = textEditorUtil.getNextListIndent(blockAttrs, detection.type);
 
     // Apply list style
     const selection = getSelection();

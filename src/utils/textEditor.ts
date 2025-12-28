@@ -1682,6 +1682,16 @@ function getListBulletText(type: DocListValue, indent: number, index: number): s
   }
 }
 
+export function getNextListIndent(blockAttrs: DocAttributes | undefined, nextListType: DocListValue): number {
+  const baseIndent = blockAttrs?.indent ?? 0;
+  const currentListType = blockAttrs?.list;
+  if (!currentListType) return baseIndent;
+
+  // When next type is "quote" and the line already has list type, increment the indent.
+  if (nextListType === "quote") return baseIndent + 1;
+  return baseIndent;
+}
+
 /**
  * Updates list counters based on current line's list attributes
  */
