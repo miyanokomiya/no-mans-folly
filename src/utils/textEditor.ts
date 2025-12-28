@@ -162,7 +162,7 @@ function renderQuoteSVGDoc([from, to, attrs]: QuoteStackItem): SVGElementInfo {
 }
 
 function newQuoteStack() {
-  // Assume items in this stack are aligned in their indentation level.
+  // Assume items in this stack are aligned in their indent level.
   // => Because list items are processed according to it.
   const stackMap: Map<number, QuoteStackItem> = new Map();
   const finishedList: QuoteStackItem[] = [];
@@ -271,6 +271,7 @@ export function renderDocByComposition(
           quoteStack.finishDeeperThan(nextQuote);
           quoteStack.addQuote(nextQuote, group);
         } else {
+          quoteStack.finishDeeperThan(line.listInfo.padding - 1);
           const srcAlign = ctx.textAlign;
           ctx.textAlign = "right";
           const listX = group.bounds.x - fontSize * TEXT_ADJUSTMENTS.listLeft;
@@ -438,6 +439,7 @@ export function renderSVGDocByComposition(
           quoteStack.finishDeeperThan(nextQuote);
           quoteStack.addQuote(nextQuote, group);
         } else {
+          quoteStack.finishDeeperThan(line.listInfo.padding - 1);
           lineElement.children!.push({
             tag: "tspan",
             attributes: {
