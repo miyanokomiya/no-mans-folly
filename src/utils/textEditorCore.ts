@@ -1,4 +1,4 @@
-import { IRectangle } from "okageo";
+import { IRectangle, IVec2 } from "okageo";
 import { DocAttributes, DocListValue, DocOutput } from "../models/document";
 
 export interface DocCompositionItem {
@@ -34,6 +34,8 @@ export type WordItem = [letter: string, width: number, attrs?: DocAttributes][];
 export type LineItem = [words: WordItem[], ListInfo?];
 export type BlockItem = [lines: LineItem[], attrs?: DocAttributes];
 
+export type QuoteStackItem = [from: IVec2, to: IVec2, attrs?: DocAttributes];
+
 export const BULLET_PREFIXES = ["•", "◦", "▪"];
 
 export const LINK_STYLE_ATTRS: DocAttributes = { underline: true, color: "#3b82f6" };
@@ -52,6 +54,8 @@ export const TEXT_ADJUSTMENTS = {
   lineWidth: 0.07,
   underlineTop: 0.9,
   strikeTop: 0.5,
+  quoteWidth: 0.15,
+  listLeft: 0.5,
 };
 
 export const URL_TEXT_REG = /https?:\/\/[^\s]+/;
@@ -59,6 +63,7 @@ export const URL_TEXT_EXACT_REG = /^https?:\/\/[^\s]+/;
 
 export const ORDERED_LIST_PATTERN = /^(\d+\.)\s/;
 export const BULLET_LIST_PATTERN = /^([-*•])\s/;
+export const QUOTE_LIST_PATTERN = /^(>)\s/;
 
 export const BLOCK_MARKER_TRIGGER = / |\t/;
 export const WORDBREAK = /\n|\t|[ -/]|[:-@]|[[-`]/;

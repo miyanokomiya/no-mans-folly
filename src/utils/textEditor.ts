@@ -37,6 +37,8 @@ import {
   BULLET_LIST_PATTERN,
   BLOCK_MARKER_TRIGGER,
   TEXT_ADJUSTMENTS,
+  QUOTE_LIST_PATTERN,
+  QuoteStackItem,
 } from "./textEditorCore";
 
 export function isBlockMarkerTrigger(char: string): boolean {
@@ -134,6 +136,82 @@ export function renderDoc(ctx: CanvasCTX, doc: DocOutput, range: IRectangle) {
   renderDocByComposition(ctx, composition, lines);
 }
 
+function renderQuote(ctx: CanvasCTX, [from, to, attrs]: QuoteStackItem) {
+  const fontSize = attrs?.size ?? DEFAULT_FONT_SIZE;
+  ctx.lineWidth = fontSize * TEXT_ADJUSTMENTS.quoteWidth;
+  ctx.strokeStyle = attrs?.color ?? "#000";
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.stroke();
+}
+
+function renderQuoteSVGDoc([from, to, attrs]: QuoteStackItem): SVGElementInfo {
+  const fontSize = attrs?.size ?? DEFAULT_FONT_SIZE;
+  return {
+    tag: "line",
+    attributes: {
+      x1: from.x,
+      y1: from.y,
+      x2: to.x,
+      y2: to.y,
+      ...getColorAttributes("stroke", toHexAndAlpha(attrs?.color ?? "#000")),
+      "stroke-width": fontSize * TEXT_ADJUSTMENTS.quoteWidth,
+    },
+  };
+}
+
+function newQuoteStack() {
+  // Assume items in this stack are aligned in their indentation level.
+  // => Because list items are processed according to it.
+  const stackMap: Map<number, QuoteStackItem> = new Map();
+  const finishedList: QuoteStackItem[] = [];
+  let currentQuote = -1;
+
+  function addQuote(nextQuote: number, group: InlineGroupItem) {
+    const quote = stackMap.get(nextQuote);
+    const fontSize = group.attributes.size ?? DEFAULT_FONT_SIZE;
+    const listX = group.bounds.x - fontSize * TEXT_ADJUSTMENTS.listLeft;
+    const quoteTo = { x: listX, y: group.bounds.y + group.bounds.height };
+    if (quote) {
+      stackMap.set(nextQuote, [quote[0], quoteTo, quote[2]]);
+    } else {
+      stackMap.set(nextQuote, [{ x: listX, y: group.bounds.y }, quoteTo, group.attributes]);
+    }
+    currentQuote = nextQuote;
+  }
+
+  function finishDeeperThan(quote: number) {
+    if (currentQuote <= quote) return;
+
+    const items = Array.from(stackMap.entries().filter(([i]) => quote < i));
+    const last = items.at(-1);
+    if (!last) return;
+
+    // Extend the bottom location to the deepest item.
+    const y = last[1][1].y;
+    items.forEach(([i, val]) => {
+      finishedList.push([val[0], { x: val[1].x, y }, val[2]]);
+      stackMap.delete(i);
+    });
+    currentQuote = quote;
+  }
+
+  function finishAll() {
+    finishDeeperThan(-1);
+    stackMap.clear();
+  }
+
+  return {
+    stackMap,
+    finishedList,
+    addQuote,
+    finishDeeperThan,
+    finishAll,
+    getCurrentQuote: () => currentQuote,
+  };
+}
+
 export function renderDocByComposition(
   ctx: CanvasCTX,
   composition: DocCompositionItem[],
@@ -143,6 +221,8 @@ export function renderDocByComposition(
   let index = 0;
   let lastAttributes: DocAttributes | undefined;
   applyDocAttributesToCtx(ctx, lastAttributes);
+
+  const quoteStack = newQuoteStack();
 
   compositionLines.forEach((line) => {
     if (index >= composition.length) return;
@@ -186,10 +266,17 @@ export function renderDocByComposition(
       ctx.fillText(group.text, group.bounds.x, textY);
 
       if (line.listInfo && i === 0) {
-        const srcAlign = ctx.textAlign;
-        ctx.textAlign = "right";
-        ctx.fillText(`${line.listInfo.head} `, group.bounds.x, textY);
-        ctx.textAlign = srcAlign;
+        if (/\|/.test(line.listInfo.head)) {
+          const nextQuote = line.listInfo.padding;
+          quoteStack.finishDeeperThan(nextQuote);
+          quoteStack.addQuote(nextQuote, group);
+        } else {
+          const srcAlign = ctx.textAlign;
+          ctx.textAlign = "right";
+          const listX = group.bounds.x - fontSize * TEXT_ADJUSTMENTS.listLeft;
+          ctx.fillText(`${line.listInfo.head}`, listX, textY);
+          ctx.textAlign = srcAlign;
+        }
       }
 
       if (group.attributes.underline || group.attributes.strike) {
@@ -225,6 +312,11 @@ export function renderDocByComposition(
     index += line.outputs.length;
   });
 
+  quoteStack.finishAll();
+  quoteStack.finishedList.forEach((quote) => {
+    renderQuote(ctx, quote);
+  });
+
   // For debug
   // composition.forEach((c) => {
   //   ctx.strokeStyle = "red";
@@ -258,6 +350,7 @@ export function renderSVGDocByComposition(
     },
     children: [bgElement, textElement, fwElement],
   };
+  const quoteStack = newQuoteStack();
 
   let index = 0;
   compositionLines.forEach((line) => {
@@ -340,18 +433,24 @@ export function renderSVGDocByComposition(
       };
 
       if (line.listInfo && i === 0) {
-        lineElement.children!.push({
-          tag: "tspan",
-          attributes: {
-            x: group.bounds.x,
-            ...getColorAttributes("fill", toHexAndAlpha(group.attributes.color)),
-            "font-size": group.attributes?.size ?? undefined,
-            "font-weight": group.attributes?.bold ? "bold" : undefined,
-            "font-style": group.attributes?.italic ? "italic" : undefined,
-            "text-anchor": "end",
-          },
-          children: [`${line.listInfo.head} `],
-        });
+        if (/\|/.test(line.listInfo.head)) {
+          const nextQuote = line.listInfo.padding;
+          quoteStack.finishDeeperThan(nextQuote);
+          quoteStack.addQuote(nextQuote, group);
+        } else {
+          lineElement.children!.push({
+            tag: "tspan",
+            attributes: {
+              x: group.bounds.x,
+              ...getColorAttributes("fill", toHexAndAlpha(group.attributes.color)),
+              "font-size": group.attributes?.size ?? undefined,
+              "font-weight": group.attributes?.bold ? "bold" : undefined,
+              "font-style": group.attributes?.italic ? "italic" : undefined,
+              "text-anchor": "end",
+            },
+            children: [`${line.listInfo.head} `],
+          });
+        }
       }
 
       if (group.attributes.link) {
@@ -371,6 +470,11 @@ export function renderSVGDocByComposition(
     });
 
     index += line.outputs.length;
+  });
+
+  quoteStack.finishAll();
+  quoteStack.finishedList.map((quote) => {
+    fwElement.children!.push(renderQuoteSVGDoc(quote));
   });
 
   return rootElement;
@@ -1534,10 +1638,7 @@ export function clearLinkRelatedAttrubites(src?: DocAttributes): DocAttributes {
 /**
  * Detects if text starts with list formatting (- item, * item, 1. item)
  */
-export function detectListFormatting(text: string): {
-  type: "bullet" | "ordered" | null;
-  content: string;
-} {
+export function detectListFormatting(text: string): { type: DocListValue; content: string } | undefined {
   const orderedMatch = text.match(ORDERED_LIST_PATTERN);
   if (orderedMatch) {
     const content = text.slice(orderedMatch[0].length);
@@ -1550,7 +1651,11 @@ export function detectListFormatting(text: string): {
     return { type: "bullet", content };
   }
 
-  return { type: null, content: text };
+  const quoteMatch = text.match(QUOTE_LIST_PATTERN);
+  if (quoteMatch) {
+    const content = text.slice(quoteMatch[0].length);
+    return { type: "quote", content };
+  }
 }
 
 /**
@@ -1564,6 +1669,9 @@ function getListBulletText(type: DocListValue, indent: number, index: number): s
     }
     case "empty": {
       return " ".repeat(spaceCount);
+    }
+    case "quote": {
+      return "|".padStart(spaceCount, " ");
     }
     default: {
       const bullet = BULLET_PREFIXES[indent % BULLET_PREFIXES.length];

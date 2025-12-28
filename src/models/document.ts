@@ -47,7 +47,7 @@ export type DocAttributesDoc = {
 };
 
 export type DocDirection = "top" | "middle" | "bottom";
-export type DocListValue = "bullet" | "ordered" | "empty";
+export type DocListValue = "bullet" | "ordered" | "empty" | "quote";
 
 export interface DocAttrInfo {
   cursor?: DocAttributes;

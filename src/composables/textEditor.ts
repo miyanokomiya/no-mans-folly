@@ -305,7 +305,7 @@ export function newTextEditorController() {
     const currentLineText = textEditorUtil.getLineTextUpToX(currentLine, location.x);
     const potentialListText = currentLineText + text;
     const detection = textEditorUtil.detectListFormatting(potentialListText);
-    if (!detection.type) return getDeltaByInputForPlainText(text);
+    if (!detection) return getDeltaByInputForPlainText(text);
 
     const lineHeadIndexRaw = getRawCursor(_composition, getLineHeadIndex(_composition, cursor));
     const rawCursor = getOutputCursor();
