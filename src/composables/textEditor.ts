@@ -25,6 +25,7 @@ import { DEFAULT_FONT_SIZE, DocCompositionItem, DocCompositionLine, LINK_STYLE_A
 import * as textEditorUtil from "../utils/textEditor";
 import { Size } from "../models";
 import { CanvasCTX } from "../utils/types";
+import { ModifierOptions } from "../utils/devices";
 
 export function newTextEditorController() {
   let _ctx: CanvasCTX;
@@ -273,7 +274,7 @@ export function newTextEditorController() {
     };
   }
 
-  function getDeltaByInputForPlainText(text: string): [DocDelta, nextCursor: number] {
+  function getDeltaByInputForPlainText(text: string, options?: ModifierOptions): [DocDelta, nextCursor: number] {
     const cursor = getCursor();
     const inputLength = textEditorUtil.splitToSegments(text).length;
     let nextCursor = cursor + inputLength;
@@ -286,6 +287,16 @@ export function newTextEditorController() {
 
     const attrs = mergeDocAttrInfo(getCurrentAttributeInfo());
     ret.push(...textEditorUtil.convertRawTextToDoc(text, attrs));
+
+    if (options?.shift && attrs?.list && isLinebreak(text)) {
+      // "shift + Enter" breaks the list line without adding a list marker
+      // => Set the list type to "empty"
+      const lineEndIndexRaw = getRawCursor(_composition, getLineEndIndex(_composition, cursor + getSelection()));
+      ret.push(
+        { retain: lineEndIndexRaw - getOutputCursor() - outputSelection },
+        { retain: 1, attributes: { list: "empty" } },
+      );
+    }
 
     if (_isDocEmpty) {
       ret.push(getInitialOutput()[0]);
@@ -329,22 +340,22 @@ export function newTextEditorController() {
     return [ret, nextCursor];
   }
 
-  function getDeltaByInputForLineBreak(text: string): [DocDelta, nextCursor: number] {
-    const blockAttrs = getCurrentAttributeInfo().block;
-    if (!blockAttrs?.list) return getDeltaByInputForPlainText(text);
-
+  function getDeltaByInputForLineBreak(text: string, options?: ModifierOptions): [DocDelta, nextCursor: number] {
     const selection = getSelection();
-    if (selection > 0) return getDeltaByInputForPlainText(text);
+    if (options?.shift || selection > 0) return getDeltaByInputForPlainText(text, options);
+
+    const blockAttrs = getCurrentAttributeInfo().block;
+    if (!blockAttrs?.list) return getDeltaByInputForPlainText(text, options);
 
     const cursor = getCursor();
     const location = getCursorLocation(_compositionLines, cursor);
-    if (location.x > 0) return getDeltaByInputForPlainText(text);
+    if (location.x > 0) return getDeltaByInputForPlainText(text, options);
 
     const currentLine = _compositionLines[location.y];
-    if (!currentLine) return getDeltaByInputForPlainText(text);
+    if (!currentLine) return getDeltaByInputForPlainText(text, options);
 
     const hasLineText = !!textEditorUtil.getLineTextUpToX(currentLine, location.x + 1);
-    if (hasLineText) return getDeltaByInputForPlainText(text);
+    if (hasLineText) return getDeltaByInputForPlainText(text, options);
 
     // Clear list style
     return [
@@ -455,10 +466,10 @@ export function newTextEditorController() {
     return getDeltaByApplyBlockStyle(_composition, cursor, selection, { indent: newIndent });
   }
 
-  function getDeltaByInput(text: string): [DocDelta, nextCursor: number] {
-    if (isLinebreak(text)) return getDeltaByInputForLineBreak(text);
+  function getDeltaByInput(text: string, options?: ModifierOptions): [DocDelta, nextCursor: number] {
+    if (isLinebreak(text)) return getDeltaByInputForLineBreak(text, options);
     if (textEditorUtil.isBlockMarkerTrigger(text)) return getDeltaByInputForSpace(text);
-    return getDeltaByInputForPlainText(text);
+    return getDeltaByInputForPlainText(text, options);
   }
 
   function getBoundsAtIME(): IRectangle | undefined {

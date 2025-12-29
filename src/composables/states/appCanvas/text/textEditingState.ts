@@ -12,7 +12,7 @@ import {
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
-import { isMac } from "../../../../utils/devices";
+import { isMac, ModifierOptions } from "../../../../utils/devices";
 import { KeyDownEvent, TransitionValue } from "../../core";
 import { CursorPositionInfo } from "../../../../stores/documents";
 import { TextShape, isTextShape } from "../../../../shapes/text";
@@ -35,6 +35,12 @@ export function newTextEditingState(option: Option): AppCanvasState {
   let textEditorController: TextEditorController;
   let textBounds: ReturnType<typeof getShapeTextBounds>;
   let cursorInfo: CursorPositionInfo | undefined;
+
+  // Record modifire keys manually since they are untrackable from input events.
+  const modifierOptions: ModifierOptions = {};
+  function recordModifierOptions(val: ModifierOptions) {
+    modifierOptions.shift = val.shift;
+  }
 
   function updateEditorPosition(ctx: AppCanvasStateContext) {
     if (!textEditorController || !applyAffine) return;
@@ -157,7 +163,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "text-input": {
-          const [delta, nextCursor] = textEditorController.getDeltaByInput(event.data.value);
+          const [delta, nextCursor] = textEditorController.getDeltaByInput(event.data.value, modifierOptions);
           patchDocument(ctx, delta);
           textEditorController.setCursor(nextCursor);
 
@@ -232,9 +238,15 @@ export function newTextEditingState(option: Option): AppCanvasState {
           onCursorUpdated(ctx);
           return;
         }
-        case "keydown":
+        case "keydown": {
           updateEditorPosition(ctx);
+          recordModifierOptions(event.data);
           return handleKeydown(ctx, textEditorController, onCursorUpdated, patchDocument, event);
+        }
+        case "keyup": {
+          recordModifierOptions(event.data);
+          return;
+        }
         case "shape-updated": {
           const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
           if (!shape) return ctx.states.newSelectionHubState;
