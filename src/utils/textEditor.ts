@@ -240,7 +240,10 @@ export function renderDocByComposition(
     );
 
     const processList = (group: InlineGroupItem, fontSize: number) => {
-      if (!line.listInfo) return;
+      if (!line.listInfo) {
+        quoteStack.finishAll();
+        return;
+      }
 
       if (/\|/.test(line.listInfo.head)) {
         const nextQuote = line.listInfo.padding;
@@ -442,25 +445,29 @@ export function renderSVGDocByComposition(
         children: [group.text],
       };
 
-      if (line.listInfo && i === 0) {
-        if (/\|/.test(line.listInfo.head)) {
-          const nextQuote = line.listInfo.padding;
-          quoteStack.finishDeeperThan(nextQuote);
-          quoteStack.addQuote(nextQuote, group);
+      if (i === 0) {
+        if (line.listInfo) {
+          if (/\|/.test(line.listInfo.head)) {
+            const nextQuote = line.listInfo.padding;
+            quoteStack.finishDeeperThan(nextQuote);
+            quoteStack.addQuote(nextQuote, group);
+          } else {
+            quoteStack.finishDeeperThan(line.listInfo.padding - 1);
+            lineElement.children!.push({
+              tag: "tspan",
+              attributes: {
+                x: group.bounds.x,
+                ...getColorAttributes("fill", toHexAndAlpha(group.attributes.color)),
+                "font-size": group.attributes?.size ?? undefined,
+                "font-weight": group.attributes?.bold ? "bold" : undefined,
+                "font-style": group.attributes?.italic ? "italic" : undefined,
+                "text-anchor": "end",
+              },
+              children: [`${line.listInfo.head} `],
+            });
+          }
         } else {
-          quoteStack.finishDeeperThan(line.listInfo.padding - 1);
-          lineElement.children!.push({
-            tag: "tspan",
-            attributes: {
-              x: group.bounds.x,
-              ...getColorAttributes("fill", toHexAndAlpha(group.attributes.color)),
-              "font-size": group.attributes?.size ?? undefined,
-              "font-weight": group.attributes?.bold ? "bold" : undefined,
-              "font-style": group.attributes?.italic ? "italic" : undefined,
-              "text-anchor": "end",
-            },
-            children: [`${line.listInfo.head} `],
-          });
+          quoteStack.finishAll();
         }
       }
 
