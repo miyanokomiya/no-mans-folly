@@ -369,19 +369,30 @@ export function newTextEditorController() {
     ];
   }
 
-  function getDeltaAndCursorByBackspace(): { delta: DocDelta; cursor: number } {
+  function getDeltaAndCursorByRemoval(deleteKey = false): { delta: DocDelta; cursor: number } {
     if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
 
-    const getPlainResult = () =>
-      textEditorUtil.getDeltaAndCursorByBackspace(
-        { composition: _composition, lines: _compositionLines },
-        getCursor(),
-        getSelection(),
-      );
-
     const cursor = getCursor();
+    const selection = getSelection();
+    const getPlainResult = () => {
+      if (deleteKey) {
+        return textEditorUtil.getDeltaAndCursorByDelete(
+          { composition: _composition, lines: _compositionLines },
+          docLength,
+          cursor,
+          selection,
+        );
+      } else {
+        return textEditorUtil.getDeltaAndCursorByBackspace(
+          { composition: _composition, lines: _compositionLines },
+          cursor,
+          selection,
+        );
+      }
+    };
+
     const location = getCursorLocation(_compositionLines, cursor);
-    if (location.x !== 0) return getPlainResult();
+    if (location.x !== 0 || selection > 0) return getPlainResult();
 
     const blockAttrs = getCurrentAttributeInfo().block;
     if (!blockAttrs?.list) return getPlainResult();
@@ -400,9 +411,12 @@ export function newTextEditorController() {
     };
   }
 
+  function getDeltaAndCursorByBackspace(): { delta: DocDelta; cursor: number } {
+    return getDeltaAndCursorByRemoval();
+  }
+
   function getDeltaAndCursorByDelete(): { delta: DocDelta; cursor: number } {
-    if (_isDocEmpty) return { delta: getInitialOutput(), cursor: 0 };
-    return textEditorUtil.getDeltaAndCursorByDelete(_composition, docLength, getCursor(), getSelection());
+    return getDeltaAndCursorByRemoval(true);
   }
 
   function getDeltaByApplyInlineStyle(attrs: DocAttributes): DocDelta {

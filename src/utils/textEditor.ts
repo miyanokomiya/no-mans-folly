@@ -1499,23 +1499,19 @@ function inheritBlockAttrsByDelete(deleted?: DocAttributes, remained?: DocAttrib
 }
 
 export function getDeltaAndCursorByDelete(
-  composition: DocCompositionItem[],
+  compositionInfo: DocCompositionInfo,
   docLength: number,
   cursor: number,
   selection: number,
 ): { delta: DocDelta; cursor: number } {
-  if (composition.length <= 1) return { delta: [], cursor: 0 };
+  // Removal by "delete" key works differently from "backspace" only when nothing's selected
+  if (selection === 0) {
+    // Nothing happens when the cursor is at the doc end
+    if (docLength - 1 <= cursor) return { delta: [], cursor };
 
-  const outputCursor = getRawCursor(composition, cursor);
-  const outputSelection = getOutputSelection(composition, cursor, selection);
-  if (outputSelection > 0) {
-    return { cursor, delta: [{ retain: outputCursor }, { delete: outputSelection }] };
+    return getDeltaAndCursorByBackspace(compositionInfo, cursor + 1, 0);
   } else {
-    const outputCursorPlus1 = getRawCursor(composition, Math.min(cursor + 1, docLength - 1));
-    return {
-      cursor,
-      delta: [{ retain: outputCursor }, { delete: outputCursorPlus1 - outputCursor }],
-    };
+    return getDeltaAndCursorByBackspace(compositionInfo, cursor, selection);
   }
 }
 

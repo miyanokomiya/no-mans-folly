@@ -1597,61 +1597,61 @@ describe("getDeltaAndCursorByDelete", () => {
   const empty: DocCompositionItem[] = [];
 
   test("should return delta and next cursor: no target", () => {
-    expect(getDeltaAndCursorByDelete(empty, 0, 0, 0)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition: empty, lines: [] }, 0, 0, 0)).toEqual({
       delta: [],
       cursor: 0,
     });
-    expect(getDeltaAndCursorByDelete(nocontent, 1, 0, 0)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition: nocontent, lines: [] }, 1, 0, 0)).toEqual({
       delta: [],
       cursor: 0,
     });
   });
 
   test("should return delta and next cursor", () => {
-    expect(getDeltaAndCursorByDelete(composition, docLength, 0, 0)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition, lines: [] }, docLength, 0, 0)).toEqual({
       delta: [{ retain: 0 }, { delete: 1 }],
       cursor: 0,
     });
-    expect(getDeltaAndCursorByDelete(composition, docLength, 1, 0)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition, lines: [] }, docLength, 1, 0)).toEqual({
       delta: [{ retain: 1 }, { delete: 1 }],
       cursor: 1,
     });
-    expect(getDeltaAndCursorByDelete(composition, docLength, 5, 0)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition, lines: [] }, docLength, 5, 0)).toEqual({
       delta: [{ retain: 7 }, { delete: 1 }],
       cursor: 5,
     });
-    expect(getDeltaAndCursorByDelete(composition, docLength, 6, 0)).toEqual({
-      delta: [{ retain: 8 }, { delete: 0 }],
+    expect(getDeltaAndCursorByDelete({ composition, lines: [] }, docLength, 6, 0)).toEqual({
+      delta: [],
       cursor: 6,
     });
-    expect(getDeltaAndCursorByDelete(composition, docLength, 1, 1)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition, lines: [] }, docLength, 1, 1)).toEqual({
       delta: [{ retain: 1 }, { delete: 1 }],
       cursor: 1,
     });
-    expect(getDeltaAndCursorByDelete(composition, docLength, 0, 2)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition, lines: [] }, docLength, 0, 2)).toEqual({
       delta: [{ retain: 0 }, { delete: 2 }],
       cursor: 0,
     });
   });
 
   test("should return delta and next cursor: emoji", () => {
-    expect(getDeltaAndCursorByDelete(composition, docLength, 2, 0)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition, lines: [] }, docLength, 2, 0)).toEqual({
       delta: [{ retain: 2 }, { delete: 2 }],
       cursor: 2,
     });
-    expect(getDeltaAndCursorByDelete(composition, docLength, 3, 0)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition, lines: [] }, docLength, 3, 0)).toEqual({
       delta: [{ retain: 4 }, { delete: 2 }],
       cursor: 3,
     });
-    expect(getDeltaAndCursorByDelete(composition, docLength, 2, 1)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition, lines: [] }, docLength, 2, 1)).toEqual({
       delta: [{ retain: 2 }, { delete: 2 }],
       cursor: 2,
     });
-    expect(getDeltaAndCursorByDelete(composition, docLength, 2, 2)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition, lines: [] }, docLength, 2, 2)).toEqual({
       delta: [{ retain: 2 }, { delete: 4 }],
       cursor: 2,
     });
-    expect(getDeltaAndCursorByDelete(composition, docLength, 1, 2)).toEqual({
+    expect(getDeltaAndCursorByDelete({ composition, lines: [] }, docLength, 1, 2)).toEqual({
       delta: [{ retain: 1 }, { delete: 3 }],
       cursor: 1,
     });
