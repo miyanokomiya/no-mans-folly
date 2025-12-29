@@ -446,6 +446,9 @@ function handleKeydown(
         return;
       }
 
+      // "Shift + Tab" should work only for decreasing the indent
+      if (event.data.shift) return;
+
       const [delta, nextCursor] = textEditorController.getDeltaByInput("\t");
       patchDocument(ctx, delta);
       textEditorController.setCursor(nextCursor);
