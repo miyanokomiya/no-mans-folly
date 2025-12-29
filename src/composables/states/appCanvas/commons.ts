@@ -383,11 +383,11 @@ export function newShapeClipboard(ctx: AppCanvasStateContext) {
 
 const APP_DOC_TYPE = "application/no-mans-folly-doc";
 const clipboardDocSerializer = newClipboardSerializer<"doc", { doc: DocOutput }>("doc");
-export function newDocClipboard(doc: DocOutput, onPaste?: (doc: DocOutput, plain: boolean) => void) {
+export function newDocClipboard(doc: DocOutput, plainText: string, onPaste?: (doc: DocOutput, plain: boolean) => void) {
   return newClipboard(
     () => {
       return {
-        "text/plain": doc.map((o) => o.insert).join(""),
+        "text/plain": plainText,
         [APP_DOC_TYPE]: clipboardDocSerializer.serialize({ doc }),
       };
     },

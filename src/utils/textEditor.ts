@@ -562,6 +562,73 @@ export function getLineTextUpToX(line: DocCompositionLine, locationX: number) {
   return currentLineText;
 }
 
+/**
+ * Works similarly as "getLineTextUpToX"
+ */
+export function getLineTextWithin(line: DocCompositionLine, from: number, count = Infinity) {
+  let currentLineText = "";
+  let charCount = 0;
+  const to = from + count;
+
+  for (const output of line.outputs) {
+    if (charCount >= to) break;
+
+    const segments = splitToSegments(output.insert);
+    for (let i = 0; i < segments.length && charCount < to; i++) {
+      const char = segments[i];
+      if (!isLinebreak(char) && from <= charCount) {
+        currentLineText += char;
+      }
+      charCount++;
+    }
+  }
+
+  return currentLineText;
+}
+
+export function copyPlainText(lines: DocCompositionLine[], cursor: number, selection: number) {
+  if (selection === 0) return "";
+
+  const locationFrom = getCursorLocation(lines, cursor);
+  const locationTo = getCursorLocation(lines, cursor + selection);
+
+  const targets = lines.slice(locationFrom.y, locationTo.y + 1);
+  const firstLine = targets[0];
+
+  let content = "";
+  if (firstLine.listInfo && locationFrom.x === 0) {
+    content = `${firstLine.listInfo.head} `;
+  }
+
+  if (targets.length === 1) {
+    // The range is wihtin single line
+    content += getLineTextWithin(firstLine, locationFrom.x, locationTo.x - locationFrom.x);
+    return content;
+  }
+
+  // The range is across multiple lines
+  // Pick the first line from the start of the range
+  content += getLineTextWithin(firstLine, locationFrom.x) + "\n";
+
+  // Pick internal lines
+  for (let i = 1; i < targets.length - 1; i++) {
+    const line = targets[i];
+    if (line.listInfo) {
+      content += `${line.listInfo.head} `;
+    }
+    content += line.outputs.reduce((s, o) => s + o.insert, "");
+  }
+
+  // Pick the last line up to the end of the range
+  const lastLine = targets[targets.length - 1];
+  if (lastLine.listInfo) {
+    content += `${lastLine.listInfo.head} `;
+  }
+  content += getLineTextWithin(lastLine, 0, locationTo.x);
+
+  return content;
+}
+
 export function getCursorLocation(compositionLines: DocCompositionLine[], cursor: number): IVec2 {
   let x = 0;
   let y = 0;
@@ -1679,7 +1746,7 @@ function getListBulletText(item: ListIndexItem, indent: number): string {
       return " ".repeat(spaceCount);
     }
     case "quote": {
-      return "|".padStart(spaceCount, " ");
+      return ">".padStart(spaceCount, " ");
     }
     default: {
       const bullet = BULLET_PREFIXES[indent % BULLET_PREFIXES.length];
@@ -1754,5 +1821,5 @@ export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttribu
 }
 
 function isQuoteLineHead(head: string): boolean {
-  return /\|/.test(head);
+  return />/.test(head);
 }

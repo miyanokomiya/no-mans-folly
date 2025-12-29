@@ -310,12 +310,15 @@ export function newTextEditingState(option: Option): AppCanvasState {
         case "state":
           return handleStateEvent(ctx, event, getCommonAcceptableEvents(["Break", "ShapeInspection"]));
         case "copy": {
-          const clipboard = newDocClipboard(textEditorController.getSelectedDocOutput());
+          const clipboard = newDocClipboard(
+            textEditorController.getSelectedDocOutput(),
+            textEditorController.copyPlainText(),
+          );
           clipboard.onCopy(event.nativeEvent);
           return;
         }
         case "paste": {
-          const clipboard = newDocClipboard([], (doc, plain) => {
+          const clipboard = newDocClipboard([], "", (doc, plain) => {
             const pastedInfo = textEditorController.getDeltaByPaste(doc, plain || event.data.shift);
             patchDocument(ctx, pastedInfo.delta);
             textEditorController.setCursor(pastedInfo.cursor, pastedInfo.selection);

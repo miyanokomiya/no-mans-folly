@@ -497,6 +497,10 @@ export function newTextEditorController() {
     return getDeltaByInputForPlainText(text, options);
   }
 
+  function copyPlainText(): string {
+    return textEditorUtil.copyPlainText(_compositionLines, getCursor(), getSelection());
+  }
+
   function getBoundsAtIME(): IRectangle | undefined {
     if (!_composition || !_compositionLines) return;
     return getBoundsAtLocation(
@@ -586,6 +590,7 @@ export function newTextEditorController() {
     getDeltaByChangeIndent,
     getDeltaByInput,
 
+    copyPlainText,
     getLocationAt,
     isInDoc,
     getBoundsAtIME,

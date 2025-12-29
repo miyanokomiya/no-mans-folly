@@ -4,6 +4,7 @@ import {
   applyRangeWidthToLineWord,
   convertLineWordToComposition,
   convertRawTextToDoc,
+  copyPlainText,
   createListIndexPath,
   getCursorLocationAt,
   getDeltaAndCursorByBackspace,
@@ -17,6 +18,7 @@ import {
   getLineHeadIndex,
   getLineHeight,
   getLineTextUpToX,
+  getLineTextWithin,
   getLinkAt,
   getNewInlineAttributesAt,
   getNextListIndent,
@@ -167,6 +169,93 @@ describe("getLineTextUpToX", () => {
     expect(getLineTextUpToX(line, 4)).toBe("ab😄c");
     expect(getLineTextUpToX(line, 5)).toBe("ab😄c");
     expect(getLineTextUpToX(line, 6)).toBe("ab😄c");
+  });
+});
+
+describe("getLineTextWithin", () => {
+  test("should return text up to given x", () => {
+    const line: DocCompositionLine = {
+      y: 0,
+      height: 10,
+      fontheight: 10,
+      outputs: [{ insert: "a" }, { insert: "b😄" }, { insert: "c" }, { insert: "\n" }],
+    };
+    expect(getLineTextWithin(line, 0, 0)).toBe("");
+    expect(getLineTextWithin(line, 0, 1)).toBe("a");
+    expect(getLineTextWithin(line, 0, 3)).toBe("ab😄");
+    expect(getLineTextWithin(line, 0, 5)).toBe("ab😄c");
+    expect(getLineTextWithin(line, 0, 6)).toBe("ab😄c");
+    expect(getLineTextWithin(line, 0), "Omitting count means up to the end").toBe("ab😄c");
+
+    expect(getLineTextWithin(line, 1, 0)).toBe("");
+    expect(getLineTextWithin(line, 1, 1)).toBe("b");
+    expect(getLineTextWithin(line, 1, 2)).toBe("b😄");
+  });
+});
+
+describe("copyPlainText", () => {
+  test("should return plain text for the range", () => {
+    const lines: DocCompositionLine[] = [
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "a" }, { insert: "b" }, { insert: "c" }, { insert: "\n" }],
+      },
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "d" }, { insert: "e" }, { insert: "f" }, { insert: "\n" }],
+      },
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "g" }, { insert: "h" }, { insert: "i" }, { insert: "\n" }],
+      },
+    ];
+    expect(copyPlainText(lines, 0, 0)).toBe("");
+    expect(copyPlainText(lines, 0, 1)).toBe("a");
+    expect(copyPlainText(lines, 1, 1)).toBe("b");
+    expect(copyPlainText(lines, 1, 2)).toBe("bc");
+    expect(copyPlainText(lines, 1, 3)).toBe("bc\n");
+    expect(copyPlainText(lines, 1, 4)).toBe("bc\nd");
+    expect(copyPlainText(lines, 1, 8)).toBe("bc\ndef\ng");
+    expect(copyPlainText(lines, 1, 10)).toBe("bc\ndef\nghi");
+  });
+
+  test("should convert list markers to plain text", () => {
+    const lines: DocCompositionLine[] = [
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "a" }, { insert: "b" }, { insert: "c" }, { insert: "\n" }],
+        listInfo: { head: "  1.", padding: 0 },
+      },
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "d" }, { insert: "e" }, { insert: "f" }, { insert: "\n" }],
+        listInfo: { head: "  2.", padding: 0 },
+      },
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "g" }, { insert: "h" }, { insert: "i" }, { insert: "\n" }],
+        listInfo: { head: "  3.", padding: 0 },
+      },
+    ];
+    expect(copyPlainText(lines, 0, 11)).toBe("  1. abc\n  2. def\n  3. ghi");
+    expect(copyPlainText(lines, 3, 8)).toBe("\n  2. def\n  3. ghi");
+    expect(copyPlainText(lines, 4, 7)).toBe("  2. def\n  3. ghi");
+    expect(copyPlainText(lines, 5, 6)).toBe("ef\n  3. ghi");
+    expect(copyPlainText(lines, 1, 6)).toBe("bc\n  2. def");
+    expect(copyPlainText(lines, 1, 7)).toBe("bc\n  2. def\n  3. ");
+    expect(copyPlainText(lines, 1, 8)).toBe("bc\n  2. def\n  3. g");
   });
 });
 
@@ -1396,9 +1485,9 @@ describe("applyRangeWidthToLineWord", () => {
                 ["b", 1],
               ],
             ],
-            { head: " |", padding: 28 },
+            { head: " >", padding: 28 },
           ],
-          [[[["c", 1]], [["\n", 0, { list: "quote", indent: 0 }]]], { head: " |", padding: 28 }],
+          [[[["c", 1]], [["\n", 0, { list: "quote", indent: 0 }]]], { head: " >", padding: 28 }],
         ],
         { list: "quote", indent: 0 },
       ],
