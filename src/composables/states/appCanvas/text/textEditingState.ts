@@ -1,6 +1,6 @@
 import { IVec2, applyAffine } from "okageo";
 import { getShapeTextBounds } from "../../../../shapes";
-import { TextEditorController, newTextEditorController } from "../../../textEditor";
+import { TextEditorController, TextEditorInputOptions, newTextEditorController } from "../../../textEditor";
 import {
   getCommonAcceptableEvents,
   handleFileDrop,
@@ -12,7 +12,7 @@ import {
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
-import { isMac, ModifierOptions } from "../../../../utils/devices";
+import { isMac } from "../../../../utils/devices";
 import { KeyDownEvent, TransitionValue } from "../../core";
 import { CursorPositionInfo } from "../../../../stores/documents";
 import { TextShape, isTextShape } from "../../../../shapes/text";
@@ -36,10 +36,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
   let textBounds: ReturnType<typeof getShapeTextBounds>;
   let cursorInfo: CursorPositionInfo | undefined;
 
-  // Record modifire keys manually since they are untrackable from input events.
-  const modifierOptions: ModifierOptions = {};
-  function recordModifierOptions(val: ModifierOptions) {
-    modifierOptions.shift = val.shift;
+  // Need to record modifire keys manually since they are untrackable from input events.
+  const inputOptions: TextEditorInputOptions = {};
+  function recordInputOptions(val: TextEditorInputOptions) {
+    inputOptions.shift = val.shift;
   }
 
   function updateEditorPosition(ctx: AppCanvasStateContext) {
@@ -163,7 +163,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "text-input": {
-          const [delta, nextCursor] = textEditorController.getDeltaByInput(event.data.value, modifierOptions);
+          const [delta, nextCursor] = textEditorController.getDeltaByInput(event.data.value, inputOptions);
           patchDocument(ctx, delta);
           textEditorController.setCursor(nextCursor);
 
@@ -240,11 +240,11 @@ export function newTextEditingState(option: Option): AppCanvasState {
         }
         case "keydown": {
           updateEditorPosition(ctx);
-          recordModifierOptions(event.data);
+          recordInputOptions(event.data);
           return handleKeydown(ctx, textEditorController, onCursorUpdated, patchDocument, event);
         }
         case "keyup": {
-          recordModifierOptions(event.data);
+          recordInputOptions(event.data);
           return;
         }
         case "shape-updated": {

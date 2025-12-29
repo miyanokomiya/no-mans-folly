@@ -27,6 +27,8 @@ import { Size } from "../models";
 import { CanvasCTX } from "../utils/types";
 import { ModifierOptions } from "../utils/devices";
 
+export type TextEditorInputOptions = Pick<ModifierOptions, "shift">;
+
 export function newTextEditorController() {
   let _ctx: CanvasCTX;
   let _doc: DocOutput;
@@ -274,7 +276,7 @@ export function newTextEditorController() {
     };
   }
 
-  function getDeltaByInputForPlainText(text: string, options?: ModifierOptions): [DocDelta, nextCursor: number] {
+  function getDeltaByInputForPlainText(text: string, options?: TextEditorInputOptions): [DocDelta, nextCursor: number] {
     const cursor = getCursor();
     const inputLength = textEditorUtil.splitToSegments(text).length;
     let nextCursor = cursor + inputLength;
@@ -305,7 +307,7 @@ export function newTextEditorController() {
     return [ret, nextCursor];
   }
 
-  function getDeltaByInputForSpace(text: string, options?: ModifierOptions): [DocDelta, nextCursor: number] {
+  function getDeltaByInputForSpace(text: string, options?: TextEditorInputOptions): [DocDelta, nextCursor: number] {
     if (options?.shift) return getDeltaByInputForPlainText(text, options);
 
     // Get current line content to check for list patterns
@@ -342,7 +344,7 @@ export function newTextEditorController() {
     return [ret, nextCursor];
   }
 
-  function getDeltaByInputForLineBreak(text: string, options?: ModifierOptions): [DocDelta, nextCursor: number] {
+  function getDeltaByInputForLineBreak(text: string, options?: TextEditorInputOptions): [DocDelta, nextCursor: number] {
     const selection = getSelection();
     if (options?.shift || selection > 0) return getDeltaByInputForPlainText(text, options);
 
@@ -468,7 +470,7 @@ export function newTextEditorController() {
     return getDeltaByApplyBlockStyle(_composition, cursor, selection, { indent: newIndent });
   }
 
-  function getDeltaByInput(text: string, options?: ModifierOptions): [DocDelta, nextCursor: number] {
+  function getDeltaByInput(text: string, options?: TextEditorInputOptions): [DocDelta, nextCursor: number] {
     if (isLinebreak(text)) return getDeltaByInputForLineBreak(text, options);
     if (textEditorUtil.isBlockMarkerTrigger(text)) return getDeltaByInputForSpace(text, options);
     return getDeltaByInputForPlainText(text, options);
