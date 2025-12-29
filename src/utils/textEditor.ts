@@ -232,20 +232,42 @@ export function renderDocByComposition(
     const fontPadding = (line.height - line.fontheight) / 2;
     const fontTop = lineTop + fontPadding;
     const fontHeight = line.fontheight;
+    const textY = fontTop + fontHeight * TEXT_ADJUSTMENTS.textTop;
     const groups = getInlineGroups(
       line,
       (inlineIndex) => composition[index + inlineIndex].bounds,
       (a, b) => a === b, // Make sure to keep the original reference as much as possible.
     );
 
+    const processList = (group: InlineGroupItem, fontSize: number) => {
+      if (!line.listInfo) return;
+
+      if (/\|/.test(line.listInfo.head)) {
+        const nextQuote = line.listInfo.padding;
+        quoteStack.finishDeeperThan(nextQuote);
+        quoteStack.addQuote(nextQuote, group);
+      } else {
+        quoteStack.finishDeeperThan(line.listInfo.padding - 1);
+        const srcAlign = ctx.textAlign;
+        ctx.textAlign = "right";
+        const listX = group.bounds.x - fontSize * TEXT_ADJUSTMENTS.listLeft;
+        ctx.fillText(`${line.listInfo.head}`, listX, textY);
+        ctx.textAlign = srcAlign;
+      }
+    };
+
     groups.forEach((group, i) => {
       const fontSize = group.attributes.size ?? DEFAULT_FONT_SIZE;
+
       if (scale !== undefined && fontSize / scale < LOD_THRESHOLD) {
         ctx.fillStyle = group.attributes.color ?? "#000";
         const size = fontSize / 3;
         ctx.beginPath();
         ctx.rect(group.bounds.x, group.bounds.y + (group.bounds.height - size) / 2, group.bounds.width, size);
         ctx.fill();
+        if (i === 0) {
+          processList(group, fontSize);
+        }
         return;
       }
 
@@ -262,23 +284,10 @@ export function renderDocByComposition(
         // Need to reset fill style for background at least.
         ctx.fillStyle = group.attributes.color ?? "#000";
       }
-      const textY = fontTop + fontHeight * TEXT_ADJUSTMENTS.textTop;
-      ctx.fillText(group.text, group.bounds.x, textY);
-
-      if (line.listInfo && i === 0) {
-        if (/\|/.test(line.listInfo.head)) {
-          const nextQuote = line.listInfo.padding;
-          quoteStack.finishDeeperThan(nextQuote);
-          quoteStack.addQuote(nextQuote, group);
-        } else {
-          quoteStack.finishDeeperThan(line.listInfo.padding - 1);
-          const srcAlign = ctx.textAlign;
-          ctx.textAlign = "right";
-          const listX = group.bounds.x - fontSize * TEXT_ADJUSTMENTS.listLeft;
-          ctx.fillText(`${line.listInfo.head}`, listX, textY);
-          ctx.textAlign = srcAlign;
-        }
+      if (i === 0) {
+        processList(group, fontSize);
       }
+      ctx.fillText(group.text, group.bounds.x, textY);
 
       if (group.attributes.underline || group.attributes.strike) {
         applyDefaultStrokeStyle(ctx);
