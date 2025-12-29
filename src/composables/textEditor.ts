@@ -455,14 +455,20 @@ export function newTextEditorController() {
   }
 
   function getDeltaByChangeIndent(val = 1): DocDelta {
-    if (_isDocEmpty) return [];
+    if (_isDocEmpty || val === 0) return [];
 
     const currentInfo = getCurrentAttributeInfo();
     const listType = currentInfo.block?.list;
-    if (!listType) return [];
+    if (!listType && val < 0) return [];
 
     const cursor = getCursor();
     const selection = getSelection();
+
+    if (!listType && 0 < val) {
+      // Make empty list with the indent when it's a plain line
+      return getDeltaByApplyBlockStyle(_composition, cursor, selection, { list: "empty", indent: val - 1 });
+    }
+
     const currentIndent = currentInfo.block?.indent ?? 0;
     if (currentIndent === 0 && val < 0)
       return getDeltaByApplyBlockStyle(_composition, cursor, selection, { list: null, indent: null });
