@@ -1338,6 +1338,72 @@ describe("applyRangeWidthToLineWord", () => {
       ],
     ]);
   });
+
+  test("should omit the line head when line wrapping happens except for quote", () => {
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [
+              ["a", 1],
+              ["b", 1],
+              ["c", 1],
+            ],
+            [["\n", 0, { list: "ordered", indent: 0 }]],
+          ],
+        ],
+        30,
+      ),
+    ).toEqual([
+      [
+        [
+          [
+            [
+              [
+                ["a", 1],
+                ["b", 1],
+              ],
+            ],
+            { head: "1.", padding: 28 },
+          ],
+          [[[["c", 1]], [["\n", 0, { list: "ordered", indent: 0 }]]], { head: "  ", padding: 28 }],
+        ],
+        { list: "ordered", indent: 0 },
+      ],
+    ]);
+
+    expect(
+      applyRangeWidthToLineWord(
+        [
+          [
+            [
+              ["a", 1],
+              ["b", 1],
+              ["c", 1],
+            ],
+            [["\n", 0, { list: "quote", indent: 0 }]],
+          ],
+        ],
+        30,
+      ),
+    ).toEqual([
+      [
+        [
+          [
+            [
+              [
+                ["a", 1],
+                ["b", 1],
+              ],
+            ],
+            { head: " |", padding: 28 },
+          ],
+          [[[["c", 1]], [["\n", 0, { list: "quote", indent: 0 }]]], { head: " |", padding: 28 }],
+        ],
+        { list: "quote", indent: 0 },
+      ],
+    ]);
+  });
 });
 
 describe("getWordRangeAtCursor", () => {

@@ -245,7 +245,7 @@ export function renderDocByComposition(
         return;
       }
 
-      if (/\|/.test(line.listInfo.head)) {
+      if (isQuoteLineHead(line.listInfo.head)) {
         const nextQuote = line.listInfo.padding;
         quoteStack.finishDeeperThan(nextQuote);
         quoteStack.addQuote(nextQuote, group);
@@ -447,7 +447,7 @@ export function renderSVGDocByComposition(
 
       if (i === 0) {
         if (line.listInfo) {
-          if (/\|/.test(line.listInfo.head)) {
+          if (isQuoteLineHead(line.listInfo.head)) {
             const nextQuote = line.listInfo.padding;
             quoteStack.finishDeeperThan(nextQuote);
             quoteStack.addQuote(nextQuote, group);
@@ -1150,7 +1150,9 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
       let broken = false;
 
       wordItem.forEach((unit) => {
-        const currentListInfo = lineHead ? listInfo : emptyListInfo;
+        // Omit the line head when line wrapping happens.
+        // Exception: "quote" should always keep its line head.
+        const currentListInfo = lineHead || (listInfo && isQuoteLineHead(listInfo?.head)) ? listInfo : emptyListInfo;
 
         if (isLinebreak(unit[0])) {
           if (word.length > 0) words.push(word);
@@ -1753,4 +1755,8 @@ export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttribu
   }
 
   return ret;
+}
+
+function isQuoteLineHead(head: string): boolean {
+  return /\|/.test(head);
 }
