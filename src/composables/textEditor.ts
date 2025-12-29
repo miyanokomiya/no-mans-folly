@@ -305,18 +305,20 @@ export function newTextEditorController() {
     return [ret, nextCursor];
   }
 
-  function getDeltaByInputForSpace(text: string): [DocDelta, nextCursor: number] {
+  function getDeltaByInputForSpace(text: string, options?: ModifierOptions): [DocDelta, nextCursor: number] {
+    if (options?.shift) return getDeltaByInputForPlainText(text, options);
+
     // Get current line content to check for list patterns
     const cursor = getCursor();
     const location = getCursorLocation(_compositionLines, cursor);
     const currentLine = _compositionLines[location.y];
-    if (!currentLine) return getDeltaByInputForPlainText(text);
+    if (!currentLine) return getDeltaByInputForPlainText(text, options);
 
     // Check for list pattern
     const currentLineText = textEditorUtil.getLineTextUpToX(currentLine, location.x);
     const potentialListText = currentLineText + text;
     const detection = textEditorUtil.detectListFormatting(potentialListText);
-    if (!detection) return getDeltaByInputForPlainText(text);
+    if (!detection) return getDeltaByInputForPlainText(text, options);
 
     const lineHeadIndexRaw = getRawCursor(_composition, getLineHeadIndex(_composition, cursor));
     const rawCursor = getOutputCursor();
@@ -468,7 +470,7 @@ export function newTextEditorController() {
 
   function getDeltaByInput(text: string, options?: ModifierOptions): [DocDelta, nextCursor: number] {
     if (isLinebreak(text)) return getDeltaByInputForLineBreak(text, options);
-    if (textEditorUtil.isBlockMarkerTrigger(text)) return getDeltaByInputForSpace(text);
+    if (textEditorUtil.isBlockMarkerTrigger(text)) return getDeltaByInputForSpace(text, options);
     return getDeltaByInputForPlainText(text, options);
   }
 
