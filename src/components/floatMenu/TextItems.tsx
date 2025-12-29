@@ -10,6 +10,7 @@ import iconDirectionBottom from "../../assets/icons/direction_bottom.svg";
 import iconLineheight from "../../assets/icons/lineheight.svg";
 import iconListNone from "../../assets/icons/list_none.svg";
 import iconListEmpty from "../../assets/icons/list_empty.svg";
+import iconListQuote from "../../assets/icons/list_quote.svg";
 import iconListBullet from "../../assets/icons/list_bullet.svg";
 import iconListOrdered from "../../assets/icons/list_ordered.svg";
 import iconListIndentPlus from "../../assets/icons/list_indent_plus.svg";
@@ -51,6 +52,7 @@ const ListPanel: React.FC<ListPanelProps> = ({ listValue, onListClick, onIndentC
     () => [
       { value: "none", element: <img src={iconListNone} alt="List None" className="w-8 h-8 p-1" /> },
       { value: "empty", element: <img src={iconListEmpty} alt="List Empty" className="w-8 h-8 p-1" /> },
+      { value: "quote", element: <img src={iconListQuote} alt="List Quote" className="w-8 h-8 p-1" /> },
       { value: "bullet", element: <img src={iconListBullet} alt="List Bullet" className="w-8 h-8 p-1" /> },
       { value: "ordered", element: <img src={iconListOrdered} alt="List Ordered" className="w-8 h-8 p-1" /> },
     ],
@@ -381,6 +383,8 @@ function getListIcon(docAttrInfo: DocAttrInfo) {
   switch (docAttrInfo.block?.list) {
     case "empty":
       return iconListEmpty;
+    case "quote":
+      return iconListQuote;
     case "bullet":
       return iconListBullet;
     case "ordered":
