@@ -17,6 +17,11 @@ const modifierSupportOptions: { value: Exclude<UserSetting["virtualKeyboard"], u
   { value: "modifiers", label: "Modifiers" },
 ];
 
+const listDetectionOptions: { value: Exclude<UserSetting["listDetection"], undefined>; label: string }[] = [
+  { value: "auto", label: "Auto" },
+  { value: "shift", label: "Reverse" },
+];
+
 const gridTypeOptions: { value: Exclude<UserSetting["gridType"], undefined>; label: string }[] = [
   { value: "dot", label: "Dot" },
   { value: "line", label: "Line" },
@@ -57,6 +62,13 @@ export const UserSettingPanel: React.FC = () => {
   const handleModifierSupportChange = useCallback(
     (val: UserSetting["virtualKeyboard"]) => {
       patchUserSetting({ virtualKeyboard: val });
+    },
+    [patchUserSetting],
+  );
+
+  const handleListDetectionChange = useCallback(
+    (val: string) => {
+      patchUserSetting({ listDetection: val as any });
     },
     [patchUserSetting],
   );
@@ -166,6 +178,30 @@ export const UserSettingPanel: React.FC = () => {
             {virtualKeyboardValue !== "off" ? (
               <p className="text-red-500 font-sm text-right">(Not work well with stylus pens)</p>
             ) : undefined}
+          </div>
+        </BlockGroupField>
+        <BlockGroupField label="Text">
+          <InlineField label="List detection">
+            <div className="w-24">
+              <SelectInput
+                value={userSetting.listDetection ?? "auto"}
+                options={listDetectionOptions}
+                onChange={handleListDetectionChange}
+              />
+            </div>
+          </InlineField>
+          <div className="text-sm text-right">
+            {userSetting.listDetection === "shift" ? (
+              <>
+                <p>With shift key: Start a list</p>
+                <p>Without shift key: Keep as text</p>
+              </>
+            ) : (
+              <>
+                <p>With shift key: Keep as text</p>
+                <p>Without shift key: Start a list</p>
+              </>
+            )}
           </div>
         </BlockGroupField>
         <BlockGroupField label="Grid">

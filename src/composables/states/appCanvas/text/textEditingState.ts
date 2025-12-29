@@ -12,7 +12,7 @@ import {
 import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { newTextSelectingState } from "./textSelectingState";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
-import { isMac } from "../../../../utils/devices";
+import { isMac, ModifierOptions } from "../../../../utils/devices";
 import { KeyDownEvent, TransitionValue } from "../../core";
 import { CursorPositionInfo } from "../../../../stores/documents";
 import { TextShape, isTextShape } from "../../../../shapes/text";
@@ -37,9 +37,9 @@ export function newTextEditingState(option: Option): AppCanvasState {
   let cursorInfo: CursorPositionInfo | undefined;
 
   // Need to record modifire keys manually since they are untrackable from input events.
-  const inputOptions: TextEditorInputOptions = {};
-  function recordInputOptions(val: TextEditorInputOptions) {
-    inputOptions.shift = val.shift;
+  const modifireOptions: TextEditorInputOptions = {};
+  function recordModifireOptions(val: ModifierOptions) {
+    modifireOptions.shift = val.shift;
   }
 
   function updateEditorPosition(ctx: AppCanvasStateContext) {
@@ -163,7 +163,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
     handleEvent: (ctx, event) => {
       switch (event.type) {
         case "text-input": {
-          const [delta, nextCursor] = textEditorController.getDeltaByInput(event.data.value, inputOptions);
+          const [delta, nextCursor] = textEditorController.getDeltaByInput(event.data.value, {
+            ...modifireOptions,
+            listDetection: ctx.getUserSetting().listDetection,
+          });
           patchDocument(ctx, delta);
           textEditorController.setCursor(nextCursor);
 
@@ -240,11 +243,11 @@ export function newTextEditingState(option: Option): AppCanvasState {
         }
         case "keydown": {
           updateEditorPosition(ctx);
-          recordInputOptions(event.data);
+          recordModifireOptions(event.data);
           return handleKeydown(ctx, textEditorController, onCursorUpdated, patchDocument, event);
         }
         case "keyup": {
-          recordInputOptions(event.data);
+          recordModifireOptions(event.data);
           return;
         }
         case "shape-updated": {

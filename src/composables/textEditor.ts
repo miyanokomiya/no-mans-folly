@@ -23,11 +23,11 @@ import {
 } from "../utils/textEditor";
 import { DEFAULT_FONT_SIZE, DocCompositionItem, DocCompositionLine, LINK_STYLE_ATTRS } from "../utils/textEditorCore";
 import * as textEditorUtil from "../utils/textEditor";
-import { Size } from "../models";
+import { Size, UserSetting } from "../models";
 import { CanvasCTX } from "../utils/types";
 import { ModifierOptions } from "../utils/devices";
 
-export type TextEditorInputOptions = Pick<ModifierOptions, "shift">;
+export type TextEditorInputOptions = Pick<ModifierOptions, "shift"> & Pick<UserSetting, "listDetection">;
 
 export function newTextEditorController() {
   let _ctx: CanvasCTX;
@@ -308,7 +308,8 @@ export function newTextEditorController() {
   }
 
   function getDeltaByInputForSpace(text: string, options?: TextEditorInputOptions): [DocDelta, nextCursor: number] {
-    if (options?.shift) return getDeltaByInputForPlainText(text, options);
+    if (options?.shift && options.listDetection === "auto") return getDeltaByInputForPlainText(text, options);
+    if (!options?.shift && options?.listDetection === "shift") return getDeltaByInputForPlainText(text, options);
 
     // Get current line content to check for list patterns
     const cursor = getCursor();

@@ -173,6 +173,7 @@ export interface UserSetting {
   lineSegmentRelativeAngle?: "on" | "off"; // should be "off" when it's undefined
   displayMode?: "default" | "no-hud"; // should be "default" when it's undefined
   showAttachment?: "on" | "off"; // should be "off" when it's undefined
+  listDetection?: "auto" | "shift"; // should be "auto" when it's undefined
 }
 
 /**
