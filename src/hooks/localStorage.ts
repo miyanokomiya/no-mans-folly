@@ -19,7 +19,7 @@ export function useLocalStorageAdopter<T>({
 }) {
   const [state, setState] = useState(() => {
     let v = key ? getFromLocalStorage<T>(key, version) : undefined;
-    if (v) return v;
+    if (v !== undefined) return v;
     return typeof initialValue === "function" ? (initialValue as () => T)() : initialValue;
   });
 
@@ -44,8 +44,8 @@ export function useLocalStorageAdopter<T>({
 
 function getFromLocalStorage<T>(key: string, version?: string): T | undefined {
   const str = localStorage.getItem(key);
-  if (str) {
-    const data = JSON.parse(str) as StoredData<T>;
-    if (data.version === version) return data.value;
-  }
+  if (!str) return;
+
+  const data = JSON.parse(str) as StoredData<T>;
+  if (data.version === version) return data.value;
 }

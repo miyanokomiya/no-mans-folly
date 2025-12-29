@@ -60,4 +60,23 @@ describe("useLocalStorageAdopter", () => {
     expect(rendered.result.current[0]).toBe(2);
     expect(count).toBe(1);
   });
+
+  test("should regard falsy value", async () => {
+    const option = {
+      key: "a",
+      version: "1",
+      initialValue: true,
+      duration: 10,
+    };
+    const rendered0 = renderHook(() => useLocalStorageAdopter(option));
+    expect(rendered0.result.current[0]).toBe(true);
+    act(() => {
+      rendered0.result.current[1](false);
+    });
+    vi.advanceTimersByTime(15);
+    expect(rendered0.result.current[0]).toBe(false);
+
+    const rendered1 = renderHook(() => useLocalStorageAdopter(option));
+    expect(rendered1.result.current[0]).toBe(false);
+  });
 });

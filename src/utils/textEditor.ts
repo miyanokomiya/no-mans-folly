@@ -1653,7 +1653,7 @@ export function detectListFormatting(text: string): { type: DocListValue; conten
 }
 
 /**
- * Generates bullet or number text based on list type and context
+ * Generates marker text of the list item
  */
 function getListBulletText(item: ListIndexItem, indent: number): string {
   const spaceCount = 2 + 2 * indent;
