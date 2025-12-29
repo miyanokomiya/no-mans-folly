@@ -1121,16 +1121,8 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
     if (!lineEndOutput) return;
 
     listIndexPath = createListIndexPath(listIndexPath, lineEndOutput[2]);
-    const listIndexItem = listIndexPath.at(-1);
-    let listInfo: ListInfo | undefined = undefined;
-    if (listIndexItem) {
-      const indent = listIndexPath.length - 1;
-      const index = listIndexItem[1];
-      const bulletText = getListBulletText(listIndexItem[0], indent, index);
-      const size = lineEndOutput[2]?.size ?? DEFAULT_FONT_SIZE;
-      const listPadding = size * bulletText.length;
-      listInfo = { head: bulletText, padding: listPadding };
-    }
+    const fontSize = lineEndOutput[2]?.size ?? DEFAULT_FONT_SIZE;
+    const listInfo = getListInfoFromPath(listIndexPath, fontSize);
 
     const lineRangeWidth = rangeWidth - (listInfo?.padding ?? 0);
     let lineHead = true; // Flag to detect if the unit is the line head.
@@ -1663,11 +1655,11 @@ export function detectListFormatting(text: string): { type: DocListValue; conten
 /**
  * Generates bullet or number text based on list type and context
  */
-function getListBulletText(type: DocListValue, indent: number, index: number): string {
+function getListBulletText(item: ListIndexItem, indent: number): string {
   const spaceCount = 2 + 2 * indent;
-  switch (type) {
+  switch (item[0]) {
     case "ordered": {
-      return `${index + 1}.`.padStart(spaceCount, " ");
+      return `${item[2] + 1}.`.padStart(spaceCount, " ");
     }
     case "empty": {
       return " ".repeat(spaceCount);
@@ -1680,6 +1672,15 @@ function getListBulletText(type: DocListValue, indent: number, index: number): s
       return `${bullet}`.padStart(spaceCount, " ");
     }
   }
+}
+
+function getListInfoFromPath(listIndexPath: ListIndexItem[], fontSize: number): ListInfo | undefined {
+  const listIndexItem = listIndexPath.at(-1);
+  if (!listIndexItem) return;
+
+  const bulletText = getListBulletText(listIndexItem, listIndexPath.length - 1);
+  const listPadding = fontSize * bulletText.length;
+  return { head: bulletText, padding: listPadding };
 }
 
 export function getNextListIndent(blockAttrs: DocAttributes | undefined, nextListType: DocListValue): number {
@@ -1695,18 +1696,20 @@ export function getNextListIndent(blockAttrs: DocAttributes | undefined, nextLis
 /**
  * Updates list counters based on current line's list attributes
  */
-export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttributes): [DocListValue, number][] {
+export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttributes): ListIndexItem[] {
   if (!attrs?.list) return [];
 
   const ret = current.slice();
   const indent = attrs.indent ?? 0;
+  const orderedAdjustment = attrs.list === "ordered" ? 0 : -1;
 
   const currentItem = current.at(-1);
   if (!currentItem) {
-    // Fulfil up to the index
-    for (let i = 0; i <= indent; i++) {
-      ret.push([attrs.list, 0]);
+    // Fulfil up to the indent
+    for (let i = 0; i < indent; i++) {
+      ret.push([attrs.list, 0, -1]);
     }
+    ret.push([attrs.list, 0, orderedAdjustment]);
     return ret;
   }
 
@@ -1714,13 +1717,13 @@ export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttribu
 
   if (currentIndent === indent) {
     // Same level - increment counter with new list type
-    ret[ret.length - 1] = [attrs.list, currentItem[1] + 1];
+    ret[ret.length - 1] = [attrs.list, currentItem[1] + 1, currentItem[2] + 1 + orderedAdjustment];
   } else if (currentIndent < indent) {
-    // Deeper level - add new counter
+    // Deeper level - add deeper indent
     for (let i = currentIndent; i < indent - 1; i++) {
-      ret.push([currentItem[0], 0]);
+      ret.push([currentItem[0], 0, -1]);
     }
-    ret.push([attrs.list, 0]);
+    ret.push([attrs.list, 0, orderedAdjustment]);
   } else {
     // Shallower level - discard up to the level
     for (let i = indent; i < currentIndent; i++) {
@@ -1728,7 +1731,8 @@ export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttribu
     }
     // Then increment counter with new list type
     if (ret.length > 0) {
-      ret[ret.length - 1] = [attrs.list, ret[ret.length - 1][1] + 1];
+      const i = ret.length - 1;
+      ret[i] = [attrs.list, ret[i][1] + 1, ret[i][2] + 1 + orderedAdjustment];
     }
   }
 

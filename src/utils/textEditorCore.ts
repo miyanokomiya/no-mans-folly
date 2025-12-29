@@ -23,7 +23,11 @@ export interface DocCompositionInfo {
 }
 
 export type InlineGroupItem = { bounds: IRectangle; text: string; attributes: DocAttributes };
-export type ListIndexItem = [list: DocListValue, index: number];
+/**
+ * "orderedIndex" represents the index for "ordered" markers.
+ * Its default value is "-1" when there's no "ordered" marker in the indent.
+ */
+export type ListIndexItem = [list: DocListValue, index: number, orderedIndex: number];
 
 export type ListInfo = { head: string; padding: number };
 

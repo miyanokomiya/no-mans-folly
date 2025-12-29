@@ -1699,93 +1699,139 @@ describe("getNextListIndent", () => {
 describe("createListIndexPath", () => {
   test("should return list index creator", () => {
     expect(createListIndexPath([], {})).toEqual([]);
-    expect(createListIndexPath([["bullet", 0]], {})).toEqual([]);
-    expect(createListIndexPath([], { list: "bullet", indent: 0 })).toEqual([["bullet", 0]]);
+    expect(createListIndexPath([["bullet", 0, -1]], {})).toEqual([]);
+    expect(createListIndexPath([], { list: "bullet", indent: 0 })).toEqual([["bullet", 0, -1]]);
 
     // Skip level
     expect(createListIndexPath([], { list: "bullet", indent: 2 })).toEqual([
-      ["bullet", 0],
-      ["bullet", 0],
-      ["bullet", 0],
+      ["bullet", 0, -1],
+      ["bullet", 0, -1],
+      ["bullet", 0, -1],
     ]);
 
     // Same level
-    expect(createListIndexPath([["bullet", 0]], { list: "bullet", indent: 0 })).toEqual([["bullet", 1]]);
-    expect(createListIndexPath([["bullet", 0]], { list: "ordered", indent: 0 })).toEqual([["ordered", 1]]);
+    expect(createListIndexPath([["bullet", 0, -1]], { list: "bullet", indent: 0 })).toEqual([["bullet", 1, -1]]);
+    expect(createListIndexPath([["bullet", 0, -1]], { list: "ordered", indent: 0 })).toEqual([["ordered", 1, 0]]);
 
     // Deeper level
-    expect(createListIndexPath([["bullet", 0]], { list: "bullet", indent: 1 })).toEqual([
-      ["bullet", 0],
-      ["bullet", 0],
+    expect(createListIndexPath([["bullet", 0, -1]], { list: "bullet", indent: 1 })).toEqual([
+      ["bullet", 0, -1],
+      ["bullet", 0, -1],
     ]);
-    expect(createListIndexPath([["bullet", 0]], { list: "ordered", indent: 1 })).toEqual([
-      ["bullet", 0],
-      ["ordered", 0],
+    expect(createListIndexPath([["bullet", 0, -1]], { list: "ordered", indent: 1 })).toEqual([
+      ["bullet", 0, -1],
+      ["ordered", 0, 0],
     ]);
-    expect(createListIndexPath([["bullet", 0]], { list: "bullet", indent: 2 })).toEqual([
-      ["bullet", 0],
-      ["bullet", 0],
-      ["bullet", 0],
+    expect(createListIndexPath([["bullet", 0, -1]], { list: "bullet", indent: 2 })).toEqual([
+      ["bullet", 0, -1],
+      ["bullet", 0, -1],
+      ["bullet", 0, -1],
     ]);
-    expect(createListIndexPath([["bullet", 0]], { list: "ordered", indent: 2 })).toEqual([
-      ["bullet", 0],
-      ["bullet", 0],
-      ["ordered", 0],
+    expect(createListIndexPath([["bullet", 0, -1]], { list: "ordered", indent: 2 })).toEqual([
+      ["bullet", 0, -1],
+      ["bullet", 0, -1],
+      ["ordered", 0, 0],
     ]);
 
     // Shallower level
     expect(
       createListIndexPath(
         [
-          ["bullet", 0],
-          ["bullet", 0],
-          ["bullet", 0],
+          ["bullet", 0, -1],
+          ["bullet", 0, -1],
+          ["bullet", 0, -1],
         ],
         { list: "bullet", indent: 0 },
       ),
-    ).toEqual([["bullet", 1]]);
+    ).toEqual([["bullet", 1, -1]]);
     expect(
       createListIndexPath(
         [
-          ["bullet", 0],
-          ["bullet", 0],
-          ["bullet", 0],
+          ["bullet", 0, -1],
+          ["bullet", 0, -1],
+          ["bullet", 0, -1],
         ],
         { list: "bullet", indent: 1 },
       ),
     ).toEqual([
-      ["bullet", 0],
-      ["bullet", 1],
+      ["bullet", 0, -1],
+      ["bullet", 1, -1],
     ]);
     expect(
       createListIndexPath(
         [
-          ["bullet", 0],
-          ["bullet", 0],
-          ["bullet", 0],
+          ["bullet", 0, -1],
+          ["bullet", 0, -1],
+          ["bullet", 0, -1],
         ],
         { list: "ordered", indent: 0 },
       ),
-    ).toEqual([["ordered", 1]]);
+    ).toEqual([["ordered", 1, 0]]);
     expect(
       createListIndexPath(
         [
-          ["bullet", 1],
-          ["bullet", 0],
+          ["bullet", 1, -1],
+          ["bullet", 0, -1],
         ],
         { list: "ordered", indent: 0 },
       ),
-    ).toEqual([["ordered", 2]]);
+    ).toEqual([["ordered", 2, 0]]);
     expect(
       createListIndexPath(
         [
-          ["bullet", 0],
-          ["bullet", 0],
-          ["bullet", 0],
+          ["bullet", 0, -1],
+          ["bullet", 0, -1],
+          ["bullet", 0, -1],
         ],
         undefined,
       ),
     ).toEqual([]);
+  });
+
+  test("should record the index for ordered markers", () => {
+    expect(
+      createListIndexPath(
+        [
+          ["bullet", 0, -1],
+          ["bullet", 0, -1],
+          ["ordered", 0, 0],
+        ],
+        { list: "ordered", indent: 2 },
+      ),
+    ).toEqual([
+      ["bullet", 0, -1],
+      ["bullet", 0, -1],
+      ["ordered", 1, 1],
+    ]);
+
+    expect(
+      createListIndexPath(
+        [
+          ["bullet", 0, -1],
+          ["bullet", 0, -1],
+          ["ordered", 0, 0],
+        ],
+        { list: "bullet", indent: 2 },
+      ),
+    ).toEqual([
+      ["bullet", 0, -1],
+      ["bullet", 0, -1],
+      ["bullet", 1, 0],
+    ]);
+
+    expect(
+      createListIndexPath(
+        [
+          ["bullet", 0, -1],
+          ["ordered", 0, 0],
+          ["bullet", 0, -1],
+        ],
+        { list: "ordered", indent: 1 },
+      ),
+    ).toEqual([
+      ["bullet", 0, -1],
+      ["ordered", 1, 1],
+    ]);
   });
 });
 
