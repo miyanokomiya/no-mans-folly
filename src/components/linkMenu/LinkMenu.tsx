@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { LinkInfo } from "../../composables/states/types";
 import { IVec2 } from "okageo";
 import { LINK_STYLE_ATTRS } from "../../utils/texts/textEditorCore";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { parseShapeLink, ShapeLink } from "../../utils/texts/textLink";
+import { FrameThumbnail } from "../framePanel/FrameThumbnail";
+import { useDocumentMapWithoutTmpInfo, useSelectedSheet, useStaticShapeComposite } from "../../hooks/storeHooks";
+import { AppStateContext } from "../../contexts/AppContext";
+import { rednerRGBA } from "../../utils/color";
 
 interface Props {
   focusBack?: () => void;
@@ -89,8 +93,39 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay
 
     cancelGracefulClose();
     setLocalLinkInfo(undefined);
+    setHasPointer(false);
     onJumpToShape?.(shapeLink);
   }, [shapeLink, onJumpToShape, cancelGracefulClose]);
+
+  const { getImageStore } = useContext(AppStateContext);
+  const shapeComposite = useStaticShapeComposite();
+  const documentMap = useDocumentMapWithoutTmpInfo();
+  const imageStore = getImageStore();
+  const sheet = useSelectedSheet();
+  const shapeLinkThumbnail = useMemo(() => {
+    if (!shapeLink) return;
+
+    const shapes = shapeLink.shapeIds.map((id) => shapeComposite.shapeMap[id]).filter((s) => s);
+    if (shapes.length === 0) return;
+
+    const bounds = shapeComposite.getWrapperRectForShapes(shapes, true);
+    const mockFrame = shapeComposite
+      .getShapeStruct("frame")
+      .create({ p: bounds, width: bounds.width, height: bounds.height });
+    const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
+    return (
+      <div className="w-60 h-60">
+        <FrameThumbnail
+          frame={mockFrame}
+          shapeComposite={shapeComposite}
+          documentMap={documentMap}
+          imageStore={imageStore}
+          backgroundColor={sheetColor}
+          noCrop
+        />
+      </div>
+    );
+  }, [shapeComposite, documentMap, imageStore, sheet, shapeLink]);
 
   return (
     <OutsideObserver onClick={handleGlobalClick}>
@@ -104,11 +139,11 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay
           {shapeLink ? (
             <button
               type="button"
-              className="cursor-pointer underline"
+              className="cursor-pointer underline flex items-center justify-center"
               style={{ color: LINK_STYLE_ATTRS.color ?? undefined }}
               onClick={handleShapeLinkClick}
             >
-              Jump to Shape
+              {shapeLinkThumbnail ?? "Jump to Shape"}
             </button>
           ) : (
             <a

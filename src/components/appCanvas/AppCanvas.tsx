@@ -718,6 +718,7 @@ export const AppCanvas: React.FC = () => {
     (shapeLink: ShapeLink) => {
       const ctx = getSmctx();
       ctx.setLinkInfo();
+
       if (ctx.getSelectedSheet()?.id === shapeLink.sheetId) {
         sm.handleEvent({
           type: "state",

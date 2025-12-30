@@ -17,6 +17,7 @@ interface Props {
   imageStore: ImageStore;
   backgroundColor: string;
   frame: FrameShape;
+  noCrop?: boolean;
 }
 
 export const FrameThumbnail: React.FC<Props> = ({
@@ -25,6 +26,7 @@ export const FrameThumbnail: React.FC<Props> = ({
   imageStore,
   backgroundColor,
   frame,
+  noCrop,
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -72,6 +74,8 @@ export const FrameThumbnail: React.FC<Props> = ({
     });
     renderer.render(ctx);
 
+    if (noCrop) return;
+
     // Hide outside area of the frame.
     ctx.globalCompositeOperation = "destination-in";
     ctx.beginPath();
@@ -79,7 +83,7 @@ export const FrameThumbnail: React.FC<Props> = ({
     ctx.lineJoin = getLineJoin(frame.stroke.lineJoin);
     ctx.fillStyle = "#000";
     ctx.fill();
-  }, [shapeComposite, canvasBank, documentMap, frame, imageStore, viewport, frameRectWithBorder]);
+  }, [shapeComposite, canvasBank, documentMap, frame, imageStore, viewport, frameRectWithBorder, noCrop]);
 
   return (
     <div ref={wrapperRef} className="h-full">
