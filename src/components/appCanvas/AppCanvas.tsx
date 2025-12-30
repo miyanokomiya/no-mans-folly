@@ -741,7 +741,6 @@ export const AppCanvas: React.FC = () => {
 
   const linkMenu = (
     <LinkMenu
-      canvasState={canvasState}
       focusBack={focusBackTextEditor}
       canvasToView={canvasToView}
       scale={scale}

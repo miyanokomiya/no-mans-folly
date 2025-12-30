@@ -6,7 +6,6 @@ import { OutsideObserver } from "../atoms/OutsideObserver";
 import { parseShapeLink, ShapeLink } from "../../utils/texts/textLink";
 
 interface Props {
-  canvasState: any;
   focusBack?: () => void;
   canvasToView: (v: IVec2) => IVec2;
   scale: number;
