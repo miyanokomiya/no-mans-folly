@@ -26,6 +26,7 @@ interface Option {
   scale?: number;
   canvasBank?: CanvasBank;
   targetRect?: IRectangle;
+  noTextLod?: boolean;
 }
 
 export function newShapeRenderer(option: Option) {
@@ -143,7 +144,7 @@ export function newShapeRenderer(option: Option) {
         shapeComposite.setDocCompositeCache(shape.id, info, doc);
       }
 
-      renderDocByComposition(ctx, info.composition, info.lines, option.scale);
+      renderDocByComposition(ctx, info.composition, info.lines, option.noTextLod ? undefined : option.scale);
       ctx.restore();
     }
   }

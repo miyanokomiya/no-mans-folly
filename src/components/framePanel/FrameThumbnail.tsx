@@ -71,6 +71,7 @@ export const FrameThumbnail: React.FC<Props> = ({
       canvasBank,
       targetRect: frameRectWithBorder,
       scale: viewport.scale,
+      noTextLod: true,
     });
     renderer.render(ctx);
 
