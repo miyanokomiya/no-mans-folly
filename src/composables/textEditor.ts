@@ -20,9 +20,14 @@ import {
   sliceDocOutput,
   getRawCursor,
   getDocRawLength,
-} from "../utils/textEditor";
-import { DEFAULT_FONT_SIZE, DocCompositionItem, DocCompositionLine, LINK_STYLE_ATTRS } from "../utils/textEditorCore";
-import * as textEditorUtil from "../utils/textEditor";
+} from "../utils/texts/textEditor";
+import {
+  DEFAULT_FONT_SIZE,
+  DocCompositionItem,
+  DocCompositionLine,
+  LINK_STYLE_ATTRS,
+} from "../utils/texts/textEditorCore";
+import * as textEditorUtil from "../utils/texts/textEditor";
 import { Size, UserSetting } from "../models";
 import { CanvasCTX } from "../utils/types";
 import { ModifierOptions } from "../utils/devices";

@@ -17,7 +17,7 @@ import { applyStrokeStyle } from "../utils/strokeStyle";
 import { COLORS } from "../utils/color";
 import { getFirstItemOfMap, getlastItemOfMap, pickMinItem } from "../utils/commons";
 import { DocOutput } from "../models/document";
-import { getInitialOutput } from "../utils/textEditor";
+import { getInitialOutput } from "../utils/texts/textEditor";
 import { getShapeDetransform, getShapeTransform, getRectShapeRect } from "../shapes/rectPolygon";
 import { generateKeyBetween } from "../utils/findex";
 import { CanvasCTX } from "../utils/types";

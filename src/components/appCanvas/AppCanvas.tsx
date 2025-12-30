@@ -12,7 +12,7 @@ import {
 } from "../../hooks/window";
 import { TextEditor, TextEditorEmojiOnly } from "../textEditor/TextEditor";
 import { DocAttrInfo } from "../../models/document";
-import { getDocAttributes } from "../../utils/textEditor";
+import { getDocAttributes } from "../../utils/texts/textEditor";
 import { IVec2 } from "okageo";
 import { FloatMenu } from "../floatMenu/FloatMenu";
 import { CommandExam, ContextMenuItem, LinkInfo } from "../../composables/states/types";

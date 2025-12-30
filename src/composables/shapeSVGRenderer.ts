@@ -5,7 +5,7 @@ import { hasStrokeStyle } from "../shapes/core";
 import { blobToBase64 } from "../utils/fileAccess";
 import { createTemplateShapeEmbedElement } from "../shapes/utils/shapeTemplateUtil";
 import { createSVGElement, createSVGSVGElement, renderTransform, SVGElementOption } from "../utils/svgElements";
-import { getDocCompositionInfo, hasDocNoContent, renderSVGDocByComposition } from "../utils/textEditor";
+import { getDocCompositionInfo, hasDocNoContent, renderSVGDocByComposition } from "../utils/texts/textEditor";
 import { TreeNode } from "../utils/tree";
 import { ImageStore } from "./imageStore";
 import { ShapeComposite } from "./shapeComposite";

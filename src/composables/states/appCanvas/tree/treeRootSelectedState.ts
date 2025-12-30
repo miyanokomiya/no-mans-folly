@@ -8,7 +8,7 @@ import { TreeRootShape } from "../../../../shapes/tree/treeRoot";
 import { getLocalMarginAnchorPoints, newTreeHandler } from "../../../shapeHandlers/treeHandler";
 import { canHaveText, createShape } from "../../../../shapes";
 import { TreeNodeShape } from "../../../../shapes/tree/treeNode";
-import { getInitialOutput } from "../../../../utils/textEditor";
+import { getInitialOutput } from "../../../../utils/texts/textEditor";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";

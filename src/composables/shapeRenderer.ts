@@ -9,7 +9,7 @@ import { expandRect, getIsRectHitRectFn, getOverlappedAreaOfRects, getRectPoints
 import { CanvasCTX } from "../utils/types";
 import { applyPath, scaleGlobalAlpha } from "../utils/renderer";
 import { applyStrokeStyle } from "../utils/strokeStyle";
-import { getDocCompositionInfo, hasDocNoContent, renderDocByComposition } from "../utils/textEditor";
+import { getDocCompositionInfo, hasDocNoContent, renderDocByComposition } from "../utils/texts/textEditor";
 import { TreeNode } from "../utils/tree";
 import { CanvasBank, newCanvasBank } from "./canvasBank";
 import { ImageStore } from "./imageStore";

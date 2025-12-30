@@ -16,7 +16,7 @@ import {
   newTreeHandler,
 } from "../../../shapeHandlers/treeHandler";
 import { canHaveText, createShape } from "../../../../shapes";
-import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor";
+import { getDocAttributes, getInitialOutput } from "../../../../utils/texts/textEditor";
 import { BoundingBox, newBoundingBox } from "../../../boundingBox";
 import { newResizingState } from "../resizingState";
 import { newRotatingState } from "../rotatingState";

@@ -2,7 +2,7 @@ import { Shape } from "../../../../models";
 import { DocDelta, DocOutput } from "../../../../models/document";
 import { createShape, resizeOnTextEdit, shouldResizeOnTextEdit } from "../../../../shapes";
 import { TextShape } from "../../../../shapes/text";
-import { calcOriginalDocSize } from "../../../../utils/textEditor";
+import { calcOriginalDocSize } from "../../../../utils/texts/textEditor";
 import { AppCanvasStateContext } from "../core";
 
 export function getPatchShapeByDocumentUpdate(

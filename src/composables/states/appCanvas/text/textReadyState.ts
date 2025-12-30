@@ -8,7 +8,7 @@ import { TextShape } from "../../../../shapes/text";
 import { newTextEditingState } from "./textEditingState";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { TAU } from "../../../../utils/geometry";
-import { getInitialOutput } from "../../../../utils/textEditor";
+import { getInitialOutput } from "../../../../utils/texts/textEditor";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { handleCommonWheel } from "../../commons";
 

@@ -28,7 +28,7 @@ import { generateKeyBetweenAllowSame } from "../../../utils/findex";
 import { ImageShape, isImageAssetShape } from "../../../shapes/image";
 import { parseSvgFile } from "../../../shapes/utils/svgParser";
 import { DocOutput } from "../../../models/document";
-import { calcOriginalDocSize, getInitialOutput } from "../../../utils/textEditor";
+import { calcOriginalDocSize, getInitialOutput } from "../../../utils/texts/textEditor";
 import { newColorParser } from "../../colorParser";
 import { generateFindexAfter } from "../../shapeRelation";
 import { canJoinAlignBox } from "../../alignHandler";

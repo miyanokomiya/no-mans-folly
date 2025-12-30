@@ -7,13 +7,13 @@ import {
   DocDeltaInsert,
   DocListValue,
   DocOutput,
-} from "../models/document";
-import { Size } from "../models";
-import { applyDefaultStrokeStyle } from "./strokeStyle";
-import { newChronoCache } from "./stateful/cache";
-import { SVGElementInfo, getColorAttributes } from "./svgElements";
-import { toHexAndAlpha } from "./color";
-import { CanvasCTX } from "./types";
+} from "../../models/document";
+import { Size } from "../../models";
+import { applyDefaultStrokeStyle } from "../strokeStyle";
+import { newChronoCache } from "../stateful/cache";
+import { SVGElementInfo, getColorAttributes } from "../svgElements";
+import { toHexAndAlpha } from "../color";
+import { CanvasCTX } from "../types";
 import {
   DocCompositionItem,
   DocCompositionLine,

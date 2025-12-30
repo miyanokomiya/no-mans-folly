@@ -11,7 +11,7 @@ import { findBetterShapeAt } from "../../../shapeComposite";
 import { BoardCardShape, isBoardCardShape } from "../../../../shapes/board/boardCard";
 import { BoardHandler, BoardHitResult, isSameBoardHitResult, newBoardHandler } from "../../../boardHandler";
 import { canHaveText, createShape } from "../../../../shapes";
-import { getDocAttributes, getInitialOutput } from "../../../../utils/textEditor";
+import { getDocAttributes, getInitialOutput } from "../../../../utils/texts/textEditor";
 import { Shape } from "../../../../models";
 import { newSingleSelectedState } from "../singleSelectedState";
 import { isBoardRootShape } from "../../../../shapes/board/boardRoot";

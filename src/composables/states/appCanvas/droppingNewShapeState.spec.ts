@@ -4,7 +4,7 @@ import { createShape, getCommonStruct } from "../../../shapes";
 import { RectangleShape } from "../../../shapes/rectangle";
 import { createInitialAppCanvasStateContext } from "../../../contexts/AppCanvasContext";
 import { createStyleScheme } from "../../../models/factories";
-import { getInitialOutput } from "../../../utils/textEditor";
+import { getInitialOutput } from "../../../utils/texts/textEditor";
 import { newShapeComposite } from "../../shapeComposite";
 
 function getMockCtx() {

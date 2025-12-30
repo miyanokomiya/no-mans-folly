@@ -16,7 +16,7 @@ import { FloatMenuOption } from "../../composables/states/commons";
 import { canHaveText, getCommonStruct } from "../../shapes";
 import { generateUuid } from "../../utils/random";
 import { duplicateShapes } from "../../shapes/utils/duplicator";
-import { getInitialOutput } from "../../utils/textEditor";
+import { getInitialOutput } from "../../utils/texts/textEditor";
 import { DocDelta, DocOutput } from "../../models/document";
 import { getEntityPatchByDelete, getPatchInfoByLayouts } from "../../composables/shapeLayoutHandler";
 import { getAllBranchIds, getTree } from "../../utils/tree";

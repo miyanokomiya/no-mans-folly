@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LinkInfo } from "../../composables/states/types";
 import { IVec2 } from "okageo";
-import { LINK_STYLE_ATTRS } from "../../utils/textEditorCore";
+import { LINK_STYLE_ATTRS } from "../../utils/texts/textEditorCore";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 
 interface Props {

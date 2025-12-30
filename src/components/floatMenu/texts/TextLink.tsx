@@ -6,8 +6,8 @@ import iconLinkOn from "../../../assets/icons/link_on.svg";
 import iconDelete from "../../../assets/icons/delete_filled.svg";
 import iconAdd from "../../../assets/icons/add_filled.svg";
 import { DocAttributes } from "../../../models/document";
-import { clearLinkRelatedAttrubites } from "../../../utils/textEditor";
-import { LINK_STYLE_ATTRS } from "../../../utils/textEditorCore";
+import { clearLinkRelatedAttrubites } from "../../../utils/texts/textEditor";
+import { LINK_STYLE_ATTRS } from "../../../utils/texts/textEditorCore";
 
 interface Props {
   popupedKey: string;

@@ -6,7 +6,7 @@ import { findBetterShapeAt, ShapeComposite } from "../../shapeComposite";
 import { AppCanvasState } from "./core";
 import { LinkInfo } from "../types";
 import { getShapeTextBounds, isRigidMoveShape } from "../../../shapes";
-import { getLinkAt } from "../../../utils/textEditor";
+import { getLinkAt } from "../../../utils/texts/textEditor";
 import { getRectPoints } from "../../../utils/geometry";
 import { isShapeInteratctiveWithinViewport } from "./commons";
 import { newShapeAttachmentHandler } from "../../shapeAttachmentHandler";

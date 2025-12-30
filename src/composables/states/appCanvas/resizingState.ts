@@ -26,7 +26,7 @@ import { mergeMap, patchPipe, PatchPipeItem, toMap } from "../../../utils/common
 import { COMMAND_EXAM_SRC } from "./commandExams";
 import { TextShape } from "../../../shapes/text";
 import { DocDelta } from "../../../models/document";
-import { calcOriginalDocSize, getDeltaByScaleTextSize } from "../../../utils/textEditor";
+import { calcOriginalDocSize, getDeltaByScaleTextSize } from "../../../utils/texts/textEditor";
 import { applyPath } from "../../../utils/renderer";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";

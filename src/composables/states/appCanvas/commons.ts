@@ -11,7 +11,7 @@ import {
   getDeltaByApplyBlockStyleToDoc,
   getDeltaByApplyDocStyle,
   getDeltaByApplyInlineStyleToDoc,
-} from "../../../utils/textEditor";
+} from "../../../utils/texts/textEditor";
 import {
   canHaveText,
   createShape,

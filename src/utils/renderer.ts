@@ -4,7 +4,7 @@ import { applyStrokeStyle } from "./strokeStyle";
 import { applyFillStyle } from "./fillStyle";
 import { COLORS } from "./color";
 import { Color, CurveControl, Size } from "../models";
-import { DEFAULT_FONT_SIZE } from "./textEditorCore";
+import { DEFAULT_FONT_SIZE } from "./texts/textEditorCore";
 import { CanvasCTX } from "./types";
 
 export function applyPath(ctx: CanvasCTX | Path2D, path: IVec2[], closed = false, reverse = false) {

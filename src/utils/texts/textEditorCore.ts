@@ -1,5 +1,5 @@
 import { IRectangle, IVec2 } from "okageo";
-import { DocAttributes, DocListValue, DocOutput } from "../models/document";
+import { DocAttributes, DocListValue, DocOutput } from "../../models/document";
 
 export interface DocCompositionItem {
   char: string; // A grapheme character
