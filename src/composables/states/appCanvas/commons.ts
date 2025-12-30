@@ -23,7 +23,7 @@ import {
 } from "../../../shapes";
 import { newTextEditingState } from "./text/textEditingState";
 import { IVec2, add, getRectCenter, multi } from "okageo";
-import { StringItem, newClipboard, newClipboardSerializer } from "../../clipboard";
+import { StringItem, newClipboard } from "../../clipboard";
 import { newTextReadyState } from "./text/textReadyState";
 import { TextShape } from "../../../shapes/text";
 import { getAllBranchIds, getTree } from "../../../utils/tree";
@@ -53,6 +53,7 @@ import { isLineShape } from "../../../shapes/line";
 import { doesRectAccommodateRect, getRectLines, isPointOnRectangle, isRectOverlapped } from "../../../utils/geometry";
 import { getSymbolAssetMigrationInfo } from "../../../shapes/utils/symbol";
 import { patchPipe, toList, toMap } from "../../../utils/commons";
+import { clipboardDocSerializer, clipboardShapeSerializer } from "../../clipboardSerializers";
 
 type AcceptableEvent =
   | "Break"
@@ -317,7 +318,6 @@ export function startTextEditingIfPossible(
   }
 }
 
-const clipboardShapeSerializer = newClipboardSerializer<"shapes", ShapeTemplateInfo>("shapes");
 export function newShapeClipboard(ctx: AppCanvasStateContext) {
   function pasteTextAsShape(text: string) {
     const delta = [...convertRawTextToDoc(text), { insert: "\n" }];
@@ -382,7 +382,6 @@ export function newShapeClipboard(ctx: AppCanvasStateContext) {
 }
 
 const APP_DOC_TYPE = "application/no-mans-folly-doc";
-const clipboardDocSerializer = newClipboardSerializer<"doc", { doc: DocOutput }>("doc");
 export function newDocClipboard(doc: DocOutput, plainText: string, onPaste?: (doc: DocOutput, plain: boolean) => void) {
   return newClipboard(
     () => {

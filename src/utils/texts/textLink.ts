@@ -2,7 +2,9 @@ export function generateShapeLink(sheetId: string, shapeIds: string[]): string {
   return `[FOLLY]:[${sheetId}]:[${shapeIds.join(",")}]`;
 }
 
-export function parseShapeLink(link: string): { sheetId: string; shapeIds: string[] } | undefined {
+export type ShapeLink = { sheetId: string; shapeIds: string[] };
+
+export function parseShapeLink(link: string): ShapeLink | undefined {
   const match = link.match(/^\[FOLLY\]:\[([^\]]+)\]:\[([^\]]+)\]$/);
   if (!match) return;
 

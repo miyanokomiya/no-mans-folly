@@ -3,6 +3,7 @@ import { LinkInfo } from "../../composables/states/types";
 import { IVec2 } from "okageo";
 import { LINK_STYLE_ATTRS } from "../../utils/texts/textEditorCore";
 import { OutsideObserver } from "../atoms/OutsideObserver";
+import { parseShapeLink, ShapeLink } from "../../utils/texts/textLink";
 
 interface Props {
   canvasState: any;
@@ -11,12 +12,15 @@ interface Props {
   scale: number;
   linkInfo?: LinkInfo;
   delay?: number;
+  onJumpToShape?: (shapeLink: ShapeLink) => void;
 }
 
-export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay }) => {
+export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay, onJumpToShape }) => {
   const [localLinkInfo, setLocalLinkInfo] = useState<LinkInfo>();
   const [hasPointer, setHasPointer] = useState(false);
   const gracefulCloseTimer = useRef<any>(undefined);
+
+  const shapeLink = useMemo(() => (localLinkInfo ? parseShapeLink(localLinkInfo.link) : undefined), [localLinkInfo]);
 
   const rootStyle = useMemo(() => {
     if (!localLinkInfo) return;
@@ -81,6 +85,11 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay
     setLocalLinkInfo(linkInfo);
   }, [linkInfo, cancelGracefulClose]);
 
+  const handleShapeLinkClick = useCallback(() => {
+    if (!shapeLink) return;
+    onJumpToShape?.(shapeLink);
+  }, [shapeLink, onJumpToShape]);
+
   return (
     <OutsideObserver onClick={handleGlobalClick}>
       {localLinkInfo ? (
@@ -90,15 +99,26 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}
         >
-          <a
-            href={localLinkInfo.link}
-            target="_blank"
-            rel="noopener"
-            className="underline"
-            style={{ color: LINK_STYLE_ATTRS.color ?? undefined }}
-          >
-            {localLinkInfo.link}
-          </a>
+          {shapeLink ? (
+            <button
+              type="button"
+              className="cursor-pointer underline"
+              style={{ color: LINK_STYLE_ATTRS.color ?? undefined }}
+              onClick={handleShapeLinkClick}
+            >
+              Jump to Shape
+            </button>
+          ) : (
+            <a
+              href={localLinkInfo.link}
+              target="_blank"
+              rel="noopener"
+              className="underline"
+              style={{ color: LINK_STYLE_ATTRS.color ?? undefined }}
+            >
+              {localLinkInfo.link}
+            </a>
+          )}
         </div>
       ) : undefined}
     </OutsideObserver>

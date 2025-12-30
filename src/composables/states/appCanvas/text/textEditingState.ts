@@ -103,7 +103,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
       if (option.textEditorController) {
         textEditorController = option.textEditorController;
       } else {
-        textEditorController = newTextEditorController();
+        textEditorController = newTextEditorController({ sheetId: ctx.getSelectedSheet()?.id ?? "" });
         textEditorController.setRenderingContext(ctx.getRenderCtx()!);
 
         textEditorController.setDoc(getMergedDoc(ctx), textBounds.range);

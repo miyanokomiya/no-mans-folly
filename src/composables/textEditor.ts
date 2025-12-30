@@ -31,10 +31,14 @@ import * as textEditorUtil from "../utils/texts/textEditor";
 import { Size, UserSetting } from "../models";
 import { CanvasCTX } from "../utils/types";
 import { ModifierOptions } from "../utils/devices";
+import { generateShapeLink } from "../utils/texts/textLink";
+import { clipboardShapeSerializer } from "./clipboardSerializers";
 
 export type TextEditorInputOptions = Pick<ModifierOptions, "shift"> & Pick<UserSetting, "listDetection">;
 
-export function newTextEditorController() {
+type TextEditorControllerOptions = { sheetId: string };
+
+export function newTextEditorController(options: TextEditorControllerOptions) {
   let _ctx: CanvasCTX;
   let _doc: DocOutput;
   let docLength = 0;
@@ -239,7 +243,17 @@ export function newTextEditorController() {
     if (plain) {
       const text = pasted.flatMap((p) => p.insert).join("");
       const selection = getOutputSelection();
-      if (selection > 0 && textEditorUtil.isUrlText(text)) {
+      const pasteAsPlain = () => {
+        const [delta, nextCursor] = getDeltaByInputForPlainText(text);
+        return {
+          delta,
+          cursor: nextCursor,
+          selection: 0,
+        };
+      };
+      if (selection === 0) return pasteAsPlain();
+
+      if (textEditorUtil.isUrlText(text)) {
         // Make current selection link when pasted text is URL
         return {
           delta: [
@@ -249,13 +263,25 @@ export function newTextEditorController() {
           cursor: getCursor(),
           selection: getSelection(),
         };
-      } else {
-        const [delta, nextCursor] = getDeltaByInputForPlainText(text);
+      }
+
+      try {
+        // Check if the text is shape template. If so, generate link for it
+        const info = clipboardShapeSerializer.deserialize(text);
+        const link = generateShapeLink(
+          options.sheetId,
+          info.shapes.map((s) => s.id),
+        );
         return {
-          delta,
-          cursor: nextCursor,
-          selection: 0,
+          delta: [
+            { retain: getOutputCursor() },
+            { retain: selection, attributes: { ...LINK_STYLE_ATTRS, link: link } },
+          ],
+          cursor: getCursor(),
+          selection: getSelection(),
         };
+      } catch {
+        return pasteAsPlain();
       }
     }
 

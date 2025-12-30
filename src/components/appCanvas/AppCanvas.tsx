@@ -40,6 +40,7 @@ import { useWebsocketAwareness } from "../../hooks/realtimeHooks";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { applyDefaultTextStyle } from "../../utils/renderer";
 import { renderAllShapeAttachmentAnchors } from "../../composables/shapeAttachmentHandler";
+import { ShapeLink } from "../../utils/texts/textLink";
 
 // image files, folly sheet files (having empty type).
 const DroppableFileRegs = [/image\/.+/, /^$/];
@@ -689,6 +690,26 @@ export const AppCanvas: React.FC = () => {
     />
   ) : undefined;
 
+  const handleJumpToShape = useCallback(
+    (shapeLink: ShapeLink) => {
+      const ctx = getSmctx();
+      // TODO: Move the other sheet
+      if (ctx.getSelectedSheet()?.id === shapeLink.sheetId) {
+        sm.handleEvent({
+          type: "state",
+          data: {
+            name: "PanToShape",
+            options: {
+              ids: shapeLink.shapeIds,
+              duration: 150,
+            },
+          },
+        });
+      }
+    },
+    [sm, getSmctx],
+  );
+
   const linkMenu = (
     <LinkMenu
       canvasState={canvasState}
@@ -697,6 +718,7 @@ export const AppCanvas: React.FC = () => {
       scale={scale}
       linkInfo={linkInfo}
       delay={1000}
+      onJumpToShape={handleJumpToShape}
     />
   );
 
