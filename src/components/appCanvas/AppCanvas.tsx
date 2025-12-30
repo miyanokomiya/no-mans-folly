@@ -690,10 +690,34 @@ export const AppCanvas: React.FC = () => {
     />
   ) : undefined;
 
+  // Pan to the target shapes on the sheet opens
+  const shapeLinkRef = useRef<ShapeLink>(undefined);
+  useEffect(() => {
+    const shapeLink = shapeLinkRef.current;
+    if (!shapeLink) return;
+
+    const ctx = getSmctx();
+    if (ctx.getSelectedSheet()?.id !== shapeLink.sheetId) return;
+
+    sm.handleEvent({
+      type: "state",
+      data: {
+        name: "PanToShape",
+        options: {
+          ids: shapeLink.shapeIds,
+          // Smooth transition doesn't work well with other initializing processes.
+          // Instant transition is good enough for this case.
+          duration: 0,
+        },
+      },
+    });
+    shapeLinkRef.current = undefined;
+  }, [sm, getSmctx, shapeStore]);
+
   const handleJumpToShape = useCallback(
     (shapeLink: ShapeLink) => {
       const ctx = getSmctx();
-      // TODO: Move the other sheet
+      ctx.setLinkInfo();
       if (ctx.getSelectedSheet()?.id === shapeLink.sheetId) {
         sm.handleEvent({
           type: "state",
@@ -705,6 +729,11 @@ export const AppCanvas: React.FC = () => {
             },
           },
         });
+      } else {
+        if (!ctx.getSheets().some((s) => s.id === shapeLink.sheetId)) return;
+
+        shapeLinkRef.current = shapeLink;
+        ctx.selectSheet(shapeLink.sheetId);
       }
     },
     [sm, getSmctx],

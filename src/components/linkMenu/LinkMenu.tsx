@@ -87,8 +87,11 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, scale, linkInfo, delay
 
   const handleShapeLinkClick = useCallback(() => {
     if (!shapeLink) return;
+
+    cancelGracefulClose();
+    setLocalLinkInfo(undefined);
     onJumpToShape?.(shapeLink);
-  }, [shapeLink, onJumpToShape]);
+  }, [shapeLink, onJumpToShape, cancelGracefulClose]);
 
   return (
     <OutsideObserver onClick={handleGlobalClick}>
