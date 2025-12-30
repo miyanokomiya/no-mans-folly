@@ -528,6 +528,8 @@ async function pasteShapeTemplateInfoList(ctx: AppCanvasStateContext, templates:
         lastIndex, // This is just a temprorary value and adjusted later.
         new Set(),
         position,
+        undefined,
+        ctx.getSelectedSheet()?.id,
       );
       duplicated.shapes.forEach((s) => {
         newShapes.push(s);

@@ -49,6 +49,9 @@ export function newDuplicatingShapesState(): AppCanvasState {
         ctx.generateUuid,
         ctx.createLastIndex(),
         new Set(Object.keys(shapeMap)),
+        undefined,
+        undefined,
+        ctx.getSelectedSheet()?.id,
       );
       duplicatedShapeComposite = newShapeComposite({
         getStruct: shapeComposite.getShapeStruct,

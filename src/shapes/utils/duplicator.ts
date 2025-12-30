@@ -9,6 +9,7 @@ import { newShapeComposite } from "../../composables/shapeComposite";
 import { patchByRegenerateTreeStructure } from "./tree";
 import { isTreeRootShape } from "../tree/treeRoot";
 import { isTreeNodeShape } from "../tree/treeNode";
+import { generateShapeLink, parseShapeLink } from "../../utils/texts/textLink";
 
 /**
  * When `keepExternalRelations` is true, all relations except for ids of duplicating targets will be kept.
@@ -23,12 +24,31 @@ export function duplicateShapes(
   availableIdSet: Set<string>,
   p?: IVec2,
   keepExternalRelations = false,
+  targetSheetId?: string,
 ): { shapes: Shape[]; docMap: { [id: string]: DocOutput } } {
   const treeShapes = shapes.filter((s) => isTreeRootShape(s) || isTreeNodeShape(s));
   const adjustedShapes = toList(patchPipe([() => patchByRegenerateTreeStructure(treeShapes)], toMap(shapes)).result);
 
   const remapInfo = remapShapeIds(getStruct, adjustedShapes, generateUuid, !keepExternalRelations);
   const remapDocs = remap(mapDataToObj(docs), remapInfo.newToOldMap);
+
+  if (targetSheetId) {
+    // Migrate shape links
+    for (let id in remapDocs) {
+      remapDocs[id] = remapDocs[id].map((o) => {
+        if (!o.attributes?.link) return o;
+
+        const shapeLink = parseShapeLink(o.attributes.link);
+        if (!shapeLink) return o;
+
+        // Keep unknown IDs regardless of "keepExternalRelations" and "availableIdSet"
+        // => Shape links work across sheets so that they should be weak references
+        const newShapeIds = shapeLink.shapeIds.map((id) => remapInfo.oldToNewMap[id] ?? id);
+        const nextLink = generateShapeLink(targetSheetId, newShapeIds);
+        return { ...o, attributes: { ...o.attributes, link: nextLink } };
+      });
+    }
+  }
 
   const remapComposite = newShapeComposite({
     shapes: remapInfo.shapes,

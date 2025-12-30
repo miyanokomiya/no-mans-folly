@@ -829,6 +829,7 @@ function duplicateSelectedShapes(ctx: AppCanvasStateContext, withinGroup = false
     new Set(Object.keys(shapeComposite.shapeMap)),
     getSlideOverlayPosition(ctx, srcBounds),
     withinGroup,
+    ctx.getSelectedSheet()?.id,
   );
 
   const entityPatch = normalizeEntityPatchInfo(

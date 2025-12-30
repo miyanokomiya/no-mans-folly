@@ -256,7 +256,14 @@ export function useSetupStateContext({
       deleteShapes: getDeleteShapesFn(shapeStore, documentStore),
       patchShapes: shapeStore.patchEntities,
       updateShapes: getUpdateShapesFn(shapeStore, documentStore, loadShapeAssets),
-      pasteShapes: getPasteShapesFn(shapeStore, documentStore, loadShapeAssets, viewToCanvas, getMousePoint),
+      pasteShapes: getPasteShapesFn(
+        shapeStore,
+        documentStore,
+        loadShapeAssets,
+        viewToCanvas,
+        getMousePoint,
+        sheetStore.getSelectedSheet()?.id,
+      ),
 
       createFirstIndex: shapeStore.createFirstIndex,
       createLastIndex: shapeStore.createLastIndex,
@@ -447,6 +454,7 @@ function getPasteShapesFn(
   loadShapeAssets: (shapes: Shape[]) => Promise<void>,
   viewToCanvas: (point: IVec2) => IVec2,
   getMousePoint: () => IVec2,
+  sheetId?: string,
 ): (shapes: Shape[], docs: [id: string, doc: DocOutput][], p?: IVec2) => void {
   return (shapes, docs, p) => {
     const targetP = p ?? viewToCanvas(getMousePoint());
@@ -459,6 +467,8 @@ function getPasteShapesFn(
       shapeStore.createLastIndex(),
       availableIdSet,
       targetP,
+      undefined,
+      sheetId,
     );
 
     shapeStore.transact(() => {

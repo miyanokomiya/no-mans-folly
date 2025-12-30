@@ -4,6 +4,7 @@ import { createShape, getCommonStruct } from "..";
 import { TreeRootShape } from "../tree/treeRoot";
 import { generateKeyBetween } from "../../utils/findex";
 import { TreeNodeShape } from "../tree/treeNode";
+import { generateShapeLink } from "../../utils/texts/textLink";
 
 describe("duplicateShapes", () => {
   test("should preserve the structure of tree shapes", () => {
@@ -75,6 +76,33 @@ describe("duplicateShapes", () => {
       expect(result1.shapes[1].type).toBe(root.type);
       expect(result1.shapes[1].parentId).toBe(undefined);
       expect((result1.shapes[1] as TreeNodeShape).treeParentId).toBe(undefined);
+    }
+  });
+
+  test("should migrate shape links in text", () => {
+    const a = createShape(getCommonStruct, "a", { id: "a", findex: generateKeyBetween(null, null) });
+    const b = { ...a, id: "b", findex: generateKeyBetween(a.findex, null) };
+    const c = { ...a, id: "c", findex: generateKeyBetween(b.findex, null) };
+
+    let count = 0;
+    const generateUuid = () => {
+      count++;
+      return `id_${count}`;
+    };
+
+    {
+      const result0 = duplicateShapes(
+        getCommonStruct,
+        [a, b, c],
+        [[a.id, [{ insert: "link", attributes: { link: generateShapeLink("sheet", [b.id, c.id, "z"]) } }]]],
+        generateUuid,
+        c.findex,
+        new Set([a.id, b.id, c.id]),
+        undefined,
+        false,
+        "targetSheet",
+      );
+      expect(result0.docMap["id_1"][0].attributes?.link).toBe(generateShapeLink("targetSheet", ["id_2", "id_3", "z"]));
     }
   });
 });

@@ -34,7 +34,10 @@ export function insertFrameTreeItem(
  * The first item of returned shapes should be duplicated source shape.
  */
 export function duplicateFrameTreeItem(
-  ctx: Pick<AppCanvasStateContext, "getShapeComposite" | "getDocumentMap" | "generateUuid" | "createLastIndex">,
+  ctx: Pick<
+    AppCanvasStateContext,
+    "getShapeComposite" | "getDocumentMap" | "generateUuid" | "createLastIndex" | "getSelectedSheet"
+  >,
   srcId: string,
 ): { shapes: Shape[]; docMap: { [id: string]: DocOutput } } {
   const shapeComposite = ctx.getShapeComposite();
@@ -52,6 +55,7 @@ export function duplicateFrameTreeItem(
     availableIdSet,
     findBetterRectanglePositionsBelowShape(shapeComposite, src.id, shapeComposite.getWrapperRect(src)),
     true,
+    ctx.getSelectedSheet()?.id,
   );
   const [duplicatedSrc, ...others] = duplicated.shapes;
   const adjusted = [

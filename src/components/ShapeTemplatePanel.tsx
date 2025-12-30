@@ -86,6 +86,9 @@ export const ShapeTemplatePanel: React.FC = () => {
         smctx.generateUuid,
         smctx.createLastIndex(), // This is just a temprorary value and adjusted later.
         new Set(),
+        undefined,
+        undefined,
+        smctx.getSelectedSheet()?.id,
       );
       return duplicated;
     },
