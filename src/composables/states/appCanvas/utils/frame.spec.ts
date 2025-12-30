@@ -44,6 +44,7 @@ function getCtx() {
     getDocumentMap: () => ({ [rect.id]: [] }),
     generateUuid: () => `${++count}`,
     createLastIndex: () => generateKeyBetween(rect.findex, null),
+    getSelectedSheet: () => ({ id: "sheet", findex: "Aa", name: "Sheet" }),
   };
 }
 
