@@ -58,8 +58,15 @@ export const FloatMenuInspector: React.FC<Props> = ({
 }) => {
   const { shapeStore } = useContext(AppCanvasContext);
   const { handleEvent } = useContext(AppStateMachineContext);
-  const { getShapeStruct, setTmpShapeMap, patchShapes, createLastIndex, createFirstIndex, updateShapes } =
-    useContext(AppStateContext);
+  const {
+    getShapeStruct,
+    setTmpShapeMap,
+    patchShapes,
+    createLastIndex,
+    createFirstIndex,
+    updateShapes,
+    getSelectedSheet,
+  } = useContext(AppStateContext);
   const indexShape = useMemo<Shape | undefined>(() => {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     canvasState; // For exhaustive-deps
@@ -486,6 +493,7 @@ export const FloatMenuInspector: React.FC<Props> = ({
             onDocChanged={onDocAttributesChanged}
             docAttrInfo={indexDocAttrInfo}
             textEditing={textEditing}
+            sheetId={getSelectedSheet()?.id ?? ""}
           />
         </>
       ) : undefined}

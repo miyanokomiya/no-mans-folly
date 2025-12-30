@@ -41,6 +41,19 @@ export const TextInput: React.FC<Props> = ({
     ref.current?.focus();
   }, [onChange]);
 
+  useEffect(() => {
+    const elm = ref.current;
+    if (!elm) return;
+
+    const fn = (e: ClipboardEvent) => {
+      e.stopPropagation();
+    };
+    elm.addEventListener("paste", fn);
+    return () => {
+      elm.removeEventListener("paste", fn);
+    };
+  }, []);
+
   return (
     <span className="relative">
       <input

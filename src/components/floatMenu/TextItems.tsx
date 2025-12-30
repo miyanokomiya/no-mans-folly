@@ -167,6 +167,7 @@ interface Props {
   onDocChanged?: (val: DocAttributes, draft?: boolean) => void;
   docAttrInfo: DocAttrInfo;
   textEditing: boolean;
+  sheetId: string;
 }
 
 export const TextItems: React.FC<Props> = ({
@@ -178,6 +179,7 @@ export const TextItems: React.FC<Props> = ({
   onDocChanged,
   docAttrInfo,
   textEditing,
+  sheetId,
 }) => {
   const onListClick = useCallback(() => {
     setPopupedKey("list");
@@ -321,6 +323,7 @@ export const TextItems: React.FC<Props> = ({
           defaultDirection={defaultDirection}
           value={docAttrInfo.cursor}
           onChange={onInlineChanged}
+          sheetId={sheetId}
         />
       ) : undefined}
       <PopupButton

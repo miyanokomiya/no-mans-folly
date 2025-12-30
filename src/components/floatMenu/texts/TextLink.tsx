@@ -8,16 +8,26 @@ import iconAdd from "../../../assets/icons/add_filled.svg";
 import { DocAttributes } from "../../../models/document";
 import { clearLinkRelatedAttrubites } from "../../../utils/texts/textEditor";
 import { LINK_STYLE_ATTRS } from "../../../utils/texts/textEditorCore";
+import { clipboardShapeSerializer } from "../../../composables/clipboardSerializers";
+import { generateShapeLink } from "../../../utils/texts/textLink";
 
 interface Props {
   popupedKey: string;
   setPopupedKey: (key: string) => void;
+  sheetId: string;
   defaultDirection?: PopupDirection; // bottom by default
   value?: DocAttributes;
   onChange?: (val: DocAttributes) => void;
 }
 
-export const TextLink: React.FC<Props> = ({ popupedKey, setPopupedKey, defaultDirection, value, onChange }) => {
+export const TextLink: React.FC<Props> = ({
+  popupedKey,
+  setPopupedKey,
+  sheetId,
+  defaultDirection,
+  value,
+  onChange,
+}) => {
   const handleLinkChange = useCallback(
     (val: string) => {
       if (val) {
@@ -34,7 +44,7 @@ export const TextLink: React.FC<Props> = ({ popupedKey, setPopupedKey, defaultDi
     <PopupButton
       name="text-link"
       opened={popupedKey === "text-link"}
-      popup={<TextLinkPanel value={value?.link ?? ""} onChange={handleLinkChange} />}
+      popup={<TextLinkPanel value={value?.link ?? ""} onChange={handleLinkChange} sheetId={sheetId} />}
       onClick={setPopupedKey}
       defaultDirection={defaultDirection}
     >
@@ -48,9 +58,10 @@ export const TextLink: React.FC<Props> = ({ popupedKey, setPopupedKey, defaultDi
 interface TextLinkPanelProps {
   value: string;
   onChange?: (val: string) => void;
+  sheetId: string;
 }
 
-export const TextLinkPanel: React.FC<TextLinkPanelProps> = ({ value, onChange }) => {
+export const TextLinkPanel: React.FC<TextLinkPanelProps> = ({ value, onChange, sheetId }) => {
   const [draftValue, setDraftValue] = useState("");
 
   useEffect(() => {
@@ -65,9 +76,21 @@ export const TextLinkPanel: React.FC<TextLinkPanelProps> = ({ value, onChange })
     [draftValue, onChange],
   );
 
-  const handleChange = useCallback((val: string) => {
-    setDraftValue(val);
-  }, []);
+  const handleChange = useCallback(
+    (val: string) => {
+      try {
+        const info = clipboardShapeSerializer.deserialize(val);
+        const link = generateShapeLink(
+          sheetId,
+          info.shapes.map((s) => s.id),
+        );
+        setDraftValue(link);
+      } catch {
+        setDraftValue(val);
+      }
+    },
+    [sheetId],
+  );
 
   const handleDelete = useCallback(() => {
     onChange?.("");
@@ -82,7 +105,7 @@ export const TextLinkPanel: React.FC<TextLinkPanelProps> = ({ value, onChange })
             onChange={handleChange}
             autofocus={true}
             keepFocus={true}
-            placeholder="Attach a link"
+            placeholder="Attach URL / Shape link"
           />
         </div>
         <button type="submit" className="w-8 h-8 p-1 border rounded-xs">
