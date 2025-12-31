@@ -744,7 +744,7 @@ export const AppCanvas: React.FC = () => {
     <LinkMenu
       focusBack={focusBackTextEditor}
       canvasToView={canvasToView}
-      scale={scale}
+      viewSize={viewSize}
       linkInfo={linkInfo}
       delay={1000}
       onJumpToShape={handleJumpToShape}
