@@ -22,6 +22,8 @@ import { getLabel, hasSpecialOrderPriority } from "../../shapes";
 import { newShapeRenderer, ShapeRenderer } from "../../composables/shapeRenderer";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
 import { LazyOnScreenRender } from "../atoms/LazyOnScreenRender";
+import { useLocalStorageAdopter } from "../../hooks/localStorage";
+import iconDropdown from "../../assets/icons/dropdown.svg";
 
 type DropOperation = "group" | "above" | "below";
 
@@ -42,6 +44,28 @@ export const ShapeTreePanel: React.FC = () => {
     return s ? shapeComposite.getSelectionScope(s) : undefined;
   }, [shapeComposite, selectedLastId]);
 
+  const [foldedMap, setFoldedMap] = useLocalStorageAdopter<Record<string, true>>({
+    key: "shape-tree",
+    version: "1",
+    initialValue: () => ({}),
+    duration: 0,
+  });
+
+  const handleFoldedToggle = useCallback(
+    (id: string) => {
+      setFoldedMap((val) => {
+        const next = { ...val };
+        if (next[id]) {
+          delete next[id];
+        } else {
+          next[id] = true;
+        }
+        return next;
+      });
+    },
+    [setFoldedMap],
+  );
+
   const renderShape = useMemo(() => {
     const renderer = newShapeRenderer({
       shapeComposite,
@@ -56,9 +80,18 @@ export const ShapeTreePanel: React.FC = () => {
     return shapeComposite.mergedShapeTree
       .filter((n) => !hasSpecialOrderPriority(shapeComposite.getShapeStruct, shapeComposite.mergedShapeMap[n.id]))
       .map((n) =>
-        getUITreeNodeProps(shapeComposite, selectedIdMap, selectedLastId, selectionScope, n, sheetColor, renderShape),
+        getUITreeNodeProps(
+          shapeComposite,
+          selectedIdMap,
+          selectedLastId,
+          selectionScope,
+          n,
+          sheetColor,
+          renderShape,
+          foldedMap,
+        ),
       );
-  }, [shapeComposite, renderShape, selectedIdMap, selectedLastId, selectionScope, sheetColor]);
+  }, [shapeComposite, renderShape, selectedIdMap, selectedLastId, selectionScope, sheetColor, foldedMap]);
 
   const { handleEvent } = useContext(AppStateMachineContext);
 
@@ -213,10 +246,11 @@ export const ShapeTreePanel: React.FC = () => {
           onHover={handleNodeHover}
           onSelect={handleNodeSelect}
           onDragStart={handleStartDragging}
+          onFoldedToggle={handleFoldedToggle}
         />
       </li>
     ));
-  }, [dropTo, handleNodeHover, handleNodeSelect, handleStartDragging, rootNodeProps]);
+  }, [dropTo, handleNodeHover, handleNodeSelect, handleStartDragging, rootNodeProps, handleFoldedToggle]);
 
   return (
     <div ref={rootRef} className="h-full overflow-auto">
@@ -243,6 +277,9 @@ interface UITreeNodeProps {
   selected: boolean;
   prime: boolean;
   primeSibling: boolean;
+  folded?: boolean;
+  foldable?: boolean;
+  onFoldedToggle?: (id: string) => void;
   draggable: boolean;
   dropTo?: [string, DropOperation];
   sheetColor: string;
@@ -259,6 +296,9 @@ const NodeHeader: React.FC<Omit<UITreeNodeProps, "childNode"> & { dropElm?: Reac
     selected,
     prime,
     primeSibling,
+    folded,
+    foldable,
+    onFoldedToggle,
     draggable,
     sheetColor,
     renderShape,
@@ -307,10 +347,26 @@ const NodeHeader: React.FC<Omit<UITreeNodeProps, "childNode"> & { dropElm?: Reac
       renderShape(id, canvasRef.current);
     }, [renderShape, id]);
 
+    const handleFoldedToggle = useCallback(() => {
+      onFoldedToggle?.(id);
+    }, [id, onFoldedToggle]);
+
     return (
       <div data-anchor-root>
         <LazyOnScreenRender className="flex items-center relative h-[30px]" onRender={renderTargetShape}>
-          <div className={"ml-1 w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
+          <div className="w-4 h-full flex items-center justify-center">
+            {foldable ? (
+              <button type="button" onClick={handleFoldedToggle} className="w-full h-full hover:bg-gray-200">
+                <img
+                  src={iconDropdown}
+                  alt={folded ? "Collapse" : "Expand"}
+                  className={"w-full transition-all" + (folded ? " -rotate-90" : "")}
+                />
+              </button>
+            ) : (
+              <div className={"w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
+            )}
+          </div>
           <ClickOrDragHandler
             className={"px-1 rounded-xs w-full hover:bg-gray-200" + selectedClass}
             onClick={handleNodeClick}
@@ -340,6 +396,9 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
   selected,
   prime,
   primeSibling,
+  folded,
+  foldable,
+  onFoldedToggle,
   draggable,
   dropTo,
   onHover,
@@ -384,6 +443,9 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
         selected={selected}
         prime={prime}
         primeSibling={primeSibling}
+        folded={folded}
+        foldable={foldable}
+        onFoldedToggle={onFoldedToggle}
         draggable={draggable}
         sheetColor={sheetColor}
         renderShape={renderShape}
@@ -392,14 +454,21 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
         onDragStart={onDragStart}
         dropElm={dropGroupElm ?? dropAboveElm}
       />
-      {hasChildren ? (
+      {hasChildren && !folded ? (
         <ul
           className="ml-2 relative border-l-2 border-gray-400 flex flex-col items-start"
           style={{ gap: 1, paddingBottom: 1 }}
         >
           {childNode.map((c) => (
             <li key={c.id} className="w-full">
-              <UITreeNode {...c} dropTo={dropTo} onHover={onHover} onSelect={onSelect} onDragStart={onDragStart} />
+              <UITreeNode
+                {...c}
+                dropTo={dropTo}
+                onHover={onHover}
+                onSelect={onSelect}
+                onDragStart={onDragStart}
+                onFoldedToggle={onFoldedToggle}
+              />
             </li>
           ))}
           <div className="absolute left-0 right-0 bottom-0 border-t border-gray-400" />
@@ -412,12 +481,13 @@ const UITreeNode: React.FC<UITreeNodeProps> = ({
 
 function getUITreeNodeProps(
   shapeComposite: ShapeComposite,
-  selectedIdMap: { [id: string]: true },
+  selectedIdMap: Record<string, true>,
   lastSelectedId: string | undefined,
   selectedScope: ShapeSelectionScope | undefined,
   shapeNode: TreeNode,
   sheetColor: string,
   renderShape: (id: string, canvas: HTMLCanvasElement | null) => void,
+  foldedMap: Record<string, true>,
 ): UITreeNodeProps {
   const shape = shapeComposite.shapeMap[shapeNode.id];
   const label = getLabel(shapeComposite.getShapeStruct, shape);
@@ -430,9 +500,20 @@ function getUITreeNodeProps(
     selected: !!selectedIdMap[shapeNode.id],
     prime: lastSelectedId === shapeNode.id,
     primeSibling: primeSibling,
+    folded: !!foldedMap[shapeNode.id],
+    foldable: shapeNode.children.length > 0,
     draggable,
     childNode: shapeNode.children.map((c) =>
-      getUITreeNodeProps(shapeComposite, selectedIdMap, lastSelectedId, selectedScope, c, sheetColor, renderShape),
+      getUITreeNodeProps(
+        shapeComposite,
+        selectedIdMap,
+        lastSelectedId,
+        selectedScope,
+        c,
+        sheetColor,
+        renderShape,
+        foldedMap,
+      ),
     ),
     renderShape,
     sheetColor,
