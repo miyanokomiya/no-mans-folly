@@ -27,6 +27,12 @@ import iconDropdown from "../../assets/icons/dropdown.svg";
 
 type DropOperation = "group" | "above" | "below";
 
+/**
+ * 0: Forcefully expanded
+ */
+type FoldedValue = boolean | 0;
+type FoldedMap = Record<string, FoldedValue>;
+
 export const ShapeTreePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
   const sheet = useSelectedSheet();
@@ -50,6 +56,16 @@ export const ShapeTreePanel: React.FC = () => {
     initialValue: () => ({}),
     duration: 0,
   });
+
+  const adjustedFoldedMap = useMemo<FoldedMap>(() => {
+    if (!selectedLastId) return foldedMap;
+
+    // Expand all the way to the selected node
+    const ret: FoldedMap = { ...foldedMap };
+    const branchPath = shapeComposite.getBranchPathTo(selectedLastId);
+    branchPath.forEach((id) => (ret[id] = 0));
+    return ret;
+  }, [foldedMap, selectedLastId, shapeComposite]);
 
   const handleFoldedToggle = useCallback(
     (id: string) => {
@@ -88,10 +104,10 @@ export const ShapeTreePanel: React.FC = () => {
           n,
           sheetColor,
           renderShape,
-          foldedMap,
+          adjustedFoldedMap,
         ),
       );
-  }, [shapeComposite, renderShape, selectedIdMap, selectedLastId, selectionScope, sheetColor, foldedMap]);
+  }, [shapeComposite, renderShape, selectedIdMap, selectedLastId, selectionScope, sheetColor, adjustedFoldedMap]);
 
   const { handleEvent } = useContext(AppStateMachineContext);
 
@@ -277,7 +293,7 @@ interface UITreeNodeProps {
   selected: boolean;
   prime: boolean;
   primeSibling: boolean;
-  folded?: boolean;
+  folded?: FoldedValue;
   foldable?: boolean;
   onFoldedToggle?: (id: string) => void;
   draggable: boolean;
@@ -351,22 +367,31 @@ const NodeHeader: React.FC<Omit<UITreeNodeProps, "childNode"> & { dropElm?: Reac
       onFoldedToggle?.(id);
     }, [id, onFoldedToggle]);
 
+    const getPrefixElm = () => {
+      if (!foldable)
+        return <div className={"w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />;
+
+      const forced = folded === 0;
+      return (
+        <button
+          type="button"
+          className={"w-full h-full" + (forced ? " opacity-50" : " hover:bg-gray-200")}
+          onClick={handleFoldedToggle}
+          disabled={forced}
+        >
+          <img
+            src={iconDropdown}
+            alt={folded ? "Collapse" : "Expand"}
+            className={"w-full transition-all" + (folded ? " -rotate-90" : "")}
+          />
+        </button>
+      );
+    };
+
     return (
       <div data-anchor-root>
         <LazyOnScreenRender className="flex items-center relative h-[30px]" onRender={renderTargetShape}>
-          <div className="w-4 h-full flex items-center justify-center">
-            {foldable ? (
-              <button type="button" onClick={handleFoldedToggle} className="w-full h-full hover:bg-gray-200">
-                <img
-                  src={iconDropdown}
-                  alt={folded ? "Collapse" : "Expand"}
-                  className={"w-full transition-all" + (folded ? " -rotate-90" : "")}
-                />
-              </button>
-            ) : (
-              <div className={"w-2  border-gray-400 " + (draggable ? "border-t-2" : "border-2 h-2 rounded-full")} />
-            )}
-          </div>
+          <div className="w-4 h-full flex items-center justify-center">{getPrefixElm()}</div>
           <ClickOrDragHandler
             className={"px-1 rounded-xs w-full hover:bg-gray-200" + selectedClass}
             onClick={handleNodeClick}
@@ -487,7 +512,7 @@ function getUITreeNodeProps(
   shapeNode: TreeNode,
   sheetColor: string,
   renderShape: (id: string, canvas: HTMLCanvasElement | null) => void,
-  foldedMap: Record<string, true>,
+  foldedMap: FoldedMap,
 ): UITreeNodeProps {
   const shape = shapeComposite.shapeMap[shapeNode.id];
   const label = getLabel(shapeComposite.getShapeStruct, shape);
@@ -500,7 +525,7 @@ function getUITreeNodeProps(
     selected: !!selectedIdMap[shapeNode.id],
     prime: lastSelectedId === shapeNode.id,
     primeSibling: primeSibling,
-    folded: !!foldedMap[shapeNode.id],
+    folded: foldedMap[shapeNode.id],
     foldable: shapeNode.children.length > 0,
     draggable,
     childNode: shapeNode.children.map((c) =>
