@@ -122,10 +122,7 @@ export const EntranceDialog: React.FC<Props> = ({
             </div>
           </div>
         ) : undefined}
-        <p>
-          {/* FIXME: "key" is required to avoid warning inside the library. */}
-          <Trans i18nKey="select_workspace" components={{ tag_folder: <span key="span" className="font-bold" /> }} />
-        </p>
+        <p>{t("select_workspace")}</p>
         <div className="mt-4 flex flex-col items-center">
           {fileAccessAvailable ? (
             <button

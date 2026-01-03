@@ -11,8 +11,7 @@ const en = {
     open_workspace: "Open [[(l)WORKSPACE]]",
     save_and_open_workspace: "Save and open [[(l)WORKSPACE]]",
     export_workspace: "Export [[(l)WORKSPACE]]",
-    select_workspace:
-      "Select <tag_folder>a folder</tag_folder> as a workspace, then all updates are automatically saved there.",
+    select_workspace: "Select a folder as a workspace, then all updates are automatically saved there.",
     local_folder: "Local folder",
     "local_folder.unsupported": "This browser doesn't support local folder.",
     google_drive: "Google Drive",
@@ -183,8 +182,7 @@ const ja: TranslationResource = {
     open_workspace: "[[WORKSPACE]]選択",
     save_and_open_workspace: "[[(l)WORKSPACE]]保存&選択",
     export_workspace: "[[(l)WORKSPACE]]エクスポート",
-    select_workspace:
-      "<tag_folder>フォルダ</tag_folder>をワークスペースとして選択します。全ての変更は自動的にワークスペースに保存されます。",
+    select_workspace: "フォルダをワークスペースとして選択します。全ての変更は自動的にワークスペースに保存されます。",
     local_folder: "ローカルフォルダ",
     "local_folder.unsupported": "このブラウザはローカルフォルダをサポートしていません。",
     google_drive: "Google Drive",
