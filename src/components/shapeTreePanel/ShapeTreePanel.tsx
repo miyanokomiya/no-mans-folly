@@ -26,6 +26,7 @@ import { useLocalStorageAdopter } from "../../hooks/localStorage";
 import iconDropdown from "../../assets/icons/dropdown.svg";
 import { ShapeTreeToolPanel } from "./ShapeTreeToolPanel";
 import { mapReduce } from "../../utils/commons";
+import { createPortal } from "react-dom";
 
 type DropOperation = "group" | "above" | "below";
 
@@ -295,21 +296,24 @@ export const ShapeTreePanel: React.FC = () => {
   return (
     <div className="h-full grid grid-cols-1 grid-rows-[1fr_max-content] gap-1">
       <div ref={rootRef} className="h-full overflow-auto">
-        <ul className="relative flex flex-col items-start" style={{ gap: 1 }}>
+        <ul className="flex flex-col items-start" style={{ gap: 1 }}>
           {rootNodeElms}
-          {draggingTarget ? (
-            <div
-              className="fixed px-1 w-40 h-4 rounded-xs left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
-              style={{
-                left: `${draggingTarget[2].x}px`,
-                top: `${draggingTarget[2].y}px`,
-              }}
-            />
-          ) : undefined}
         </ul>
         <div data-drop-to-bottom-dummy className="h-4" />
       </div>
       <ShapeTreeToolPanel onAllFoldedChange={handleAllFoldedChange} />
+      {draggingTarget
+        ? createPortal(
+            <div
+              className="fixed z-300 px-1 w-40 h-4 rounded-xs left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
+              style={{
+                left: `${draggingTarget[2].x}px`,
+                top: `${draggingTarget[2].y}px`,
+              }}
+            />,
+            document.body,
+          )
+        : undefined}
     </div>
   );
 };

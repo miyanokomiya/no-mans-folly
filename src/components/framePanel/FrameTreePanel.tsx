@@ -26,6 +26,7 @@ import { findBetterShapePositionsNearByShape } from "../../composables/shapePosi
 import { mergeEntityPatchInfo } from "../../utils/entities";
 import { isParentDisconnected } from "../../composables/shapeRelation";
 import { duplicateFrameTreeItem, insertFrameTreeItem } from "../../composables/states/appCanvas/utils/frame";
+import { createPortal } from "react-dom";
 
 type DropOperation = "above" | "below" | "adopt";
 
@@ -294,17 +295,20 @@ export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
             />
           </li>
         ))}
-        {draggingTarget ? (
-          <div
-            className="fixed px-1 w-40 h-4 rounded-xs left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
-            style={{
-              left: `${draggingTarget[2].x}px`,
-              top: `${draggingTarget[2].y}px`,
-            }}
-          />
-        ) : undefined}
       </ul>
       <div data-drop-to-bottom-dummy className="h-4" />
+      {draggingTarget
+        ? createPortal(
+            <div
+              className="fixed z-300 px-1 w-40 h-4 rounded-xs left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
+              style={{
+                left: `${draggingTarget[2].x}px`,
+                top: `${draggingTarget[2].y}px`,
+              }}
+            />,
+            document.body,
+          )
+        : undefined}
     </div>
   );
 };
