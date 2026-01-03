@@ -135,15 +135,18 @@ export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
     [shapeComposite, getCtx],
   );
 
-  const [draggingTarget, setDraggingTarget] = useState<[id: string, IVec2]>();
+  const [draggingTarget, setDraggingTarget] = useState<[id: string, cursorP: IVec2, anchorP: IVec2]>();
   const [dropTo, setDropTo] = useState<[id: string, operation: DropOperation]>();
 
   const { startDragging } = useGlobalDrag(
     useCallback((e: PointerEvent) => {
       e.preventDefault();
-      if (!e.currentTarget) return;
+      const rootElm = rootRef.current;
+      if (!e.currentTarget || !rootElm) return;
 
-      setDraggingTarget((val) => (val ? [val[0], { x: e.clientX, y: e.clientY }] : val));
+      setDraggingTarget((val) =>
+        val ? [val[0], { x: e.clientX, y: e.clientY }, { x: rootElm.getBoundingClientRect().left, y: e.clientY }] : val,
+      );
     }, []),
     useCallback(() => {
       const ids = Object.keys(selectedIdMap);
@@ -158,9 +161,17 @@ export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
 
   const handleStartDragging = useCallback(
     (e: React.PointerEvent, id: string) => {
-      if (!e.currentTarget) return;
+      const rootElm = rootRef.current;
+      if (!e.currentTarget || !rootElm) return;
 
-      setDraggingTarget([id, { x: e.clientX, y: e.clientY }]);
+      setDraggingTarget([
+        id,
+        { x: e.clientX, y: e.clientY },
+        {
+          x: rootElm.getBoundingClientRect().left,
+          y: e.clientY,
+        },
+      ]);
       startDragging();
     },
     [startDragging],
@@ -285,9 +296,10 @@ export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
         ))}
         {draggingTarget ? (
           <div
-            className="fixed left-6 px-1 w-40 h-4 rounded-xs left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
+            className="fixed px-1 w-40 h-4 rounded-xs left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
             style={{
-              top: `${draggingTarget[1].y}px`,
+              left: `${draggingTarget[2].x}px`,
+              top: `${draggingTarget[2].y}px`,
             }}
           />
         ) : undefined}

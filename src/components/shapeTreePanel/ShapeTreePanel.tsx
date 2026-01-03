@@ -168,7 +168,7 @@ export const ShapeTreePanel: React.FC = () => {
     [shapeComposite, getCtx],
   );
 
-  const [draggingTarget, setDraggingTarget] = useState<[Element, id: string, IVec2]>();
+  const [draggingTarget, setDraggingTarget] = useState<[id: string, cursorP: IVec2, anchorP: IVec2]>();
   const [dropTo, setDropToRaw] = useState<[id: string, operation: DropOperation]>();
 
   const setDropTo = useCallback((val: [id: string, operation: DropOperation] | undefined) => {
@@ -181,9 +181,12 @@ export const ShapeTreePanel: React.FC = () => {
   const { startDragging } = useGlobalDrag(
     useCallback((e: PointerEvent) => {
       e.preventDefault();
-      if (!e.currentTarget) return;
+      const rootElm = rootRef.current;
+      if (!e.currentTarget || !rootElm) return;
 
-      setDraggingTarget((val) => (val ? [e.currentTarget as Element, val[1], { x: e.clientX, y: e.clientY }] : val));
+      setDraggingTarget((val) =>
+        val ? [val[0], { x: e.clientX, y: e.clientY }, { x: rootElm.getBoundingClientRect().left, y: e.clientY }] : val,
+      );
     }, []),
     useCallback(() => {
       const ids = Object.keys(selectedIdMap);
@@ -198,9 +201,17 @@ export const ShapeTreePanel: React.FC = () => {
 
   const handleStartDragging = useCallback(
     (e: React.PointerEvent, id: string) => {
-      if (!e.currentTarget) return;
+      const rootElm = rootRef.current;
+      if (!e.currentTarget || !rootElm) return;
 
-      setDraggingTarget([e.currentTarget, id, { x: e.clientX, y: e.clientY }]);
+      setDraggingTarget([
+        id,
+        { x: e.clientX, y: e.clientY },
+        {
+          x: rootElm.getBoundingClientRect().left,
+          y: e.clientY,
+        },
+      ]);
       startDragging();
     },
     [startDragging],
@@ -213,7 +224,7 @@ export const ShapeTreePanel: React.FC = () => {
       return;
     }
 
-    const hoveredElm = document.elementFromPoint(draggingTarget[2].x, draggingTarget[2].y);
+    const hoveredElm = document.elementFromPoint(draggingTarget[1].x, draggingTarget[1].y);
     if (!hoveredElm) {
       setDropTo(undefined);
       return;
@@ -237,7 +248,7 @@ export const ShapeTreePanel: React.FC = () => {
       const margin = 40;
       const shift = 6;
       const rootRect = rootRef.current.getBoundingClientRect();
-      const p = draggingTarget[2];
+      const p = draggingTarget[1];
       if (p.y <= rootRect.top + margin) {
         rootRef.current.scrollBy({ top: -shift });
       } else if (rootRect.bottom - margin <= p.y) {
@@ -246,13 +257,13 @@ export const ShapeTreePanel: React.FC = () => {
     }
 
     const id = wrapperElm.getAttribute("data-id")!;
-    if (id === draggingTarget[1]) {
+    if (id === draggingTarget[0]) {
       setDropTo(undefined);
       return;
     }
 
     const target = shapeComposite.mergedShapeTreeMap[id];
-    const offsetRate = (draggingTarget[2].y - anchorRootRect.top) / anchorRootRect.height;
+    const offsetRate = (draggingTarget[1].y - anchorRootRect.top) / anchorRootRect.height;
 
     if (offsetRate < 0.4) {
       setDropTo([id, "above"]);
@@ -288,8 +299,9 @@ export const ShapeTreePanel: React.FC = () => {
           {rootNodeElms}
           {draggingTarget ? (
             <div
-              className="fixed left-6 px-1 w-40 h-4 rounded-xs left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
+              className="fixed px-1 w-40 h-4 rounded-xs left-0 bg-red-400 -translate-y-1/2 opacity-30 pointer-events-none touch-none"
               style={{
+                left: `${draggingTarget[2].x}px`,
                 top: `${draggingTarget[2].y}px`,
               }}
             />
