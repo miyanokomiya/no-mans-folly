@@ -103,7 +103,7 @@ export const FixedPopupButton: React.FC<FixedPopupButtonOption> = ({
     const translateY =
       bounds.bottom + popupBounds.height > window.innerHeight ? -bounds.height - popupBounds.height : 0;
     const classBase =
-      "z-10 fixed bg-white border rounded-xs drop-shadow-md " + (translateY === undefined ? "opacity-0 " : "");
+      "z-1000 fixed bg-white border rounded-xs drop-shadow-md " + (translateY === undefined ? "opacity-0 " : "");
     const translateAdjustment = translateY ? ` translateY(${translateY}px)` : "";
 
     switch (popupPosition) {
