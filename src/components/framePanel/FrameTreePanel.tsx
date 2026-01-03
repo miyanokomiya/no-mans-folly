@@ -205,18 +205,6 @@ export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
     const anchorRootElm = wrapperElm.querySelector<HTMLElement>("[data-anchor-root]")!;
     const anchorRootRect = anchorRootElm.getBoundingClientRect();
 
-    {
-      const margin = 60;
-      const shift = 8;
-      const rootRect = rootRef.current.getBoundingClientRect();
-      const p = draggingTarget[1];
-      if (p.y <= rootRect.top + margin) {
-        rootRef.current.scrollBy({ top: -shift });
-      } else if (rootRect.bottom - margin <= p.y) {
-        rootRef.current.scrollBy({ top: shift });
-      }
-    }
-
     const id = wrapperElm.getAttribute("data-id")!;
     if (id === draggingTarget[0]) {
       setDropTo(undefined);
@@ -238,6 +226,20 @@ export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
       setDropTo([id, "below"]);
     }
   }, [draggingTarget, shapeComposite]);
+
+  useEffect(() => {
+    if (!rootRef.current || !draggingTarget) return;
+
+    const margin = 40;
+    const shift = 6;
+    const rootRect = rootRef.current.getBoundingClientRect();
+    const p = draggingTarget[1];
+    if (p.y <= rootRect.top + margin) {
+      rootRef.current.scrollBy({ top: -shift });
+    } else if (rootRect.bottom - margin <= p.y) {
+      rootRef.current.scrollBy({ top: shift });
+    }
+  }, [draggingTarget]);
 
   const handleNameChange = useCallback(
     (id: string, name: string) => {

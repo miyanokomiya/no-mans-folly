@@ -245,18 +245,6 @@ export const ShapeTreePanel: React.FC = () => {
     const anchorRootElm = wrapperElm.querySelector<HTMLElement>("[data-anchor-root]")!;
     const anchorRootRect = anchorRootElm.getBoundingClientRect();
 
-    {
-      const margin = 40;
-      const shift = 6;
-      const rootRect = rootRef.current.getBoundingClientRect();
-      const p = draggingTarget[1];
-      if (p.y <= rootRect.top + margin) {
-        rootRef.current.scrollBy({ top: -shift });
-      } else if (rootRect.bottom - margin <= p.y) {
-        rootRef.current.scrollBy({ top: shift });
-      }
-    }
-
     const id = wrapperElm.getAttribute("data-id")!;
     if (id === draggingTarget[0]) {
       setDropTo(undefined);
@@ -277,6 +265,20 @@ export const ShapeTreePanel: React.FC = () => {
       setDropTo([id, "below"]);
     }
   }, [setDropTo, draggingTarget, shapeComposite]);
+
+  useEffect(() => {
+    if (!rootRef.current || !draggingTarget) return;
+
+    const margin = 40;
+    const shift = 6;
+    const rootRect = rootRef.current.getBoundingClientRect();
+    const p = draggingTarget[1];
+    if (p.y <= rootRect.top + margin) {
+      rootRef.current.scrollBy({ top: -shift });
+    } else if (rootRect.bottom - margin <= p.y) {
+      rootRef.current.scrollBy({ top: shift });
+    }
+  }, [draggingTarget]);
 
   const rootNodeElms = useMemo(() => {
     return rootNodeProps.map((n) => (
