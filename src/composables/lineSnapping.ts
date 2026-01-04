@@ -237,7 +237,7 @@ export function newLineSnapping(option: Option) {
       }
 
       if (lineConstrain && extendedGuideLine) {
-        // Seed the closest intersection between the guideline and shape outline.
+        // Seek the closest intersection between the guideline and shape outline.
         reversedSnappableShapes.forEach((shape) => {
           if (!lineConstrain || !extendedGuideLine) return;
 
