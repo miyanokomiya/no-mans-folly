@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { startTextEditingIfPossible } from "./commons";
-import { isRigidMoveShape } from "../../../shapes";
+import { isRigidShape } from "../../../shapes";
 import { newFuzzyDrag } from "../../pointer";
 
 interface Option {
@@ -44,7 +44,7 @@ export function newSelectedByPointerOnState(option?: Option): AppCanvasState {
               });
           }
 
-          const isRigid = isRigidMoveShape(shapeComposite.getShapeStruct, shape);
+          const isRigid = isRigidShape(shapeComposite.getShapeStruct, shape);
           if (!option?.concurrent && isRigid) {
             // Deselect the rigid shape and activate rect-select.
             ctx.selectShape(shape.id, true);

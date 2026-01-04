@@ -469,6 +469,10 @@ export function isRigidMoveShape(getStruct: GetShapeStruct, shape: Shape): boole
   return !!struct.rigidMove;
 }
 
+export function isRigidShape(getStruct: GetShapeStruct, shape: Shape): boolean {
+  return shape.locked || isRigidMoveShape(getStruct, shape);
+}
+
 export function isNoRotationShape(getStruct: GetShapeStruct, shape: Shape): boolean {
   const struct = getStruct(shape.type);
   return !!struct.noRotation;
