@@ -2,6 +2,8 @@ import { expect, describe, test } from "vitest";
 import { newLineBounding } from "./lineBounding";
 import { struct } from "../shapes/line";
 import { createStyleScheme } from "../models/factories";
+import { newShapeComposite } from "./shapeComposite";
+import { createShape, getCommonStruct } from "../shapes";
 
 describe("newLineBounding", () => {
   describe("hitTest", () => {
@@ -154,6 +156,47 @@ describe("newLineBounding", () => {
 
         expect(target.hitTest({ x: 0, y: -20 })).toEqual(undefined);
         expect(target.hitTest({ x: 100, y: 20 })).toEqual(undefined);
+      });
+    });
+
+    test("should return hit result for line extending", () => {
+      const target = newLineBounding({
+        ...option,
+        shapeComposite: newShapeComposite({
+          getStruct: getCommonStruct,
+          shapes: [
+            option.lineShape,
+            createShape(getCommonStruct, "rectangle", { id: "a", p: { x: -200, y: -50 } }),
+            createShape(getCommonStruct, "rectangle", { id: "b", p: { x: 200, y: -50 } }),
+          ],
+        }),
+      });
+
+      expect(target.hitTest({ x: -200, y: 0 })).toEqual({
+        connection: { id: "a", rate: { x: 0, y: 0.5 } },
+        index: 0,
+        p: { x: -200, y: 0 },
+        type: "extend-and-connect",
+      });
+      expect(target.hitTest({ x: -150, y: 0 })).toEqual(undefined);
+      expect(target.hitTest({ x: -100, y: 0 })).toEqual({
+        connection: { id: "a", rate: { x: 1, y: 0.5 } },
+        index: 0,
+        p: { x: -100, y: 0 },
+        type: "extend-and-connect",
+      });
+      expect(target.hitTest({ x: 200, y: 0 })).toEqual({
+        connection: { id: "b", rate: { x: 0, y: 0.5 } },
+        index: 1,
+        p: { x: 200, y: 0 },
+        type: "extend-and-connect",
+      });
+      expect(target.hitTest({ x: 250, y: 0 })).toEqual(undefined);
+      expect(target.hitTest({ x: 300, y: 0 })).toEqual({
+        connection: { id: "b", rate: { x: 1, y: 0.5 } },
+        index: 1,
+        p: { x: 300, y: 0 },
+        type: "extend-and-connect",
       });
     });
   });
