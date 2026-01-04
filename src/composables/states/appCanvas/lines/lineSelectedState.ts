@@ -47,7 +47,7 @@ import {
 import { getSegments } from "../../../../utils/geometry";
 import { getDistanceSq, IVec2 } from "okageo";
 import { ContextMenuItem } from "../../types";
-import { AppCanvasState } from "../core";
+import { AppCanvasState, AppCanvasStateContext } from "../core";
 import { VnNodeShape } from "../../../../shapes/vectorNetworks/vnNode";
 import { generateFindexAfter, generateFindexBefore } from "../../../shapeRelation";
 import { getInheritableVnNodeProperties, patchBySplitAttachingLine, seekNearbyVnNode } from "../../../vectorNetwork";
@@ -63,7 +63,11 @@ export const newLineSelectedState = defineIntransientState(() => {
   let lineBounding: LineBounding;
 
   const render: AppCanvasState["render"] = (ctx, renderCtx) => {
-    lineBounding.render(renderCtx, ctx.getScale());
+    lineBounding.render(renderCtx, ctx.getScale(), ctx.getViewRect());
+  };
+
+  const lineBoundingHitTest = (ctx: AppCanvasStateContext, p: IVec2) => {
+    return lineBounding.hitTest(p, ctx.getScale(), ctx.getViewRect());
   };
 
   return {
@@ -76,7 +80,7 @@ export const newLineSelectedState = defineIntransientState(() => {
         styleScheme: ctx.getStyleScheme(),
         shapeComposite: ctx.getShapeComposite(),
       });
-      lineBounding.saveHitResult(lineBounding.hitTest(ctx.getCursorPoint(), ctx.getScale()));
+      lineBounding.saveHitResult(lineBoundingHitTest(ctx, ctx.getCursorPoint()));
       ctx.setCommandExams([COMMAND_EXAM_SRC.DELETE_INER_VERTX, ...getCommonCommandExams(ctx)]);
     },
     onEnd: (ctx) => {
@@ -94,7 +98,7 @@ export const newLineSelectedState = defineIntransientState(() => {
 
           switch (event.data.options.button) {
             case 0: {
-              const hitResult = lineBounding.hitTest(event.data.point, ctx.getScale());
+              const hitResult = lineBoundingHitTest(ctx, event.data.point);
               if (hitResult) {
                 if (event.data.options.alt) {
                   return newDuplicatingShapesState;
@@ -193,7 +197,7 @@ export const newLineSelectedState = defineIntransientState(() => {
             case 1:
               return () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render });
             case 2: {
-              const hitResult = lineBounding.hitTest(event.data.point, ctx.getScale());
+              const hitResult = lineBoundingHitTest(ctx, event.data.point);
               lineBounding.saveHitResult(hitResult);
               if (hitResult) return;
 
@@ -209,7 +213,7 @@ export const newLineSelectedState = defineIntransientState(() => {
               return;
           }
         case "pointerhover": {
-          const hitResult = lineBounding.hitTest(event.data.current, ctx.getScale());
+          const hitResult = lineBoundingHitTest(ctx, event.data.current);
           if (lineBounding.saveHitResult(hitResult)) {
             ctx.redraw();
           }
@@ -238,7 +242,7 @@ export const newLineSelectedState = defineIntransientState(() => {
               return handleIntransientEvent(ctx, event);
           }
         case "contextmenu": {
-          const hitResult = lineBounding.hitTest(event.data.point, ctx.getScale());
+          const hitResult = lineBoundingHitTest(ctx, event.data.point);
           const items: ContextMenuItem[] = [];
           if (hitResult?.type === "vertex") {
             const connection = getConnection(lineShape, hitResult.index);
@@ -491,7 +495,7 @@ export const newLineSelectedState = defineIntransientState(() => {
         case "keydown": {
           switch (event.data.key) {
             case "x": {
-              const hitResult = lineBounding.hitTest(ctx.getCursorPoint(), ctx.getScale());
+              const hitResult = lineBoundingHitTest(ctx, ctx.getCursorPoint());
               if (hitResult?.type === "vertex") {
                 const patch = deleteVertex(lineShape, hitResult.index);
                 if (!isObjectEmpty(patch)) {

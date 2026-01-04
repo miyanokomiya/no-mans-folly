@@ -1,4 +1,5 @@
 import {
+  IRectangle,
   IVec2,
   MINVALUE,
   add,
@@ -126,12 +127,13 @@ export function newLineBounding(option: Option) {
 
   let hitResult: LineHitResult | undefined;
 
-  function getExtendAnchors(): Omit<ExtendAndConnectHitResult, "type">[] {
+  function getExtendAnchors(viewRect?: IRectangle): Omit<ExtendAndConnectHitResult, "type">[] {
     const sc = option.shapeComposite;
     if (!sc) return [];
 
     const ret: Omit<ExtendAndConnectHitResult, "type">[] = [];
-    const snappableShapes = sc.shapes.filter((s) => isLineSnappableShape(sc, s));
+    const shapes = viewRect ? sc.getShapesOverlappingRect(sc.shapes, viewRect) : sc.shapes;
+    const snappableShapes = shapes.filter((s) => isLineSnappableShape(sc, s));
     const bounds = sc.getWrapperRectForShapes(snappableShapes);
     const long = getNorm({ x: bounds.width, y: bounds.height });
 
@@ -275,7 +277,7 @@ export function newLineBounding(option: Option) {
     return false;
   }
 
-  function hitTest(p: IVec2, scale = 1): LineHitResult | undefined {
+  function hitTest(p: IVec2, scale = 1, viewRect?: IRectangle): LineHitResult | undefined {
     const vertexSize = VERTEX_R * scale;
     const bezierSize = BEZIER_ANCHOR_SIZE * scale;
     const bezierVicinitySize = BEZIER_ANCHOR_VICINITY_SIZE * scale;
@@ -402,7 +404,7 @@ export function newLineBounding(option: Option) {
     }
 
     {
-      const anchors = getExtendAnchors();
+      const anchors = getExtendAnchors(viewRect);
       const result = findBackward(anchors, (a) => {
         const testFn = newCircleHitTest(a.p, vertexSize);
         return testFn.test(p);
@@ -411,7 +413,7 @@ export function newLineBounding(option: Option) {
     }
   }
 
-  function render(ctx: CanvasCTX, scale = 1) {
+  function render(ctx: CanvasCTX, scale = 1, viewRect?: IRectangle) {
     const vertexSize = VERTEX_R * scale;
     const bezierSize = BEZIER_ANCHOR_SIZE * scale;
     const bezierVicinitySize = BEZIER_ANCHOR_VICINITY_SIZE * scale;
@@ -425,7 +427,7 @@ export function newLineBounding(option: Option) {
     renderBeziers(ctx, vertices, addAnchorBeziers, bezierSize, bezierVicinitySize, scale, style);
 
     {
-      const anchors = getExtendAnchors();
+      const anchors = getExtendAnchors(viewRect);
       const size = vertexSize;
       anchors.forEach((a) => {
         renderOutlinedCircle(ctx, a.p, size, style.transformAnchor);
