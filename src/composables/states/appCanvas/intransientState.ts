@@ -34,14 +34,9 @@ export function defineIntransientState<A extends any[]>(
             const selectedId = ctx.getLastSelectedShapeId();
             const selectedShape = selectedId ? shapeComposite.shapeMap[selectedId] : undefined;
             const selectionScope = selectedShape ? shapeComposite.getSelectionScope(selectedShape) : undefined;
+            const scale = ctx.getScale();
 
-            let shape = findBetterShapeAt(
-              shapeComposite,
-              event.data.current,
-              selectionScope,
-              undefined,
-              ctx.getScale(),
-            );
+            let shape = findBetterShapeAt(shapeComposite, event.data.current, selectionScope, undefined, scale);
             shape =
               shape &&
               isShapeInteratctiveWithinViewport(ctx, shape) &&
@@ -54,7 +49,10 @@ export function defineIntransientState<A extends any[]>(
               ctx.redraw();
             }
 
-            const linkInfo = shape ? getInlineLinkInfoAt(shapeComposite, shape, event.data.current) : undefined;
+            const shapeForLink = shapeComposite.findFrontMostShapeWithDoc(event.data.current, scale);
+            const linkInfo = shapeForLink
+              ? getInlineLinkInfoAt(shapeComposite, shapeForLink, event.data.current)
+              : undefined;
             const prev = ctx.getLinkInfo();
             if (prev?.key !== linkInfo?.key) {
               ctx.setCursor(linkInfo ? "pointer" : undefined);

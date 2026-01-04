@@ -166,6 +166,13 @@ export function newShapeComposite(option: Option) {
     return childCandidate ?? candidate;
   }
 
+  function findFrontMostShapeWithDoc(p: IVec2, scale = 1): Shape | undefined {
+    return findBackward(
+      mergedShapes.filter((s) => shapeModule.canHaveText(getStruct, s)),
+      (s) => shapeModule.isPointOn(getStruct, s, p, mergedShapeContext, scale),
+    );
+  }
+
   function isPointOn(shape: Shape, p: IVec2): boolean {
     return shapeModule.isPointOn(getStruct, shape, p, mergedShapeContext);
   }
@@ -462,6 +469,7 @@ export function newShapeComposite(option: Option) {
     createClipSVGPath,
 
     findShapeAt,
+    findFrontMostShapeWithDoc,
     isPointOn,
     isPointOnOutline,
     transformShape,
