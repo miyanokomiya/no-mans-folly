@@ -82,7 +82,7 @@ export type LineHitResult =
   | {
       type: "new-bezier-anchor" | "bezier-anchor";
       index: number;
-      subIndex: number;
+      subIndex: 0 | 1;
     }
   | ExtendAndConnectHitResult;
 
