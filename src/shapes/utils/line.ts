@@ -499,3 +499,11 @@ export function getMovingLineVertex(patchedLine: LineShape, targetIndex: number)
     return vertices.at(targetIndex);
   }
 }
+
+export function isSameConnection(a?: ConnectionPoint, b?: ConnectionPoint): boolean {
+  if (a?.id !== b?.id) return false;
+  if (a?.rate.x !== b?.rate.x) return false;
+  if (a?.rate.y !== b?.rate.y) return false;
+  if (!!a?.optimized !== !!b?.optimized) return false;
+  return true;
+}

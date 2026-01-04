@@ -17,11 +17,13 @@ import {
   getPatchByReverseLine,
   getPatchByCombineLines,
   getMovingLineVertex,
+  isSameConnection,
 } from "./line";
 import { createShape, getCommonStruct } from "..";
 import { getConnections, getLinePath, LineShape } from "../line";
 import { createLineHead } from "../lineHeads";
 import { struct as lineStruct } from "../line";
+import { ConnectionPoint } from "../../models";
 
 describe("getNakedLineShape", () => {
   test("should return the line with minimum styles", () => {
@@ -742,5 +744,22 @@ describe("getMovingLineVertex", () => {
     expect(getMovingLineVertex(line, 0)).toEqual(line.p);
     expect(getMovingLineVertex(line, 1)).toEqual(line.q);
     expect(getMovingLineVertex(line, 2)).toEqual(line.q);
+  });
+});
+
+describe("isSameConnection", () => {
+  test("should return true when both connection are the same", () => {
+    const a: ConnectionPoint = { id: "a", rate: { x: 0.1, y: 0.2 } };
+    expect(isSameConnection()).toBe(true);
+    expect(isSameConnection(a)).toBe(false);
+    expect(isSameConnection(undefined, a)).toBe(false);
+    expect(isSameConnection(a, a)).toBe(true);
+    expect(isSameConnection(a, { ...a })).toBe(true);
+    expect(isSameConnection(a, { ...a, id: "b" })).toBe(false);
+    expect(isSameConnection(a, { ...a, rate: { x: 0.2, y: 0.2 } })).toBe(false);
+    expect(isSameConnection(a, { ...a, rate: { x: 0.1, y: 0.1 } })).toBe(false);
+    expect(isSameConnection(a, { ...a, rate: { x: 0.1, y: 0.2 } })).toBe(true);
+    expect(isSameConnection(a, { ...a, optimized: false })).toBe(true);
+    expect(isSameConnection(a, { ...a, optimized: true })).toBe(false);
   });
 });

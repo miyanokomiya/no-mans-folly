@@ -12,6 +12,7 @@ import {
   getConnections,
   getLinePath,
   getRelativePointOn,
+  isLineShape,
   patchBodyVertex,
   patchConnection,
   patchVertices,
@@ -70,7 +71,11 @@ export const newLineSelectedState = defineIntransientState(() => {
     onStart: (ctx) => {
       ctx.showFloatMenu();
       lineShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as LineShape;
-      lineBounding = newLineBounding({ lineShape, styleScheme: ctx.getStyleScheme() });
+      lineBounding = newLineBounding({
+        lineShape,
+        styleScheme: ctx.getStyleScheme(),
+        shapeComposite: ctx.getShapeComposite(),
+      });
       lineBounding.saveHitResult(lineBounding.hitTest(ctx.getCursorPoint(), ctx.getScale()));
       ctx.setCommandExams([COMMAND_EXAM_SRC.DELETE_INER_VERTX, ...getCommonCommandExams(ctx)]);
     },
@@ -96,6 +101,21 @@ export const newLineSelectedState = defineIntransientState(() => {
                 }
 
                 switch (hitResult.type) {
+                  case "extend-and-connect": {
+                    const target = hitResult.connection
+                      ? ctx.getShapeComposite().shapeMap[hitResult.connection.id]
+                      : undefined;
+                    if (!target) return ctx.states.newSelectionHubState;
+
+                    const patch = isLineShape(target)
+                      ? patchVertices(lineShape, [[hitResult.index, hitResult.p!, undefined]])
+                      : patchConnection(lineShape, hitResult.index, hitResult.connection);
+                    const layoutPatch = getPatchByLayouts(ctx.getShapeComposite(), {
+                      update: { [lineShape.id]: patch },
+                    });
+                    ctx.patchShapes(layoutPatch);
+                    return ctx.states.newSelectionHubState;
+                  }
                   case "optimize": {
                     const c = getConnection(lineShape, hitResult.index);
                     if (!c) return;

@@ -1,6 +1,28 @@
-import { IVec2, add, getCenter, getOuterRectangle, getRadian, isSame, multi, rotate } from "okageo";
-import { BezierCurveControl, StyleScheme } from "../models";
-import { LineShape, getConnections, getEdges, getLinePath, getRadianP, getRadianQ, isCurveLine } from "../shapes/line";
+import {
+  IVec2,
+  MINVALUE,
+  add,
+  getCenter,
+  getDistance,
+  getNorm,
+  getOuterRectangle,
+  getRadian,
+  isSame,
+  multi,
+  rotate,
+  sub,
+} from "okageo";
+import { BezierCurveControl, ConnectionPoint, StyleScheme } from "../models";
+import {
+  LineShape,
+  getConnections,
+  getEdges,
+  getLinePath,
+  getRadianP,
+  getRadianQ,
+  isCurveLine,
+  isLineShape,
+} from "../shapes/line";
 import { newCircleHitTest } from "./shapeHitTest";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { ISegment, TAU, getCurveLerpFn, isOnDonutArc, isPointCloseToCurveSpline } from "../utils/geometry";
@@ -16,10 +38,14 @@ import {
 } from "../utils/renderer";
 import { getSegmentVicinityFrom, getSegmentVicinityTo } from "../utils/path";
 import { canAddBezierControls, getModifiableBezierControls } from "../shapes/utils/curveLine";
-import { isConnectedToCenter } from "../shapes/utils/line";
+import { isConnectedToCenter, isSameConnection } from "../shapes/utils/line";
 import { CanvasCTX } from "../utils/types";
 import { THRESHOLD_FOR_SEGMENT } from "../shapes/core";
 import { getShapeStatusColor } from "./states/appCanvas/utils/style";
+import { ShapeComposite } from "./shapeComposite";
+import { getIntersectedOutlines } from "../shapes";
+import { isLineSnappableShape, renderConnectionResult } from "./lineSnapping";
+import { findBackward } from "../utils/commons";
 
 const VERTEX_R = 7;
 const ADD_VERTEX_ANCHOR_RATE = 1;
@@ -38,17 +64,31 @@ type LineHitType =
   | "arc-anchor"
   | "optimize"
   | "elbow-edge"
-  | "reset-elbow-edge";
+  | "reset-elbow-edge"
+  | "extend-and-connect";
+type LineHitResultBase = {
+  type: LineHitType;
+  index: number;
+
+  // For type convenience
+  subIndex?: undefined;
+  connection?: ConnectionPoint;
+  p?: IVec2;
+};
 export type LineHitResult =
-  | {
-      type: LineHitType;
-      index: number;
-      subIndex?: undefined; // For type convenience
-    }
+  | LineHitResultBase
   | {
       type: "new-bezier-anchor" | "bezier-anchor";
       index: number;
       subIndex: 0 | 1;
+      connection: undefined;
+    }
+  | {
+      type: "extend-and-connect";
+      index: number;
+      subIndex: undefined;
+      connection: ConnectionPoint;
+      p: IVec2;
     };
 
 type BezierAnchorInfo =
@@ -68,6 +108,7 @@ type BezierAnchorInfo =
 interface Option {
   lineShape: LineShape;
   styleScheme: StyleScheme;
+  shapeComposite?: ShapeComposite;
 }
 
 export function newLineBounding(option: Option) {
@@ -90,6 +131,64 @@ export function newLineBounding(option: Option) {
   const availableVertexIndex = elbow ? new Set([0, vertices.length - 1]) : new Set(vertices.map((_, i) => i));
 
   let hitResult: LineHitResult | undefined;
+
+  function getExtendAnchors(): { p: IVec2; index: number; connection: ConnectionPoint; line: boolean }[] {
+    const sc = option.shapeComposite;
+    if (!sc) return [];
+
+    const ret: { p: IVec2; index: number; connection: ConnectionPoint; line: boolean }[] = [];
+    const snappableShapes = sc.shapes.filter((s) => isLineSnappableShape(sc, s));
+    const bounds = sc.getWrapperRectForShapes(snappableShapes);
+    const long = getNorm({ x: bounds.width, y: bounds.height });
+
+    if (!option.lineShape.pConnection) {
+      const candidates: [IVec2, ConnectionPoint, line: boolean][] = [];
+      const edgeHead = edges[0];
+      const d = getDistance(edgeHead[0], edgeHead[1]);
+      if (d < MINVALUE) return [];
+
+      const from = edgeHead[0];
+      const to = add(from, multi(sub(from, edgeHead[1]), long / d));
+      snappableShapes.forEach((s) =>
+        getIntersectedOutlines(sc.getShapeStruct, s, from, to)?.forEach((p) =>
+          candidates.push([
+            p,
+            {
+              id: s.id,
+              rate: sc.getLocationRateOnShape(s, p),
+            },
+            isLineShape(s),
+          ]),
+        ),
+      );
+      candidates.forEach(([p, connection, line]) => ret.push({ p, index: 0, connection, line }));
+    }
+
+    if (!option.lineShape.qConnection) {
+      const candidates: [IVec2, ConnectionPoint, line: boolean][] = [];
+      const edgeTail = edges[edges.length - 1];
+      const d = getDistance(edgeTail[0], edgeTail[1]);
+      if (d < MINVALUE) return [];
+
+      const from = edgeTail[1];
+      const to = add(from, multi(sub(from, edgeTail[0]), long / d));
+      snappableShapes.forEach((s) =>
+        getIntersectedOutlines(sc.getShapeStruct, s, from, to)?.forEach((p) =>
+          candidates.push([
+            p,
+            {
+              id: s.id,
+              rate: sc.getLocationRateOnShape(s, p),
+            },
+            isLineShape(s),
+          ]),
+        ),
+      );
+      candidates.forEach(([p, connection, line]) => ret.push({ p, index: edges.length, connection, line }));
+    }
+
+    return ret;
+  }
 
   function getResetElbowEdgeAnchors(scale: number): { p: IVec2; index: number; c: IVec2 }[] {
     const ret: { p: IVec2; index: number; c: IVec2 }[] = [];
@@ -170,8 +269,8 @@ export function newLineBounding(option: Option) {
     if (!prev) return true;
     if (prev.type !== result.type) return true;
     if (prev.index !== result.index) return true;
-    if (prev.index !== result.index) return true;
     if (prev.subIndex !== result.subIndex) return true;
+    if (!isSameConnection(prev.connection, result.connection)) return true;
     return false;
   }
 
@@ -300,6 +399,16 @@ export function newLineBounding(option: Option) {
         }
       }
     }
+
+    {
+      const anchors = getExtendAnchors();
+      const result = findBackward(anchors, (a) => {
+        const testFn = newCircleHitTest(a.p, vertexSize);
+        return testFn.test(p);
+      });
+      if (result)
+        return { type: "extend-and-connect", index: result.index, connection: result.connection, p: result.p };
+    }
   }
 
   function render(ctx: CanvasCTX, scale = 1) {
@@ -314,6 +423,40 @@ export function newLineBounding(option: Option) {
 
     renderBeziers(ctx, vertices, bezierViewAnchors, bezierSize, bezierVicinitySize, scale, style);
     renderBeziers(ctx, vertices, addAnchorBeziers, bezierSize, bezierVicinitySize, scale, style);
+
+    {
+      const anchors = getExtendAnchors();
+      const size = vertexSize;
+      anchors.forEach((a) => {
+        renderOutlinedCircle(ctx, a.p, size, style.transformAnchor);
+      });
+
+      if (hitResult?.type === "extend-and-connect") {
+        const hit = anchors.find((a) => isSameConnection(hitResult?.connection, a.connection));
+        if (hit) {
+          renderOutlinedCircle(ctx, hit.p, size, style.selectionSecondaly);
+          const p = vertices[hit.index];
+          applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 3 * scale });
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(hit.p.x, hit.p.y);
+          ctx.stroke();
+
+          if (option.shapeComposite) {
+            renderConnectionResult(ctx, {
+              result: {
+                connection: hit.connection,
+                outlineSrc: hit.connection.id,
+                p: hit.p,
+              },
+              scale,
+              style,
+              shapeComposite: option.shapeComposite,
+            });
+          }
+        }
+      }
+    }
 
     if (!elbow) {
       {
