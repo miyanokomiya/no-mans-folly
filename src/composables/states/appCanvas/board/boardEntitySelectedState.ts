@@ -48,6 +48,7 @@ export const newBoardEntitySelectedState = defineIntransientState(() => {
   };
 
   return {
+    hasHitResult: () => !!boundingBox.retrieveHitResult() || !!boardHitResult,
     getLabel: () => "BoardEntitySelected",
     onStart: (ctx) => {
       const shapeComposite = ctx.getShapeComposite();

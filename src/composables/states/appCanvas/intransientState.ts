@@ -12,6 +12,11 @@ import { isShapeInteratctiveWithinViewport } from "./commons";
 import { newShapeAttachmentHandler } from "../../shapeAttachmentHandler";
 
 /**
+ * Skips the rendering for the hovered shape when "hasHitResult" returns "true".
+ */
+export type IntransientAppCanvasState = AppCanvasState & { hasHitResult?: () => boolean };
+
+/**
  * Event flow specifications.
  * - "handleEvent" of this factory function is always called first.
  *   - No state transition can take place here.
@@ -19,7 +24,7 @@ import { newShapeAttachmentHandler } from "../../shapeAttachmentHandler";
  *   - Its state transition takes place here.
  */
 export function defineIntransientState<A extends any[]>(
-  createFn: (...o: A) => AppCanvasState,
+  createFn: (...o: A) => IntransientAppCanvasState,
 ): (...o: A) => AppCanvasState {
   return (...o: A) => {
     const src = createFn(...o);
@@ -76,7 +81,7 @@ export function defineIntransientState<A extends any[]>(
       render: (ctx, renderCtx) => {
         // Avoid highlighting selected shape.
         // => It should have certain selected appearance provided by other state.
-        if (hoveredShapeId && !ctx.getSelectedShapeIdMap()[hoveredShapeId]) {
+        if (hoveredShapeId && !ctx.getSelectedShapeIdMap()[hoveredShapeId] && !src.hasHitResult?.()) {
           const sc = ctx.getShapeComposite();
           const shape = sc.mergedShapeMap[hoveredShapeId];
           if (shape) {

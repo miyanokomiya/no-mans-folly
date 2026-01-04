@@ -681,7 +681,7 @@ export function newLineBounding(option: Option) {
     }
   }
 
-  return { saveHitResult, hitTest, render };
+  return { saveHitResult, hitTest, render, retrieveHitResult: () => hitResult };
 }
 export type LineBounding = ReturnType<typeof newLineBounding>;
 

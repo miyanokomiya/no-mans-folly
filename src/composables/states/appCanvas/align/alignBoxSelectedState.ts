@@ -44,6 +44,7 @@ export const newAlignBoxSelectedState = defineIntransientState(() => {
   };
 
   return {
+    hasHitResult: () => !!boundingBox.retrieveHitResult() || !!alignBoxHitResult,
     getLabel: () => "AlignBoxSelected",
     onStart: (ctx) => {
       targetId = ctx.getLastSelectedShapeId()!;

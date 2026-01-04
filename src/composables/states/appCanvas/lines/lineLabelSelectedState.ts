@@ -32,6 +32,7 @@ export const newLineLabelSelectedState = defineIntransientState((option?: Option
   };
 
   return {
+    hasHitResult: () => !!boundingBox.retrieveHitResult(),
     getLabel: () => "LineLabelSelected",
     onStart: (ctx) => {
       ctx.setCommandExams([COMMAND_EXAM_SRC.LABEL_ALIGN_ACTIVATE, ...getCommonCommandExams(ctx)]);

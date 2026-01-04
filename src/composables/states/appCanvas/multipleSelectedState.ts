@@ -72,6 +72,10 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
   };
 
   return {
+    hasHitResult: () =>
+      !!boundingBox.retrieveHitResult() ||
+      !!shapeAttachmentHandler.retrieveHitResult() ||
+      !!handler.retrieveHitResult(),
     getLabel: () => "MultipleSelected",
     onStart: (ctx) => {
       selectedIdMap = ctx.getSelectedShapeIdMap();

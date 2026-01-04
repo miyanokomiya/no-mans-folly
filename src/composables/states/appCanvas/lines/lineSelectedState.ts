@@ -71,6 +71,7 @@ export const newLineSelectedState = defineIntransientState(() => {
   };
 
   return {
+    hasHitResult: () => !!lineBounding.retrieveHitResult(),
     getLabel: () => "LineSelected",
     onStart: (ctx) => {
       ctx.showFloatMenu();

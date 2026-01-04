@@ -87,6 +87,11 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
 
     return {
       ...src,
+      hasHitResult: () =>
+        !!shapeHandler.retrieveHitResult() ||
+        !!boundingBox.retrieveHitResult() ||
+        !!smartBranchHandler?.retrieveHitResult() ||
+        !!shapeAttachmentHandler.retrieveHitResult(),
       onStart: (ctx) => {
         targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as S;
         if (!targetShape) return ctx.states.newSelectionHubState;

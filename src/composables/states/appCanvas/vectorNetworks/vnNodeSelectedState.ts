@@ -13,13 +13,13 @@ import {
 } from "../commons";
 import { getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { AppCanvasState } from "../core";
-import { defineIntransientState } from "../intransientState";
+import { defineIntransientState, IntransientAppCanvasState } from "../intransientState";
 import { newPointerDownEmptyState } from "../pointerDownEmptyState";
 import { getShapeStatusColor } from "../utils/style";
 
 export const newVNNodeSelectedState = defineIntransientState(getState);
 
-function getState(): AppCanvasState {
+function getState(): IntransientAppCanvasState {
   let shape: VnNodeShape;
   let shapeHandler: VnNodeHandler;
 
@@ -40,6 +40,7 @@ function getState(): AppCanvasState {
   };
 
   return {
+    hasHitResult: () => !!shapeHandler.retrieveHitResult(),
     getLabel: () => "VNNodeSelected",
     onStart(ctx) {
       shape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as VnNodeShape;

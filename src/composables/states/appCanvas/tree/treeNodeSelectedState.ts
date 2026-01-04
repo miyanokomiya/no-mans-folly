@@ -56,6 +56,7 @@ export const newTreeNodeSelectedState = defineIntransientState(() => {
   };
 
   return {
+    hasHitResult: () => !!boundingBox.retrieveHitResult() || !!treeHandler.retrieveHitResult(),
     getLabel: () => "TreeNodeSelected",
     onStart: (ctx) => {
       ctx.showFloatMenu();
