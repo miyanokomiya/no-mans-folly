@@ -64,32 +64,26 @@ type LineHitType =
   | "arc-anchor"
   | "optimize"
   | "elbow-edge"
-  | "reset-elbow-edge"
-  | "extend-and-connect";
-type LineHitResultBase = {
-  type: LineHitType;
-  index: number;
+  | "reset-elbow-edge";
 
-  // For type convenience
-  subIndex?: undefined;
-  connection?: ConnectionPoint;
-  p?: IVec2;
+type ExtendAndConnectHitResult = {
+  type: "extend-and-connect";
+  index: number;
+  connection: ConnectionPoint;
+  p: IVec2;
 };
+
 export type LineHitResult =
-  | LineHitResultBase
+  | {
+      type: LineHitType;
+      index: number;
+    }
   | {
       type: "new-bezier-anchor" | "bezier-anchor";
       index: number;
-      subIndex: 0 | 1;
-      connection: undefined;
+      subIndex: number;
     }
-  | {
-      type: "extend-and-connect";
-      index: number;
-      subIndex: undefined;
-      connection: ConnectionPoint;
-      p: IVec2;
-    };
+  | ExtendAndConnectHitResult;
 
 type BezierAnchorInfo =
   | {
@@ -132,11 +126,11 @@ export function newLineBounding(option: Option) {
 
   let hitResult: LineHitResult | undefined;
 
-  function getExtendAnchors(): { p: IVec2; index: number; connection: ConnectionPoint; line: boolean }[] {
+  function getExtendAnchors(): Omit<ExtendAndConnectHitResult, "type">[] {
     const sc = option.shapeComposite;
     if (!sc) return [];
 
-    const ret: { p: IVec2; index: number; connection: ConnectionPoint; line: boolean }[] = [];
+    const ret: Omit<ExtendAndConnectHitResult, "type">[] = [];
     const snappableShapes = sc.shapes.filter((s) => isLineSnappableShape(sc, s));
     const bounds = sc.getWrapperRectForShapes(snappableShapes);
     const long = getNorm({ x: bounds.width, y: bounds.height });
@@ -161,7 +155,7 @@ export function newLineBounding(option: Option) {
           ]),
         ),
       );
-      candidates.forEach(([p, connection, line]) => ret.push({ p, index: 0, connection, line }));
+      candidates.forEach(([p, connection]) => ret.push({ p, index: 0, connection }));
     }
 
     if (!option.lineShape.qConnection) {
@@ -184,7 +178,7 @@ export function newLineBounding(option: Option) {
           ]),
         ),
       );
-      candidates.forEach(([p, connection, line]) => ret.push({ p, index: edges.length, connection, line }));
+      candidates.forEach(([p, connection]) => ret.push({ p, index: edges.length, connection }));
     }
 
     return ret;
@@ -269,8 +263,15 @@ export function newLineBounding(option: Option) {
     if (!prev) return true;
     if (prev.type !== result.type) return true;
     if (prev.index !== result.index) return true;
-    if (prev.subIndex !== result.subIndex) return true;
-    if (!isSameConnection(prev.connection, result.connection)) return true;
+    if (prev.type === "new-bezier-anchor" && result.type === "new-bezier-anchor") {
+      if (prev.subIndex !== result.subIndex) return true;
+    }
+    if (prev.type === "bezier-anchor" && result.type === "bezier-anchor") {
+      if (prev.subIndex !== result.subIndex) return true;
+    }
+    if (prev.type === "extend-and-connect" && result.type === "extend-and-connect") {
+      if (!isSameConnection(prev.connection, result.connection)) return true;
+    }
     return false;
   }
 
@@ -406,8 +407,7 @@ export function newLineBounding(option: Option) {
         const testFn = newCircleHitTest(a.p, vertexSize);
         return testFn.test(p);
       });
-      if (result)
-        return { type: "extend-and-connect", index: result.index, connection: result.connection, p: result.p };
+      if (result) return { ...result, type: "extend-and-connect" };
     }
   }
 
@@ -432,7 +432,8 @@ export function newLineBounding(option: Option) {
       });
 
       if (hitResult?.type === "extend-and-connect") {
-        const hit = anchors.find((a) => isSameConnection(hitResult?.connection, a.connection));
+        const connection = hitResult.connection;
+        const hit = anchors.find((a) => isSameConnection(connection, a.connection));
         if (hit) {
           renderOutlinedCircle(ctx, hit.p, size, style.selectionSecondaly);
           const p = vertices[hit.index];
