@@ -26,8 +26,11 @@ export type InlineGroupItem = { bounds: IRectangle; text: string; attributes: Do
 /**
  * "orderedIndex" represents the index for "ordered" markers.
  * Its default value is "-1" when there's no "ordered" marker in the indent.
+ *
+ * "fontSize" represents the font size of the list that may have different sizes within.
+ * This size is used to determine the style of the markers.
  */
-export type ListIndexItem = [list: DocListValue, index: number, orderedIndex: number];
+export type ListIndexItem = [list: DocListValue, index: number, orderedIndex: number, fontSize: number];
 
 export type ListInfo = { head: string; padding: number };
 

@@ -171,12 +171,14 @@ function newQuoteStack() {
 
   function addQuote(nextQuote: number, group: InlineGroupItem) {
     const quote = stackMap.get(nextQuote);
-    const fontSize = group.attributes.size ?? DEFAULT_FONT_SIZE;
-    const listX = group.bounds.x - fontSize * TEXT_ADJUSTMENTS.listLeft;
-    const quoteTo = { x: listX, y: group.bounds.y + group.bounds.height };
     if (quote) {
+      const quoteTo = { x: quote[0].x, y: group.bounds.y + group.bounds.height };
       stackMap.set(nextQuote, [quote[0], quoteTo, quote[2]]);
     } else {
+      // The marker's x-location is derived from the initial group, then other items follow it.
+      const fontSize = group.attributes.size ?? DEFAULT_FONT_SIZE;
+      const listX = group.bounds.x - fontSize * TEXT_ADJUSTMENTS.listLeft;
+      const quoteTo = { x: listX, y: group.bounds.y + group.bounds.height };
       stackMap.set(nextQuote, [{ x: listX, y: group.bounds.y }, quoteTo, group.attributes]);
     }
     currentQuote = nextQuote;
@@ -1210,8 +1212,7 @@ export function applyRangeWidthToLineWord(lineWord: WordItem[][], rangeWidth: nu
     if (!lineEndOutput) return;
 
     listIndexPath = createListIndexPath(listIndexPath, lineEndOutput[2]);
-    const fontSize = lineEndOutput[2]?.size ?? DEFAULT_FONT_SIZE;
-    const listInfo = getListInfoFromPath(listIndexPath, fontSize);
+    const listInfo = getListInfoFromPath(listIndexPath);
 
     const lineRangeWidth = rangeWidth - (listInfo?.padding ?? 0);
     let lineHead = true; // Flag to detect if the unit is the line head.
@@ -1761,12 +1762,12 @@ function getListBulletText(item: ListIndexItem, indent: number): string {
   }
 }
 
-function getListInfoFromPath(listIndexPath: ListIndexItem[], fontSize: number): ListInfo | undefined {
+function getListInfoFromPath(listIndexPath: ListIndexItem[]): ListInfo | undefined {
   const listIndexItem = listIndexPath.at(-1);
   if (!listIndexItem) return;
 
   const bulletText = getListBulletText(listIndexItem, listIndexPath.length - 1);
-  const listPadding = fontSize * bulletText.length;
+  const listPadding = listIndexItem[3] * bulletText.length;
   return { head: bulletText, padding: listPadding };
 }
 
@@ -1790,27 +1791,29 @@ export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttribu
   const indent = attrs.indent ?? 0;
   const orderedAdjustment = attrs.list === "ordered" ? 0 : -1;
 
+  const newFontSize = attrs.size ?? DEFAULT_FONT_SIZE;
   const currentItem = current.at(-1);
   if (!currentItem) {
     // Fulfil up to the indent
     for (let i = 0; i < indent; i++) {
-      ret.push([attrs.list, 0, -1]);
+      ret.push([attrs.list, 0, -1, newFontSize]);
     }
-    ret.push([attrs.list, 0, orderedAdjustment]);
+    ret.push([attrs.list, 0, orderedAdjustment, newFontSize]);
     return ret;
   }
 
   const currentIndent = current.length - 1;
+  const currentFontSize = currentItem[3];
 
   if (currentIndent === indent) {
     // Same level - increment counter with new list type
-    ret[ret.length - 1] = [attrs.list, currentItem[1] + 1, currentItem[2] + 1 + orderedAdjustment];
+    ret[ret.length - 1] = [attrs.list, currentItem[1] + 1, currentItem[2] + 1 + orderedAdjustment, currentFontSize];
   } else if (currentIndent < indent) {
-    // Deeper level - add deeper indent
+    // Deeper level - dig down to the indent
     for (let i = currentIndent; i < indent - 1; i++) {
-      ret.push([currentItem[0], 0, -1]);
+      ret.push([currentItem[0], 0, -1, currentFontSize]);
     }
-    ret.push([attrs.list, 0, orderedAdjustment]);
+    ret.push([attrs.list, 0, orderedAdjustment, newFontSize]);
   } else {
     // Shallower level - discard up to the level
     for (let i = indent; i < currentIndent; i++) {
@@ -1819,7 +1822,7 @@ export function createListIndexPath(current: ListIndexItem[], attrs?: DocAttribu
     // Then increment counter with new list type
     if (ret.length > 0) {
       const i = ret.length - 1;
-      ret[i] = [attrs.list, ret[i][1] + 1, ret[i][2] + 1 + orderedAdjustment];
+      ret[i] = [attrs.list, ret[i][1] + 1, ret[i][2] + 1 + orderedAdjustment, ret[i][3]];
     }
   }
 

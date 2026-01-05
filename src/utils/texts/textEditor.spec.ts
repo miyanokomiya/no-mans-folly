@@ -1854,89 +1854,89 @@ describe("getNextListIndent", () => {
 describe("createListIndexPath", () => {
   test("should return list index creator", () => {
     expect(createListIndexPath([], {})).toEqual([]);
-    expect(createListIndexPath([["bullet", 0, -1]], {})).toEqual([]);
-    expect(createListIndexPath([], { list: "bullet", indent: 0 })).toEqual([["bullet", 0, -1]]);
+    expect(createListIndexPath([["bullet", 0, -1, 3]], {})).toEqual([]);
+    expect(createListIndexPath([], { list: "bullet", indent: 0, size: 3 })).toEqual([["bullet", 0, -1, 3]]);
 
     // Skip level
-    expect(createListIndexPath([], { list: "bullet", indent: 2 })).toEqual([
-      ["bullet", 0, -1],
-      ["bullet", 0, -1],
-      ["bullet", 0, -1],
+    expect(createListIndexPath([], { list: "bullet", indent: 2, size: 3 })).toEqual([
+      ["bullet", 0, -1, 3],
+      ["bullet", 0, -1, 3],
+      ["bullet", 0, -1, 3],
     ]);
 
     // Same level
-    expect(createListIndexPath([["bullet", 0, -1]], { list: "bullet", indent: 0 })).toEqual([["bullet", 1, -1]]);
-    expect(createListIndexPath([["bullet", 0, -1]], { list: "ordered", indent: 0 })).toEqual([["ordered", 1, 0]]);
+    expect(createListIndexPath([["bullet", 0, -1, 3]], { list: "bullet", indent: 0 })).toEqual([["bullet", 1, -1, 3]]);
+    expect(createListIndexPath([["bullet", 0, -1, 3]], { list: "ordered", indent: 0 })).toEqual([["ordered", 1, 0, 3]]);
 
     // Deeper level
-    expect(createListIndexPath([["bullet", 0, -1]], { list: "bullet", indent: 1 })).toEqual([
-      ["bullet", 0, -1],
-      ["bullet", 0, -1],
+    expect(createListIndexPath([["bullet", 0, -1, 3]], { list: "bullet", indent: 1, size: 5 })).toEqual([
+      ["bullet", 0, -1, 3],
+      ["bullet", 0, -1, 5],
     ]);
-    expect(createListIndexPath([["bullet", 0, -1]], { list: "ordered", indent: 1 })).toEqual([
-      ["bullet", 0, -1],
-      ["ordered", 0, 0],
+    expect(createListIndexPath([["bullet", 0, -1, 3]], { list: "ordered", indent: 1, size: 5 })).toEqual([
+      ["bullet", 0, -1, 3],
+      ["ordered", 0, 0, 5],
     ]);
-    expect(createListIndexPath([["bullet", 0, -1]], { list: "bullet", indent: 2 })).toEqual([
-      ["bullet", 0, -1],
-      ["bullet", 0, -1],
-      ["bullet", 0, -1],
+    expect(createListIndexPath([["bullet", 0, -1, 3]], { list: "bullet", indent: 2, size: 5 })).toEqual([
+      ["bullet", 0, -1, 3],
+      ["bullet", 0, -1, 3],
+      ["bullet", 0, -1, 5],
     ]);
-    expect(createListIndexPath([["bullet", 0, -1]], { list: "ordered", indent: 2 })).toEqual([
-      ["bullet", 0, -1],
-      ["bullet", 0, -1],
-      ["ordered", 0, 0],
+    expect(createListIndexPath([["bullet", 0, -1, 3]], { list: "ordered", indent: 2, size: 5 })).toEqual([
+      ["bullet", 0, -1, 3],
+      ["bullet", 0, -1, 3],
+      ["ordered", 0, 0, 5],
     ]);
 
     // Shallower level
     expect(
       createListIndexPath(
         [
-          ["bullet", 0, -1],
-          ["bullet", 0, -1],
-          ["bullet", 0, -1],
+          ["bullet", 0, -1, 3],
+          ["bullet", 0, -1, 3],
+          ["bullet", 0, -1, 3],
         ],
-        { list: "bullet", indent: 0 },
+        { list: "bullet", indent: 0, size: 5 },
       ),
-    ).toEqual([["bullet", 1, -1]]);
+    ).toEqual([["bullet", 1, -1, 3]]);
     expect(
       createListIndexPath(
         [
-          ["bullet", 0, -1],
-          ["bullet", 0, -1],
-          ["bullet", 0, -1],
+          ["bullet", 0, -1, 3],
+          ["bullet", 0, -1, 3],
+          ["bullet", 0, -1, 3],
         ],
-        { list: "bullet", indent: 1 },
+        { list: "bullet", indent: 1, size: 5 },
       ),
     ).toEqual([
-      ["bullet", 0, -1],
-      ["bullet", 1, -1],
+      ["bullet", 0, -1, 3],
+      ["bullet", 1, -1, 3],
     ]);
     expect(
       createListIndexPath(
         [
-          ["bullet", 0, -1],
-          ["bullet", 0, -1],
-          ["bullet", 0, -1],
+          ["bullet", 0, -1, 3],
+          ["bullet", 0, -1, 3],
+          ["bullet", 0, -1, 3],
         ],
-        { list: "ordered", indent: 0 },
+        { list: "ordered", indent: 0, size: 5 },
       ),
-    ).toEqual([["ordered", 1, 0]]);
+    ).toEqual([["ordered", 1, 0, 3]]);
     expect(
       createListIndexPath(
         [
-          ["bullet", 1, -1],
-          ["bullet", 0, -1],
+          ["bullet", 1, -1, 3],
+          ["bullet", 0, -1, 3],
         ],
         { list: "ordered", indent: 0 },
       ),
-    ).toEqual([["ordered", 2, 0]]);
+    ).toEqual([["ordered", 2, 0, 3]]);
     expect(
       createListIndexPath(
         [
-          ["bullet", 0, -1],
-          ["bullet", 0, -1],
-          ["bullet", 0, -1],
+          ["bullet", 0, -1, 3],
+          ["bullet", 0, -1, 3],
+          ["bullet", 0, -1, 3],
         ],
         undefined,
       ),
@@ -1947,45 +1947,45 @@ describe("createListIndexPath", () => {
     expect(
       createListIndexPath(
         [
-          ["bullet", 0, -1],
-          ["bullet", 0, -1],
-          ["ordered", 0, 0],
+          ["bullet", 0, -1, 3],
+          ["bullet", 0, -1, 3],
+          ["ordered", 0, 0, 3],
         ],
         { list: "ordered", indent: 2 },
       ),
     ).toEqual([
-      ["bullet", 0, -1],
-      ["bullet", 0, -1],
-      ["ordered", 1, 1],
+      ["bullet", 0, -1, 3],
+      ["bullet", 0, -1, 3],
+      ["ordered", 1, 1, 3],
     ]);
 
     expect(
       createListIndexPath(
         [
-          ["bullet", 0, -1],
-          ["bullet", 0, -1],
-          ["ordered", 0, 0],
+          ["bullet", 0, -1, 3],
+          ["bullet", 0, -1, 3],
+          ["ordered", 0, 0, 3],
         ],
         { list: "bullet", indent: 2 },
       ),
     ).toEqual([
-      ["bullet", 0, -1],
-      ["bullet", 0, -1],
-      ["bullet", 1, 0],
+      ["bullet", 0, -1, 3],
+      ["bullet", 0, -1, 3],
+      ["bullet", 1, 0, 3],
     ]);
 
     expect(
       createListIndexPath(
         [
-          ["bullet", 0, -1],
-          ["ordered", 0, 0],
-          ["bullet", 0, -1],
+          ["bullet", 0, -1, 3],
+          ["ordered", 0, 0, 3],
+          ["bullet", 0, -1, 3],
         ],
         { list: "ordered", indent: 1 },
       ),
     ).toEqual([
-      ["bullet", 0, -1],
-      ["ordered", 1, 1],
+      ["bullet", 0, -1, 3],
+      ["ordered", 1, 1, 3],
     ]);
   });
 });
