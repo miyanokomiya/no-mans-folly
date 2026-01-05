@@ -33,12 +33,14 @@ import { CanvasCTX } from "../utils/types";
 import { ModifierOptions } from "../utils/devices";
 import { generateShapeLink } from "../utils/texts/textLink";
 import { clipboardShapeSerializer } from "./clipboardSerializers";
+import { newCallback } from "../utils/stateful/reactives";
 
 export type TextEditorInputOptions = Pick<ModifierOptions, "shift"> & Pick<UserSetting, "listDetection">;
 
 type TextEditorControllerOptions = { sheetId: string };
 
 export function newTextEditorController(options: TextEditorControllerOptions) {
+  const cursorCallback = newCallback<[cursor: number, selection: number]>();
   let _ctx: CanvasCTX;
   let _doc: DocOutput;
   let docLength = 0;
@@ -80,9 +82,13 @@ export function newTextEditorController(options: TextEditorControllerOptions) {
     _composition = result.composition;
   }
 
+  /**
+   * Make sure to use this function to update the cursor and the selection
+   */
   function setCursor(c: number, selection = 0) {
     _cursor = Math.max(c, 0);
     _selection = selection;
+    cursorCallback.dispatch([_cursor, _selection]);
   }
 
   function shiftCursorBy(diff: number) {
@@ -170,7 +176,7 @@ export function newTextEditorController(options: TextEditorControllerOptions) {
       getCursorLocation(_compositionLines, getMovingCursor()),
     );
     const p = { x: location.x, y: location.y - location.height * 0.1 };
-    _selection = getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)) - _cursor;
+    setCursor(_cursor, getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)) - _cursor);
   }
 
   function shiftSelectionDown() {
@@ -180,7 +186,7 @@ export function newTextEditorController(options: TextEditorControllerOptions) {
       getCursorLocation(_compositionLines, getMovingCursor()),
     );
     const p = { x: location.x, y: location.y + location.height * 1.1 };
-    _selection = getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)) - _cursor;
+    setCursor(_cursor, getLocationIndex(getCursorLocationAt(_composition, _compositionLines, p)) - _cursor);
   }
 
   function moveCursorLineHead() {
@@ -628,6 +634,8 @@ export function newTextEditorController(options: TextEditorControllerOptions) {
     startIME,
     stopIME,
     render,
+
+    watchCursor: cursorCallback.bind,
   };
 }
 export type TextEditorController = ReturnType<typeof newTextEditorController>;

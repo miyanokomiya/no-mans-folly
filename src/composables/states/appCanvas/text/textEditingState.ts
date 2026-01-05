@@ -43,7 +43,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
   }
 
   function updateEditorPosition(ctx: AppCanvasStateContext) {
-    if (!textEditorController || !applyAffine) return;
+    if (!textEditorController) return;
 
     const bounds = textEditorController.getBoundsAtIME();
     if (!bounds) return;
@@ -85,6 +85,179 @@ export function newTextEditingState(option: Option): AppCanvasState {
 
     textEditorController.render(renderCtx);
     renderCtx.restore();
+  };
+
+  const handleEvent: AppCanvasState["handleEvent"] = (ctx, event) => {
+    switch (event.type) {
+      case "text-input": {
+        const [delta, nextCursor] = textEditorController.getDeltaByInput(event.data.value, {
+          ...modifireOptions,
+          listDetection: ctx.getUserSetting().listDetection,
+        });
+        patchDocument(ctx, delta);
+        textEditorController.setCursor(nextCursor);
+
+        if (event.data.composition) {
+          const inputLength = splitToSegments(event.data.value).length;
+          textEditorController.startIME(inputLength);
+        } else {
+          textEditorController.stopIME();
+        }
+        return;
+      }
+      case "pointerdown": {
+        switch (event.data.options.button) {
+          case 0: {
+            const adjustedP = applyAffine(textBounds.affineReverse, event.data.point);
+
+            // Check if the point is in the doc.
+            // If not, try to find a shape at the point.
+            if (!textEditorController.isInDoc(adjustedP)) {
+              const shapeComposite = ctx.getShapeComposite();
+              shapeComposite.getSelectionScope(shapeComposite.shapeMap[option.id]);
+              const shapeAtPointer = findBetterShapeAt(
+                shapeComposite,
+                event.data.point,
+                shapeComposite.getSelectionScope(shapeComposite.shapeMap[option.id]),
+                undefined,
+                ctx.getScale(),
+              );
+
+              // If the shape is the doc owner, keep editing it.
+              // If not, select the shape.
+              if (shapeAtPointer?.id !== option.id) {
+                if (shapeAtPointer && isShapeInteratctiveWithinViewport(ctx, shapeAtPointer)) {
+                  ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
+                } else {
+                  return {
+                    type: "stack-resume",
+                    getState: () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render }),
+                  };
+                }
+                return ctx.states.newSelectionHubState;
+              }
+            }
+
+            const location = textEditorController.getLocationAt(adjustedP);
+            textEditorController.setCursor(textEditorController.getLocationIndex(location));
+            updateEditorPosition(ctx);
+            return {
+              type: "stack-resume",
+              getState: () => newTextSelectingState({ id: option.id, textEditorController }),
+            };
+          }
+          case 1:
+            ctx.hideFloatMenu();
+            ctx.stopTextEditing();
+            return {
+              type: "stack-resume",
+              getState: () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render }),
+            };
+          default:
+            return;
+        }
+      }
+      case "pointerdoubleclick": {
+        const location = textEditorController.getLocationAt(
+          applyAffine(textBounds.affineReverse, event.data.point),
+          true,
+        );
+        textEditorController.setCursor(textEditorController.getLocationIndex(location));
+        textEditorController.selectWordAtCursor();
+        return;
+      }
+      case "keydown": {
+        updateEditorPosition(ctx);
+        recordModifireOptions(event.data);
+        return handleKeydown(ctx, textEditorController, patchDocument, event);
+      }
+      case "keyup": {
+        recordModifireOptions(event.data);
+        return;
+      }
+      case "shape-updated": {
+        const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
+        if (!shape) return ctx.states.newSelectionHubState;
+
+        if (event.data.keys.has(option.id)) {
+          textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
+          textEditorController.setDoc(getMergedDoc(ctx), textBounds.range);
+          textEditorController.setCursor(ctx.retrieveCursorPosition(cursorInfo), textEditorController.getSelection());
+        }
+        return;
+      }
+      case "tmp-shape-updated": {
+        const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
+        if (!shape) return ctx.states.newSelectionHubState;
+
+        const shapeUpdated = ctx.getTmpShapeMap()[option.id];
+        const docUpdated = ctx.getTmpDocMap()[option.id];
+        if (shapeUpdated || docUpdated) {
+          textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
+          textEditorController.setDoc(getMergedDoc(ctx), textBounds.range);
+          textEditorController.setCursor(ctx.retrieveCursorPosition(cursorInfo), textEditorController.getSelection());
+        }
+        return;
+      }
+      case "text-style": {
+        const attrs = event.data.value;
+        const currentInfo = textEditorController.getCurrentAttributeInfo();
+        let ops: DocDelta;
+        let nextInfo: DocAttrInfo;
+
+        if (event.data.doc) {
+          ops = textEditorController.getDeltaByApplyDocStyle(attrs);
+          nextInfo = { ...currentInfo, doc: { ...currentInfo.doc, ...attrs } };
+        } else if (event.data.block) {
+          ops = textEditorController.getDeltaByApplyBlockStyle(attrs);
+          nextInfo = { ...currentInfo, block: { ...currentInfo.block, ...attrs } };
+        } else {
+          ops = textEditorController.getDeltaByApplyInlineStyle(attrs);
+          nextInfo = { ...currentInfo, cursor: { ...currentInfo.cursor, ...attrs } };
+        }
+
+        patchDocument(ctx, ops, event.data.draft);
+        ctx.setCurrentDocAttrInfo(nextInfo);
+        return;
+      }
+      case "close-emoji-picker":
+        ctx.setShowEmojiPicker(false);
+        return;
+      case "wheel":
+        handleCommonWheel(ctx, event);
+        return;
+      case "selection": {
+        return ctx.states.newSelectionHubState;
+      }
+      case "history":
+        handleHistoryEvent(ctx, event);
+        return ctx.states.newSelectionHubState;
+      case "state":
+        return handleStateEvent(ctx, event, getCommonAcceptableEvents(["Break", "ShapeInspection"]));
+      case "copy": {
+        const clipboard = newDocClipboard(
+          textEditorController.getSelectedDocOutput(),
+          textEditorController.copyPlainText(),
+        );
+        clipboard.onCopy(event.nativeEvent);
+        return;
+      }
+      case "paste": {
+        const clipboard = newDocClipboard([], "", (doc, plain) => {
+          const pastedInfo = textEditorController.getDeltaByPaste(doc, plain || event.data.shift);
+          patchDocument(ctx, pastedInfo.delta);
+          textEditorController.setCursor(pastedInfo.cursor, pastedInfo.selection);
+        });
+        clipboard.onPaste(event.nativeEvent);
+        return;
+      }
+      case "file-drop": {
+        handleFileDrop(ctx, event);
+        return;
+      }
+      default:
+        return;
+    }
   };
 
   return {
@@ -161,178 +334,10 @@ export function newTextEditingState(option: Option): AppCanvasState {
       }
     },
     handleEvent: (ctx, event) => {
-      switch (event.type) {
-        case "text-input": {
-          const [delta, nextCursor] = textEditorController.getDeltaByInput(event.data.value, {
-            ...modifireOptions,
-            listDetection: ctx.getUserSetting().listDetection,
-          });
-          patchDocument(ctx, delta);
-          textEditorController.setCursor(nextCursor);
-
-          if (event.data.composition) {
-            const inputLength = splitToSegments(event.data.value).length;
-            textEditorController.startIME(inputLength);
-          } else {
-            textEditorController.stopIME();
-          }
-          return;
-        }
-        case "pointerdown": {
-          switch (event.data.options.button) {
-            case 0: {
-              const adjustedP = applyAffine(textBounds.affineReverse, event.data.point);
-
-              // Check if the point is in the doc.
-              // If not, try to find a shape at the point.
-              if (!textEditorController.isInDoc(adjustedP)) {
-                const shapeComposite = ctx.getShapeComposite();
-                shapeComposite.getSelectionScope(shapeComposite.shapeMap[option.id]);
-                const shapeAtPointer = findBetterShapeAt(
-                  shapeComposite,
-                  event.data.point,
-                  shapeComposite.getSelectionScope(shapeComposite.shapeMap[option.id]),
-                  undefined,
-                  ctx.getScale(),
-                );
-
-                // If the shape is the doc owner, keep editing it.
-                // If not, select the shape.
-                if (shapeAtPointer?.id !== option.id) {
-                  if (shapeAtPointer && isShapeInteratctiveWithinViewport(ctx, shapeAtPointer)) {
-                    ctx.selectShape(shapeAtPointer.id, event.data.options.ctrl);
-                  } else {
-                    return {
-                      type: "stack-resume",
-                      getState: () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render }),
-                    };
-                  }
-                  return ctx.states.newSelectionHubState;
-                }
-              }
-
-              const location = textEditorController.getLocationAt(adjustedP);
-              textEditorController.setCursor(textEditorController.getLocationIndex(location));
-              updateEditorPosition(ctx);
-              onCursorUpdated(ctx);
-              return {
-                type: "stack-resume",
-                getState: () => newTextSelectingState({ id: option.id, textEditorController }),
-              };
-            }
-            case 1:
-              ctx.hideFloatMenu();
-              ctx.stopTextEditing();
-              return {
-                type: "stack-resume",
-                getState: () => newPointerDownEmptyState({ ...event.data.options, renderWhilePanning: render }),
-              };
-            default:
-              return;
-          }
-        }
-        case "pointerdoubleclick": {
-          const location = textEditorController.getLocationAt(
-            applyAffine(textBounds.affineReverse, event.data.point),
-            true,
-          );
-          textEditorController.setCursor(textEditorController.getLocationIndex(location));
-          textEditorController.selectWordAtCursor();
-          onCursorUpdated(ctx);
-          return;
-        }
-        case "keydown": {
-          updateEditorPosition(ctx);
-          recordModifireOptions(event.data);
-          return handleKeydown(ctx, textEditorController, onCursorUpdated, patchDocument, event);
-        }
-        case "keyup": {
-          recordModifireOptions(event.data);
-          return;
-        }
-        case "shape-updated": {
-          const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
-          if (!shape) return ctx.states.newSelectionHubState;
-
-          if (event.data.keys.has(option.id)) {
-            textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
-            textEditorController.setDoc(getMergedDoc(ctx), textBounds.range);
-            textEditorController.setCursor(ctx.retrieveCursorPosition(cursorInfo), textEditorController.getSelection());
-          }
-          return;
-        }
-        case "tmp-shape-updated": {
-          const shape = ctx.getShapeComposite().mergedShapeMap[option.id];
-          if (!shape) return ctx.states.newSelectionHubState;
-
-          const shapeUpdated = ctx.getTmpShapeMap()[option.id];
-          const docUpdated = ctx.getTmpDocMap()[option.id];
-          if (shapeUpdated || docUpdated) {
-            textBounds = getShapeTextBounds(ctx.getShapeStruct, shape);
-            textEditorController.setDoc(getMergedDoc(ctx), textBounds.range);
-            textEditorController.setCursor(ctx.retrieveCursorPosition(cursorInfo), textEditorController.getSelection());
-          }
-          return;
-        }
-        case "text-style": {
-          const attrs = event.data.value;
-          const currentInfo = textEditorController.getCurrentAttributeInfo();
-          let ops: DocDelta;
-          let nextInfo: DocAttrInfo;
-
-          if (event.data.doc) {
-            ops = textEditorController.getDeltaByApplyDocStyle(attrs);
-            nextInfo = { ...currentInfo, doc: { ...currentInfo.doc, ...attrs } };
-          } else if (event.data.block) {
-            ops = textEditorController.getDeltaByApplyBlockStyle(attrs);
-            nextInfo = { ...currentInfo, block: { ...currentInfo.block, ...attrs } };
-          } else {
-            ops = textEditorController.getDeltaByApplyInlineStyle(attrs);
-            nextInfo = { ...currentInfo, cursor: { ...currentInfo.cursor, ...attrs } };
-          }
-
-          patchDocument(ctx, ops, event.data.draft);
-          ctx.setCurrentDocAttrInfo(nextInfo);
-          return;
-        }
-        case "close-emoji-picker":
-          ctx.setShowEmojiPicker(false);
-          return;
-        case "wheel":
-          handleCommonWheel(ctx, event);
-          return;
-        case "selection": {
-          return ctx.states.newSelectionHubState;
-        }
-        case "history":
-          handleHistoryEvent(ctx, event);
-          return ctx.states.newSelectionHubState;
-        case "state":
-          return handleStateEvent(ctx, event, getCommonAcceptableEvents(["Break", "ShapeInspection"]));
-        case "copy": {
-          const clipboard = newDocClipboard(
-            textEditorController.getSelectedDocOutput(),
-            textEditorController.copyPlainText(),
-          );
-          clipboard.onCopy(event.nativeEvent);
-          return;
-        }
-        case "paste": {
-          const clipboard = newDocClipboard([], "", (doc, plain) => {
-            const pastedInfo = textEditorController.getDeltaByPaste(doc, plain || event.data.shift);
-            patchDocument(ctx, pastedInfo.delta);
-            textEditorController.setCursor(pastedInfo.cursor, pastedInfo.selection);
-          });
-          clipboard.onPaste(event.nativeEvent);
-          return;
-        }
-        case "file-drop": {
-          handleFileDrop(ctx, event);
-          return;
-        }
-        default:
-          return;
-      }
+      const unwatchCursor = textEditorController.watchCursor(() => onCursorUpdated(ctx));
+      const result = handleEvent(ctx, event);
+      unwatchCursor();
+      return result;
     },
     render,
   };
@@ -341,7 +346,6 @@ export function newTextEditingState(option: Option): AppCanvasState {
 function handleKeydown(
   ctx: AppCanvasStateContext,
   textEditorController: TextEditorController,
-  onCursorUpdated: (ctx: AppCanvasStateContext) => void,
   patchDocument: (ctx: AppCanvasStateContext, delta: DocDelta) => void,
   event: KeyDownEvent,
 ): TransitionValue<AppCanvasStateContext> {
@@ -356,52 +360,44 @@ function handleKeydown(
         } else {
           textEditorController.selectAll();
         }
-        onCursorUpdated(ctx);
       }
       return;
     case "Home":
       event.data.prevent?.();
       textEditorController.moveCursorLineHead();
-      onCursorUpdated(ctx);
       return;
     case "End":
       event.data.prevent?.();
       textEditorController.moveCursorLineTail();
-      onCursorUpdated(ctx);
       return;
     case "e":
       if (event.data.ctrl) {
         event.data.prevent?.();
         textEditorController.moveCursorLineTail();
-        onCursorUpdated(ctx);
       }
       return;
     case "f":
       if (event.data.ctrl) {
         event.data.prevent?.();
         textEditorController.shiftCursorBy(1);
-        onCursorUpdated(ctx);
       }
       return;
     case "b":
       if (event.data.ctrl) {
         event.data.prevent?.();
         textEditorController.shiftCursorBy(-1);
-        onCursorUpdated(ctx);
       }
       return;
     case "n":
       if (event.data.ctrl) {
         event.data.prevent?.();
         textEditorController.moveCursorDown();
-        onCursorUpdated(ctx);
       }
       return;
     case "p":
       if (event.data.ctrl) {
         event.data.prevent?.();
         textEditorController.moveCursorUp();
-        onCursorUpdated(ctx);
       }
       return;
     case "h":
@@ -445,7 +441,6 @@ function handleKeydown(
       const deltaForIndent = textEditorController.getDeltaByChangeIndent(event.data.shift ? -1 : 1);
       if (deltaForIndent.length > 0) {
         patchDocument(ctx, deltaForIndent);
-        onCursorUpdated(ctx);
         return;
       }
 
@@ -463,7 +458,6 @@ function handleKeydown(
       } else {
         textEditorController.shiftCursorBy(-1);
       }
-      onCursorUpdated(ctx);
       return;
     case "ArrowRight": {
       if (event.data.shift) {
@@ -471,7 +465,6 @@ function handleKeydown(
       } else {
         textEditorController.shiftCursorBy(1);
       }
-      onCursorUpdated(ctx);
       return;
     }
     case "ArrowUp":
@@ -480,7 +473,6 @@ function handleKeydown(
       } else {
         textEditorController.moveCursorUp();
       }
-      onCursorUpdated(ctx);
       return;
     case "ArrowDown":
       if (event.data.shift) {
@@ -488,7 +480,6 @@ function handleKeydown(
       } else {
         textEditorController.moveCursorDown();
       }
-      onCursorUpdated(ctx);
       return;
     case "Backspace": {
       const info = textEditorController.getDeltaAndCursorByBackspace();
