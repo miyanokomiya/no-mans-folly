@@ -140,6 +140,7 @@ function renderQuote(ctx: CanvasCTX, [from, to, attrs]: QuoteStackItem) {
   const fontSize = attrs?.size ?? DEFAULT_FONT_SIZE;
   ctx.lineWidth = fontSize * TEXT_ADJUSTMENTS.quoteWidth;
   ctx.strokeStyle = attrs?.color ?? "#000";
+  ctx.lineCap = "butt"; // Should be "butt", otherwise it can overlap background of other lines
   ctx.beginPath();
   ctx.moveTo(from.x, from.y);
   ctx.lineTo(to.x, to.y);
@@ -295,6 +296,7 @@ export function renderDocByComposition(
       if (group.attributes.underline || group.attributes.strike) {
         applyDefaultStrokeStyle(ctx);
         ctx.lineWidth = fontHeight * TEXT_ADJUSTMENTS.lineWidth;
+        ctx.lineCap = "butt";
         if (group.attributes.color) {
           ctx.strokeStyle = group.attributes.color;
         }
@@ -355,7 +357,11 @@ export function renderSVGDocByComposition(
     },
     children: [],
   };
-  const fwElement: SVGElementInfo = { tag: "g", attributes: { stroke: "#000" }, children: [] };
+  const fwElement: SVGElementInfo = {
+    tag: "g",
+    attributes: { stroke: "#000" },
+    children: [],
+  };
   const rootElement: SVGElementInfo = {
     tag: "g",
     attributes: {
