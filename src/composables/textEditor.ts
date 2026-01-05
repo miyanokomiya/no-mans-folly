@@ -462,12 +462,13 @@ export function newTextEditorController(options: TextEditorControllerOptions) {
     const cursor = getCursor();
     const selection = getSelection();
 
-    // When the selection reaches the doc end, apply the style to the line break at the doc end.
-    // => Otherwise, there's no way to change inline style of it but changing whole doc style.
-    const lastSelected = cursor + selection === docLength - 1;
+    // When the selection reaches the line end, apply the style to the line break.
+    // => The line break will provide the style to new line when line break happens.
+    // This style may differ from one of the visible line end character, but it works fine for most cases.
+    const linebreakSelected = isLinebreak(_composition[cursor + selection].char);
 
     const outputCursor = getOutputCursor();
-    const outputSelection = getOutputSelection() + (lastSelected ? 1 : 0);
+    const outputSelection = getOutputSelection() + (linebreakSelected ? 1 : 0);
 
     if (outputSelection === 0) return [];
     return [{ retain: outputCursor }, { retain: outputSelection, attributes: attrs }];
@@ -687,6 +688,7 @@ function renderCursor(
 ) {
   ctx.strokeStyle = "#000";
   ctx.lineWidth = 2;
+  ctx.lineCap = "butt";
   ctx.setLineDash([]);
 
   if (composition.length === 0) {
