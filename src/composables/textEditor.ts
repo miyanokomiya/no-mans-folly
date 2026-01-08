@@ -259,12 +259,13 @@ export function newTextEditorController(options: TextEditorControllerOptions) {
       };
       if (selection === 0) return pasteAsPlain();
 
-      if (textEditorUtil.isUrlText(text)) {
-        // Make current selection link when pasted text is URL
+      const trimmed = text.trim();
+      if (textEditorUtil.isUrlText(trimmed, true)) {
+        // Make current selection link when trimmed-pasted text is URL
         return {
           delta: [
             { retain: getOutputCursor() },
-            { retain: selection, attributes: { ...LINK_STYLE_ATTRS, link: text } },
+            { retain: selection, attributes: { ...LINK_STYLE_ATTRS, link: trimmed } },
           ],
           cursor: getCursor(),
           selection: getSelection(),

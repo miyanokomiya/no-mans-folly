@@ -65,8 +65,12 @@ describe("isUrlText", () => {
     expect(isUrlText("http://example.com", true)).toBe(true);
     expect(isUrlText("abc https://example.com abc", true)).toBe(false);
     expect(isUrlText(" https://example.com", true)).toBe(false);
-    // Tail part can be anithing
-    expect(isUrlText("https://example.com ", true)).toBe(true);
+    // Tail part can be anithing other than white space
+    expect(isUrlText("https://example.com+", true)).toBe(true);
+    expect(isUrlText("https://example.com ", true)).toBe(false);
+    expect(isUrlText("https://example.com\t", true)).toBe(false);
+    expect(isUrlText("https://example.com\n", true)).toBe(false);
+    expect(isUrlText("https://example.com a", true)).toBe(false);
   });
 });
 

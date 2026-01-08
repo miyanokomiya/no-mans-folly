@@ -66,7 +66,7 @@ export const TEXT_ADJUSTMENTS = {
 };
 
 export const URL_TEXT_REG = /https?:\/\/[^\s]+/;
-export const URL_TEXT_EXACT_REG = /^https?:\/\/[^\s]+/;
+export const URL_TEXT_EXACT_REG = /^https?:\/\/[^\s]+$/;
 
 export const ORDERED_LIST_PATTERN = /^(\d+\.)\s/;
 export const BULLET_LIST_PATTERN = /^([-*•])\s/;
