@@ -120,6 +120,7 @@ export const lineTypeList: ShapeTypeItem[] = [
 
 export const layoutTypeList: ShapeTypeItem[] = [
   { type: "align_box", icon: iconLayoutAlignBox },
+  { type: "table", icon: iconLayoutAlignBox },
   { type: "tree_root", icon: iconLayoutBranch },
   { type: "board_root", icon: iconLayoutBoard },
 ];

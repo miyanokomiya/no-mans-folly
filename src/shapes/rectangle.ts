@@ -1,5 +1,4 @@
 import {
-  IRectangle,
   IVec2,
   applyAffine,
   getCenter,
@@ -8,12 +7,10 @@ import {
   getRectCenter,
   isSame,
   pathSegmentRawsToString,
-  rotate,
 } from "okageo";
 import { CommonStyle } from "../models";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
-  getClosestOutlineOnRectangle,
   getRectPoints,
   getRotateFn,
   getRotatedWrapperRect,
@@ -36,7 +33,7 @@ import {
 } from "./core";
 import { createBoxPadding, getPaddingRect } from "../utils/boxPadding";
 import { renderTransform } from "../utils/svgElements";
-import { RectPolygonShape } from "./rectPolygon";
+import { getClosestOutlineForRect, RectPolygonShape } from "./rectPolygon";
 import { applyPath, createSVGCurvePath } from "../utils/renderer";
 import { getClosestPointOnPolyline, getPolylineEdgeInfo } from "../utils/path";
 
@@ -140,20 +137,7 @@ export const struct: ShapeStruct<RectangleShape> = {
   },
   getClosestOutline(shape, p, threshold, thresholdForMarker = threshold) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
-    const center = getRectCenter(rect);
-    const rotateFn = getRotateFn(shape.rotation, center);
-    const rotatedP = rotateFn(p, true);
-
-    {
-      const markers = getMarkers(rect, center);
-      const rotatedClosest = markers.find((m) => getDistance(m, rotatedP) <= thresholdForMarker);
-      if (rotatedClosest) return rotateFn(rotatedClosest);
-    }
-
-    {
-      const rotatedClosest = getClosestOutlineOnRectangle(rect, rotatedP, threshold);
-      if (rotatedClosest) return rotateFn(rotatedClosest);
-    }
+    return getClosestOutlineForRect(rect, shape.rotation, p, threshold, thresholdForMarker);
   },
   getIntersectedOutlines(shape, from, to) {
     const polygon = getLocalRectPolygon(shape);
@@ -180,18 +164,6 @@ export const struct: ShapeStruct<RectangleShape> = {
 function getLocalRectPolygon(shape: RectangleShape): IVec2[] {
   const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
   const c = getRectCenter(rect);
-  return getRectPoints(rect).map((p) => rotate(p, shape.rotation, c));
-}
-
-function getMarkers(rect: IRectangle, center: IVec2): IVec2[] {
-  return [
-    { x: rect.x, y: rect.y },
-    { x: center.x, y: rect.y },
-    { x: rect.x + rect.width, y: rect.y },
-    { x: rect.x + rect.width, y: center.y },
-    { x: rect.x + rect.width, y: rect.y + rect.height },
-    { x: center.x, y: rect.y + rect.height },
-    { x: rect.x, y: rect.y + rect.height },
-    { x: rect.x, y: center.y },
-  ];
+  const rotateFn = getRotateFn(shape.rotation, c);
+  return getRectPoints(rect).map((p) => rotateFn(p));
 }

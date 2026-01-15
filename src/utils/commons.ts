@@ -202,6 +202,14 @@ export function convertMapToObject<T>(map: Map<string, T>): { [key: string]: T }
   return ret;
 }
 
+export function convertMapValueToObject<T>(mapValue: [string, T][]): { [key: string]: T } {
+  const ret: { [key: string]: T } = {};
+  mapValue.forEach(([key, val]) => {
+    ret[key] = val;
+  });
+  return ret;
+}
+
 /**
  * "undefined" property is considered as non-empty value unless "ignoreUndefined" is set true.
  */

@@ -45,6 +45,7 @@ import { struct as board_column } from "./board/boardColumn";
 import { struct as board_lane } from "./board/boardLane";
 import { struct as board_card } from "./board/boardCard";
 import { struct as align_box } from "./align/alignBox";
+import { struct as table } from "./table/table";
 
 import { struct as vn_node } from "./vectorNetworks/vnNode";
 
@@ -102,6 +103,7 @@ export const SHAPE_COMMON_STRUCTS: {
   board_lane,
   board_card,
   align_box,
+  table,
 
   vn_node,
 

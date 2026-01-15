@@ -326,6 +326,17 @@ describe("convertMapToObject", () => {
   });
 });
 
+describe("convertMapValueToObject", () => {
+  test("should convert Map values to Object", () => {
+    expect(
+      target.convertMapValueToObject([
+        ["a", { val: 1 }],
+        ["b", { val: 2 }],
+      ]),
+    ).toEqual({ a: { val: 1 }, b: { val: 2 } });
+  });
+});
+
 describe("isObjectEmpty", () => {
   test("should return true when the object has no entry", () => {
     expect(target.isObjectEmpty({})).toBe(true);
