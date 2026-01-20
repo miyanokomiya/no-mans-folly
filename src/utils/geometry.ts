@@ -1009,7 +1009,7 @@ function getBezierValue(v1: number, v2: number, c1: number, c2: number, t: numbe
 
 /**
  * These parameters are compatible to HTML canvas "arc" method.
- * => "from" and "to" reprenset absolete positions on the circumference.
+ * => "from" and "to" reprenset absolute positions on the circumference.
  * ex) from:0, to: -pi/2 => The curve still should be clockwise.
  */
 interface ArcCurveParams {

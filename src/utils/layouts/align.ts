@@ -1,7 +1,7 @@
-import { IRectangle, IVec2, MINVALUE, add } from "okageo";
+import { IRectangle, IVec2, MINVALUE } from "okageo";
 import { BoxValues4, Direction2 } from "../../models";
 import { TreeNode, getTree } from "../tree";
-import { LayoutFn, LayoutNode } from "./core";
+import { LayoutFn, LayoutNode, toAbsoluteRectMap } from "./core";
 import { getWrapperRect } from "../geometry";
 import { getNegativePaddingRect } from "../boxPadding";
 
@@ -35,7 +35,7 @@ export interface AlignLayoutBox extends AlignLayoutBase {
    */
   baseWidth?: number;
   baseHeight?: number;
-  padding?: BoxValues4; // absolete values
+  padding?: BoxValues4; // absolute values
   /**
    * Works same as CSS flex.
    * "start" by default.
@@ -53,36 +53,7 @@ export const alignLayout: LayoutFn<AlignLayoutNode> = (src) => {
 
 export function getAlignRectMap(nodeMap: Map<string, AlignLayoutNode>, treeRoots: TreeNode[]): Map<string, IRectangle> {
   const relativeMap = getAlignRelativeRectMap(nodeMap, treeRoots);
-  return toAbsoleteRectMap(nodeMap, relativeMap, treeRoots);
-}
-
-function toAbsoleteRectMap(
-  nodeMap: Map<string, AlignLayoutNode>,
-  relativeMap: Map<string, IRectangle>,
-  treeRoots: TreeNode[],
-): Map<string, IRectangle> {
-  const ret = new Map<string, IRectangle>();
-  treeRoots.forEach((t) => {
-    const node = nodeMap.get(t.id)!;
-    toAbsoleteRectMapStep(ret, relativeMap, t, node.rect);
-  });
-  return ret;
-}
-
-function toAbsoleteRectMapStep(
-  ret: Map<string, IRectangle>,
-  relativeMap: Map<string, IRectangle>,
-  treeNode: TreeNode,
-  offset: IVec2,
-) {
-  const rect = relativeMap.get(treeNode.id)!;
-  const newOffset = add(offset, rect);
-
-  treeNode.children.forEach((c) => {
-    toAbsoleteRectMapStep(ret, relativeMap, c, newOffset);
-  });
-
-  ret.set(treeNode.id, { ...rect, x: rect.x + offset.x, y: rect.y + offset.y });
+  return toAbsoluteRectMap(nodeMap, relativeMap, treeRoots);
 }
 
 /**

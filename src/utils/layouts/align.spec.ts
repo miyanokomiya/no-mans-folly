@@ -55,7 +55,7 @@ const entity11: AlignLayoutNode = {
 };
 
 describe("getAlignRectMap", () => {
-  test("should return absolete aligned rects: vertical & nested box", () => {
+  test("should return absolute aligned rects: vertical & nested box", () => {
     const nodes = [
       { ...box0, rect: { ...box0.rect, x: 1, y: 2 } },
       entity0,
