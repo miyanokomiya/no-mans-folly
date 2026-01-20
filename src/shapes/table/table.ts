@@ -253,10 +253,15 @@ export function isTableShape(shape: Shape): shape is TableShape {
   return shape.type === "table";
 }
 
-function getTableLocalBounds(shape: TableShape): IRectangle {
+export function getTableSize(shape: TableShape): Size {
   const info = getTableShapeInfo(shape);
   const width = info?.columns.reduce((p, v) => p + v.size, 0) ?? 0;
   const height = info?.rows.reduce((p, v) => p + v.size, 0) ?? 0;
+  return { width, height };
+}
+
+function getTableLocalBounds(shape: TableShape): IRectangle {
+  const { width, height } = getTableSize(shape);
   return { x: shape.p.x, y: shape.p.y, width, height };
 }
 
@@ -270,7 +275,7 @@ function getLocalRectPolygon(shape: TableShape) {
 /**
  * Returns "undefined" when tha table is invalid
  */
-function getTableShapeInfo(shape: Partial<TableShape>): TableShapeInfo | undefined {
+export function getTableShapeInfo(shape: Partial<TableShape>): TableShapeInfo | undefined {
   const columns: TableColumn[] = [];
   const rows: TableRow[] = [];
   const keys = Object.keys(shape) as (keyof TableShape)[];

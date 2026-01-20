@@ -20,7 +20,7 @@ import { getBranchPath } from "../utils/tree";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { DocOutput } from "../models/document";
-import { createShape, hasSpecialOrderPriority } from "../shapes";
+import { createShape } from "../shapes";
 import { RectangleShape } from "../shapes/rectangle";
 import {
   ISegment,
@@ -37,13 +37,10 @@ import { applyFillStyle } from "../utils/fillStyle";
 import { renderArrowUnit, renderOutlinedCircle, renderRoundedSegment, renderValueLabel } from "../utils/renderer";
 import { COLORS } from "../utils/color";
 import { getPaddingRect } from "../utils/boxPadding";
-import { isLineShape } from "../shapes/line";
 import { isObjectEmpty, toMap } from "../utils/commons";
 import { ANCHOR_SIZE, DIRECTION_ANCHOR_SIZE } from "./shapeHandlers/simplePolygonHandler";
 import { generateKeyBetween } from "../utils/findex";
 import { CanvasCTX } from "../utils/types";
-import { isVNNodeShape } from "../shapes/vectorNetworks/vnNode";
-import { isGroupShape } from "../shapes/group";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -1023,36 +1020,6 @@ export function getModifiedAlignRootIds(
   }
 
   return Array.from(targetRootIdSet).filter((id) => !deletedRootIdSet.has(id));
-}
-
-export function canJoinAlignBox(shapeComposite: ShapeComposite, shape: Shape): boolean {
-  if (hasSpecialOrderPriority(shapeComposite.getShapeStruct, shape)) return false;
-  // It may be better to let shape structs decide whether the shape can be joined or not.
-  // But for now, there's not so many shape types that should be excluded.
-  if (isLineShape(shape) || isVNNodeShape(shape)) return false;
-  if (!shape.parentId) return true;
-
-  const parent = shapeComposite.shapeMap[shape.parentId];
-  if (!parent) return true;
-
-  return isAlignBoxShape(parent) || isGroupShape(parent);
-}
-
-/**
- * Check if all shapes can be joined to the same align box.
- */
-export function canShapesJoinAlignBox(shapeComposite: ShapeComposite, shapes: Shape[]): boolean {
-  if (shapes.length === 0) return false;
-  // Check individual shapes.
-  if (shapes.some((shape) => !canJoinAlignBox(shapeComposite, shape))) return false;
-
-  // Check if all shapes have no parent or the same parent.
-  const indexParentId = shapeComposite.hasParent(shapes[0]) ? shapes[0].parentId : undefined;
-  if (indexParentId) {
-    return shapes.every((shape) => shape.parentId === indexParentId);
-  } else {
-    return shapes.every((shape) => !shapeComposite.hasParent(shape));
-  }
 }
 
 export function generateAlignTemplate(

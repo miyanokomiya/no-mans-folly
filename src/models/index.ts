@@ -38,6 +38,11 @@ export interface Shape extends Entity {
   noBounds?: boolean; // When this is set true, the shape doesn't affect the bounds of the parent shape.
   alpha?: number; // "undefined" should mean 1.
   attachment?: ShapeAttachment;
+  /**
+   * Represents additional parent information.
+   * e.g. `${rowId}:${columnId}` when the parent is a table.
+   */
+  parentMeta?: string;
 }
 
 export type ClipRule = "out" | "in";

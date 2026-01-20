@@ -4,10 +4,11 @@ import { isBoardCardShape } from "../../../shapes/board/boardCard";
 import { isBoardRootShape } from "../../../shapes/board/boardRoot";
 import { isFrameShape } from "../../../shapes/frame";
 import { FrameAlignGroupShape, isFrameAlignGroupShape } from "../../../shapes/frameGroups/frameAlignGroup";
+import { TableShape } from "../../../shapes/table/table";
 import { findBackward, mergeMap } from "../../../utils/commons";
-import { canJoinAlignBox } from "../../alignHandler";
 import { BoundingBox } from "../../boundingBox";
 import { ShapeComposite, findBetterShapeAt, getClosestShapeByType } from "../../shapeComposite";
+import { canJoinGeneralLayout } from "../../shapeHandlers/layoutHandler";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { PointerMoveEvent, TransitionValue } from "../core";
 import { newMovingShapeInAlignState } from "./align/movingShapeInAlignState";
@@ -35,18 +36,26 @@ export function handlePointerMoveOnLayout(
       type: "stack-resume",
       getState: () => newBoardCardMovingState({ boardId }),
     };
-  } else if (canAlign(ctx)) {
+  } else if (canSomeJoinGeneralLayout(ctx)) {
     const scope = shapeComposite.getSelectionScope(shapeComposite.shapeMap[indexId]);
     const shapeAtPoint = findBetterShapeAt(shapeComposite, event.data.current, scope, movingIds);
-    if (shapeAtPoint) {
-      const alignBoxShape = getClosestShapeByType<AlignBoxShape>(shapeComposite, shapeAtPoint.id, "align_box");
-      if (alignBoxShape) {
-        return {
-          type: "stack-resume",
-          getState: () =>
-            newMovingShapeInAlignState({ boundingBox: option?.boundingBox, alignBoxId: alignBoxShape.id }),
-        };
-      }
+    if (!shapeAtPoint) return;
+
+    const alignBoxShape = getClosestShapeByType<AlignBoxShape>(shapeComposite, shapeAtPoint.id, "align_box");
+    if (alignBoxShape) {
+      return {
+        type: "stack-resume",
+        getState: () => newMovingShapeInAlignState({ boundingBox: option?.boundingBox, alignBoxId: alignBoxShape.id }),
+      };
+    }
+
+    const tableShape = getClosestShapeByType<TableShape>(shapeComposite, shapeAtPoint.id, "table");
+    if (tableShape) {
+      return {
+        type: "stack-resume",
+        getState: () =>
+          ctx.states.newMovingShapeInTableState({ boundingBox: option?.boundingBox, tableId: tableShape.id }),
+      };
     }
   }
 }
@@ -83,11 +92,11 @@ export function getPatchByPointerUpOutsideLayout(
   return getPatchByLayouts(shapeComposite, { update: adjusted });
 }
 
-function canAlign(ctx: AppCanvasStateContext) {
+function canSomeJoinGeneralLayout(ctx: AppCanvasStateContext) {
   const shapeComposite = ctx.getShapeComposite();
   const ids = Object.keys(ctx.getSelectedShapeIdMap());
   // Allow unalignable shapes to be mixed so that connected lines are dealt with well.
-  return ids.some((id) => canJoinAlignBox(shapeComposite, shapeComposite.shapeMap[id]));
+  return ids.some((id) => canJoinGeneralLayout(shapeComposite, shapeComposite.shapeMap[id]));
 }
 
 /**

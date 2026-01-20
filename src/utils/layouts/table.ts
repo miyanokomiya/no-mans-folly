@@ -4,16 +4,16 @@ import { LayoutFn, LayoutNode, toAbsoluteRectMap } from "./core";
 
 export type TableLayoutNode = TableLayoutBox | TableLayoutEntity;
 
-type Coords = [rowId: string, columnId: string];
+export type TableCoords = [rowId: string, columnId: string];
 
 interface TableLayoutBase extends LayoutNode {
   parentId?: string;
-  coords?: Coords;
+  coords?: TableCoords;
 }
 
 export interface TableLayoutEntity extends TableLayoutBase {
   type: "entity";
-  coords: Coords;
+  coords: TableCoords;
 }
 
 type TableLayoutColumn = { id: string; size: number };
@@ -107,7 +107,7 @@ function calcTableRectMap(
       cellX = 0;
     });
 
-    const boxRect = { ...from, width: cellX, height: cellY };
+    const boxRect = { ...from, width: node.rect.width, height: node.rect.height };
     ret.set(node.id, boxRect);
   } else {
     ret.set(node.id, { ...node.rect, ...from });
@@ -117,7 +117,7 @@ function calcTableRectMap(
 function newMatrixMap<T>() {
   const rowMap = new Map<string, Map<string, Set<T>>>();
 
-  function add(coords: Coords, item: T) {
+  function add(coords: TableCoords, item: T) {
     let row = rowMap.get(coords[0]);
     if (!row) {
       row = new Map();
@@ -131,12 +131,12 @@ function newMatrixMap<T>() {
     column.add(item);
   }
 
-  function get(coords: Coords) {
+  function get(coords: TableCoords) {
     return rowMap.get(coords[0])?.get(coords[1]);
   }
 
   function toMap() {
-    const ret = new Map<Coords, Set<T>>();
+    const ret = new Map<TableCoords, Set<T>>();
     rowMap.forEach((row, rowId) => {
       row.forEach((column, columnId) => {
         ret.set([rowId, columnId], column);

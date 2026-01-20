@@ -15,12 +15,12 @@ import { isGroupShape } from "../../../shapes/group";
 import { MultipleSelectedHandler, newMultipleSelectedHandler } from "../../shapeHandlers/multipleSelectedHandler";
 import { AppCanvasState, AppCanvasStateContext } from "./core";
 import { getShapeStatusColor } from "./utils/style";
-import { canShapesJoinAlignBox } from "../../alignHandler";
 import {
   getPatchByDetachFromShape,
   newShapeAttachmentHandler,
   ShapeAttachmentHandler,
 } from "../../shapeAttachmentHandler";
+import { canShapesJoinGeneralLayout } from "../../shapeHandlers/layoutHandler";
 
 interface Option {
   // Once the bounding box is rotated, it's difficult to retrieve original bounding box.
@@ -259,7 +259,7 @@ export const newMultipleSelectedState = defineIntransientState((option?: Option)
             items.push(CONTEXT_MENU_ITEM_SRC.UNGROUP);
           }
 
-          if (canShapesJoinAlignBox(shapeComposite, targetShapes)) {
+          if (canShapesJoinGeneralLayout(shapeComposite, targetShapes)) {
             items.push(CONTEXT_MENU_ITEM_SRC.ALIGN_LAYOUT);
           }
 

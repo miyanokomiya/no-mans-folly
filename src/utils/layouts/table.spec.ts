@@ -8,7 +8,7 @@ describe("tableLayout", () => {
         id: "root",
         findex: "Aa",
         type: "box",
-        rect: { x: 1000, y: 2000, width: 100, height: 100 },
+        rect: { x: 1000, y: 2000, width: 300, height: 300 },
         columns: [
           { id: "c0", size: 100 },
           { id: "c1", size: 100 },
@@ -54,7 +54,7 @@ describe("tableLayout", () => {
       },
     ]);
     expect(result0.map((r) => [r.id, r.rect])).toEqual([
-      ["root", { height: 300, width: 0, x: 1000, y: 2000 }],
+      ["root", { height: 300, width: 300, x: 1000, y: 2000 }],
       ["0_0", { height: 10, width: 20, x: 1040, y: 2045 }],
       ["0_1_0", { height: 10, width: 20, x: 1130, y: 2045 }],
       ["0_1_1", { height: 10, width: 20, x: 1150, y: 2045 }],

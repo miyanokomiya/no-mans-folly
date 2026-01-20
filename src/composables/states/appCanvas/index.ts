@@ -25,6 +25,7 @@ import { newVnEdgeDrawingState } from "./vectorNetworks/vnEdgeDrawingState";
 import { newVnNodeInsertReadyState } from "./vectorNetworks/vnNodeInsertReadyState";
 import { newVNNodeSelectedState } from "./vectorNetworks/vnNodeSelectedState";
 import { newShapeAttachingState } from "./attachments/shapeAttachingState";
+import { newMovingShapeInTableState } from "./table/movingShapeInTableState";
 
 // TODO: Should hoist all states here to avoid circular dependencies.
 export const stateGenerators = {
@@ -55,5 +56,6 @@ export const stateGenerators = {
   newVnNodeInsertReadyState,
   newVnCreatePolygonState,
   newShapeAttachingState,
+  newMovingShapeInTableState,
 };
 export type StateGenerators = typeof stateGenerators;

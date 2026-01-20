@@ -14,36 +14,41 @@ import { Shape } from "../../../../models";
 import { BoundingBox } from "../../../boundingBox";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
-import { AlignHitResult, AlignHandler, newAlignHandler } from "../../../alignHandler";
-import { AlignBoxShape } from "../../../../shapes/align/alignBox";
 import { canJoinGeneralLayout } from "../../../shapeHandlers/layoutHandler";
+import {
+  MovingInTableHandler,
+  MovingInTableHitResult,
+  newMovingInTableHandler,
+} from "../../../shapeHandlers/tableHandler";
+import { TableShape } from "../../../../shapes/table/table";
+import { handleShapeUpdate } from "../utils/shapeUpdatedEventHandlers";
 
 interface Option {
   boundingBox?: BoundingBox;
-  alignBoxId: string;
+  tableId: string;
 }
 
 /**
  * This state is supposed to be stacked on "MovingShape".
  * => "startDragging" and other methods aren't called by this state because of that.
  */
-export function newMovingShapeInAlignState(option: Option): AppCanvasState {
+export function newMovingShapeInTableState(option: Option): AppCanvasState {
   let shapes: Shape[];
-  let alignBoxId = option.alignBoxId;
-  let alignHandler: AlignHandler;
-  let hitResult: AlignHitResult | undefined;
+  let tableId = option.tableId;
+  let tableHandler: MovingInTableHandler;
+  let hitResult: MovingInTableHitResult | undefined;
   let diff: IVec2;
 
   function initHandler(ctx: AppCanvasStateContext) {
     hitResult = undefined;
-    alignHandler = newAlignHandler({
+    tableHandler = newMovingInTableHandler({
       getShapeComposite: ctx.getShapeComposite,
-      alignBoxId: alignBoxId,
+      tableId: tableId,
     });
   }
 
   return {
-    getLabel: () => "MovingShapeInAlign",
+    getLabel: () => "MovingShapeInTable",
     onStart: (ctx) => {
       const shapeComposite = ctx.getShapeComposite();
       const shapeMap = shapeComposite.shapeMap;
@@ -71,17 +76,17 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
           );
           if (!shapeAtPoint) return { type: "break" };
 
-          const alignBoxShape = getClosestShapeByType<AlignBoxShape>(shapeComposite, shapeAtPoint.id, "align_box");
-          if (!alignBoxShape) {
+          const tableShape = getClosestShapeByType<TableShape>(shapeComposite, shapeAtPoint.id, "table");
+          if (!tableShape) {
             return { type: "break" };
-          } else if (alignBoxShape.id !== alignBoxId) {
-            // Switch to the closest align box shape
-            alignBoxId = alignBoxShape.id;
+          } else if (tableShape.id !== tableId) {
+            // Switch to the closest table shape
+            tableId = tableShape.id;
             initHandler(ctx);
           }
 
           diff = sub(event.data.current, event.data.startAbs);
-          const result = alignHandler.hitTest(event.data.current);
+          const result = tableHandler.hitTest(event.data.current);
           hitResult = result;
           ctx.redraw();
           return;
@@ -92,7 +97,7 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
           const shapeComposite = ctx.getShapeComposite();
           if (!hitResult) {
             const patch = shapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
-              p[s.id] = { parentId: alignBoxId };
+              p[s.id] = { parentId: tableId };
               return p;
             }, {});
             const nextComposite = getNextShapeComposite(shapeComposite, { update: patch });
@@ -102,7 +107,7 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
             const findexTo = hitResult.findexBetween[1];
             let findex = generateKeyBetweenAllowSame(hitResult.findexBetween[0], findexTo);
             const patch = shapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
-              p[s.id] = { parentId: alignBoxId, findex };
+              p[s.id] = { parentId: tableId, findex };
               findex = generateKeyBetweenAllowSame(findex, findexTo);
               return p;
             }, {});
@@ -115,10 +120,7 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
           return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
-          if (alignHandler.isAlignChanged(event.data.keys)) {
-            initHandler(ctx);
-          }
-          return;
+          return handleShapeUpdate(ctx, event, [tableId]);
         }
         default:
           return;
@@ -138,7 +140,7 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
         });
       });
 
-      alignHandler.render(renderCtx, style, ctx.getScale(), hitResult);
+      tableHandler.render(renderCtx, style, ctx.getScale(), hitResult);
 
       if (diff) {
         const shapeRenderer = newShapeRenderer({

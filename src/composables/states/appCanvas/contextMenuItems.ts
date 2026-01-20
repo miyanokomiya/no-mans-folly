@@ -31,12 +31,12 @@ import { DocOutput } from "../../../models/document";
 import { calcOriginalDocSize, getInitialOutput } from "../../../utils/texts/textEditor";
 import { newColorParser } from "../../colorParser";
 import { generateFindexAfter } from "../../shapeRelation";
-import { canJoinAlignBox } from "../../alignHandler";
 import { AlignBoxShape } from "../../../shapes/align/alignBox";
 import { isSymbolShape, SymbolShape } from "../../../shapes/symbol";
 import { generateSymbolAssetId, getAssetIdSrcStr } from "../../../shapes/utils/symbol";
 import { getSlideOverlayPosition } from "./commons";
 import { getPatchByDetachFromShape } from "../../shapeAttachmentHandler";
+import { canJoinGeneralLayout } from "../../shapeHandlers/layoutHandler";
 
 export const CONTEXT_MENU_ITEM_SRC = {
   get GRID_ON() {
@@ -680,7 +680,7 @@ export function createAlignBox(ctx: AppCanvasStateContext): boolean {
   const targetIds = Object.keys(ctx.getSelectedShapeIdMap());
   const targets = targetIds
     .map((id) => shapeComposite.shapeMap[id])
-    .filter((s) => s && canJoinAlignBox(shapeComposite, s));
+    .filter((s) => s && canJoinGeneralLayout(shapeComposite, s));
   if (targets.length < 2) return false;
 
   const rect = shapeComposite.getWrapperRectForShapes(targets);
