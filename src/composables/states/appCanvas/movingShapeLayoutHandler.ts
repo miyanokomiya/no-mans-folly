@@ -4,7 +4,7 @@ import { isBoardCardShape } from "../../../shapes/board/boardCard";
 import { isBoardRootShape } from "../../../shapes/board/boardRoot";
 import { isFrameShape } from "../../../shapes/frame";
 import { FrameAlignGroupShape, isFrameAlignGroupShape } from "../../../shapes/frameGroups/frameAlignGroup";
-import { TableShape } from "../../../shapes/table/table";
+import { isTableShape, TableShape } from "../../../shapes/table/table";
 import { findBackward, mergeMap } from "../../../utils/commons";
 import { BoundingBox } from "../../boundingBox";
 import { ShapeComposite, findBetterShapeAt, getClosestShapeByType } from "../../shapeComposite";
@@ -84,7 +84,7 @@ export function getPatchByPointerUpOutsideLayout(
 ): { [id: string]: Partial<Shape> } {
   const detatched = targetIds.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
     if (shouldDetachParentWhenOutside(shapeComposite.shapeMap, id)) {
-      p[id] = { parentId: undefined };
+      p[id] = { parentId: undefined, parentMeta: undefined };
     }
     return p;
   }, {});
@@ -110,7 +110,7 @@ function shouldDetachParentWhenOutside(shapeMap: { [id: string]: Shape }, id: st
   const parent = shapeMap[shape.parentId];
   if (!parent) return false;
 
-  return isFrameAlignGroupShape(parent) || isAlignBoxShape(parent) || isBoardRootShape(parent);
+  return isFrameAlignGroupShape(parent) || isAlignBoxShape(parent) || isBoardRootShape(parent) || isTableShape(parent);
 }
 
 /**

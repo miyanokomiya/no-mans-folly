@@ -1,11 +1,12 @@
-import { applyAffine, getOuterRectangle, getRectCenter, IRectangle, IVec2 } from "okageo";
-import { StyleScheme } from "../../models";
-import { getTableShapeInfo, getTableSize, TableShape } from "../../shapes/table/table";
+import { applyAffine, getDistance, getOuterRectangle, getRectCenter, IRectangle, IVec2, rotate } from "okageo";
+import { EntityPatchInfo, Shape, StyleScheme } from "../../models";
+import { getTableShapeInfo, getTableSize, isTableShape, TableShape } from "../../shapes/table/table";
 import { getDistanceBetweenPointAndRect, getRotationAffines, ISegment } from "../../utils/geometry";
 import { ShapeComposite } from "../shapeComposite";
-import { TableCoords } from "../../utils/layouts/table";
+import { TableCoords, tableLayout, TableLayoutNode } from "../../utils/layouts/table";
 import { CanvasCTX } from "../../utils/types";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
+import { getModifiedLayoutRootIds, getNextLayout, LayoutNodeWithMeta } from "./layoutHandler";
 
 export type MovingInTableHitResult = {
   seg: ISegment;
@@ -148,4 +149,76 @@ function parseTableMeta(meta?: string): TableCoords | undefined {
 
   const result = meta.split(/\s*:\s*/);
   return result.length === 2 ? (result as TableCoords) : undefined;
+}
+
+export function generateTableMeta(coords: TableCoords): string {
+  return coords.join(":");
+}
+
+export function getTableLayoutPatchFunctions(
+  srcComposite: ShapeComposite,
+  updatedComposite: ShapeComposite,
+  patchInfo: EntityPatchInfo<Shape>,
+) {
+  return getModifiedLayoutRootIds(srcComposite, updatedComposite, patchInfo, isTableShape).map((id) => {
+    return () => getNextTableLayout(updatedComposite, id);
+  });
+}
+
+export function getNextTableLayout(shapeComposite: ShapeComposite, rootId: string): { [id: string]: Partial<Shape> } {
+  const layoutNodes = toLayoutNodes(shapeComposite, rootId);
+  return getNextLayout(shapeComposite, rootId, layoutNodes, tableLayout);
+}
+
+type TableLayoutNodeWithMeta = LayoutNodeWithMeta<TableLayoutNode>;
+
+function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): TableLayoutNodeWithMeta[] {
+  const root = shapeComposite.mergedShapeTreeMap[rootId];
+  const rootShape = shapeComposite.mergedShapeMap[root.id] as TableShape;
+  const layoutNodes: TableLayoutNodeWithMeta[] = [];
+  treeToLayoutNode(layoutNodes, shapeComposite, rootShape);
+  return layoutNodes;
+}
+
+function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: ShapeComposite, shape: Shape) {
+  const treeNode = shapeComposite.mergedShapeTreeMap[shape.id];
+  const rectPolygon = shapeComposite.getRectPolygonForLayout(shape);
+  const c = getRectCenter(shapeComposite.getWrapperRect(shape));
+  const p = rotate(rectPolygon[0], -shape.rotation, c);
+  const rect = {
+    x: p.x,
+    y: p.y,
+    width: getDistance(rectPolygon[0], rectPolygon[1]),
+    height: getDistance(rectPolygon[0], rectPolygon[3]),
+  };
+
+  if (isTableShape(shape)) {
+    const tableInfo = getTableShapeInfo(shape);
+    result.push({
+      id: shape.id,
+      findex: shape.findex,
+      parentId: shape.parentId ?? "",
+      type: "box",
+      rect,
+      rows: tableInfo?.rows ?? [],
+      columns: tableInfo?.columns ?? [],
+      coords: parseTableMeta(shape.parentMeta),
+    });
+
+    treeNode.children.forEach((c) => {
+      treeToLayoutNode(result, shapeComposite, shapeComposite.mergedShapeMap[c.id]);
+    });
+  } else if (shape.parentId) {
+    const coords = parseTableMeta(shape.parentMeta);
+    if (coords) {
+      result.push({
+        id: shape.id,
+        findex: shape.findex,
+        type: "entity",
+        rect,
+        parentId: shape.parentId,
+        coords,
+      });
+    }
+  }
 }

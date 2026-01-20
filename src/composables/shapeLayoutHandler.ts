@@ -13,6 +13,7 @@ import { getLineAttachmentPatch } from "./lineAttachmentHandler";
 import { getLineLabelPatch } from "./lineLabelHandler";
 import { getShapeAttachmentPatch } from "./shapeAttachmentHandler";
 import { ShapeComposite, getDeleteTargetIds, getNextShapeComposite } from "./shapeComposite";
+import { getTableLayoutPatchFunctions } from "./shapeHandlers/tableHandler";
 import { getTreeLayoutPatchFunctions } from "./shapeHandlers/treeHandler";
 import { getLineRelatedDependantMap } from "./shapeRelation";
 
@@ -69,6 +70,12 @@ export function getPatchByLayouts(
             shapeComposite,
             getNextShapeComposite(shapeComposite, nextPatchInfo),
             nextPatchInfo,
+          ).concat(
+            getTableLayoutPatchFunctions(
+              shapeComposite,
+              getNextShapeComposite(shapeComposite, nextPatchInfo),
+              nextPatchInfo,
+            ),
           ),
           {},
         ).patch;
@@ -133,6 +140,12 @@ export function getPatchInfoByLayouts(
             shapeComposite,
             getNextShapeComposite(shapeComposite, nextPatchInfo),
             nextPatchInfo,
+          ).concat(
+            getTableLayoutPatchFunctions(
+              shapeComposite,
+              getNextShapeComposite(shapeComposite, nextPatchInfo),
+              nextPatchInfo,
+            ),
           ),
           {},
         ).patch;

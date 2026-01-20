@@ -1,8 +1,11 @@
 import { describe, test, expect } from "vitest";
 import { createShape, getCommonStruct } from "../../shapes";
 import { TextShape } from "../../shapes/text";
-import { newShapeComposite } from "../shapeComposite";
-import { canJoinGeneralLayout, canShapesJoinGeneralLayout } from "./layoutHandler";
+import { getNextShapeComposite, newShapeComposite } from "../shapeComposite";
+import { canJoinGeneralLayout, canShapesJoinGeneralLayout, getModifiedLayoutRootIds } from "./layoutHandler";
+import { EntityPatchInfo, Shape } from "../../models";
+import { AlignBoxShape, isAlignBoxShape } from "../../shapes/align/alignBox";
+import { RectangleShape } from "../../shapes/rectangle";
 
 describe("canJoinAlignBox / canShapesJoinAlignBox", () => {
   const rect0 = createShape(getCommonStruct, "rectangle", {
@@ -92,5 +95,135 @@ describe("canJoinAlignBox / canShapesJoinAlignBox", () => {
     expect(canShapesJoinGeneralLayout(shapeComposite, [rect0, child1])).toBe(true);
     expect(canShapesJoinGeneralLayout(shapeComposite, [child0, align_child]), "different parents").toBe(false);
     expect(canShapesJoinGeneralLayout(shapeComposite, [align_child])).toBe(true);
+  });
+});
+
+describe("getModifiedLayoutRootIds", () => {
+  const box0 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
+    id: "box0",
+    height: 100,
+    direction: 0,
+    gapR: 10,
+    gapC: 10,
+    baseWidth: undefined,
+  });
+  const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "rect0",
+    parentId: box0.id,
+    width: 30,
+    height: 30,
+  });
+  const rect1 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "rect1",
+    parentId: box0.id,
+    width: 30,
+    height: 30,
+  });
+  const box10 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
+    id: "box10",
+    height: 100,
+    direction: 0,
+    gapR: 10,
+    gapC: 10,
+    baseWidth: undefined,
+  });
+  const rect10 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "rect10",
+    parentId: box10.id,
+    width: 30,
+    height: 30,
+  });
+  const rect11 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "rect11",
+    parentId: box10.id,
+    width: 30,
+    height: 30,
+  });
+  const box20 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
+    id: "box20",
+    height: 100,
+    direction: 0,
+    gapR: 10,
+    gapC: 10,
+    baseWidth: undefined,
+  });
+  test("should return related align box shapes: swap parent", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      update: { rect0: { parentId: box10.id } },
+    };
+    const srcComposite = newShapeComposite({
+      shapes: [box0, rect0, rect1, box10, rect10, rect11, box20],
+      getStruct: getCommonStruct,
+    });
+    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
+    expect(getModifiedLayoutRootIds(srcComposite, updatedComposite, patchInfo, isAlignBoxShape)).toEqual([
+      box0.id,
+      box10.id,
+    ]);
+  });
+
+  test("should return related align box shapes: leave from a box", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      update: { rect0: { parentId: undefined } },
+    };
+    const srcComposite = newShapeComposite({
+      shapes: [box0, rect0, rect1, box10, rect10, rect11, box20],
+      getStruct: getCommonStruct,
+    });
+    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
+    expect(getModifiedLayoutRootIds(srcComposite, updatedComposite, patchInfo, isAlignBoxShape)).toEqual([box0.id]);
+  });
+
+  test("should return related align box shapes: nested boxes", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      update: { rect10: { findex: "a" } },
+    };
+    const srcComposite = newShapeComposite({
+      shapes: [box0, rect0, rect1, { ...box10, parentId: box0.id }, rect10, rect11, box20],
+      getStruct: getCommonStruct,
+    });
+    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
+    expect(getModifiedLayoutRootIds(srcComposite, updatedComposite, patchInfo, isAlignBoxShape)).toEqual([box0.id]);
+  });
+
+  test("should not return a box id when it becomes a child of other board", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      update: { box10: { parentId: box0.id } },
+    };
+    const srcComposite = newShapeComposite({
+      shapes: [box0, rect0, rect1, box10, rect10, rect11, box20],
+      getStruct: getCommonStruct,
+    });
+    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
+    expect(getModifiedLayoutRootIds(srcComposite, updatedComposite, patchInfo, isAlignBoxShape)).toEqual([box0.id]);
+  });
+
+  test("should return related align box shapes: add and delete children", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      add: [rect1],
+      delete: [rect11.id],
+    };
+    const srcComposite = newShapeComposite({
+      shapes: [box0, rect0, box10, rect10, rect11, box20],
+      getStruct: getCommonStruct,
+    });
+    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
+    expect(getModifiedLayoutRootIds(srcComposite, updatedComposite, patchInfo, isAlignBoxShape)).toEqual([
+      box0.id,
+      box10.id,
+    ]);
+  });
+
+  test("should return related align box shapes: add and delete boxes", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      add: [box0, rect0],
+      delete: [box10.id],
+    };
+    const srcComposite = newShapeComposite({
+      shapes: [box10, rect10, rect11, box20],
+      getStruct: getCommonStruct,
+    });
+    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
+    expect(getModifiedLayoutRootIds(srcComposite, updatedComposite, patchInfo, isAlignBoxShape)).toEqual([box0.id]);
   });
 });

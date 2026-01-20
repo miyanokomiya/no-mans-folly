@@ -16,6 +16,7 @@ import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
 import { canJoinGeneralLayout } from "../../../shapeHandlers/layoutHandler";
 import {
+  generateTableMeta,
   MovingInTableHandler,
   MovingInTableHitResult,
   newMovingInTableHandler,
@@ -97,7 +98,7 @@ export function newMovingShapeInTableState(option: Option): AppCanvasState {
           const shapeComposite = ctx.getShapeComposite();
           if (!hitResult) {
             const patch = shapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
-              p[s.id] = { parentId: tableId };
+              p[s.id] = { parentId: undefined, parentMeta: undefined };
               return p;
             }, {});
             const nextComposite = getNextShapeComposite(shapeComposite, { update: patch });
@@ -105,9 +106,10 @@ export function newMovingShapeInTableState(option: Option): AppCanvasState {
             ctx.patchShapes(layoutPatch);
           } else {
             const findexTo = hitResult.findexBetween[1];
+            const parentMeta = generateTableMeta(hitResult.coords);
             let findex = generateKeyBetweenAllowSame(hitResult.findexBetween[0], findexTo);
             const patch = shapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
-              p[s.id] = { parentId: tableId, findex };
+              p[s.id] = { parentId: tableId, parentMeta, findex };
               findex = generateKeyBetweenAllowSame(findex, findexTo);
               return p;
             }, {});

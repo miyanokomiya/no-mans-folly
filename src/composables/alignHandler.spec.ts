@@ -1,10 +1,9 @@
 import { describe, test, expect } from "vitest";
-import { getModifiedAlignRootIds, getNextAlignLayout, newAlignBoxHandler } from "./alignHandler";
+import { getNextAlignLayout, newAlignBoxHandler } from "./alignHandler";
 import { createShape, getCommonStruct } from "../shapes";
 import { AlignBoxShape } from "../shapes/align/alignBox";
 import { RectangleShape } from "../shapes/rectangle";
-import { getNextShapeComposite, newShapeComposite } from "./shapeComposite";
-import { EntityPatchInfo, Shape } from "../models";
+import { newShapeComposite } from "./shapeComposite";
 import { LineShape } from "../shapes/line";
 
 const box0 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
@@ -276,81 +275,5 @@ describe("getNextAlignLayout", () => {
     const result = getNextAlignLayout(shapeComposite, box0.id);
     expect(result).not.toHaveProperty(group0.id);
     expect(result[child0.id]).toEqual({ p: { x: 0, y: 80 } });
-  });
-});
-
-describe("getModifiedAlignRootIds", () => {
-  test("should return related align box shapes: swap parent", () => {
-    const patchInfo: EntityPatchInfo<Shape> = {
-      update: { rect0: { parentId: box10.id } },
-    };
-    const srcComposite = newShapeComposite({
-      shapes: [box0, rect0, rect1, box10, rect10, rect11, box20],
-      getStruct: getCommonStruct,
-    });
-    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
-    expect(getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo)).toEqual([box0.id, box10.id]);
-  });
-
-  test("should return related align box shapes: leave from a box", () => {
-    const patchInfo: EntityPatchInfo<Shape> = {
-      update: { rect0: { parentId: undefined } },
-    };
-    const srcComposite = newShapeComposite({
-      shapes: [box0, rect0, rect1, box10, rect10, rect11, box20],
-      getStruct: getCommonStruct,
-    });
-    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
-    expect(getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo)).toEqual([box0.id]);
-  });
-
-  test("should return related align box shapes: nested boxes", () => {
-    const patchInfo: EntityPatchInfo<Shape> = {
-      update: { rect10: { findex: "a" } },
-    };
-    const srcComposite = newShapeComposite({
-      shapes: [box0, rect0, rect1, { ...box10, parentId: box0.id }, rect10, rect11, box20],
-      getStruct: getCommonStruct,
-    });
-    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
-    expect(getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo)).toEqual([box0.id]);
-  });
-
-  test("should not return a box id when it becomes a child of other board", () => {
-    const patchInfo: EntityPatchInfo<Shape> = {
-      update: { box10: { parentId: box0.id } },
-    };
-    const srcComposite = newShapeComposite({
-      shapes: [box0, rect0, rect1, box10, rect10, rect11, box20],
-      getStruct: getCommonStruct,
-    });
-    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
-    expect(getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo)).toEqual([box0.id]);
-  });
-
-  test("should return related align box shapes: add and delete children", () => {
-    const patchInfo: EntityPatchInfo<Shape> = {
-      add: [rect1],
-      delete: [rect11.id],
-    };
-    const srcComposite = newShapeComposite({
-      shapes: [box0, rect0, box10, rect10, rect11, box20],
-      getStruct: getCommonStruct,
-    });
-    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
-    expect(getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo)).toEqual([box0.id, box10.id]);
-  });
-
-  test("should return related align box shapes: add and delete boxes", () => {
-    const patchInfo: EntityPatchInfo<Shape> = {
-      add: [box0, rect0],
-      delete: [box10.id],
-    };
-    const srcComposite = newShapeComposite({
-      shapes: [box10, rect10, rect11, box20],
-      getStruct: getCommonStruct,
-    });
-    const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
-    expect(getModifiedAlignRootIds(srcComposite, updatedComposite, patchInfo)).toEqual([box0.id]);
   });
 });
