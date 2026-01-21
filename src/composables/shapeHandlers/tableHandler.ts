@@ -1,4 +1,16 @@
-import { applyAffine, getDistance, getOuterRectangle, getRectCenter, IRectangle, IVec2, rotate, sub } from "okageo";
+import {
+  add,
+  AffineMatrix,
+  applyAffine,
+  getDistance,
+  getOuterRectangle,
+  getRectCenter,
+  IRectangle,
+  isSame,
+  IVec2,
+  rotate,
+  sub,
+} from "okageo";
 import { Shape, StyleScheme } from "../../models";
 import {
   getTableCoordsLocations,
@@ -9,6 +21,7 @@ import {
 } from "../../shapes/table/table";
 import {
   getDistanceBetweenPointAndRect,
+  getRectPoints,
   getRotateFn,
   getRotationAffines,
   ISegment,
@@ -24,6 +37,7 @@ import { applyLocalSpace } from "../../utils/renderer";
 
 const BorderThreshold = 5;
 
+// "coord" is from 0 to the number of lines. 0 refers to the head line.
 type BorderAnchor = { type: "border-row" | "border-column"; coord: number; segment: ISegment };
 
 export type TableHitResult = BorderAnchor;
@@ -81,7 +95,7 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
   function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: TableHitResult) {
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       const borderAnchors = getBorderAnchors(scale);
-      applyStrokeStyle(ctx, { color: style.transformAnchor, width: 4 * scale, dash: "dot" });
+      applyStrokeStyle(ctx, { color: style.transformAnchor, width: 4 * scale });
       ctx.beginPath();
       borderAnchors.forEach((a) => {
         ctx.moveTo(a.segment[0].x, a.segment[0].y);
@@ -326,4 +340,108 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
       });
     });
   }
+}
+
+export function newResizeColumn(table: TableShape, coord: number) {
+  const info = getColumnBoundsInfo(table, coord);
+  if (!info) return;
+
+  const { path, rotateFn, column, lineBounds } = info;
+  const origin = coord === 0 ? path[2] : path[0];
+
+  return {
+    linePath: path,
+    resizeFn: (affine: AffineMatrix) => {
+      const resizedLinePath = path.map((p) => applyAffine(affine, p));
+      const deroratedResizedLinePath = resizedLinePath.map((p) => rotateFn(p, true));
+      const nextLineWidth = deroratedResizedLinePath[2].x - deroratedResizedLinePath[0].x;
+      const diff = nextLineWidth - lineBounds.width;
+      const patch: Partial<TableShape> = {
+        [column.id]: { ...column, size: column.size + diff },
+      } as any;
+      const nextTarget = { ...table, ...patch } as TableShape;
+      const nextInfo = getColumnBoundsInfo(nextTarget, coord)!;
+      const nextOrigin = coord === 0 ? nextInfo.path[2] : nextInfo.path[0];
+      if (!isSame(origin, nextOrigin)) {
+        patch.p = add(nextTarget.p, sub(origin, nextOrigin));
+      }
+      return patch;
+    },
+  };
+}
+
+function getColumnBoundsInfo(table: TableShape, coord: number) {
+  const tableInfo = getTableShapeInfo(table);
+  const column = tableInfo?.columns[Math.max(0, coord - 1)];
+  if (!column) return;
+
+  const size = getTableSizeByInfo(tableInfo);
+  const cls = getTableCoordsLocations(tableInfo);
+  let l = cls.columns[0];
+  let r = cls.columns[1];
+  if (coord > 0) {
+    l = cls.columns[coord - 1];
+    r = cls.columns[coord];
+  }
+  const lineBounds = { x: l + table.p.x, y: table.p.y, width: r - l, height: size.height };
+  const shapeRect = {
+    x: table.p.x,
+    y: table.p.y,
+    width: size.width,
+    height: size.height,
+  };
+  const rotateFn = getRotateFn(table.rotation, getRectCenter(shapeRect));
+  return { path: getRectPoints(lineBounds).map((p) => rotateFn(p)), rotateFn, column, lineBounds };
+}
+
+export function newResizeRow(table: TableShape, coord: number) {
+  const info = getRowBoundsInfo(table, coord);
+  if (!info) return;
+
+  const { path, rotateFn, row, lineBounds } = info;
+  const origin = coord === 0 ? path[2] : path[0];
+
+  return {
+    linePath: path,
+    resizeFn: (affine: AffineMatrix) => {
+      const resizedLinePath = path.map((p) => applyAffine(affine, p));
+      const deroratedResizedLinePath = resizedLinePath.map((p) => rotateFn(p, true));
+      const nextLineHeight = deroratedResizedLinePath[2].y - deroratedResizedLinePath[0].y;
+      const diff = nextLineHeight - lineBounds.height;
+      const patch: Partial<TableShape> = {
+        [row.id]: { ...row, size: row.size + diff },
+      } as any;
+      const nextTarget = { ...table, ...patch } as TableShape;
+      const nextInfo = getRowBoundsInfo(nextTarget, coord)!;
+      const nextOrigin = coord === 0 ? nextInfo.path[2] : nextInfo.path[0];
+      if (!isSame(origin, nextOrigin)) {
+        patch.p = add(nextTarget.p, sub(origin, nextOrigin));
+      }
+      return patch;
+    },
+  };
+}
+
+function getRowBoundsInfo(table: TableShape, coord: number) {
+  const tableInfo = getTableShapeInfo(table);
+  const row = tableInfo?.rows[Math.max(0, coord - 1)];
+  if (!row) return;
+
+  const size = getTableSizeByInfo(tableInfo);
+  const cls = getTableCoordsLocations(tableInfo);
+  let t = cls.rows[0];
+  let b = cls.rows[1];
+  if (coord > 0) {
+    t = cls.rows[coord - 1];
+    b = cls.rows[coord];
+  }
+  const lineBounds = { x: table.p.x, y: t + table.p.y, width: size.width, height: b - t };
+  const shapeRect = {
+    x: table.p.x,
+    y: table.p.y,
+    width: size.width,
+    height: size.height,
+  };
+  const rotateFn = getRotateFn(table.rotation, getRectCenter(shapeRect));
+  return { path: getRectPoints(lineBounds).map((p) => rotateFn(p)), rotateFn, row, lineBounds };
 }
