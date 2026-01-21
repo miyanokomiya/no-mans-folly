@@ -1,12 +1,119 @@
-import { applyAffine, getDistance, getOuterRectangle, getRectCenter, IRectangle, IVec2, rotate } from "okageo";
+import { applyAffine, getDistance, getOuterRectangle, getRectCenter, IRectangle, IVec2, rotate, sub } from "okageo";
 import { Shape, StyleScheme } from "../../models";
-import { getTableShapeInfo, getTableSize, isTableShape, TableShape } from "../../shapes/table/table";
-import { getDistanceBetweenPointAndRect, getRotationAffines, ISegment } from "../../utils/geometry";
+import {
+  getTableCoordsLocations,
+  getTableShapeInfo,
+  getTableSizeByInfo,
+  isTableShape,
+  TableShape,
+} from "../../shapes/table/table";
+import {
+  getDistanceBetweenPointAndRect,
+  getRotateFn,
+  getRotationAffines,
+  ISegment,
+  isPointCloseToSegment,
+} from "../../utils/geometry";
 import { ShapeComposite } from "../shapeComposite";
 import { TableCoords, tableLayout, TableLayoutNode } from "../../utils/layouts/table";
 import { CanvasCTX } from "../../utils/types";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { getNextLayout, LayoutNodeWithMeta } from "./layoutHandler";
+import { defineShapeHandler } from "./core";
+import { applyLocalSpace } from "../../utils/renderer";
+
+const BorderThreshold = 5;
+
+type BorderAnchor = { type: "border-row" | "border-column"; coord: number; segment: ISegment };
+
+export type TableHitResult = BorderAnchor;
+
+interface Option {
+  getShapeComposite: () => ShapeComposite;
+  targetId: string;
+}
+
+export const newTableHandler = defineShapeHandler<TableHitResult, Option>((option) => {
+  const shapeComposite = option.getShapeComposite();
+  const shape = shapeComposite.shapeMap[option.targetId] as TableShape;
+  const tableInfo = getTableShapeInfo(shape);
+  const size = getTableSizeByInfo(tableInfo);
+  const shapeRect = { x: shape.p.x, y: shape.p.y, width: size.width, height: size.height };
+  const rotateFn = getRotateFn(shape.rotation, getRectCenter(shapeRect));
+  const coordsLocations = getTableCoordsLocations(tableInfo);
+
+  function getBorderAnchors(scale: number): BorderAnchor[] {
+    const ret: BorderAnchor[] = [];
+    const extra = 40 * scale;
+    coordsLocations.rows.forEach((y, r) => {
+      ret.push({
+        type: "border-row",
+        coord: r,
+        segment: [
+          { x: -extra, y },
+          { x: r === 0 || r === coordsLocations.rows.length - 1 ? 0 : size.width, y },
+        ],
+      });
+    });
+    coordsLocations.columns.forEach((x, c) => {
+      ret.push({
+        type: "border-column",
+        coord: c,
+        segment: [
+          { x, y: -extra },
+          { x, y: c === 0 || c === coordsLocations.columns.length - 1 ? 0 : size.height },
+        ],
+      });
+    });
+    return ret;
+  }
+
+  function hitTest(p: IVec2, scale = 1): TableHitResult | undefined {
+    const adjustedP = sub(rotateFn(p, true), shape.p);
+    const borderThreshold = BorderThreshold * scale;
+
+    const borderAnchor = getBorderAnchors(scale).find((a) => {
+      return isPointCloseToSegment(a.segment, adjustedP, borderThreshold);
+    });
+    if (borderAnchor) return borderAnchor;
+  }
+
+  function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: TableHitResult) {
+    applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
+      const borderAnchors = getBorderAnchors(scale);
+      applyStrokeStyle(ctx, { color: style.transformAnchor, width: 4 * scale, dash: "dot" });
+      ctx.beginPath();
+      borderAnchors.forEach((a) => {
+        ctx.moveTo(a.segment[0].x, a.segment[0].y);
+        ctx.lineTo(a.segment[1].x, a.segment[1].y);
+      });
+      ctx.stroke();
+
+      if (hitResult?.type === "border-row" || hitResult?.type === "border-column") {
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 4 * scale });
+        ctx.beginPath();
+        ctx.moveTo(hitResult.segment[0].x, hitResult.segment[0].y);
+        ctx.lineTo(hitResult.segment[1].x, hitResult.segment[1].y);
+        ctx.stroke();
+      }
+    });
+  }
+
+  return {
+    hitTest,
+    render,
+    isSameHitResult: (a, b) => {
+      if (a?.type === "border-row" && b?.type === "border-row") {
+        return a.coord === b.coord;
+      }
+      if (a?.type === "border-column" && b?.type === "border-column") {
+        return a.coord === b.coord;
+      }
+      return false;
+    },
+  };
+});
+export type TableHandler = ReturnType<typeof newTableHandler>;
 
 export type MovingInTableHitResult = {
   seg: ISegment;
@@ -28,7 +135,7 @@ export function newMovingInTableHandler(option: MovingInTableHandlerOption) {
   const tableRect = {
     x: table.p.x,
     y: table.p.y,
-    ...getTableSize(table),
+    ...getTableSizeByInfo(tableInfo),
   };
   const { rotateAffine, derotateAffine } = getRotationAffines(table.rotation, getRectCenter(tableRect));
 

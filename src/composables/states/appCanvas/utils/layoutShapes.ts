@@ -16,8 +16,7 @@ export function handleNextLayoutShape(
   currentId?: string,
   option?: { boundingBox?: BoundingBox; diff?: IVec2 },
 ): TransitionValue<AppCanvasStateContext, ModeStateEvent> {
-  if (!layoutShape) return;
-  if (layoutShape.id === currentId) return;
+  if (!layoutShape || layoutShape.id === currentId) return;
   if (isAlignBoxShape(layoutShape))
     return {
       type: "stacked-switch",

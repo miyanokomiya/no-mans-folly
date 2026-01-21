@@ -73,6 +73,7 @@ import { newVNNodeSelectedState } from "./states/appCanvas/vectorNetworks/vnNode
 import { newSheetImageSelectedState } from "./states/appCanvas/sheetImage/sheetImageSelectedState";
 import { newGearSelectedState } from "./states/appCanvas/gear/gearSelectedState";
 import { newSymbolSelectedState } from "./states/appCanvas/images/symbolSelectedState";
+import { newTableSelectedState } from "./states/appCanvas/table/tableSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -196,6 +197,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newBoardEntitySelectedState;
     case "align_box":
       return newAlignBoxSelectedState;
+    case "table":
+      return newTableSelectedState;
     case "vn_node":
       return newVNNodeSelectedState;
     case "frame":

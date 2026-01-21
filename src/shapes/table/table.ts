@@ -253,8 +253,12 @@ export function isTableShape(shape: Shape): shape is TableShape {
   return shape.type === "table";
 }
 
-export function getTableSize(shape: TableShape): Size {
+function getTableSize(shape: TableShape): Size {
   const info = getTableShapeInfo(shape);
+  return getTableSizeByInfo(info);
+}
+
+export function getTableSizeByInfo(info?: TableShapeInfo): Size {
   const width = info?.columns.reduce((p, v) => p + v.size, 0) ?? 0;
   const height = info?.rows.reduce((p, v) => p + v.size, 0) ?? 0;
   return { width, height };
@@ -295,7 +299,7 @@ export function getTableShapeInfo(shape: Partial<TableShape>): TableShapeInfo | 
   return { columns, rows };
 }
 
-function getInnerBorders(tableInfo: TableShapeInfo, size: Size): ISegment[] {
+export function getInnerBorders(tableInfo: TableShapeInfo, size: Size): ISegment[] {
   const ret: ISegment[] = [];
   {
     let x = 0;
@@ -322,4 +326,27 @@ function getInnerBorders(tableInfo: TableShapeInfo, size: Size): ISegment[] {
     });
   }
   return ret;
+}
+
+/**
+ * e.g. 3x3 table: rows: [0, 10, 20, 30], columns: [0, 10, 20, 30]
+ */
+export function getTableCoordsLocations(tableInfo?: TableShapeInfo): { rows: number[]; columns: number[] } {
+  const columns: number[] = [0];
+  {
+    let x = 0;
+    tableInfo?.columns.forEach((column) => {
+      x += column.size;
+      columns.push(x);
+    });
+  }
+  const rows: number[] = [0];
+  {
+    let y = 0;
+    tableInfo?.rows.forEach((row) => {
+      y += row.size;
+      rows.push(y);
+    });
+  }
+  return { rows, columns };
 }
