@@ -83,7 +83,7 @@ function calcAlignRectMapForRoot(
 ) {
   const node = nodeMap.get(treeNode.id)!;
   if (node.type === "box") {
-    calcAlignRectMap(ret, nodeMap, treeNode, node.direction, { x: 0, y: 0 }, node.rect.height, options);
+    calcAlignRectMap(ret, nodeMap, treeNode, node.direction, { x: 0, y: 0 }, node.rect.height, options, true);
   } else {
     ret.set(node.id, node.rect);
   }
@@ -103,10 +103,11 @@ function calcAlignRectMap(
   options = {
     emptySize: EMPTY_SIZE,
   },
+  top?: boolean,
 ): boolean | undefined {
   const node = nodeMap.get(treeNode.id)!;
 
-  if (node.type === "box") {
+  if (top && node.type === "box") {
     const gapC = node.gapC ?? 0;
     const gapR = node.gapR ?? 0;
     const paddingL = node.padding?.[3] ?? 0;

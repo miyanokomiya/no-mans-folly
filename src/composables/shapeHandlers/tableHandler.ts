@@ -206,19 +206,27 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
     });
 
     treeNode.children.forEach((c) => {
-      treeToLayoutNode(result, shapeComposite, shapeComposite.mergedShapeMap[c.id]);
-    });
-  } else if (shape.parentId) {
-    const coords = parseTableMeta(shape.parentMeta);
-    if (coords) {
+      const child = shapeComposite.mergedShapeMap[c.id];
+      const coords = parseTableMeta(child.parentMeta);
+      if (!coords) return;
+
+      const childRectPolygon = shapeComposite.getRectPolygonForLayout(child);
+      const childC = getRectCenter(shapeComposite.getWrapperRect(child));
+      const childP = rotate(childRectPolygon[0], -child.rotation, childC);
+      const childRec = {
+        x: childP.x,
+        y: childP.y,
+        width: getDistance(childRectPolygon[0], childRectPolygon[1]),
+        height: getDistance(childRectPolygon[0], childRectPolygon[3]),
+      };
       result.push({
-        id: shape.id,
-        findex: shape.findex,
+        id: child.id,
+        findex: child.findex,
         type: "entity",
-        rect,
-        parentId: shape.parentId,
+        rect: childRec,
+        parentId: shape.id,
         coords,
       });
-    }
+    });
   }
 }

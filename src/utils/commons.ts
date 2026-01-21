@@ -109,6 +109,9 @@ export type PatchPipeItem<T extends { id: string }> = (
   patchMap: { [id: string]: Partial<T> },
 ) => { [id: string]: Partial<T> };
 
+/**
+ * "initialParch" will be included in the returned "patch"
+ */
 export function patchPipe<T extends { id: string }>(
   patchFns: PatchPipeItem<T>[],
   src: { [id: string]: T },

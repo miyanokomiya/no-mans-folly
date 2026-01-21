@@ -6,11 +6,12 @@ import { isGroupShape } from "../../shapes/group";
 import { isLineShape } from "../../shapes/line";
 import { isTableShape } from "../../shapes/table/table";
 import { isVNNodeShape } from "../../shapes/vectorNetworks/vnNode";
-import { isObjectEmpty, toMap } from "../../utils/commons";
+import { isObjectEmpty, mapEach, toMap } from "../../utils/commons";
 import { getRotatedAtAffine } from "../../utils/geometry";
 import { LayoutFn, LayoutNode } from "../../utils/layouts/core";
 import { getBranchPath } from "../../utils/tree";
 import { ShapeComposite } from "../shapeComposite";
+import { DependencyMap, topSortHierarchy } from "../../utils/graph";
 
 export function canJoinGeneralLayout(shapeComposite: ShapeComposite, shape: Shape): boolean {
   if (hasSpecialOrderPriority(shapeComposite.getShapeStruct, shape)) return false;
@@ -166,11 +167,18 @@ export function getNextLayout<T extends LayoutNode>(
     if (affines.length === 0) return;
 
     const affine = multiAffines(affines);
-    if (isAlignBoxShape(s)) {
-      const val = shapeComposite.transformShape(s, affine);
-      // "baseWidth" and "baseHeight" shouldn't be changed by layout logic.
-      delete val.baseWidth;
-      delete val.baseHeight;
+    if (s.id === rootId) {
+      let val: Partial<Shape>;
+      if (isAlignBoxShape(s)) {
+        const v = shapeComposite.transformShape(s, affine);
+        // "baseWidth" and "baseHeight" shouldn't be changed by layout logic.
+        delete v.baseWidth;
+        delete v.baseHeight;
+        val = v;
+      } else {
+        val = shapeComposite.transformShape(s, affine);
+      }
+
       if (!isObjectEmpty(val)) {
         ret[s.id] = val;
       }
@@ -186,4 +194,66 @@ export function getNextLayout<T extends LayoutNode>(
   });
 
   return ret;
+}
+
+/**
+ * When "isStableLayoutShape" returns true, the shape only activates the closest layout shape in the branch tree.
+ * => Because they don't change their bounds depending on their children. e.g. table
+ */
+export function getModifiedLayoutIdsInOrder(
+  srcComposite: ShapeComposite,
+  nextComposite: ShapeComposite,
+  patchInfo: EntityPatchInfo<Shape>,
+  isLayoutShape: (s: Shape) => boolean,
+  isStableLayoutShape?: (s: Shape) => boolean,
+): string[][] {
+  const depMap: DependencyMap = new Map();
+
+  const saveLayoutByShapeComposite = (id: string, sc: ShapeComposite) => {
+    if (!sc.mergedShapeMap[id]) return;
+
+    // Get branch path based on the specified composite
+    const branchPath = getBranchPath(sc.mergedShapeTreeMap, id);
+    let layoutBranchPath = branchPath.filter((branchId) => {
+      // Always use "nextComposite" to check if the shape exists and is a layout one
+      const branchShape = nextComposite.shapeMap[branchId];
+      return branchShape && isLayoutShape(branchShape);
+    });
+
+    const tail = layoutBranchPath.at(-1);
+    if (!tail) return;
+
+    if (isStableLayoutShape?.(nextComposite.shapeMap[tail])) {
+      if (tail === id) {
+        layoutBranchPath = layoutBranchPath.slice(-2);
+      } else {
+        layoutBranchPath = layoutBranchPath.slice(-1);
+      }
+    }
+
+    layoutBranchPath.forEach((branchId, i) => {
+      let deps = depMap.get(branchId);
+      if (!deps) {
+        deps = new Set();
+        depMap.set(branchId, deps);
+      }
+      for (let j = i + 1; j < layoutBranchPath.length; j++) {
+        deps.add(layoutBranchPath[j]);
+      }
+    });
+  };
+
+  mapEach(patchInfo.update ?? {}, (_, id) => {
+    saveLayoutByShapeComposite(id, srcComposite);
+    saveLayoutByShapeComposite(id, nextComposite);
+  });
+  patchInfo.add?.forEach((s) => {
+    saveLayoutByShapeComposite(s.id, nextComposite);
+  });
+  patchInfo.delete?.forEach((id) => {
+    saveLayoutByShapeComposite(id, srcComposite);
+  });
+
+  const sorted = topSortHierarchy(depMap);
+  return sorted;
 }

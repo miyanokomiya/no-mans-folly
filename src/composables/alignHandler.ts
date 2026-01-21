@@ -845,15 +845,23 @@ function treeToLayoutNode(result: AlignLayoutNodeWithMeta[], shapeComposite: Sha
     });
 
     treeNode.children.forEach((c) => {
-      treeToLayoutNode(result, shapeComposite, shapeComposite.mergedShapeMap[c.id]);
-    });
-  } else if (shape.parentId) {
-    result.push({
-      id: shape.id,
-      findex: shape.findex,
-      type: "entity",
-      rect,
-      parentId: shape.parentId,
+      const child = shapeComposite.mergedShapeMap[c.id];
+      const childRectPolygon = shapeComposite.getRectPolygonForLayout(child);
+      const childC = getRectCenter(shapeComposite.getWrapperRect(child));
+      const childP = rotate(childRectPolygon[0], -child.rotation, childC);
+      const childRec = {
+        x: childP.x,
+        y: childP.y,
+        width: getDistance(childRectPolygon[0], childRectPolygon[1]),
+        height: getDistance(childRectPolygon[0], childRectPolygon[3]),
+      };
+      result.push({
+        id: child.id,
+        findex: child.findex,
+        type: "entity",
+        rect: childRec,
+        parentId: shape.id,
+      });
     });
   }
 }

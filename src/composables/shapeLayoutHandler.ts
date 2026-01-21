@@ -1,10 +1,12 @@
 import { EntityPatchInfo, Shape } from "../models";
 import { refreshShapeRelations } from "../shapes";
+import { isAlignBoxShape } from "../shapes/align/alignBox";
+import { isTableShape } from "../shapes/table/table";
 import { isObjectEmpty, mapEach, mapFilter, mergeMap, patchPipe, toList } from "../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../utils/entities";
 import { topSortHierarchy } from "../utils/graph";
 import { getAllBranchIds, getTree } from "../utils/tree";
-import { getAlignLayoutPatchFunctions } from "./alignHandler";
+import { getNextAlignLayout } from "./alignHandler";
 import { getBoardLayoutPatchFunctions } from "./boardHandler";
 import { getConnectedLinePatch } from "./connectedLineHandler";
 import { getCurveLinePatch } from "./curveLineHandler";
@@ -13,7 +15,8 @@ import { getLineAttachmentPatch } from "./lineAttachmentHandler";
 import { getLineLabelPatch } from "./lineLabelHandler";
 import { getShapeAttachmentPatch } from "./shapeAttachmentHandler";
 import { ShapeComposite, getDeleteTargetIds, getNextShapeComposite } from "./shapeComposite";
-import { getTableLayoutPatchFunctions } from "./shapeHandlers/tableHandler";
+import { getModifiedLayoutIdsInOrder } from "./shapeHandlers/layoutHandler";
+import { getNextTableLayout } from "./shapeHandlers/tableHandler";
 import { getTreeLayoutPatchFunctions } from "./shapeHandlers/treeHandler";
 import { getLineRelatedDependantMap } from "./shapeRelation";
 
@@ -65,20 +68,7 @@ export function getPatchByLayouts(
       ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, patchInfo),
       (_, patch) => {
         const nextPatchInfo = normalizeEntityPatchInfo(mergeEntityPatchInfo(patchInfo, { update: patch }));
-        return patchPipe(
-          getAlignLayoutPatchFunctions(
-            shapeComposite,
-            getNextShapeComposite(shapeComposite, nextPatchInfo),
-            nextPatchInfo,
-          ).concat(
-            getTableLayoutPatchFunctions(
-              shapeComposite,
-              getNextShapeComposite(shapeComposite, nextPatchInfo),
-              nextPatchInfo,
-            ),
-          ),
-          {},
-        ).patch;
+        return getLayoutPatchList(shapeComposite, nextPatchInfo);
       },
       // Use the composite from here that contains newly added shapes.
       (_, patch) => getLineRelatedLayoutPatch(applyAddAndDelete(shapeComposite, patchInfo), patch),
@@ -135,20 +125,7 @@ export function getPatchInfoByLayouts(
       ...getBoardLayoutPatchFunctions(shapeComposite, updatedComposite, adjustedPatchInfo),
       (_, patch) => {
         const nextPatchInfo = normalizeEntityPatchInfo(mergeEntityPatchInfo(adjustedPatchInfo, { update: patch }));
-        return patchPipe(
-          getAlignLayoutPatchFunctions(
-            shapeComposite,
-            getNextShapeComposite(shapeComposite, nextPatchInfo),
-            nextPatchInfo,
-          ).concat(
-            getTableLayoutPatchFunctions(
-              shapeComposite,
-              getNextShapeComposite(shapeComposite, nextPatchInfo),
-              nextPatchInfo,
-            ),
-          ),
-          {},
-        ).patch;
+        return getLayoutPatchList(shapeComposite, nextPatchInfo);
       },
       (_, patch) => getLineRelatedLayoutPatch(applyAddAndDelete(shapeComposite, adjustedPatchInfo), patch),
     ],
@@ -288,4 +265,36 @@ function getLineRelatedLayoutPatch(
 
 function applyAddAndDelete(shapeComposite: ShapeComposite, patchInfo: EntityPatchInfo<Shape>) {
   return getNextShapeComposite(shapeComposite, { add: patchInfo.add, delete: patchInfo.delete });
+}
+
+function getLayoutPatchList(shapeComposite: ShapeComposite, patchInfo: EntityPatchInfo<Shape>) {
+  const nextShapeComposite = getNextShapeComposite(shapeComposite, patchInfo);
+  const sorted = getModifiedLayoutIdsInOrder(
+    shapeComposite,
+    nextShapeComposite,
+    patchInfo,
+    (s) => isTableShape(s) || isAlignBoxShape(s),
+    (s) => isTableShape(s),
+  );
+
+  let latestShapeComposite = nextShapeComposite;
+  return patchPipe<Shape>(
+    sorted.map((ids) => (current, patch) => {
+      latestShapeComposite = getNextShapeComposite(latestShapeComposite, { update: patch });
+      return patchPipe<Shape>(
+        ids.map((id) => () => {
+          const s = latestShapeComposite.mergedShapeMap[id];
+          if (isTableShape(s)) {
+            return getNextTableLayout(latestShapeComposite, id);
+          } else if (isAlignBoxShape(s)) {
+            return getNextAlignLayout(latestShapeComposite, id);
+          } else {
+            return {};
+          }
+        }),
+        current,
+      ).patch;
+    }),
+    latestShapeComposite.shapeMap,
+  ).patch;
 }

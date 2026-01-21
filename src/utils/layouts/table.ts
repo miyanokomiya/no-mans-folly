@@ -57,7 +57,7 @@ function calcTableRectMapForRoot(
 ) {
   const node = nodeMap.get(treeNode.id)!;
   if (node.type === "box") {
-    calcTableRectMap(ret, nodeMap, treeNode, { x: 0, y: 0 });
+    calcTableRectMap(ret, nodeMap, treeNode, { x: 0, y: 0 }, true);
   } else {
     ret.set(node.id, node.rect);
   }
@@ -68,10 +68,11 @@ function calcTableRectMap(
   nodeMap: Map<string, TableLayoutNode>,
   treeNode: TreeNode,
   from: IVec2,
+  top?: boolean,
 ) {
   const node = nodeMap.get(treeNode.id)!;
 
-  if (node.type === "box" && treeNode.children.length > 0) {
+  if (top && node.type === "box" && treeNode.children.length > 0) {
     const matrixMap = newMatrixMap<TreeNode>();
     treeNode.children.forEach((c) => {
       const cNode = nodeMap.get(c.id)!;

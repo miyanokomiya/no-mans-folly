@@ -2,10 +2,16 @@ import { describe, test, expect } from "vitest";
 import { createShape, getCommonStruct } from "../../shapes";
 import { TextShape } from "../../shapes/text";
 import { getNextShapeComposite, newShapeComposite } from "../shapeComposite";
-import { canJoinGeneralLayout, canShapesJoinGeneralLayout, getModifiedLayoutRootIds } from "./layoutHandler";
+import {
+  canJoinGeneralLayout,
+  canShapesJoinGeneralLayout,
+  getModifiedLayoutIdsInOrder,
+  getModifiedLayoutRootIds,
+} from "./layoutHandler";
 import { EntityPatchInfo, Shape } from "../../models";
 import { AlignBoxShape, isAlignBoxShape } from "../../shapes/align/alignBox";
 import { RectangleShape } from "../../shapes/rectangle";
+import { isTableShape } from "../../shapes/table/table";
 
 describe("canJoinAlignBox / canShapesJoinAlignBox", () => {
   const rect0 = createShape(getCommonStruct, "rectangle", {
@@ -225,5 +231,129 @@ describe("getModifiedLayoutRootIds", () => {
     });
     const updatedComposite = getNextShapeComposite(srcComposite, patchInfo);
     expect(getModifiedLayoutRootIds(srcComposite, updatedComposite, patchInfo, isAlignBoxShape)).toEqual([box0.id]);
+  });
+});
+
+describe("getModifiedLayoutIdsInOrder", () => {
+  const box0 = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
+    id: "box0",
+    height: 100,
+    direction: 0,
+    gapR: 10,
+    gapC: 10,
+    baseWidth: undefined,
+  });
+  const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+    id: "rect0",
+    parentId: box0.id,
+    width: 30,
+    height: 30,
+  });
+  const rect1 = { ...rect0, id: "rect1" };
+  const box01 = { ...box0, id: "box01", parentId: box0.id };
+  const rect00 = { ...rect0, id: "rect00", parentId: box01.id };
+  const rect9 = { ...rect0, id: "rect9", parentId: undefined };
+
+  const shapeComposite = newShapeComposite({
+    shapes: [box0, rect0, rect1, box01, rect00, rect9],
+    getStruct: getCommonStruct,
+  });
+
+  function isLayoutShape(s: Shape): boolean {
+    return isAlignBoxShape(s) || isTableShape(s);
+  }
+
+  test("should return modified layout ids: update entity", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      update: {
+        [rect00.id]: { width: 50 } as Partial<RectangleShape>,
+      },
+    };
+    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
+    expect(getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape)).toEqual([
+      [box01.id],
+      [box0.id],
+    ]);
+  });
+
+  test("should return modified layout ids: update box", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      update: {
+        [box01.id]: { p: { x: 100, y: 0 } },
+      },
+    };
+    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
+    expect(getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape)).toEqual([
+      [box01.id],
+      [box0.id],
+    ]);
+  });
+
+  test("should return modified layout ids: add", () => {
+    const rect01 = { ...rect00, id: "rect01" };
+    const patchInfo: EntityPatchInfo<Shape> = {
+      add: [rect01],
+    };
+    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
+    expect(getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape)).toEqual([
+      [box01.id],
+      [box0.id],
+    ]);
+  });
+
+  test("should return modified layout ids: delete entity", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      delete: [rect00.id],
+    };
+    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
+    expect(getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape)).toEqual([
+      [box01.id],
+      [box0.id],
+    ]);
+  });
+
+  test("should return modified layout ids: delete box", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      delete: [box01.id],
+    };
+    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
+    expect(getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape)).toEqual([[box0.id]]);
+  });
+
+  test("should regard stable layout: update entity", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      update: {
+        [rect00.id]: { width: 50 } as Partial<RectangleShape>,
+      },
+    };
+    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
+    expect(
+      getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape, (s) => s.id === box01.id),
+    ).toEqual([[box01.id]]);
+  });
+
+  test("should regard stable layout: update box", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      update: {
+        [box01.id]: { p: { x: 100, y: 0 } },
+      },
+    };
+    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
+    expect(
+      getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape, (s) => s.id === box01.id),
+    ).toEqual([[box01.id], [box0.id]]);
+  });
+
+  test("should return modified layout ids: make entity child", () => {
+    const patchInfo: EntityPatchInfo<Shape> = {
+      update: {
+        [rect9.id]: { parentId: box01.id },
+      },
+    };
+    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
+    expect(getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape)).toEqual([
+      [box01.id],
+      [box0.id],
+    ]);
   });
 });
