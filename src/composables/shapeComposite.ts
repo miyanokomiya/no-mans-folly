@@ -689,10 +689,19 @@ export function getClosestShapeByType<T extends Shape>(
   targetId: string,
   type: string,
 ): T | undefined {
+  return getClosestShapeByTypes(shapeComposite, targetId, [type]);
+}
+
+export function getClosestShapeByTypes<T extends Shape>(
+  shapeComposite: ShapeComposite,
+  targetId: string,
+  types: string[],
+): T | undefined {
+  const typeSet = new Set(types);
   const path = getBranchPath(shapeComposite.mergedShapeTreeMap, targetId);
   const id = findBackward(path, (id) => {
     const shape = shapeComposite.mergedShapeMap[id];
-    return shape.type === type;
+    return typeSet.has(shape.type);
   });
   return id ? (shapeComposite.mergedShapeMap[id] as T) : undefined;
 }

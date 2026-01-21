@@ -191,6 +191,44 @@ describe("newStateMachine", () => {
       expect(next2.onEnd).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("transition: stacked-switch", () => {
+    test("should switch stacked state", () => {
+      const next2 = getMockState({
+        getLabel: () => "2",
+        handleEvent: vi.fn().mockReturnValue({ type: "break" }),
+      });
+      const next1 = getMockState({
+        getLabel: () => "1",
+        onEnd: vi.fn().mockReturnValue(undefined),
+        handleEvent: vi.fn().mockReturnValue({ type: "stacked-switch", getState: () => next2 }),
+      });
+      const current = getMockState({
+        getLabel: () => "0",
+        onStart: vi.fn().mockReturnValue(undefined),
+        onEnd: vi.fn().mockReturnValue(undefined),
+        handleEvent: vi.fn().mockReturnValue({
+          getState: () => next1,
+          type: "stack-resume",
+        }),
+      });
+      const sm = newStateMachine(getCtx, () => current);
+
+      expect(sm.getStateSummary().label).toBe("0");
+
+      sm.handleEvent({ type: "test" } as any);
+      expect(sm.getStateSummary().label).toBe("1");
+
+      sm.handleEvent({ type: "test" } as any);
+      expect(sm.getStateSummary().label).toBe("2");
+      expect(next1.onEnd).toHaveBeenCalledTimes(1);
+
+      sm.handleEvent({ type: "test" } as any);
+      expect(sm.getStateSummary().label).toBe("0");
+      expect(current.onEnd).toHaveBeenCalledTimes(0);
+      expect(next2.onEnd).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 describe("newObjectGroupState", () => {

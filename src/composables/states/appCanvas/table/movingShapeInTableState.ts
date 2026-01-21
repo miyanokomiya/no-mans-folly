@@ -1,12 +1,7 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
 import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { applyFillStyle } from "../../../../utils/fillStyle";
-import {
-  findBetterShapeAt,
-  getClosestShapeByType,
-  getNextShapeComposite,
-  newShapeComposite,
-} from "../../../shapeComposite";
+import { findBetterShapeAt, getNextShapeComposite, newShapeComposite } from "../../../shapeComposite";
 import { findexSortFn } from "../../../../utils/commons";
 import { IVec2, add, sub } from "okageo";
 import { newShapeRenderer } from "../../../shapeRenderer";
@@ -14,18 +9,19 @@ import { Shape } from "../../../../models";
 import { BoundingBox } from "../../../boundingBox";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
-import { canJoinGeneralLayout } from "../../../shapeHandlers/layoutHandler";
+import { canJoinGeneralLayout, getClosestLayoutShapeAt } from "../../../shapeHandlers/layoutHandler";
 import {
   generateTableMeta,
   MovingInTableHandler,
   MovingInTableHitResult,
   newMovingInTableHandler,
 } from "../../../shapeHandlers/tableHandler";
-import { TableShape } from "../../../../shapes/table/table";
 import { handleShapeUpdate } from "../utils/shapeUpdatedEventHandlers";
+import { handleNextLayoutShape } from "../utils/layoutShapes";
 
 interface Option {
   boundingBox?: BoundingBox;
+  diff?: IVec2;
   tableId: string;
 }
 
@@ -38,7 +34,7 @@ export function newMovingShapeInTableState(option: Option): AppCanvasState {
   let tableId = option.tableId;
   let tableHandler: MovingInTableHandler;
   let hitResult: MovingInTableHitResult | undefined;
-  let diff: IVec2;
+  let diff = option.diff;
 
   function initHandler(ctx: AppCanvasStateContext) {
     hitResult = undefined;
@@ -77,16 +73,14 @@ export function newMovingShapeInTableState(option: Option): AppCanvasState {
           );
           if (!shapeAtPoint) return { type: "break" };
 
-          const tableShape = getClosestShapeByType<TableShape>(shapeComposite, shapeAtPoint.id, "table");
-          if (!tableShape) {
-            return { type: "break" };
-          } else if (tableShape.id !== tableId) {
-            // Switch to the closest table shape
-            tableId = tableShape.id;
-            initHandler(ctx);
-          }
-
           diff = sub(event.data.current, event.data.startAbs);
+          const layoutShape = getClosestLayoutShapeAt(shapeComposite, shapeAtPoint.id);
+          const layoutHandling = handleNextLayoutShape(ctx, layoutShape, tableId, {
+            boundingBox: option.boundingBox,
+            diff,
+          });
+          if (layoutHandling) return layoutHandling;
+
           const result = tableHandler.hitTest(event.data.current);
           hitResult = result;
           ctx.redraw();
@@ -145,9 +139,10 @@ export function newMovingShapeInTableState(option: Option): AppCanvasState {
       tableHandler.render(renderCtx, style, ctx.getScale(), hitResult);
 
       if (diff) {
+        const d = diff;
         const shapeRenderer = newShapeRenderer({
           shapeComposite: newShapeComposite({
-            shapes: shapes.map((s) => ({ ...s, p: add(s.p, diff) })),
+            shapes: shapes.map((s) => ({ ...s, p: add(s.p, d) })),
             getStruct: shapeComposite.getShapeStruct,
           }),
           getDocumentMap: ctx.getDocumentMap,

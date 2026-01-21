@@ -2,23 +2,45 @@ import { AffineMatrix, sub } from "okageo";
 import { EntityPatchInfo, Shape } from "../../models";
 import { FrameShape, isFrameShape } from "../../shapes/frame";
 import { isFrameAlignGroupShape } from "../../shapes/frameGroups/frameAlignGroup";
-import { patchPipe } from "../../utils/commons";
-import { getAlignLayoutPatchFunctions } from "../alignHandler";
+import { isObjectEmpty, patchPipe } from "../../utils/commons";
+import { getNextAlignLayout } from "../alignHandler";
 import { getNextShapeComposite, ShapeComposite } from "../shapeComposite";
 import { getRootShapeIdsByFrame } from "../frame";
+import { getModifiedLayoutIdsInOrder } from "../shapeHandlers/layoutHandler";
+import { isAlignBoxShape } from "../../shapes/align/alignBox";
 
 export function getFrameAlignLayoutPatch(
   shapeComposite: ShapeComposite,
   patchInfo: EntityPatchInfo<Shape>,
 ): { [id: string]: Partial<Shape> } {
   const dummyShapeComposite = getDummyShapeCompositeForFrameAlign(shapeComposite);
-  const patchFns = getAlignLayoutPatchFunctions(
-    dummyShapeComposite,
-    getNextShapeComposite(dummyShapeComposite, patchInfo),
-    patchInfo,
+  const dummyNextShapeComposite = getNextShapeComposite(dummyShapeComposite, patchInfo);
+  const sorted = getModifiedLayoutIdsInOrder(dummyShapeComposite, dummyNextShapeComposite, patchInfo, (s) =>
+    isAlignBoxShape(s),
   );
 
-  const layoutResult = patchPipe(patchFns, {});
+  let latestShapeComposite = dummyNextShapeComposite;
+  const layoutResult = patchPipe<Shape>(
+    sorted.map((ids) => (current, patch) => {
+      if (!isObjectEmpty(patch)) {
+        latestShapeComposite = getNextShapeComposite(latestShapeComposite, { update: patch });
+      }
+
+      return patchPipe<Shape>(
+        ids.map((id) => () => {
+          const s = latestShapeComposite.mergedShapeMap[id];
+          if (isAlignBoxShape(s)) {
+            return getNextAlignLayout(latestShapeComposite, id);
+          } else {
+            return {};
+          }
+        }),
+        current,
+      ).patch;
+    }),
+    latestShapeComposite.shapeMap,
+  );
+
   const resultEntries = Object.entries(layoutResult.patch);
   if (resultEntries.length === 0) return {};
 

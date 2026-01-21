@@ -280,7 +280,10 @@ function getLayoutPatchList(shapeComposite: ShapeComposite, patchInfo: EntityPat
   let latestShapeComposite = nextShapeComposite;
   return patchPipe<Shape>(
     sorted.map((ids) => (current, patch) => {
-      latestShapeComposite = getNextShapeComposite(latestShapeComposite, { update: patch });
+      if (!isObjectEmpty(patch)) {
+        latestShapeComposite = getNextShapeComposite(latestShapeComposite, { update: patch });
+      }
+
       return patchPipe<Shape>(
         ids.map((id) => () => {
           const s = latestShapeComposite.mergedShapeMap[id];

@@ -10,7 +10,7 @@ import { isObjectEmpty, mapEach, toMap } from "../../utils/commons";
 import { getRotatedAtAffine } from "../../utils/geometry";
 import { LayoutFn, LayoutNode } from "../../utils/layouts/core";
 import { getBranchPath } from "../../utils/tree";
-import { ShapeComposite } from "../shapeComposite";
+import { getClosestShapeByTypes, ShapeComposite } from "../shapeComposite";
 import { DependencyMap, topSortHierarchy } from "../../utils/graph";
 
 export function canJoinGeneralLayout(shapeComposite: ShapeComposite, shape: Shape): boolean {
@@ -41,6 +41,10 @@ export function canShapesJoinGeneralLayout(shapeComposite: ShapeComposite, shape
   } else {
     return shapes.every((shape) => !shapeComposite.hasParent(shape));
   }
+}
+
+export function getClosestLayoutShapeAt(shapeComposite: ShapeComposite, shapeId: string): Shape | undefined {
+  return getClosestShapeByTypes(shapeComposite, shapeId, ["align_box", "table"]);
 }
 
 export function getModifiedLayoutRootIds(

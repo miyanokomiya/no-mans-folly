@@ -1,12 +1,12 @@
 import { applyAffine, getDistance, getOuterRectangle, getRectCenter, IRectangle, IVec2, rotate } from "okageo";
-import { EntityPatchInfo, Shape, StyleScheme } from "../../models";
+import { Shape, StyleScheme } from "../../models";
 import { getTableShapeInfo, getTableSize, isTableShape, TableShape } from "../../shapes/table/table";
 import { getDistanceBetweenPointAndRect, getRotationAffines, ISegment } from "../../utils/geometry";
 import { ShapeComposite } from "../shapeComposite";
 import { TableCoords, tableLayout, TableLayoutNode } from "../../utils/layouts/table";
 import { CanvasCTX } from "../../utils/types";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
-import { getModifiedLayoutRootIds, getNextLayout, LayoutNodeWithMeta } from "./layoutHandler";
+import { getNextLayout, LayoutNodeWithMeta } from "./layoutHandler";
 
 export type MovingInTableHitResult = {
   seg: ISegment;
@@ -153,16 +153,6 @@ function parseTableMeta(meta?: string): TableCoords | undefined {
 
 export function generateTableMeta(coords: TableCoords): string {
   return coords.join(":");
-}
-
-export function getTableLayoutPatchFunctions(
-  srcComposite: ShapeComposite,
-  updatedComposite: ShapeComposite,
-  patchInfo: EntityPatchInfo<Shape>,
-) {
-  return getModifiedLayoutRootIds(srcComposite, updatedComposite, patchInfo, isTableShape).map((id) => {
-    return () => getNextTableLayout(updatedComposite, id);
-  });
 }
 
 export function getNextTableLayout(shapeComposite: ShapeComposite, rootId: string): { [id: string]: Partial<Shape> } {

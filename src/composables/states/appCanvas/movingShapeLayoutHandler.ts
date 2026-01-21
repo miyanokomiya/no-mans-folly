@@ -1,14 +1,14 @@
 import { Shape } from "../../../models";
-import { AlignBoxShape, isAlignBoxShape } from "../../../shapes/align/alignBox";
+import { isAlignBoxShape } from "../../../shapes/align/alignBox";
 import { isBoardCardShape } from "../../../shapes/board/boardCard";
 import { isBoardRootShape } from "../../../shapes/board/boardRoot";
 import { isFrameShape } from "../../../shapes/frame";
 import { FrameAlignGroupShape, isFrameAlignGroupShape } from "../../../shapes/frameGroups/frameAlignGroup";
-import { isTableShape, TableShape } from "../../../shapes/table/table";
+import { isTableShape } from "../../../shapes/table/table";
 import { findBackward, mergeMap } from "../../../utils/commons";
 import { BoundingBox } from "../../boundingBox";
 import { ShapeComposite, findBetterShapeAt, getClosestShapeByType } from "../../shapeComposite";
-import { canJoinGeneralLayout } from "../../shapeHandlers/layoutHandler";
+import { canJoinGeneralLayout, getClosestLayoutShapeAt } from "../../shapeHandlers/layoutHandler";
 import { getPatchByLayouts } from "../../shapeLayoutHandler";
 import { PointerMoveEvent, TransitionValue } from "../core";
 import { newMovingShapeInAlignState } from "./align/movingShapeInAlignState";
@@ -41,20 +41,19 @@ export function handlePointerMoveOnLayout(
     const shapeAtPoint = findBetterShapeAt(shapeComposite, event.data.current, scope, movingIds);
     if (!shapeAtPoint) return;
 
-    const alignBoxShape = getClosestShapeByType<AlignBoxShape>(shapeComposite, shapeAtPoint.id, "align_box");
-    if (alignBoxShape) {
+    const layoutShape = getClosestLayoutShapeAt(shapeComposite, shapeAtPoint.id);
+    if (!layoutShape) return;
+
+    if (isAlignBoxShape(layoutShape)) {
       return {
         type: "stack-resume",
-        getState: () => newMovingShapeInAlignState({ boundingBox: option?.boundingBox, alignBoxId: alignBoxShape.id }),
+        getState: () => newMovingShapeInAlignState({ boundingBox: option?.boundingBox, alignBoxId: layoutShape.id }),
       };
-    }
-
-    const tableShape = getClosestShapeByType<TableShape>(shapeComposite, shapeAtPoint.id, "table");
-    if (tableShape) {
+    } else if (isTableShape(layoutShape)) {
       return {
         type: "stack-resume",
         getState: () =>
-          ctx.states.newMovingShapeInTableState({ boundingBox: option?.boundingBox, tableId: tableShape.id }),
+          ctx.states.newMovingShapeInTableState({ boundingBox: option?.boundingBox, tableId: layoutShape.id }),
       };
     }
   }

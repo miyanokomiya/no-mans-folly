@@ -10,7 +10,7 @@ import {
   rotate,
   sub,
 } from "okageo";
-import { BoxValues4, Direction2, Direction4, EntityPatchInfo, Shape, StyleScheme } from "../models";
+import { BoxValues4, Direction2, Direction4, Shape, StyleScheme } from "../models";
 import { AlignBoxShape, isAlignBoxShape } from "../shapes/align/alignBox";
 import { AlignLayoutNode, alignLayout } from "../utils/layouts/align";
 import { ShapeComposite, newShapeComposite } from "./shapeComposite";
@@ -35,7 +35,7 @@ import { getPaddingRect } from "../utils/boxPadding";
 import { ANCHOR_SIZE, DIRECTION_ANCHOR_SIZE } from "./shapeHandlers/simplePolygonHandler";
 import { generateKeyBetween } from "../utils/findex";
 import { CanvasCTX } from "../utils/types";
-import { getModifiedLayoutRootIds, getNextLayout, LayoutNodeWithMeta } from "./shapeHandlers/layoutHandler";
+import { getNextLayout, LayoutNodeWithMeta } from "./shapeHandlers/layoutHandler";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -877,16 +877,6 @@ function toLayoutNodes(shapeComposite: ShapeComposite, rootId: string): AlignLay
 export function getNextAlignLayout(shapeComposite: ShapeComposite, rootId: string): { [id: string]: Partial<Shape> } {
   const layoutNodes = toLayoutNodes(shapeComposite, rootId);
   return getNextLayout(shapeComposite, rootId, layoutNodes, alignLayout);
-}
-
-export function getAlignLayoutPatchFunctions(
-  srcComposite: ShapeComposite,
-  updatedComposite: ShapeComposite,
-  patchInfo: EntityPatchInfo<Shape>,
-) {
-  return getModifiedLayoutRootIds(srcComposite, updatedComposite, patchInfo, isAlignBoxShape).map((id) => {
-    return () => getNextAlignLayout(updatedComposite, id);
-  });
 }
 
 export function generateAlignTemplate(

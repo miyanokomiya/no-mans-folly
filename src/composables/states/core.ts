@@ -4,7 +4,7 @@ import { ModifierOptions } from "../../utils/devices";
 import { newCallback } from "../../utils/stateful/reactives";
 import { CanvasCTX } from "../../utils/types";
 
-type TransitionType = "break" | "stack-restart" | "stack-resume";
+type TransitionType = "break" | "stack-restart" | "stack-resume" | "stacked-switch";
 
 export type TransitionValue<C, E = ModeStateEvent> =
   | (() => ModeStateBase<C, E>)
@@ -141,6 +141,16 @@ export function newStateMachine<C, E = ModeStateEvent>(
         break;
       case "stack-resume":
         stateStack.push(nextItem);
+        break;
+      case "stacked-switch":
+        blockEvent(() => {
+          current.state.onEnd?.(ctx);
+        });
+        stateStack.pop();
+        stateStack.push({
+          ...nextItem,
+          type: current.type,
+        });
         break;
       default:
         blockEvent(() => {
