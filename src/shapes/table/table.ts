@@ -101,12 +101,18 @@ export const struct: ShapeStruct<TableShape> = {
 
     const rect = getTableLocalBounds(shape);
     applyLocalSpace(ctx, rect, shape.rotation, () => {
-      ctx.beginPath();
-      ctx.rect(0, 0, rect.width, rect.height);
-      applyFillStyle(ctx, shape.fill);
-      ctx.fill();
-      applyStrokeStyle(ctx, shape.stroke);
-      ctx.stroke();
+      if (!shape.fill.disabled || !shape.stroke.disabled) {
+        ctx.beginPath();
+        ctx.rect(0, 0, rect.width, rect.height);
+        if (!shape.fill.disabled) {
+          applyFillStyle(ctx, shape.fill);
+          ctx.fill();
+        }
+        if (!shape.stroke.disabled) {
+          applyStrokeStyle(ctx, shape.stroke);
+          ctx.stroke();
+        }
+      }
 
       ctx.beginPath();
       getInnerBorders(info, rect).forEach((seg) => {
