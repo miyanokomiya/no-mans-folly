@@ -17,7 +17,10 @@ import {
   getTableShapeInfo,
   getTableSizeByInfo,
   isTableShape,
+  TableColumn,
+  TableRow,
   TableShape,
+  TableShapeInfo,
 } from "../../shapes/table/table";
 import {
   getDistanceBetweenPointAndRect,
@@ -26,6 +29,7 @@ import {
   getRotationAffines,
   ISegment,
   isPointCloseToSegment,
+  TAU,
 } from "../../utils/geometry";
 import { ShapeComposite } from "../shapeComposite";
 import { TableCoords, tableLayout, TableLayoutNode } from "../../utils/layouts/table";
@@ -33,14 +37,19 @@ import { CanvasCTX } from "../../utils/types";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { getNextLayout, LayoutNodeWithMeta } from "./layoutHandler";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace } from "../../utils/renderer";
+import { applyLocalSpace, renderPlusIcon } from "../../utils/renderer";
+import { generateNKeysBetweenAllowSame } from "../../utils/findex";
+import { applyFillStyle } from "../../utils/fillStyle";
+import { COLORS } from "../../utils/color";
 
 const BorderThreshold = 5;
+const AnchorSize = 8;
 
 // "coord" is from 0 to the number of lines. 0 refers to the head line.
 type BorderAnchor = { type: "border-row" | "border-column"; coord: number; segment: ISegment };
+type AddLineAnchor = { type: "add-row" | "add-column"; coord: number; p: IVec2 };
 
-export type TableHitResult = BorderAnchor;
+export type TableHitResult = BorderAnchor | AddLineAnchor;
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
@@ -82,9 +91,35 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
     return ret;
   }
 
+  function getAddLineAnchors(scale: number): AddLineAnchor[] {
+    const ret: AddLineAnchor[] = [];
+    const extra = 40 * scale;
+    coordsLocations.rows.forEach((y, r) => {
+      ret.push({
+        type: "add-row",
+        coord: r,
+        p: { x: -extra, y },
+      });
+    });
+    coordsLocations.columns.forEach((x, c) => {
+      ret.push({
+        type: "add-column",
+        coord: c,
+        p: { x, y: -extra },
+      });
+    });
+    return ret;
+  }
+
   function hitTest(p: IVec2, scale = 1): TableHitResult | undefined {
     const adjustedP = sub(rotateFn(p, true), shape.p);
     const borderThreshold = BorderThreshold * scale;
+    const anchorSize = AnchorSize * scale;
+
+    const addLineAnchor = getAddLineAnchors(scale).find((a) => {
+      return getDistance(a.p, adjustedP) <= anchorSize;
+    });
+    if (addLineAnchor) return addLineAnchor;
 
     const borderAnchor = getBorderAnchors(scale).find((a) => {
       return isPointCloseToSegment(a.segment, adjustedP, borderThreshold);
@@ -95,6 +130,8 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
   function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: TableHitResult) {
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
       const borderAnchors = getBorderAnchors(scale);
+      const anchorSize = AnchorSize * scale;
+
       applyStrokeStyle(ctx, { color: style.transformAnchor, width: 4 * scale });
       ctx.beginPath();
       borderAnchors.forEach((a) => {
@@ -109,6 +146,24 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
         ctx.moveTo(hitResult.segment[0].x, hitResult.segment[0].y);
         ctx.lineTo(hitResult.segment[1].x, hitResult.segment[1].y);
         ctx.stroke();
+      }
+
+      const addLineAnchors = getAddLineAnchors(scale);
+      applyFillStyle(ctx, { color: COLORS.WHITE });
+      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
+      addLineAnchors.forEach((a) => {
+        ctx.beginPath();
+        ctx.arc(a.p.x, a.p.y, anchorSize, 0, TAU);
+        ctx.fill();
+        renderPlusIcon(ctx, a.p, anchorSize * 1.8);
+      });
+      if (hitResult?.type === "add-row" || hitResult?.type === "add-column") {
+        applyFillStyle(ctx, { color: style.selectionSecondaly });
+        applyStrokeStyle(ctx, { color: COLORS.WHITE, width: 3 * scale });
+        ctx.beginPath();
+        ctx.arc(hitResult.p.x, hitResult.p.y, anchorSize, 0, TAU);
+        ctx.fill();
+        renderPlusIcon(ctx, hitResult.p, anchorSize * 1.8);
       }
     });
   }
@@ -342,6 +397,9 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
   }
 }
 
+/**
+ * "resizeFn" receives affine matrix that transforms the bounds of the target line.
+ */
 export function newResizeColumn(table: TableShape, coord: number) {
   const info = getColumnBoundsInfo(table, coord);
   if (!info) return;
@@ -394,6 +452,9 @@ function getColumnBoundsInfo(table: TableShape, coord: number) {
   return { path: getRectPoints(lineBounds).map((p) => rotateFn(p)), rotateFn, column, lineBounds };
 }
 
+/**
+ * "resizeFn" receives affine matrix that transforms the bounds of the target line.
+ */
 export function newResizeRow(table: TableShape, coord: number) {
   const info = getRowBoundsInfo(table, coord);
   if (!info) return;
@@ -444,4 +505,77 @@ function getRowBoundsInfo(table: TableShape, coord: number) {
   };
   const rotateFn = getRotateFn(table.rotation, getRectCenter(shapeRect));
   return { path: getRectPoints(lineBounds).map((p) => rotateFn(p)), rotateFn, row, lineBounds };
+}
+
+export function getPatchInfoByAddRows(table: TableShape, coord: number, src: TableRow[]): Partial<TableShape> {
+  const tableInfo = getTableShapeInfo(table);
+  return getPatchInfoByAddLines(tableInfo?.rows ?? [], coord, src);
+}
+
+export function getPatchInfoByAddColumns(table: TableShape, coord: number, src: TableColumn[]): Partial<TableShape> {
+  const tableInfo = getTableShapeInfo(table);
+  return getPatchInfoByAddLines(tableInfo?.columns ?? [], coord, src);
+}
+
+export function getPatchInfoByInsertRow(
+  table: TableShape,
+  coord: number,
+  generateUuid: () => string,
+): Partial<TableShape> {
+  const tableInfo = getTableShapeInfo(table);
+  const src = tableInfo?.rows[Math.max(0, coord - 1)];
+  if (!src) return {};
+
+  return getPatchInfoByAddLines(
+    tableInfo?.rows ?? [],
+    coord,
+    [src].map((s) => ({ ...s, id: `r_${generateUuid()}` })),
+  );
+}
+
+export function getPatchInfoByInsertColumn(
+  table: TableShape,
+  coord: number,
+  generateUuid: () => string,
+): Partial<TableShape> {
+  const tableInfo = getTableShapeInfo(table);
+  const src = tableInfo?.columns[Math.max(0, coord - 1)];
+  if (!src) return {};
+
+  return getPatchInfoByAddLines(
+    tableInfo?.columns ?? [],
+    coord,
+    [src].map((s) => ({ ...s, id: `c_${generateUuid()}` })),
+  );
+}
+
+/**
+ * "coord = 0" => Add to the head
+ * "src" is added as new lines with adjusted findex.
+ * => Their IDs should already be unique in the table.
+ */
+function getPatchInfoByAddLines<T extends TableRow | TableColumn>(
+  lines: TableShapeInfo["rows"] | TableShapeInfo["columns"],
+  coord: number,
+  src: T[],
+): Partial<TableShape> {
+  let findexList: string[];
+  if (lines.length > 0) {
+    if (coord <= 0) {
+      findexList = generateNKeysBetweenAllowSame(undefined, lines.at(0)?.findex, src.length);
+    } else if (lines.length <= coord) {
+      findexList = generateNKeysBetweenAllowSame(lines.at(-1)?.findex, undefined, src.length);
+    } else {
+      findexList = generateNKeysBetweenAllowSame(lines.at(coord - 1)?.findex, lines.at(coord)?.findex, src.length);
+    }
+  } else {
+    findexList = generateNKeysBetweenAllowSame(undefined, undefined, src.length);
+  }
+
+  const patch: Partial<TableShape> = {};
+  src.forEach((r: any, i) => {
+    patch[r.id] = { ...r, findex: findexList[i] };
+  });
+
+  return patch;
 }

@@ -1,6 +1,13 @@
 import { TableShape } from "../../../../shapes/table/table";
 import { newBoundingBox } from "../../../boundingBox";
-import { newResizeColumn, newResizeRow, newTableHandler, TableHandler } from "../../../shapeHandlers/tableHandler";
+import {
+  getPatchInfoByInsertColumn,
+  getPatchInfoByInsertRow,
+  newResizeColumn,
+  newResizeRow,
+  newTableHandler,
+  TableHandler,
+} from "../../../shapeHandlers/tableHandler";
 import { newResizingState } from "../resizingState";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 
@@ -52,6 +59,16 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                           return { [targetShape.id]: resizeColumn.resizeFn(affine) };
                         },
                       });
+                  }
+                  case "add-row": {
+                    const patch = getPatchInfoByInsertRow(targetShape, hitResult.coord, ctx.generateUuid);
+                    ctx.updateShapes({ update: { [targetShape.id]: patch } });
+                    return ctx.states.newSelectionHubState;
+                  }
+                  case "add-column": {
+                    const patch = getPatchInfoByInsertColumn(targetShape, hitResult.coord, ctx.generateUuid);
+                    ctx.updateShapes({ update: { [targetShape.id]: patch } });
+                    return ctx.states.newSelectionHubState;
                   }
                 }
               }

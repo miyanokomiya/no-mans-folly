@@ -40,16 +40,16 @@ import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../
 const DEFAULT_CELL_WIDTH = 100;
 const DEFAULT_CELL_HEIGHT = 50;
 
-type TableColumnKey = `c_${string}`;
-type TableRowKey = `r_${string}`;
+export type TableColumnKey = `c_${string}`;
+export type TableRowKey = `r_${string}`;
 
-type TableColumn = {
+export type TableColumn = {
   id: TableColumnKey;
   size: number;
   findex: string;
 };
 
-type TableRow = {
+export type TableRow = {
   id: TableRowKey;
   size: number;
   findex: string;
@@ -65,7 +65,7 @@ export type TableShape = Shape &
 /**
  * Detailed table info derived from a table shape
  */
-type TableShapeInfo = {
+export type TableShapeInfo = {
   columns: TableColumn[];
   rows: TableRow[];
 };
@@ -316,7 +316,7 @@ export function getInnerBorders(tableInfo: TableShapeInfo, size: Size): ISegment
   {
     let y = 0;
     tableInfo.rows.forEach((row, i) => {
-      if (i === tableInfo.columns.length - 1) return;
+      if (i === tableInfo.rows.length - 1) return;
 
       y += row.size;
       ret.push([
