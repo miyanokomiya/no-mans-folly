@@ -35,6 +35,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
       handleEvent: (ctx, event) => {
         const targetShape = getters.getTargetShape();
         const shapeHandler = getters.getShapeHandler();
+        const shapeComposite = ctx.getShapeComposite();
 
         switch (event.type) {
           case "pointerdown": {
@@ -78,12 +79,22 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                       });
                   }
                   case "add-row": {
-                    const patch = getPatchInfoByInsertRow(targetShape, hitResult.coord, ctx.generateUuid);
+                    const patch = getPatchInfoByInsertRow(
+                      shapeComposite,
+                      targetShape,
+                      hitResult.coord,
+                      ctx.generateUuid,
+                    );
                     ctx.updateShapes({ update: { [targetShape.id]: patch } });
                     return ctx.states.newSelectionHubState;
                   }
                   case "add-column": {
-                    const patch = getPatchInfoByInsertColumn(targetShape, hitResult.coord, ctx.generateUuid);
+                    const patch = getPatchInfoByInsertColumn(
+                      shapeComposite,
+                      targetShape,
+                      hitResult.coord,
+                      ctx.generateUuid,
+                    );
                     ctx.updateShapes({ update: { [targetShape.id]: patch } });
                     return ctx.states.newSelectionHubState;
                   }
@@ -165,8 +176,6 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
             return null;
           }
           case "contextmenu-item": {
-            const shapeComposite = ctx.getShapeComposite();
-
             switch (event.data.key) {
               case CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_ROW.key: {
                 const rows = tableSelectable.getSelectedRows();

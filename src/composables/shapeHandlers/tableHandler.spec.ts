@@ -13,8 +13,12 @@ import { createShape, getCommonStruct } from "../../shapes";
 describe("getPatchInfoByAddRows", () => {
   test("should return patch by adding rows", () => {
     const table = generateTable(3, 3, { width: 20, height: 10 });
+    const shapeComposite = newShapeComposite({
+      shapes: [table],
+      getStruct: getCommonStruct,
+    });
 
-    const result0 = getPatchInfoByAddRows(table, 0, [table.r_0!, table.r_1!]);
+    const result0 = getPatchInfoByAddRows(shapeComposite, table, 0, [table.r_0!, table.r_1!]);
     const findexList0 = generateNKeysBetweenAllowSame(undefined, table.r_0?.findex, 2);
     expect(result0).toEqual({
       r_0: {
@@ -29,10 +33,10 @@ describe("getPatchInfoByAddRows", () => {
       },
     });
 
-    const result01 = getPatchInfoByAddRows(table, -1, [table.r_0!, table.r_1!]);
+    const result01 = getPatchInfoByAddRows(shapeComposite, table, -1, [table.r_0!, table.r_1!]);
     expect(result01).toEqual(result0);
 
-    const result1 = getPatchInfoByAddRows(table, 1, [table.r_0!, table.r_1!]);
+    const result1 = getPatchInfoByAddRows(shapeComposite, table, 1, [table.r_0!, table.r_1!]);
     const findexList1 = generateNKeysBetweenAllowSame(table.r_0?.findex, table.r_1?.findex, 2);
     expect(result1).toEqual({
       r_0: {
@@ -47,7 +51,7 @@ describe("getPatchInfoByAddRows", () => {
       },
     });
 
-    const result2 = getPatchInfoByAddRows(table, 3, [table.r_0!, table.r_1!]);
+    const result2 = getPatchInfoByAddRows(shapeComposite, table, 3, [table.r_0!, table.r_1!]);
     const findexList2 = generateNKeysBetweenAllowSame(table.r_2?.findex, undefined, 2);
     expect(result2).toEqual({
       r_0: {
@@ -62,7 +66,7 @@ describe("getPatchInfoByAddRows", () => {
       },
     });
 
-    const result21 = getPatchInfoByAddRows(table, 4, [table.r_0!, table.r_1!]);
+    const result21 = getPatchInfoByAddRows(shapeComposite, table, 4, [table.r_0!, table.r_1!]);
     expect(result21).toEqual(result2);
   });
 });
@@ -70,8 +74,12 @@ describe("getPatchInfoByAddRows", () => {
 describe("getPatchInfoByAddColumns", () => {
   test("should return patch by adding columns", () => {
     const table = generateTable(3, 3, { width: 20, height: 10 });
+    const shapeComposite = newShapeComposite({
+      shapes: [table],
+      getStruct: getCommonStruct,
+    });
 
-    const result0 = getPatchInfoByAddColumns(table, 0, [table.c_0!, table.c_1!]);
+    const result0 = getPatchInfoByAddColumns(shapeComposite, table, 0, [table.c_0!, table.c_1!]);
     const findexList0 = generateNKeysBetweenAllowSame(undefined, table.c_0?.findex, 2);
     expect(result0).toEqual({
       c_0: {

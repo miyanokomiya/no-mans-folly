@@ -559,17 +559,28 @@ function getRowBoundsInfo(table: TableShape, coord: number) {
   return { path: getRectPoints(lineBounds).map((p) => rotateFn(p)), rotateFn, row, lineBounds };
 }
 
-export function getPatchInfoByAddRows(table: TableShape, coord: number, src: TableRow[]): Partial<TableShape> {
+export function getPatchInfoByAddRows(
+  shapeComposite: ShapeComposite,
+  table: TableShape,
+  coord: number,
+  src: TableRow[],
+): Partial<TableShape> {
   const tableInfo = getTableShapeInfo(table);
-  return getPatchInfoByAddLines(tableInfo?.rows ?? [], coord, src);
+  return adjustPatchByKeepPosition(shapeComposite, table, getPatchInfoByAddLines(tableInfo?.rows ?? [], coord, src));
 }
 
-export function getPatchInfoByAddColumns(table: TableShape, coord: number, src: TableColumn[]): Partial<TableShape> {
+export function getPatchInfoByAddColumns(
+  shapeComposite: ShapeComposite,
+  table: TableShape,
+  coord: number,
+  src: TableColumn[],
+): Partial<TableShape> {
   const tableInfo = getTableShapeInfo(table);
-  return getPatchInfoByAddLines(tableInfo?.columns ?? [], coord, src);
+  return adjustPatchByKeepPosition(shapeComposite, table, getPatchInfoByAddLines(tableInfo?.columns ?? [], coord, src));
 }
 
 export function getPatchInfoByInsertRow(
+  shapeComposite: ShapeComposite,
   table: TableShape,
   coord: number,
   generateUuid: () => string,
@@ -578,14 +589,19 @@ export function getPatchInfoByInsertRow(
   const src = tableInfo?.rows[Math.max(0, coord - 1)];
   if (!src) return {};
 
-  return getPatchInfoByAddLines(
-    tableInfo?.rows ?? [],
-    coord,
-    [src].map((s) => ({ ...s, id: `r_${generateUuid()}` })),
+  return adjustPatchByKeepPosition(
+    shapeComposite,
+    table,
+    getPatchInfoByAddLines(
+      tableInfo?.rows ?? [],
+      coord,
+      [src].map((s) => ({ ...s, id: `r_${generateUuid()}` })),
+    ),
   );
 }
 
 export function getPatchInfoByInsertColumn(
+  shapeComposite: ShapeComposite,
   table: TableShape,
   coord: number,
   generateUuid: () => string,
@@ -594,10 +610,14 @@ export function getPatchInfoByInsertColumn(
   const src = tableInfo?.columns[Math.max(0, coord - 1)];
   if (!src) return {};
 
-  return getPatchInfoByAddLines(
-    tableInfo?.columns ?? [],
-    coord,
-    [src].map((s) => ({ ...s, id: `c_${generateUuid()}` })),
+  return adjustPatchByKeepPosition(
+    shapeComposite,
+    table,
+    getPatchInfoByAddLines(
+      tableInfo?.columns ?? [],
+      coord,
+      [src].map((s) => ({ ...s, id: `c_${generateUuid()}` })),
+    ),
   );
 }
 
@@ -641,17 +661,16 @@ export function getPatchByDeleteLines(
   table: TableShape,
   lineIds: string[],
 ): { patch: Partial<TableShape>; delete: string[] } {
-  const patch: Partial<TableShape> = {};
+  let patch: Partial<TableShape> = {};
 
   lineIds.forEach((id: any) => {
     patch[id] = undefined;
   });
 
-  const nextTable = { ...table, ...patch };
-  const v = sub(shapeComposite.getLocalRectPolygon(table)[0], shapeComposite.getLocalRectPolygon(nextTable)[0]);
-  if (!isZero(v)) {
-    patch.p = add(nextTable.p, v);
-  }
+  patch = {
+    ...patch,
+    ...adjustPatchByKeepPosition(shapeComposite, table, patch),
+  };
 
   const idSet = new Set(lineIds);
 
@@ -668,4 +687,17 @@ export function getPatchByDeleteLines(
       })
       .map((s) => s.id),
   };
+}
+
+function adjustPatchByKeepPosition(
+  shapeComposite: ShapeComposite,
+  table: TableShape,
+  patch: Partial<TableShape>,
+): Partial<TableShape> {
+  const nextTable = { ...table, ...patch };
+  const v = sub(shapeComposite.getLocalRectPolygon(table)[0], shapeComposite.getLocalRectPolygon(nextTable)[0]);
+  if (!isZero(v)) {
+    return { ...patch, p: add(nextTable.p, v) };
+  }
+  return patch;
 }
