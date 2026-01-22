@@ -157,6 +157,10 @@ const en = {
       "vertex.vnnode.split": "Split by VNNode",
       "segment.refine": "Refine segment",
       "line.combine": "[[COMBINE_LINES]]",
+      table: {
+        "row.delete": "Delete row",
+        "column.delete": "Delete column",
+      },
     },
 
     floatmenu: {
@@ -326,6 +330,10 @@ const ja: TranslationResource = {
       "vertex.vnnode.split": "VNノードで分割",
       "segment.refine": "辺精密編集",
       "line.combine": "[[COMBINE_LINES]]",
+      table: {
+        "row.delete": "行削除",
+        "column.delete": "列削除",
+      },
     },
 
     floatmenu: {

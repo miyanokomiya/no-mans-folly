@@ -81,3 +81,4 @@ export function newTableSelectable(option: TableSelectableOption) {
     selectColumn,
   };
 }
+export type TableSelectable = ReturnType<typeof newTableSelectable>;

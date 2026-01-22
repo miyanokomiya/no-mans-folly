@@ -175,6 +175,7 @@ export function createBaseShape(arg: Partial<Shape> = {}): Shape {
     p: arg.p ?? { x: 0, y: 0 },
     rotation: arg.rotation ?? 0,
     parentId: arg.parentId,
+    parentMeta: arg.parentMeta,
     gcV: arg.gcV,
     gcH: arg.gcH,
     locked: arg.locked,

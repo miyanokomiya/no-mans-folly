@@ -1,23 +1,18 @@
 import { describe, test, expect } from "vitest";
-import { getPatchInfoByAddColumns, getPatchInfoByAddRows } from "./tableHandler";
-import { createShape, getCommonStruct } from "../../shapes";
-import { TableShape } from "../../shapes/table/table";
+import {
+  generateTableMeta,
+  getPatchByDeleteLines,
+  getPatchInfoByAddColumns,
+  getPatchInfoByAddRows,
+} from "./tableHandler";
+import { generateTable } from "../../shapes/table/table";
 import { generateNKeysBetweenAllowSame } from "../../utils/findex";
-import { toMap } from "../../utils/commons";
-
-function getTable(row: number, column: number) {
-  const rowFindexList = generateNKeysBetweenAllowSame(undefined, undefined, row);
-  const columnFindexList = generateNKeysBetweenAllowSame(undefined, undefined, column);
-  return createShape<TableShape>(getCommonStruct, "table", {
-    id: "table3x3",
-    ...toMap(rowFindexList.map((findex, i) => ({ id: `r_${i}`, findex, size: 10 }))),
-    ...toMap(columnFindexList.map((findex, i) => ({ id: `c_${i}`, findex, size: 20 }))),
-  });
-}
+import { newShapeComposite } from "../shapeComposite";
+import { createShape, getCommonStruct } from "../../shapes";
 
 describe("getPatchInfoByAddRows", () => {
   test("should return patch by adding rows", () => {
-    const table = getTable(3, 3);
+    const table = generateTable(3, 3, { width: 20, height: 10 });
 
     const result0 = getPatchInfoByAddRows(table, 0, [table.r_0!, table.r_1!]);
     const findexList0 = generateNKeysBetweenAllowSame(undefined, table.r_0?.findex, 2);
@@ -74,7 +69,7 @@ describe("getPatchInfoByAddRows", () => {
 
 describe("getPatchInfoByAddColumns", () => {
   test("should return patch by adding columns", () => {
-    const table = getTable(3, 3);
+    const table = generateTable(3, 3, { width: 20, height: 10 });
 
     const result0 = getPatchInfoByAddColumns(table, 0, [table.c_0!, table.c_1!]);
     const findexList0 = generateNKeysBetweenAllowSame(undefined, table.c_0?.findex, 2);
@@ -89,6 +84,45 @@ describe("getPatchInfoByAddColumns", () => {
         id: "c_1",
         size: 20,
       },
+    });
+  });
+});
+
+describe("getPatchByDeleteLines", () => {
+  test("should return patch info to delete table lines", () => {
+    const table = generateTable(3, 3, { width: 20, height: 10 });
+    const shape00 = createShape(getCommonStruct, "rectangle", {
+      id: "shape00",
+      parentId: table.id,
+      parentMeta: generateTableMeta(["r_0", "c_0"]),
+    });
+    const shape01 = {
+      ...shape00,
+      id: "shape01",
+      parentMeta: generateTableMeta(["r_0", "c_1"]),
+    };
+    const shape10 = {
+      ...shape00,
+      id: "shape10",
+      parentMeta: generateTableMeta(["r_1", "c_0"]),
+    };
+    const shapeComposite = newShapeComposite({
+      shapes: [table, shape00, shape01, shape10],
+      getStruct: getCommonStruct,
+    });
+
+    const result0 = getPatchByDeleteLines(shapeComposite, table, ["r_0"]);
+    expect(result0.patch).toHaveProperty("r_0");
+    expect(result0).toEqual({
+      patch: { r_0: undefined },
+      delete: [shape00.id, shape01.id],
+    });
+
+    const result1 = getPatchByDeleteLines(shapeComposite, table, ["c_0"]);
+    expect(result1.patch).toHaveProperty("c_0");
+    expect(result1).toEqual({
+      patch: { c_0: undefined },
+      delete: [shape00.id, shape10.id],
     });
   });
 });

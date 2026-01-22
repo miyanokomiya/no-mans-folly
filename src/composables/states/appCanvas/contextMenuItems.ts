@@ -284,6 +284,21 @@ export const CONTEXT_MENU_ITEM_SRC = {
     };
   },
 
+  get DELETE_TABLE_ROW() {
+    return {
+      label: i18n.t("contextmenu.table.row.delete"),
+      key: "DELETE_TABLE_ROW",
+      icon: iconDustbinRed,
+    };
+  },
+  get DELETE_TABLE_COLUMN() {
+    return {
+      label: i18n.t("contextmenu.table.column.delete"),
+      key: "DELETE_TABLE_COLUMN",
+      icon: iconDustbinRed,
+    };
+  },
+
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };
 

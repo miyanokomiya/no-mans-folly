@@ -7,6 +7,7 @@ import {
   getRectCenter,
   IRectangle,
   isSame,
+  isZero,
   IVec2,
   rotate,
   sub,
@@ -29,6 +30,7 @@ import {
   getRotationAffines,
   ISegment,
   isPointCloseToSegment,
+  isPointOnRectangle,
   TAU,
 } from "../../utils/geometry";
 import { ShapeComposite } from "../shapeComposite";
@@ -37,19 +39,20 @@ import { CanvasCTX } from "../../utils/types";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { getNextLayout, LayoutNodeWithMeta } from "./layoutHandler";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace, renderPlusIcon } from "../../utils/renderer";
+import { applyLocalSpace, renderPlusIcon, scaleGlobalAlpha } from "../../utils/renderer";
 import { generateNKeysBetweenAllowSame } from "../../utils/findex";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
 
-const BorderThreshold = 5;
-const AnchorSize = 8;
+const BORDER_THRESHOLD = 5;
+const ANCHOR_SIZE = 8;
 
 // "coord" is from 0 to the number of lines. 0 refers to the head line.
 type BorderAnchor = { type: "border-row" | "border-column"; coord: number; segment: ISegment };
 type AddLineAnchor = { type: "add-row" | "add-column"; coord: number; p: IVec2 };
+type LineHeadAnchor = { type: "head-row" | "head-column"; coord: number; rect: IRectangle };
 
-export type TableHitResult = BorderAnchor | AddLineAnchor;
+export type TableHitResult = BorderAnchor | AddLineAnchor | LineHeadAnchor;
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
@@ -111,10 +114,38 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
     return ret;
   }
 
+  function getHeadAnchors(scale: number): LineHeadAnchor[] {
+    const ret: LineHeadAnchor[] = [];
+    const extra = 25 * scale;
+    const margin = 5 * scale;
+    coordsLocations.rows.forEach((y, r) => {
+      if (r >= coordsLocations.rows.length - 1) return;
+
+      ret.push({
+        type: "head-row",
+        coord: r,
+        rect: { x: -extra, y, width: extra - margin, height: coordsLocations.rows[r + 1] - coordsLocations.rows[r] },
+      });
+    });
+    coordsLocations.columns.forEach((x, c) => {
+      ret.push({
+        type: "head-column",
+        coord: c,
+        rect: {
+          x,
+          y: -extra,
+          width: coordsLocations.columns[c + 1] - coordsLocations.columns[c],
+          height: extra - margin,
+        },
+      });
+    });
+    return ret;
+  }
+
   function hitTest(p: IVec2, scale = 1): TableHitResult | undefined {
     const adjustedP = sub(rotateFn(p, true), shape.p);
-    const borderThreshold = BorderThreshold * scale;
-    const anchorSize = AnchorSize * scale;
+    const borderThreshold = BORDER_THRESHOLD * scale;
+    const anchorSize = ANCHOR_SIZE * scale;
 
     const addLineAnchor = getAddLineAnchors(scale).find((a) => {
       return getDistance(a.p, adjustedP) <= anchorSize;
@@ -125,13 +156,34 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
       return isPointCloseToSegment(a.segment, adjustedP, borderThreshold);
     });
     if (borderAnchor) return borderAnchor;
+
+    const headAnchor = getHeadAnchors(scale).find((a) => {
+      return isPointOnRectangle(a.rect, adjustedP);
+    });
+    if (headAnchor) return headAnchor;
   }
 
   function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: TableHitResult) {
     applyLocalSpace(ctx, shapeRect, shape.rotation, () => {
-      const borderAnchors = getBorderAnchors(scale);
-      const anchorSize = AnchorSize * scale;
+      const anchorSize = ANCHOR_SIZE * scale;
 
+      const headerAnchors = getHeadAnchors(scale);
+      scaleGlobalAlpha(ctx, 0.5, () => {
+        applyFillStyle(ctx, { color: style.selectionPrimary });
+        ctx.beginPath();
+        headerAnchors.forEach((a) => {
+          ctx.rect(a.rect.x, a.rect.y, a.rect.width, a.rect.height);
+        });
+        ctx.fill();
+      });
+      if (hitResult?.type === "head-row" || hitResult?.type === "head-column") {
+        applyFillStyle(ctx, { color: style.selectionSecondaly });
+        ctx.beginPath();
+        ctx.rect(hitResult.rect.x, hitResult.rect.y, hitResult.rect.width, hitResult.rect.height);
+        ctx.fill();
+      }
+
+      const borderAnchors = getBorderAnchors(scale);
       applyStrokeStyle(ctx, { color: style.transformAnchor, width: 4 * scale });
       ctx.beginPath();
       borderAnchors.forEach((a) => {
@@ -578,4 +630,42 @@ function getPatchInfoByAddLines<T extends TableRow | TableColumn>(
   });
 
   return patch;
+}
+
+/**
+ * "lineIds" can contain both rows and columns.
+ * Returned value "delete" contains IDs of shapes that belong to deleted lines.
+ */
+export function getPatchByDeleteLines(
+  shapeComposite: ShapeComposite,
+  table: TableShape,
+  lineIds: string[],
+): { patch: Partial<TableShape>; delete: string[] } {
+  const patch: Partial<TableShape> = {};
+
+  lineIds.forEach((id: any) => {
+    patch[id] = undefined;
+  });
+
+  const nextTable = { ...table, ...patch };
+  const v = sub(shapeComposite.getLocalRectPolygon(table)[0], shapeComposite.getLocalRectPolygon(nextTable)[0]);
+  if (!isZero(v)) {
+    patch.p = add(nextTable.p, v);
+  }
+
+  const idSet = new Set(lineIds);
+
+  return {
+    patch,
+    delete: shapeComposite.shapes
+      .filter((s) => {
+        if (s.parentId !== table.id) return;
+
+        const coords = parseTableMeta(s.parentMeta);
+        if (!coords) return;
+
+        return idSet.has(coords[0]) || idSet.has(coords[1]);
+      })
+      .map((s) => s.id),
+  };
 }
