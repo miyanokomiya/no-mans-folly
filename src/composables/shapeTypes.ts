@@ -36,6 +36,7 @@ import iconLineElbowCurve from "../assets/icons/shape_line_elbow_curve.svg";
 import iconLayoutBranch from "../assets/icons/layout_branch.svg";
 import iconLayoutBoard from "../assets/icons/layout_board.svg";
 import iconLayoutAlignBox from "../assets/icons/layout_align_box.svg";
+import iconLayoutTable from "../assets/icons/layout_table.svg";
 
 import { newLineSelectedState } from "./states/appCanvas/lines/lineSelectedState";
 import { newRoundedRectangleSelectedState } from "./states/appCanvas/roundedRectangle/roundedRectangleSelectedState";
@@ -121,7 +122,7 @@ export const lineTypeList: ShapeTypeItem[] = [
 
 export const layoutTypeList: ShapeTypeItem[] = [
   { type: "align_box", icon: iconLayoutAlignBox },
-  { type: "table", icon: iconLayoutAlignBox },
+  { type: "table", icon: iconLayoutTable },
   { type: "tree_root", icon: iconLayoutBranch },
   { type: "board_root", icon: iconLayoutBoard },
 ];
