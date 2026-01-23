@@ -20,6 +20,16 @@ describe("newTableSelectable", () => {
     ]);
     target.clearAll();
     expect(target.getSelectedCoords()).toEqual([]);
+
+    // shift option
+    target.selectCell(tableInfo.rows[0].id, tableInfo.columns[0].id, false, true);
+    expect(target.getSelectedCoords()).toEqual([[tableInfo.rows[0].id, tableInfo.columns[0].id]]);
+    target.selectCell(tableInfo.rows[0].id, tableInfo.columns[0].id, false, true);
+    expect(target.getSelectedCoords()).toEqual([[tableInfo.rows[0].id, tableInfo.columns[0].id]]);
+    target.selectCell(tableInfo.rows[0].id, tableInfo.columns[0].id, true, true);
+    expect(target.getSelectedCoords()).toEqual([]);
+    target.selectCell(tableInfo.rows[0].id, tableInfo.columns[0].id, true, true);
+    expect(target.getSelectedCoords()).toEqual([]);
   });
 
   test("should select each row", () => {
@@ -34,6 +44,18 @@ describe("newTableSelectable", () => {
       ...tableInfo.columns.map((c) => [tableInfo.rows[1].id, c.id]),
       ...tableInfo.columns.map((c) => [tableInfo.rows[0].id, c.id]),
     ]);
+
+    // shift option
+    target.clearAll();
+    target.selectRow(tableInfo.rows[0].id, false, true);
+    expect(target.getSelectedCoords()).toEqual(tableInfo.columns.map((c) => [tableInfo.rows[0].id, c.id]));
+    target.selectRow(tableInfo.rows[0].id, false, true);
+    expect(target.getSelectedCoords()).toEqual(tableInfo.columns.map((c) => [tableInfo.rows[0].id, c.id]));
+    target.selectRow(tableInfo.rows[1].id, true);
+    target.selectRow(tableInfo.rows[0].id, true, true);
+    expect(target.getSelectedCoords()).toEqual(tableInfo.columns.map((c) => [tableInfo.rows[1].id, c.id]));
+    target.selectRow(tableInfo.rows[0].id, true, true);
+    expect(target.getSelectedCoords()).toEqual(tableInfo.columns.map((c) => [tableInfo.rows[1].id, c.id]));
   });
 
   test("should select each column", () => {
@@ -48,6 +70,18 @@ describe("newTableSelectable", () => {
       ...tableInfo.rows.map((r) => [r.id, tableInfo.columns[1].id]),
       ...tableInfo.rows.map((r) => [r.id, tableInfo.columns[0].id]),
     ]);
+
+    // shift option
+    target.clearAll();
+    target.selectColumn(tableInfo.columns[0].id, false, true);
+    expect(target.getSelectedCoords()).toEqual(tableInfo.rows.map((r) => [r.id, tableInfo.columns[0].id]));
+    target.selectColumn(tableInfo.columns[0].id, false, true);
+    expect(target.getSelectedCoords()).toEqual(tableInfo.rows.map((r) => [r.id, tableInfo.columns[0].id]));
+    target.selectColumn(tableInfo.columns[1].id, true);
+    target.selectColumn(tableInfo.columns[0].id, true, true);
+    expect(target.getSelectedCoords()).toEqual(tableInfo.rows.map((r) => [r.id, tableInfo.columns[1].id]));
+    target.selectColumn(tableInfo.columns[0].id, true, true);
+    expect(target.getSelectedCoords()).toEqual(tableInfo.rows.map((r) => [r.id, tableInfo.columns[1].id]));
   });
 
   test("getSelectedRows", () => {

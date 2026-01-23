@@ -27,7 +27,7 @@
     "minimatrix-polyroots": "^3.0.5",
     "nanoid": "^5.1.5",
     "okageo": "^3.1.12",
-    "okaselect": "^0.1.1",
+    "okaselect": "^0.1.2",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-google-drive-picker": "^1.2.2",

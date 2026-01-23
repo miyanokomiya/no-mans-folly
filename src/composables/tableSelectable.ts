@@ -20,28 +20,55 @@ export function newTableSelectable(option: TableSelectableOption) {
   }
   const selectable = okaselect.useItemSelectable(() => items);
 
-  function selectCell(row: string, column: string, ctrl = false) {
-    selectable.select(generateTableMeta([row, column] as TableCoords), ctrl);
+  function selectCell(row: string, column: string, ctrl = false, shift = false) {
+    const key = generateTableMeta([row, column] as TableCoords);
+    if (shift) {
+      if (ctrl) {
+        selectable.clearForce([key]);
+      } else {
+        selectable.selectForce([key]);
+      }
+    } else {
+      selectable.select(key, ctrl);
+    }
   }
 
-  function selectRow(coord: string, ctrl = false) {
+  function selectRow(coord: string, ctrl = false, shift = false) {
     const list: string[] = [];
     mapEach(items, ([row], key) => {
       if (row === coord) {
         list.push(key);
       }
     });
-    selectable.multiSelect(list, ctrl);
+
+    if (shift) {
+      if (ctrl) {
+        selectable.clearForce(list);
+      } else {
+        selectable.selectForce(list);
+      }
+    } else {
+      selectable.multiSelect(list, ctrl);
+    }
   }
 
-  function selectColumn(coord: string, ctrl = false) {
+  function selectColumn(coord: string, ctrl = false, shift = false) {
     const list: string[] = [];
     mapEach(items, ([, column], key) => {
       if (column === coord) {
         list.push(key);
       }
     });
-    selectable.multiSelect(list, ctrl);
+
+    if (shift) {
+      if (ctrl) {
+        selectable.clearForce(list);
+      } else {
+        selectable.selectForce(list);
+      }
+    } else {
+      selectable.multiSelect(list, ctrl);
+    }
   }
 
   function getSelectedCoords() {

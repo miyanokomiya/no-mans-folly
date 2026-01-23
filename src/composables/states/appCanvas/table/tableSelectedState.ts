@@ -213,6 +213,19 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
             ctx.updateShapes({ add: [rectShape] });
             return () => ctx.states.newTextEditingState({ id: rectShape.id });
           }
+          case "pointerhover": {
+            const hitResult = shapeHandler.retrieveHitResult();
+            if (event.data.shift && hitResult?.type === "cell") {
+              const tableInfo = getTableShapeInfo(targetShape);
+              const row = tableInfo?.rows[hitResult.coords[0]];
+              const column = tableInfo?.columns[hitResult.coords[1]];
+              if (row && column) {
+                tableSelectable.selectCell(row.id, column.id, event.data.ctrl, true);
+                ctx.redraw();
+              }
+            }
+            return;
+          }
           case "contextmenu": {
             const hitResult = shapeHandler.retrieveHitResult();
             if (!hitResult) return;
