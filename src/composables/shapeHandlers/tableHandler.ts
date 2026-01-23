@@ -53,8 +53,9 @@ const ANCHOR_SIZE = 8;
 type BorderAnchor = { type: "border-row" | "border-column"; coord: number; segment: ISegment };
 type AddLineAnchor = { type: "add-row" | "add-column"; coord: number; p: IVec2 };
 type LineHeadAnchor = { type: "head-row" | "head-column"; coord: number; rect: IRectangle };
+type CellAnchor = { type: "cell"; coords: [number, number]; rect: IRectangle };
 
-export type TableHitResult = BorderAnchor | AddLineAnchor | LineHeadAnchor;
+export type TableHitResult = BorderAnchor | AddLineAnchor | LineHeadAnchor | CellAnchor;
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
@@ -144,6 +145,24 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
     return ret;
   }
 
+  function hitTestCellAnchor(adjustedP: IVec2): CellAnchor | undefined {
+    if (adjustedP.x < 0 || adjustedP.y < 0) return;
+
+    const row = coordsLocations.rows.findIndex((y, i) => i > 0 && adjustedP.y < y);
+    const column = coordsLocations.columns.findIndex((x, i) => i > 0 && adjustedP.x < x);
+    if (row < 0 || column < 0) return;
+
+    const left = coordsLocations.columns[column - 1];
+    const right = coordsLocations.columns[column];
+    const top = coordsLocations.rows[row - 1];
+    const bottom = coordsLocations.rows[row];
+    return {
+      type: "cell",
+      coords: [row - 1, column - 1],
+      rect: { x: left, y: top, width: right - left, height: bottom - top },
+    };
+  }
+
   function hitTest(p: IVec2, scale = 1): TableHitResult | undefined {
     const adjustedP = sub(rotateFn(p, true), shape.p);
     const borderThreshold = BORDER_THRESHOLD * scale;
@@ -163,6 +182,9 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
       return isPointOnRectangle(a.rect, adjustedP);
     });
     if (headAnchor) return headAnchor;
+
+    const cellAnchor = hitTestCellAnchor(adjustedP);
+    if (cellAnchor) return cellAnchor;
   }
 
   function render(ctx: CanvasCTX, style: StyleScheme, scale: number, hitResult?: TableHitResult) {

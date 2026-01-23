@@ -1,13 +1,17 @@
+import { createShape } from "../../../../shapes";
+import { RectangleShape } from "../../../../shapes/rectangle";
 import {
   getTableCoordsLocations,
   getTableShapeInfo,
   getTableSizeByInfo,
   TableShape,
 } from "../../../../shapes/table/table";
-import { applyFillStyle } from "../../../../utils/fillStyle";
+import { applyFillStyle, createFillStyle } from "../../../../utils/fillStyle";
 import { applyLocalSpace, scaleGlobalAlpha } from "../../../../utils/renderer";
+import { createStrokeStyle } from "../../../../utils/strokeStyle";
 import { newBoundingBox } from "../../../boundingBox";
 import {
+  generateTableMeta,
   getPatchByDeleteLines,
   getPatchInfoByInsertColumn,
   getPatchInfoByInsertRow,
@@ -152,6 +156,43 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
               }
             }
             return;
+          }
+          case "pointerdoubleclick": {
+            const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
+            if (hitResult?.type !== "cell") return;
+
+            const shapeAtPoint = shapeComposite.findShapeAt(
+              event.data.point,
+              shapeComposite.getSelectionScope(targetShape),
+              undefined,
+              undefined,
+              ctx.getScale(),
+            );
+            if (shapeAtPoint?.id !== targetShape.id) return;
+
+            const tableInfo = getTableShapeInfo(targetShape);
+            const row = tableInfo?.rows[hitResult.coords[0]];
+            const column = tableInfo?.columns[hitResult.coords[1]];
+            if (!row || !column) return;
+
+            const parentMeta = generateTableMeta([row.id, column.id]);
+            const sibling = shapeComposite.shapes.find(
+              (s) => s.parentId === targetShape.id && s.parentMeta === parentMeta,
+            );
+            if (sibling) return;
+
+            const rectShape = createShape<RectangleShape>(ctx.getShapeStruct, "rectangle", {
+              id: ctx.generateUuid(),
+              findex: ctx.createLastIndex(),
+              parentId: targetShape.id,
+              parentMeta,
+              lcH: 1,
+              lcV: 1,
+              fill: createFillStyle({ disabled: true }),
+              stroke: createStrokeStyle({ disabled: true }),
+            });
+            ctx.updateShapes({ add: [rectShape] });
+            return () => ctx.states.newTextEditingState({ id: rectShape.id });
           }
           case "contextmenu": {
             const hitResult = shapeHandler.retrieveHitResult();
