@@ -185,14 +185,12 @@ export function newBoundingBox(option: Option): BoundingBox {
 
       ctx.beginPath();
       applyPath(ctx, option.path, true);
-      if (hitResult?.type === "area") {
-        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: style.selectionLineWidth * scale });
-      } else {
-        applyStrokeStyle(ctx, {
-          color: getShapeStatusColor(style, option) ?? style.selectionPrimary,
-          width: style.selectionLineWidth * scale,
-        });
-      }
+      // No highlight for "area" type
+      // It dosn't always activate an action & highlighting all bounds looks too much
+      applyStrokeStyle(ctx, {
+        color: getShapeStatusColor(style, option) ?? style.selectionPrimary,
+        width: style.selectionLineWidth * scale,
+      });
       ctx.stroke();
 
       if (hitResult?.type === "segment") {

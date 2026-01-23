@@ -89,7 +89,8 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
       ...src,
       hasHitResult: () =>
         !!shapeHandler.retrieveHitResult() ||
-        !!boundingBox.retrieveHitResult() ||
+        // Exclude "area" for layout shapes => Inner shapes are selectable
+        (!!boundingBox.retrieveHitResult() && boundingBox.retrieveHitResult()?.type !== "area") ||
         !!smartBranchHandler?.retrieveHitResult() ||
         !!shapeAttachmentHandler.retrieveHitResult(),
       onStart: (ctx) => {
