@@ -1,3 +1,4 @@
+import { IVec2 } from "okageo";
 import { createShape } from "../../../../shapes";
 import { RectangleShape } from "../../../../shapes/rectangle";
 import {
@@ -25,10 +26,24 @@ import { ContextMenuItem } from "../../types";
 import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
 import { newResizingState } from "../resizingState";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
+import { AppCanvasStateContext } from "../core";
 
 export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape, TableHandler, never>(
   (getters) => {
     let tableSelectable: TableSelectable;
+
+    function isOnTable(ctx: AppCanvasStateContext, p: IVec2) {
+      const targetShape = getters.getTargetShape();
+      const shapeComposite = ctx.getShapeComposite();
+      const shapeAtPoint = shapeComposite.findShapeAt(
+        p,
+        shapeComposite.getSelectionScope(targetShape),
+        undefined,
+        undefined,
+        ctx.getScale(),
+      );
+      return shapeAtPoint?.id === targetShape.id;
+    }
 
     return {
       getLabel: () => "TableSelected",
@@ -120,6 +135,18 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     }
                     return null;
                   }
+                  case "cell": {
+                    if (!event.data.options.shift && !isOnTable(ctx, event.data.point)) return;
+
+                    const tableInfo = getTableShapeInfo(targetShape);
+                    const row = tableInfo?.rows[hitResult.coords[0]];
+                    const column = tableInfo?.columns[hitResult.coords[1]];
+                    if (!row || !column) return;
+
+                    tableSelectable.selectCell(row.id, column.id, event.data.options.ctrl);
+                    ctx.redraw();
+                    return null;
+                  }
                   default: {
                     return;
                   }
@@ -160,15 +187,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
           case "pointerdoubleclick": {
             const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
             if (hitResult?.type !== "cell") return;
-
-            const shapeAtPoint = shapeComposite.findShapeAt(
-              event.data.point,
-              shapeComposite.getSelectionScope(targetShape),
-              undefined,
-              undefined,
-              ctx.getScale(),
-            );
-            if (shapeAtPoint?.id !== targetShape.id) return;
+            if (!isOnTable(ctx, event.data.point)) return;
 
             const tableInfo = getTableShapeInfo(targetShape);
             const row = tableInfo?.rows[hitResult.coords[0]];
@@ -241,36 +260,57 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
         }
       },
       render: (ctx, renderCtx) => {
-        const selectedCoords = tableSelectable.getSelectedCoords();
-        if (selectedCoords.length === 0) return;
-
         const targetShape = getters.getTargetShape();
         const tableInfo = getTableShapeInfo(targetShape);
         if (!tableInfo) return;
 
+        const renderFns: (() => void)[] = [];
+
+        const selectedCoords = tableSelectable.getSelectedCoords();
+        if (selectedCoords.length > 0) {
+          const coordsLocations = getTableCoordsLocations(tableInfo);
+          const rowIndexMap = new Map<string, number>(tableInfo.rows.map((row, r) => [row.id, r]));
+          const columnIndexMap = new Map<string, number>(tableInfo.columns.map((column, c) => [column.id, c]));
+          renderFns.push(() => {
+            scaleGlobalAlpha(renderCtx, 0.2, () => {
+              applyFillStyle(renderCtx, { color: style.selectionPrimary });
+              renderCtx.beginPath();
+              selectedCoords.forEach((coord) => {
+                const r = rowIndexMap.get(coord[0]);
+                const c = columnIndexMap.get(coord[1]);
+                if (r === undefined || c === undefined) return;
+
+                const top = coordsLocations.rows[r];
+                const bottom = coordsLocations.rows[r + 1];
+                const left = coordsLocations.columns[c];
+                const right = coordsLocations.columns[c + 1];
+                renderCtx.rect(left, top, right - left, bottom - top);
+              });
+              renderCtx.fill();
+            });
+          });
+        }
+
+        const shapeHandler = getters.getShapeHandler();
+        const hitResult = shapeHandler.retrieveHitResult();
+        if (hitResult?.type === "cell" && isOnTable(ctx, ctx.getCursorPoint())) {
+          renderFns.push(() => {
+            scaleGlobalAlpha(renderCtx, 0.2, () => {
+              applyFillStyle(renderCtx, { color: style.selectionPrimary });
+              renderCtx.beginPath();
+              renderCtx.rect(hitResult.rect.x, hitResult.rect.y, hitResult.rect.width, hitResult.rect.height);
+              renderCtx.fill();
+            });
+          });
+        }
+
+        if (renderFns.length === 0) return;
+
         const style = ctx.getStyleScheme();
-        const coordsLocations = getTableCoordsLocations(tableInfo);
         const size = getTableSizeByInfo(tableInfo);
         const shapeRect = { x: targetShape.p.x, y: targetShape.p.y, width: size.width, height: size.height };
-        const rowIndexMap = new Map<string, number>(tableInfo.rows.map((row, r) => [row.id, r]));
-        const columnIndexMap = new Map<string, number>(tableInfo.columns.map((column, c) => [column.id, c]));
         applyLocalSpace(renderCtx, shapeRect, targetShape.rotation, () => {
-          scaleGlobalAlpha(renderCtx, 0.2, () => {
-            applyFillStyle(renderCtx, { color: style.selectionPrimary });
-            renderCtx.beginPath();
-            selectedCoords.forEach((coord) => {
-              const r = rowIndexMap.get(coord[0]);
-              const c = columnIndexMap.get(coord[1]);
-              if (r === undefined || c === undefined) return;
-
-              const top = coordsLocations.rows[r];
-              const bottom = coordsLocations.rows[r + 1];
-              const left = coordsLocations.columns[c];
-              const right = coordsLocations.columns[c + 1];
-              renderCtx.rect(left, top, right - left, bottom - top);
-            });
-            renderCtx.fill();
-          });
+          renderFns.forEach((fn) => fn());
         });
       },
     };
