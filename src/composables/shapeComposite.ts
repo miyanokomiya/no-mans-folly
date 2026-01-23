@@ -43,6 +43,7 @@ import { isLineShape } from "../shapes/line";
 import { shouldEntityOrderUpdate, shouldEntityTreeUpdate } from "../utils/entities";
 import { CanvasCTX } from "../utils/types";
 import { BezierPath } from "../utils/path";
+import { isTableShape, parseTableMeta } from "../shapes/table/table";
 
 interface Option {
   shapes: Shape[];
@@ -349,6 +350,14 @@ export function newShapeComposite(option: Option) {
     return !!shapeMap[shape.parentId ?? ""];
   }
 
+  function isInTableCell(shape: Shape): shape is Shape & Required<Pick<Shape, "parentId">> {
+    const parent = shapeMap[shape.parentId ?? ""];
+    if (!shape.parentMeta || !parent || !isTableShape(parent)) return false;
+
+    const coords = parseTableMeta(shape.parentMeta);
+    return !!coords && !!parent[coords[0]] && !!parent[coords[1]];
+  }
+
   function attached(
     shape: Shape,
     attachmentType?: "line" | "shape",
@@ -490,6 +499,7 @@ export function newShapeComposite(option: Option) {
     getShapeActualPosition,
     getRectPolygonForLayout,
     hasParent,
+    isInTableCell,
     attached,
     canAttach,
     canBeShapeAttached,

@@ -7,7 +7,7 @@ import { AppStateContext, AppStateMachineContext, GetAppStateContext } from "../
 import { Shape, ShapeAttachment } from "../../models";
 import { LineShapeInspector } from "./LineShapeInspector";
 import { LineShape, isLineShape } from "../../shapes/line";
-import { GroupConstraintInspector } from "./GroupConstraintInspector";
+import { GroupConstraintInspector, TableConstraintInspector } from "./GroupConstraintInspector";
 import { MultipleShapesInspector } from "./MultipleShapesInspector";
 import { canClip, canShapeGrouped } from "../../shapes";
 import { GroupShape, isGroupShape } from "../../shapes/group";
@@ -226,7 +226,9 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     </BlockGroupField>
   );
 
-  const groupConstraintField = canShapeGrouped(getShapeComposite().getShapeStruct, targetShape) ? (
+  const groupConstraintField = shapeComposite.isInTableCell(targetShape) ? (
+    <TableConstraintInspector targetShape={targetShape} updateTargetShape={updateTargetShapesBySamePatch} />
+  ) : canShapeGrouped(shapeComposite.getShapeStruct, targetShape) ? (
     <GroupConstraintInspector targetShape={targetShape} updateTargetShape={updateTargetShapesBySamePatch} />
   ) : undefined;
 
@@ -268,7 +270,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
         </>
       )}
       {groupConstraintField}
-      {canClip(getShapeComposite().getShapeStruct, targetShape) ? (
+      {canClip(shapeComposite.getShapeStruct, targetShape) ? (
         <ClipInspector
           targetShape={targetShape}
           updateTargetShape={updateTargetShapesBySamePatch}

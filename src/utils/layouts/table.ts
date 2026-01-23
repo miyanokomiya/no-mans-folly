@@ -1,14 +1,16 @@
 import { IRectangle, IVec2 } from "okageo";
 import { getTree, TreeNode } from "../tree";
 import { LayoutFn, LayoutNode, toAbsoluteRectMap } from "./core";
+import { divideSafely } from "../geometry";
 
+type TableCoords = [rowId: string, columnId: string];
 export type TableLayoutNode = TableLayoutBox | TableLayoutEntity;
-
-export type TableCoords = [rowId: string, columnId: string];
 
 interface TableLayoutBase extends LayoutNode {
   parentId?: string;
   coords?: TableCoords;
+  fullH?: boolean;
+  fullV?: boolean;
 }
 
 export interface TableLayoutEntity extends TableLayoutBase {
@@ -87,19 +89,38 @@ function calcTableRectMap(
       let y = cellY;
       node.columns.forEach((column) => {
         const items = matrixMap.get([row.id, column.id]);
-        let itemBoundsWidth = 0;
-        items?.forEach((c) => {
-          itemBoundsWidth += nodeMap.get(c.id)!.rect.width;
-        });
-        const paddingX = (column.size - itemBoundsWidth) / 2;
-        let x = cellX + paddingX;
 
-        items?.forEach((c) => {
-          const paddingY = (row.size - nodeMap.get(c.id)!.rect.height) / 2;
-          calcTableRectMap(ret, nodeMap, c, { x, y: y + paddingY });
-          const crect = ret.get(c.id)!;
-          x += crect.width + gapC;
-        });
+        if (items) {
+          const itemList = Array.from(items);
+          const hasFullHItem = itemList.some((c) => nodeMap.get(c.id)!.fullH);
+
+          let itemBoundsWidth = 0;
+          let fixedItemBoundsWidth = 0;
+          itemList.forEach((c) => {
+            const cNode = nodeMap.get(c.id)!;
+            itemBoundsWidth += cNode.rect.width;
+            if (!cNode.fullH) {
+              fixedItemBoundsWidth += cNode.rect.width;
+            }
+          });
+          const remainWidth = hasFullHItem ? 0 : column.size - itemBoundsWidth;
+          let x = cellX + remainWidth / 2;
+
+          const fullHScale = divideSafely(
+            column.size - fixedItemBoundsWidth,
+            itemBoundsWidth - fixedItemBoundsWidth,
+            1,
+          );
+          itemList.forEach((c) => {
+            const cNode = nodeMap.get(c.id)!;
+            const width = cNode.rect.width * (cNode.fullH ? fullHScale : 1);
+            const height = cNode.fullV ? row.size : cNode.rect.height;
+            const paddingY = (row.size - height) / 2;
+            const cRect = { width, height, x, y: y + paddingY };
+            ret.set(cNode.id, cRect);
+            x += cRect.width + gapC;
+          });
+        }
 
         cellX += column.size;
       });

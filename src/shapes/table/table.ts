@@ -8,7 +8,7 @@ import {
   isSame,
   pathSegmentRawsToString,
 } from "okageo";
-import { CommonStyle, Shape, Size } from "../../models";
+import { CommonStyle, GroupConstraint, Shape, Size } from "../../models";
 import { findexSortFn, toMap } from "../../utils/commons";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "../core";
 import {
@@ -42,6 +42,7 @@ const DEFAULT_CELL_HEIGHT = 50;
 
 export type TableColumnKey = `c_${string}`;
 export type TableRowKey = `r_${string}`;
+export type TableCoords = [rowId: TableRowKey, columnId: TableColumnKey];
 
 export type TableColumn = {
   id: TableColumnKey;
@@ -369,4 +370,15 @@ export function generateTable(
     ...toMap(rowFindexList.map((findex, i) => ({ id: `r_${i}`, findex, size: cellSize.height }))),
     ...toMap(columnFindexList.map((findex, i) => ({ id: `c_${i}`, findex, size: cellSize.width }))),
   });
+}
+
+export function parseTableMeta(meta?: string): TableCoords | undefined {
+  if (!meta) return;
+
+  const result = meta.split(/\s*:\s*/);
+  return result.length === 2 ? (result as TableCoords) : undefined;
+}
+
+export function isStretchInCell(val?: GroupConstraint): boolean {
+  return val === 5;
 }

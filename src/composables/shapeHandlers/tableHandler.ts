@@ -17,8 +17,11 @@ import {
   getTableCoordsLocations,
   getTableShapeInfo,
   getTableSizeByInfo,
+  isStretchInCell,
   isTableShape,
+  parseTableMeta,
   TableColumn,
+  TableCoords,
   TableRow,
   TableShape,
   TableShapeInfo,
@@ -34,7 +37,7 @@ import {
   TAU,
 } from "../../utils/geometry";
 import { ShapeComposite } from "../shapeComposite";
-import { TableCoords, tableLayout, TableLayoutNode } from "../../utils/layouts/table";
+import { tableLayout, TableLayoutNode } from "../../utils/layouts/table";
 import { CanvasCTX } from "../../utils/types";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { getNextLayout, LayoutNodeWithMeta } from "./layoutHandler";
@@ -77,7 +80,7 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
         coord: r,
         segment: [
           { x: -extra, y },
-          { x: r === 0 || r === coordsLocations.rows.length - 1 ? 0 : size.width, y },
+          { x: 0, y },
         ],
       });
     });
@@ -87,7 +90,7 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
         coord: c,
         segment: [
           { x, y: -extra },
-          { x, y: c === 0 || c === coordsLocations.columns.length - 1 ? 0 : size.height },
+          { x, y: 0 },
         ],
       });
     });
@@ -168,7 +171,7 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
       const anchorSize = ANCHOR_SIZE * scale;
 
       const headerAnchors = getHeadAnchors(scale);
-      scaleGlobalAlpha(ctx, 0.5, () => {
+      scaleGlobalAlpha(ctx, 0.3, () => {
         applyFillStyle(ctx, { color: style.selectionPrimary });
         ctx.beginPath();
         headerAnchors.forEach((a) => {
@@ -184,7 +187,7 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
       }
 
       const borderAnchors = getBorderAnchors(scale);
-      applyStrokeStyle(ctx, { color: style.transformAnchor, width: 4 * scale });
+      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 4 * scale });
       ctx.beginPath();
       borderAnchors.forEach((a) => {
         ctx.moveTo(a.segment[0].x, a.segment[0].y);
@@ -192,11 +195,18 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
       });
       ctx.stroke();
 
-      if (hitResult?.type === "border-row" || hitResult?.type === "border-column") {
+      if (hitResult?.type === "border-row") {
         applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 4 * scale });
         ctx.beginPath();
         ctx.moveTo(hitResult.segment[0].x, hitResult.segment[0].y);
-        ctx.lineTo(hitResult.segment[1].x, hitResult.segment[1].y);
+        ctx.lineTo(size.width, hitResult.segment[1].y);
+        ctx.stroke();
+      }
+      if (hitResult?.type === "border-column") {
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 4 * scale });
+        ctx.beginPath();
+        ctx.moveTo(hitResult.segment[0].x, hitResult.segment[0].y);
+        ctx.lineTo(hitResult.segment[1].x, size.height);
         ctx.stroke();
       }
 
@@ -372,13 +382,6 @@ export function newMovingInTableHandler(option: MovingInTableHandlerOption) {
 }
 export type MovingInTableHandler = ReturnType<typeof newMovingInTableHandler>;
 
-function parseTableMeta(meta?: string): TableCoords | undefined {
-  if (!meta) return;
-
-  const result = meta.split(/\s*:\s*/);
-  return result.length === 2 ? (result as TableCoords) : undefined;
-}
-
 export function generateTableMeta(coords: TableCoords): string {
   return coords.join(":");
 }
@@ -421,6 +424,8 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
       rows: tableInfo?.rows ?? [],
       columns: tableInfo?.columns ?? [],
       coords: parseTableMeta(shape.parentMeta),
+      fullH: isStretchInCell(shape.gcH),
+      fullV: isStretchInCell(shape.gcV),
     });
 
     treeNode.children.forEach((c) => {
@@ -444,6 +449,8 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
         rect: childRec,
         parentId: shape.id,
         coords,
+        fullH: child.gcH === 5,
+        fullV: child.gcV === 5,
       });
     });
   }

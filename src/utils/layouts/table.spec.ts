@@ -1,25 +1,27 @@
 import { describe, test, expect } from "vitest";
-import { tableLayout } from "./table";
+import { tableLayout, TableLayoutBox, TableLayoutEntity } from "./table";
 
 describe("tableLayout", () => {
+  const root3x3: TableLayoutBox = {
+    id: "root",
+    findex: "Aa",
+    type: "box",
+    rect: { x: 0, y: 0, width: 300, height: 300 },
+    columns: [
+      { id: "c0", size: 100 },
+      { id: "c1", size: 100 },
+      { id: "c2", size: 100 },
+    ],
+    rows: [
+      { id: "r0", size: 100 },
+      { id: "r1", size: 100 },
+      { id: "r2", size: 100 },
+    ],
+  };
+
   test("should return table layout resutlt", () => {
     const result0 = tableLayout([
-      {
-        id: "root",
-        findex: "Aa",
-        type: "box",
-        rect: { x: 1000, y: 2000, width: 300, height: 300 },
-        columns: [
-          { id: "c0", size: 100 },
-          { id: "c1", size: 100 },
-          { id: "c2", size: 100 },
-        ],
-        rows: [
-          { id: "r0", size: 100 },
-          { id: "r1", size: 100 },
-          { id: "r2", size: 100 },
-        ],
-      },
+      { ...root3x3, rect: { x: 1000, y: 2000, width: 300, height: 300 } },
       {
         id: "0_0",
         findex: "Aa",
@@ -59,6 +61,90 @@ describe("tableLayout", () => {
       ["0_1_0", { height: 10, width: 20, x: 1130, y: 2045 }],
       ["0_1_1", { height: 10, width: 20, x: 1150, y: 2045 }],
       ["2_2", { height: 20, width: 40, x: 1230, y: 2240 }],
+    ]);
+  });
+
+  test("should regard fullH", () => {
+    const item0: TableLayoutEntity = {
+      id: "0_0_0",
+      findex: "Aa",
+      type: "entity",
+      parentId: "root",
+      coords: ["r0", "c0"],
+      rect: { x: 0, y: 0, width: 20, height: 10 },
+    };
+    const result0 = tableLayout([
+      root3x3,
+      { ...item0, fullH: true },
+      {
+        ...item0,
+        id: "0_0_1",
+        findex: "Bb",
+        fullH: false,
+      },
+    ]);
+    expect(result0.map((r) => [r.id, r.rect])).toEqual([
+      ["root", { height: 300, width: 300, x: 0, y: 0 }],
+      ["0_0_0", { height: 10, width: 80, x: 0, y: 45 }],
+      ["0_0_1", { height: 10, width: 20, x: 80, y: 45 }],
+    ]);
+
+    const result1 = tableLayout([
+      root3x3,
+      { ...item0, fullH: true },
+      {
+        ...item0,
+        id: "0_0_1",
+        findex: "Bb",
+        fullH: true,
+      },
+    ]);
+    expect(result1.map((r) => [r.id, r.rect])).toEqual([
+      ["root", { height: 300, width: 300, x: 0, y: 0 }],
+      ["0_0_0", { height: 10, width: 50, x: 0, y: 45 }],
+      ["0_0_1", { height: 10, width: 50, x: 50, y: 45 }],
+    ]);
+  });
+
+  test("should regard fullV", () => {
+    const item0: TableLayoutEntity = {
+      id: "0_0_0",
+      findex: "Aa",
+      type: "entity",
+      parentId: "root",
+      coords: ["r0", "c0"],
+      rect: { x: 0, y: 0, width: 20, height: 10 },
+    };
+    const result0 = tableLayout([
+      root3x3,
+      { ...item0, fullV: true },
+      {
+        ...item0,
+        id: "0_0_1",
+        findex: "Bb",
+        fullV: false,
+      },
+    ]);
+    expect(result0.map((r) => [r.id, r.rect])).toEqual([
+      ["root", { height: 300, width: 300, x: 0, y: 0 }],
+      ["0_0_0", { height: 100, width: 20, x: 30, y: 0 }],
+      ["0_0_1", { height: 10, width: 20, x: 50, y: 45 }],
+    ]);
+
+    const result1 = tableLayout([
+      root3x3,
+      { ...item0, fullV: true },
+      {
+        ...item0,
+        id: "0_0_1",
+        findex: "Bb",
+        fullV: true,
+      },
+    ]);
+    expect(result1.map((r) => [r.id, r.rect])).toEqual([
+      ["root", { height: 300, width: 300, x: 0, y: 0 }],
+      ["0_0_0", { height: 100, width: 20, x: 30, y: 0 }],
+      ["0_0_1", { height: 100, width: 20, x: 50, y: 0 }],
     ]);
   });
 });

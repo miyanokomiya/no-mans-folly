@@ -1,6 +1,5 @@
 import * as okaselect from "okaselect";
-import { getTableShapeInfo, TableShape } from "../shapes/table/table";
-import { TableCoords } from "../utils/layouts/table";
+import { getTableShapeInfo, TableCoords, TableShape } from "../shapes/table/table";
 import { generateTableMeta } from "./shapeHandlers/tableHandler";
 import { mapEach } from "../utils/commons";
 
@@ -22,7 +21,7 @@ export function newTableSelectable(option: TableSelectableOption) {
   const selectable = okaselect.useItemSelectable(() => items);
 
   function selectCell(row: string, column: string, ctrl = false) {
-    selectable.select(generateTableMeta([row, column]), ctrl);
+    selectable.select(generateTableMeta([row, column] as TableCoords), ctrl);
   }
 
   function selectRow(coord: string, ctrl = false) {

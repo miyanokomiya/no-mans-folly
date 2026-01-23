@@ -503,6 +503,48 @@ describe("newShapeComposite", () => {
     });
   });
 
+  describe("isInTableCell", () => {
+    test("should return true when a shape's parent exist", () => {
+      const group0 = createShape(getCommonStruct, "group", { id: "group0" });
+      const child0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+        id: "child0",
+        parentId: group0.id,
+        p: { x: 5, y: 5 },
+        width: 10,
+        height: 10,
+      });
+      const table = createShape(getCommonStruct, "table", { id: "table" });
+      const childWithoutMeta = {
+        ...child0,
+        id: "childWithoutMeta",
+        parentId: table.id,
+      };
+      const childInCell = {
+        ...childWithoutMeta,
+        id: "childWithMeta",
+        parentId: table.id,
+        parentMeta: "r_0:c_0",
+      };
+      const childInInvalidCell = {
+        ...childWithoutMeta,
+        id: "childWithInvalidMeta",
+        parentId: table.id,
+        parentMeta: "r_10:c_0",
+      };
+
+      const shapes = [group0, table, childWithoutMeta, childInCell, childInInvalidCell];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+
+      expect(target.isInTableCell(group0)).toBe(false);
+      expect(target.isInTableCell(childWithoutMeta)).toBe(false);
+      expect(target.isInTableCell(childInCell)).toBe(true);
+      expect(target.isInTableCell(childInInvalidCell)).toBe(false);
+    });
+  });
+
   describe("attached", () => {
     test("should return true when a shape has valid attachment", () => {
       const shape0 = createShape(getCommonStruct, "rectangle", {
