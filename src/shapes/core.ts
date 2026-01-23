@@ -178,6 +178,8 @@ export function createBaseShape(arg: Partial<Shape> = {}): Shape {
     parentMeta: arg.parentMeta,
     gcV: arg.gcV,
     gcH: arg.gcH,
+    lcV: arg.lcV,
+    lcH: arg.lcH,
     locked: arg.locked,
     noExport: arg.noExport,
     noBounds: arg.noBounds,

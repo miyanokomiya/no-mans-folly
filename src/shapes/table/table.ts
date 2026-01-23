@@ -378,7 +378,3 @@ export function parseTableMeta(meta?: string): TableCoords | undefined {
   const result = meta.split(/\s*:\s*/);
   return result.length === 2 ? (result as TableCoords) : undefined;
 }
-
-export function isStretchInCell(val?: GroupConstraint): boolean {
-  return val === 5;
-}

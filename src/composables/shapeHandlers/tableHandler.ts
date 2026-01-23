@@ -17,7 +17,6 @@ import {
   getTableCoordsLocations,
   getTableShapeInfo,
   getTableSizeByInfo,
-  isStretchInCell,
   isTableShape,
   parseTableMeta,
   TableColumn,
@@ -424,8 +423,8 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
       rows: tableInfo?.rows ?? [],
       columns: tableInfo?.columns ?? [],
       coords: parseTableMeta(shape.parentMeta),
-      fullH: isStretchInCell(shape.gcH),
-      fullV: isStretchInCell(shape.gcV),
+      fullH: shape.lcH === 1,
+      fullV: shape.lcV === 1,
     });
 
     treeNode.children.forEach((c) => {
@@ -449,8 +448,8 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
         rect: childRec,
         parentId: shape.id,
         coords,
-        fullH: child.gcH === 5,
-        fullV: child.gcV === 5,
+        fullH: child.lcH === 1,
+        fullV: child.lcV === 1,
       });
     });
   }

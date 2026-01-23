@@ -26,6 +26,8 @@ export interface Shape extends Entity {
   rotation: number;
   gcV?: GroupConstraint;
   gcH?: GroupConstraint;
+  lcV?: LayoutConstraint;
+  lcH?: LayoutConstraint;
   locked?: boolean;
   /**
    * Determines if the shape should not be printed out in PNG, SVG, or PDF.
@@ -191,3 +193,9 @@ export interface UserSetting {
  * 6: fixed content and bottom / right
  */
 export type GroupConstraint = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/**
+ * 0: No constraint
+ * 1: Stretch
+ */
+export type LayoutConstraint = 0 | 1;
