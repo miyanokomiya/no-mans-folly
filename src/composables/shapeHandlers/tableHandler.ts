@@ -403,6 +403,35 @@ export function newMovingInTableHandler(option: MovingInTableHandlerOption) {
 }
 export type MovingInTableHandler = ReturnType<typeof newMovingInTableHandler>;
 
+export function renderHighlightCells(
+  ctx: CanvasCTX,
+  style: StyleScheme,
+  tableInfo: TableShapeInfo,
+  cells: TableCoords[],
+) {
+  if (cells.length === 0) return;
+
+  const coordsLocations = getTableCoordsLocations(tableInfo);
+  const rowIndexMap = new Map<string, number>(tableInfo.rows.map((row, r) => [row.id, r]));
+  const columnIndexMap = new Map<string, number>(tableInfo.columns.map((column, c) => [column.id, c]));
+  scaleGlobalAlpha(ctx, 0.2, () => {
+    applyFillStyle(ctx, { color: style.selectionPrimary });
+    ctx.beginPath();
+    cells.forEach((coord) => {
+      const r = rowIndexMap.get(coord[0]);
+      const c = columnIndexMap.get(coord[1]);
+      if (r === undefined || c === undefined) return;
+
+      const top = coordsLocations.rows[r];
+      const bottom = coordsLocations.rows[r + 1];
+      const left = coordsLocations.columns[c];
+      const right = coordsLocations.columns[c + 1];
+      ctx.rect(left, top, right - left, bottom - top);
+    });
+    ctx.fill();
+  });
+}
+
 export function generateTableMeta(coords: TableCoords): string {
   return coords.join(":");
 }

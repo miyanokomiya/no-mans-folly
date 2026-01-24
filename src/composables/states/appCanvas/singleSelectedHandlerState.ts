@@ -31,6 +31,7 @@ interface SingleSelectedHandlerStateGetters<S extends Shape, H extends ShapeHand
   getTargetShape: () => S;
   getShapeHandler: () => H;
   getBoundingBox: () => BoundingBox;
+  refresh: (ctx: AppCanvasStateContext) => void;
 }
 
 type DefOption = {
@@ -54,11 +55,45 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
     let smartBranchHandler: SmartBranchHandler | undefined;
     let shapeAttachmentHandler: ShapeAttachmentHandler;
 
+    function refresh(ctx: AppCanvasStateContext) {
+      targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as S;
+      if (!targetShape) return;
+
+      shapeHandler = newHandlerFn?.(ctx, targetShape) ?? (newDummyHandler({}) as H);
+
+      const shapeComposite = ctx.getShapeComposite();
+      boundingBox = newBoundingBox({
+        path: shapeComposite.getLocalRectPolygon(targetShape),
+        locked: targetShape.locked,
+        noExport: targetShape.noExport,
+        noRotation: isNoRotationShape(shapeComposite.getShapeStruct, targetShape),
+      });
+
+      if (
+        !hideSmartBranch &&
+        !shapeComposite.hasParent(targetShape) &&
+        !shapeComposite.attached(targetShape) &&
+        canAttachSmartBranch(ctx.getShapeStruct, targetShape)
+      ) {
+        smartBranchHandler = newSmartBranchHandler({
+          getShapeComposite: ctx.getShapeComposite,
+          targetId: targetShape.id,
+          branchTemplate: ctx.getUserSetting(),
+        });
+      }
+
+      shapeAttachmentHandler = newShapeAttachmentHandler({
+        getShapeComposite: ctx.getShapeComposite,
+        targetIds: [targetShape.id],
+      });
+    }
+
     const src = createFn(
       {
         getTargetShape: () => targetShape,
         getShapeHandler: () => shapeHandler,
         getBoundingBox: () => boundingBox,
+        refresh,
       },
       ...o,
     );
@@ -99,34 +134,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
 
         ctx.showFloatMenu();
         ctx.setCommandExams(getCommonCommandExams(ctx));
-        shapeHandler = newHandlerFn?.(ctx, targetShape) ?? (newDummyHandler({}) as H);
-
-        const shapeComposite = ctx.getShapeComposite();
-        boundingBox = newBoundingBox({
-          path: shapeComposite.getLocalRectPolygon(targetShape),
-          locked: targetShape.locked,
-          noExport: targetShape.noExport,
-          noRotation: isNoRotationShape(shapeComposite.getShapeStruct, targetShape),
-        });
-
-        if (
-          !hideSmartBranch &&
-          !shapeComposite.hasParent(targetShape) &&
-          !shapeComposite.attached(targetShape) &&
-          canAttachSmartBranch(ctx.getShapeStruct, targetShape)
-        ) {
-          smartBranchHandler = newSmartBranchHandler({
-            getShapeComposite: ctx.getShapeComposite,
-            targetId: targetShape.id,
-            branchTemplate: ctx.getUserSetting(),
-          });
-        }
-
-        shapeAttachmentHandler = newShapeAttachmentHandler({
-          getShapeComposite: ctx.getShapeComposite,
-          targetIds: [targetShape.id],
-        });
-
+        refresh(ctx);
         src.onStart?.(ctx);
       },
       onEnd: (ctx) => {

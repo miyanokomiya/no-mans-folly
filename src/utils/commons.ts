@@ -244,3 +244,26 @@ export function slideSubArray<T>(src: T[], range: [from: number, count: number],
   others.splice(clamp(0, src.length, to), 0, ...sub);
   return others;
 }
+
+export function hasExclave(indexList: number[]): boolean {
+  const sorted = indexList.toSorted((a, b) => a - b);
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const a = sorted[i];
+    const b = sorted[i + 1];
+    if (b - a > 1) return true;
+  }
+  return false;
+}
+
+export function isChangedByMoveIndex(targetInexList: number[], moveToIndex: number): boolean {
+  // Something changes when there's an exclave
+  let changed = hasExclave(targetInexList);
+  if (!changed) {
+    // Nothing changes when there's no exclave and the moving goal is an adjacent of the targets
+    changed = !targetInexList.some((index) => {
+      const d = moveToIndex! - index;
+      return d === 0 || d === 1;
+    });
+  }
+  return changed;
+}

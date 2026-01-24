@@ -389,3 +389,29 @@ describe("slideSubArray", () => {
     expect(target.slideSubArray(src, [0, 3], 5)).toEqual([3, 4, 0, 1, 2]);
   });
 });
+
+describe("hasExclave", () => {
+  test("should return true when it has an exclave item", () => {
+    expect(target.hasExclave([1, 2, 3])).toBe(false);
+    expect(target.hasExclave([-3, -2, -1, 0, 1])).toBe(false);
+    expect(target.hasExclave([1, 3])).toBe(true);
+    expect(target.hasExclave([1, 2, 4])).toBe(true);
+  });
+});
+
+describe("isChangedByMoveIndex", () => {
+  test("should return true when it has an exclave item", () => {
+    expect(target.isChangedByMoveIndex([2, 3, 4], 0)).toBe(true);
+    expect(target.isChangedByMoveIndex([2, 3, 4], 1)).toBe(true);
+    expect(target.isChangedByMoveIndex([2, 3, 4], 2)).toBe(false);
+    expect(target.isChangedByMoveIndex([2, 3, 4], 3)).toBe(false);
+    expect(target.isChangedByMoveIndex([2, 3, 4], 4)).toBe(false);
+    expect(target.isChangedByMoveIndex([2, 3, 4], 5)).toBe(false);
+    expect(target.isChangedByMoveIndex([2, 3, 4], 6)).toBe(true);
+
+    // Any exclaves always changes something
+    expect(target.isChangedByMoveIndex([2, 4], 2)).toBe(true);
+    expect(target.isChangedByMoveIndex([2, 4], 3)).toBe(true);
+    expect(target.isChangedByMoveIndex([2, 4], 4)).toBe(true);
+  });
+});

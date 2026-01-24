@@ -1,12 +1,7 @@
 import { IVec2 } from "okageo";
 import { createShape } from "../../../../shapes";
 import { RectangleShape } from "../../../../shapes/rectangle";
-import {
-  getTableCoordsLocations,
-  getTableShapeInfo,
-  getTableSizeByInfo,
-  TableShape,
-} from "../../../../shapes/table/table";
+import { getTableShapeInfo, getTableSizeByInfo, TableShape } from "../../../../shapes/table/table";
 import { applyFillStyle, createFillStyle } from "../../../../utils/fillStyle";
 import { applyLocalSpace, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { createStrokeStyle } from "../../../../utils/strokeStyle";
@@ -19,6 +14,7 @@ import {
   newResizeColumn,
   newResizeRow,
   newTableHandler,
+  renderHighlightCells,
   TableHandler,
 } from "../../../shapeHandlers/tableHandler";
 import { newTableSelectable, TableSelectable } from "../../../tableSelectable";
@@ -27,10 +23,16 @@ import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
 import { newResizingState } from "../resizingState";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { AppCanvasStateContext } from "../core";
+import { newMovingTableLineState } from "./movingTableLineState";
 
-export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape, TableHandler, never>(
-  (getters) => {
+interface Option {
+  tableSelectable?: TableSelectable;
+}
+
+export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape, TableHandler, [Option | undefined]>(
+  (getters, option) => {
     let tableSelectable: TableSelectable;
+    if (option?.tableSelectable) tableSelectable = option.tableSelectable;
 
     function isOnTable(ctx: AppCanvasStateContext, p: IVec2) {
       const targetShape = getters.getTargetShape();
@@ -50,6 +52,9 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
       onStart: () => {
         const targetShape = getters.getTargetShape();
         tableSelectable = newTableSelectable({ table: targetShape });
+      },
+      onResume: (ctx) => {
+        getters.refresh(ctx);
       },
       handleEvent: (ctx, event) => {
         const targetShape = getters.getTargetShape();
@@ -120,20 +125,58 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                   case "head-row": {
                     const tableInfo = getTableShapeInfo(targetShape);
                     const row = tableInfo?.rows[hitResult.coord];
-                    if (row) {
+                    if (!row) return;
+
+                    if (event.data.options.ctrl) {
                       tableSelectable.selectRow(row.id, event.data.options.ctrl);
                       ctx.redraw();
+                      return null;
                     }
-                    return null;
+
+                    if (!tableSelectable.getSelectedRows().includes(row.id)) {
+                      tableSelectable.selectRow(row.id);
+                    }
+
+                    return {
+                      type: "stack-resume",
+                      getState: () =>
+                        newMovingTableLineState({
+                          tableId: targetShape.id,
+                          type: "row",
+                          targetLines: tableSelectable.getSelectedRows(),
+                          indexLine: row.id,
+                          tableHandler: shapeHandler,
+                          tableSelectable,
+                        }),
+                    };
                   }
                   case "head-column": {
                     const tableInfo = getTableShapeInfo(targetShape);
                     const column = tableInfo?.columns[hitResult.coord];
-                    if (column) {
+                    if (!column) return;
+
+                    if (event.data.options.ctrl) {
                       tableSelectable.selectColumn(column.id, event.data.options.ctrl);
                       ctx.redraw();
+                      return null;
                     }
-                    return null;
+
+                    if (!tableSelectable.getSelectedColumns().includes(column.id)) {
+                      tableSelectable.selectColumn(column.id);
+                    }
+
+                    return {
+                      type: "stack-resume",
+                      getState: () =>
+                        newMovingTableLineState({
+                          tableId: targetShape.id,
+                          type: "column",
+                          targetLines: tableSelectable.getSelectedColumns(),
+                          indexLine: column.id,
+                          tableHandler: shapeHandler,
+                          tableSelectable,
+                        }),
+                    };
                   }
                   case "cell": {
                     if (!event.data.options.shift && !isOnTable(ctx, event.data.point)) return;
@@ -277,33 +320,9 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
         const tableInfo = getTableShapeInfo(targetShape);
         if (!tableInfo) return;
 
-        const renderFns: (() => void)[] = [];
-
-        const selectedCoords = tableSelectable.getSelectedCoords();
-        if (selectedCoords.length > 0) {
-          const coordsLocations = getTableCoordsLocations(tableInfo);
-          const rowIndexMap = new Map<string, number>(tableInfo.rows.map((row, r) => [row.id, r]));
-          const columnIndexMap = new Map<string, number>(tableInfo.columns.map((column, c) => [column.id, c]));
-          renderFns.push(() => {
-            scaleGlobalAlpha(renderCtx, 0.2, () => {
-              applyFillStyle(renderCtx, { color: style.selectionPrimary });
-              renderCtx.beginPath();
-              selectedCoords.forEach((coord) => {
-                const r = rowIndexMap.get(coord[0]);
-                const c = columnIndexMap.get(coord[1]);
-                if (r === undefined || c === undefined) return;
-
-                const top = coordsLocations.rows[r];
-                const bottom = coordsLocations.rows[r + 1];
-                const left = coordsLocations.columns[c];
-                const right = coordsLocations.columns[c + 1];
-                renderCtx.rect(left, top, right - left, bottom - top);
-              });
-              renderCtx.fill();
-            });
-          });
-        }
-
+        const renderFns: (() => void)[] = [
+          () => renderHighlightCells(renderCtx, style, tableInfo, tableSelectable.getSelectedCoords()),
+        ];
         const shapeHandler = getters.getShapeHandler();
         const hitResult = shapeHandler.retrieveHitResult();
         if (hitResult?.type === "cell" && isOnTable(ctx, ctx.getCursorPoint())) {
