@@ -9,6 +9,7 @@ import { newBoundingBox } from "../../../boundingBox";
 import {
   generateTableMeta,
   getPatchByDeleteLines,
+  getPatchByMergeCells,
   getPatchInfoByInsertColumn,
   getPatchInfoByInsertRow,
   newResizeColumn,
@@ -18,8 +19,7 @@ import {
   TableHandler,
 } from "../../../shapeHandlers/tableHandler";
 import { newTableSelectable, TableSelectable } from "../../../tableSelectable";
-import { ContextMenuItem } from "../../types";
-import { CONTEXT_MENU_ITEM_SRC } from "../contextMenuItems";
+import { CONTEXT_MENU_ITEM_SRC, getMenuItemsForSelectedShapes } from "../contextMenuItems";
 import { newResizingState } from "../resizingState";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { AppCanvasStateContext } from "../core";
@@ -204,7 +204,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                   case "head-row": {
                     const tableInfo = getTableShapeInfo(targetShape);
                     const row = tableInfo?.rows[hitResult.coord];
-                    if (row) {
+                    if (row && !tableSelectable.getSelectedRows().includes(row.id)) {
                       tableSelectable.selectRow(row.id, event.data.options.ctrl);
                       ctx.redraw();
                     }
@@ -213,8 +213,18 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                   case "head-column": {
                     const tableInfo = getTableShapeInfo(targetShape);
                     const column = tableInfo?.columns[hitResult.coord];
-                    if (column) {
+                    if (column && !tableSelectable.getSelectedColumns().includes(column.id)) {
                       tableSelectable.selectColumn(column.id, event.data.options.ctrl);
+                      ctx.redraw();
+                    }
+                    return null;
+                  }
+                  case "cell": {
+                    const tableInfo = getTableShapeInfo(targetShape);
+                    const row = tableInfo?.rows[hitResult.coords[0]];
+                    const column = tableInfo?.columns[hitResult.coords[1]];
+                    if (row && column && !tableSelectable.isSelectedCell([row.id, column.id])) {
+                      tableSelectable.selectCell(row.id, column.id, event.data.options.ctrl);
                       ctx.redraw();
                     }
                     return null;
@@ -273,23 +283,37 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
             const hitResult = shapeHandler.retrieveHitResult();
             if (!hitResult) return;
 
-            const items: ContextMenuItem[] = [];
             switch (hitResult.type) {
               case "head-row": {
-                items.push(CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_ROW);
-                break;
+                ctx.setContextMenuList({
+                  items: [CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_ROW],
+                  point: event.data.point,
+                });
+                return null;
               }
               case "head-column": {
-                items.push(CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_COLUMN);
+                ctx.setContextMenuList({
+                  items: [CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_COLUMN],
+                  point: event.data.point,
+                });
+                return null;
+              }
+              case "cell": {
+                if (tableSelectable.getSelectedCoords().length > 1) {
+                  ctx.setContextMenuList({
+                    items: [
+                      CONTEXT_MENU_ITEM_SRC.MERGE_TABLE_CELLS,
+                      CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+                      ...getMenuItemsForSelectedShapes(ctx),
+                    ],
+                    point: event.data.point,
+                  });
+                  return null;
+                }
                 break;
               }
             }
-
-            ctx.setContextMenuList({
-              items,
-              point: event.data.point,
-            });
-            return null;
+            return;
           }
           case "contextmenu-item": {
             switch (event.data.key) {
@@ -308,6 +332,14 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                 ctx.updateShapes({
                   update: { [targetShape.id]: info.patch },
                   delete: info.delete,
+                });
+                return ctx.states.newSelectionHubState;
+              }
+              case CONTEXT_MENU_ITEM_SRC.MERGE_TABLE_CELLS.key: {
+                const coordsList = tableSelectable.getSelectedCoords();
+                const patch = getPatchByMergeCells(targetShape, coordsList, ctx.generateUuid);
+                ctx.updateShapes({
+                  update: { [targetShape.id]: patch },
                 });
                 return ctx.states.newSelectionHubState;
               }

@@ -160,6 +160,8 @@ const en = {
       table: {
         "row.delete": "Delete row",
         "column.delete": "Delete column",
+        merge_cells: "Merge cells",
+        unmerge_cells: "Unmerge cells",
       },
     },
 
@@ -333,6 +335,8 @@ const ja: TranslationResource = {
       table: {
         "row.delete": "行削除",
         "column.delete": "列削除",
+        merge_cells: "セル結合",
+        unmerge_cells: "セル結合解除",
       },
     },
 

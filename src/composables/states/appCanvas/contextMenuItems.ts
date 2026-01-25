@@ -298,6 +298,18 @@ export const CONTEXT_MENU_ITEM_SRC = {
       icon: iconDustbinRed,
     };
   },
+  get MERGE_TABLE_CELLS() {
+    return {
+      label: i18n.t("contextmenu.table.merge_cells"),
+      key: "MERGE_TABLE_CELLS",
+    };
+  },
+  get UNMERGE_TABLE_CELLS() {
+    return {
+      label: i18n.t("contextmenu.table.unmerge_cells"),
+      key: "UNMERGE_TABLE_CELLS",
+    };
+  },
 
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };

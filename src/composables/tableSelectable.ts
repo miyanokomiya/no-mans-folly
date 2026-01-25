@@ -71,6 +71,10 @@ export function newTableSelectable(option: TableSelectableOption) {
     }
   }
 
+  function isSelectedCell(coords: TableCoords): boolean {
+    return getSelectedCoords().some((val) => val[0] === coords[0] && val[1] === coords[1]);
+  }
+
   function getSelectedCoords() {
     return selectable.getSelectedItemList();
   }
@@ -99,6 +103,7 @@ export function newTableSelectable(option: TableSelectableOption) {
 
   return {
     clearAll: selectable.clearAll,
+    isSelectedCell,
     getSelectedCoords,
     getSelectedRows,
     getSelectedColumns,

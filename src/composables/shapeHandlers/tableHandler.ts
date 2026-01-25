@@ -19,9 +19,13 @@ import {
   getTableSizeByInfo,
   isTableShape,
   parseTableMeta,
+  TableCellMerge,
+  TableCellMergeKey,
   TableColumn,
+  TableColumnKey,
   TableCoords,
   TableRow,
+  TableRowKey,
   TableShape,
   TableShapeInfo,
 } from "../../shapes/table/table";
@@ -31,8 +35,10 @@ import {
   getRotateFn,
   getRotationAffines,
   ISegment,
+  isInMergeArea,
   isPointCloseToSegment,
   isPointOnRectangle,
+  MergeArea,
   TAU,
 } from "../../utils/geometry";
 import { ShapeComposite } from "../shapeComposite";
@@ -756,5 +762,72 @@ function adjustPatchByKeepPosition(
   if (!isZero(v)) {
     return { ...patch, p: add(nextTable.p, v) };
   }
+  return patch;
+}
+
+export function getPatchByMergeCells(
+  table: TableShape,
+  coordsList: TableCoords[],
+  generateUuid: () => string,
+): Partial<TableShape> {
+  let patch: Partial<TableShape> = {};
+
+  const tableInfo = getTableShapeInfo(table);
+  if (!tableInfo) return {};
+
+  const rowIndexById = new Map(tableInfo.rows.map((r, i) => [r.id, i]));
+  const columnIndexById = new Map(tableInfo.columns.map((c, i) => [c.id, i]));
+  let r0: [index: number, TableRowKey] | undefined;
+  let r1: [index: number, TableRowKey] | undefined;
+  let c0: [index: number, TableColumnKey] | undefined;
+  let c1: [index: number, TableColumnKey] | undefined;
+  coordsList.forEach(([rowId, columnId]) => {
+    const rowIndex = rowIndexById.get(rowId);
+    const columnIndex = columnIndexById.get(columnId);
+    if (rowIndex === undefined || columnIndex === undefined) return;
+
+    if (r0 === undefined || rowIndex < r0[0]) {
+      r0 = [rowIndex, rowId];
+    }
+    if (r1 === undefined || r1[0] < rowIndex) {
+      r1 = [rowIndex, rowId];
+    }
+    if (c0 === undefined || columnIndex < c0[0]) {
+      c0 = [columnIndex, columnId];
+    }
+    if (c1 === undefined || c1[0] < columnIndex) {
+      c1 = [columnIndex, columnId];
+    }
+  });
+  if (!r0 || !r1 || !c0 || !c1) return {};
+
+  const merge: TableCellMerge = { id: `m_${generateUuid()}`, a: [r0[1], c0[1]], b: [r1[1], c1[1]] };
+  const mergeArea: MergeArea = [
+    [r0[0], c0[0]],
+    [r1[0], c1[0]],
+  ];
+
+  const enclaveIds: TableCellMergeKey[] = [];
+  tableInfo.merges.forEach((m) => {
+    const ra = rowIndexById.get(m.a[0]);
+    const rb = rowIndexById.get(m.b[0]);
+    const ca = columnIndexById.get(m.a[1]);
+    const cb = columnIndexById.get(m.b[1]);
+    if (ra === undefined || rb === undefined || ca === undefined || cb === undefined) return;
+
+    const area: MergeArea = [
+      [ra, ca],
+      [rb, cb],
+    ];
+    if (isInMergeArea(mergeArea, area, true)) {
+      enclaveIds.push(m.id);
+    }
+  });
+
+  patch[merge.id] = merge;
+  enclaveIds.forEach((id) => {
+    patch[id] = undefined;
+  });
+
   return patch;
 }
