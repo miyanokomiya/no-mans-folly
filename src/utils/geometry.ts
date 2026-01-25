@@ -1515,3 +1515,71 @@ export function doesRectAccommodateRect(outer: IRectangle, inner: IRectangle): b
 export function isZeroSize(size: Size): boolean {
   return Math.abs(size.width * size.height) < MINVALUE;
 }
+
+/**
+ * Checks if two merge areas overlap.
+ */
+function isMergeAreaOverlapping(m1: MergeArea, m2: MergeArea, allowBorder = false): boolean {
+  if (allowBorder) {
+    return !(m1[1][0] < m2[0][0] || m1[0][0] > m2[1][0] || m1[1][1] < m2[0][1] || m1[0][1] > m2[1][1]);
+  } else {
+    return !(m1[1][0] <= m2[0][0] || m1[0][0] >= m2[1][0] || m1[1][1] <= m2[0][1] || m1[0][1] >= m2[1][1]);
+  }
+}
+
+export function isInMergeArea(outer: MergeArea, inner: MergeArea, allowBorder = false): boolean {
+  if (allowBorder) {
+    return (
+      outer[0][0] <= inner[0][0] &&
+      outer[0][1] <= inner[0][1] &&
+      outer[1][0] >= inner[1][0] &&
+      outer[1][1] >= inner[1][1]
+    );
+  } else {
+    return (
+      outer[0][0] < inner[0][0] && outer[0][1] < inner[0][1] && outer[1][0] > inner[1][0] && outer[1][1] > inner[1][1]
+    );
+  }
+}
+
+/**
+ * Merges two areas into a single wrapping area.
+ */
+function combineMergeArea(m1: MergeArea, m2: MergeArea): MergeArea {
+  return [
+    [Math.min(m1[0][0], m2[0][0]), Math.min(m1[0][1], m2[0][1])],
+    [Math.max(m1[1][0], m2[1][0]), Math.max(m1[1][1], m2[1][1])],
+  ];
+}
+
+export type MergeArea = [from: [number, number], to: [number, number]];
+
+/**
+ * Recursively resolves all overlapping merges.
+ */
+export function optimiseMergeAreas(merges: MergeArea[], allowBorder = false): MergeArea[] {
+  let hasChanged = false;
+  const result: MergeArea[] = [];
+
+  for (let i = 0; i < merges.length; i++) {
+    let current = merges[i];
+    let mergedAny = false;
+
+    for (let j = 0; j < result.length; j++) {
+      if (isMergeAreaOverlapping(current, result[j], allowBorder)) {
+        result[j] = combineMergeArea(current, result[j]);
+        mergedAny = true;
+        hasChanged = true;
+        break;
+      }
+    }
+
+    if (!mergedAny) {
+      result.push(current);
+    }
+  }
+
+  // If anything changed, run it again.
+  // => New union may now overlap with something else in the list.
+  return hasChanged ? optimiseMergeAreas(result, allowBorder) : result;
+}

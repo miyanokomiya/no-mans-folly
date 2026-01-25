@@ -96,6 +96,9 @@ import {
   isRectOverlapped,
   getRadianRangeOfArcCurveParams,
   isZeroSize,
+  optimiseMergeAreas,
+  MergeArea,
+  isInMergeArea,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -2288,5 +2291,87 @@ describe("isZeroSize", () => {
     expect(isZeroSize({ width: 0, height: -1 })).toBe(true);
     expect(isZeroSize({ width: 1e-10, height: 1e-10 })).toBe(true);
     expect(isZeroSize({ width: 1, height: -1 })).toBe(false);
+  });
+});
+
+describe("isInMergeArea", () => {
+  test("should return true when outer encompasses inner", () => {
+    const outer: MergeArea = [
+      [0, 0],
+      [10, 10],
+    ];
+    expect(isInMergeArea(outer, outer)).toBe(false);
+    expect(isInMergeArea(outer, outer, true)).toBe(true);
+    expect(
+      isInMergeArea(outer, [
+        [1, 1],
+        [9, 9],
+      ]),
+    ).toBe(true);
+    expect(
+      isInMergeArea(outer, [
+        [-1, 1],
+        [9, 9],
+      ]),
+    ).toBe(false);
+    expect(
+      isInMergeArea(outer, [
+        [1, -1],
+        [9, 9],
+      ]),
+    ).toBe(false);
+    expect(
+      isInMergeArea(outer, [
+        [1, 1],
+        [11, 9],
+      ]),
+    ).toBe(false);
+    expect(
+      isInMergeArea(outer, [
+        [1, 1],
+        [9, 11],
+      ]),
+    ).toBe(false);
+  });
+});
+
+describe("optimiseMergeAreas", () => {
+  test("should combine overlapping areas", () => {
+    const a0: MergeArea = [
+      [0, 0],
+      [10, 10],
+    ];
+    const a1: MergeArea = [
+      [10, 10],
+      [20, 20],
+    ];
+    const a2: MergeArea = [
+      [20, 30],
+      [40, 50],
+    ];
+    const a3: MergeArea = [
+      [10, 20],
+      [20, 30],
+    ];
+    expect(optimiseMergeAreas([a0, a1])).toEqual([a0, a1]);
+    expect(optimiseMergeAreas([a0, a1], true)).toEqual([
+      [
+        [0, 0],
+        [20, 20],
+      ],
+    ]);
+    expect(optimiseMergeAreas([a2, a0, a1], true)).toEqual([
+      a2,
+      [
+        [0, 0],
+        [20, 20],
+      ],
+    ]);
+    expect(optimiseMergeAreas([a2, a0, a3, a1], true)).toEqual([
+      [
+        [0, 0],
+        [40, 50],
+      ],
+    ]);
   });
 });

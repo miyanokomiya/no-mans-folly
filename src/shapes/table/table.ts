@@ -8,7 +8,7 @@ import {
   isSame,
   pathSegmentRawsToString,
 } from "okageo";
-import { CommonStyle, GroupConstraint, Shape, Size } from "../../models";
+import { CommonStyle, Shape, Size } from "../../models";
 import { findexSortFn, toMap } from "../../utils/commons";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "../core";
 import {
@@ -23,6 +23,8 @@ import {
   ISegment,
   isPointOnRectangleRotated,
   isSameValue,
+  MergeArea,
+  optimiseMergeAreas,
 } from "../../utils/geometry";
 import { renderTransform } from "../../utils/svgElements";
 import { getClosestPointOnPolyline, getPolylineEdgeInfo } from "../../utils/path";
@@ -56,11 +58,20 @@ export type TableRow = {
   findex: string;
 };
 
+export type TableCellMergeKey = `m_${string}`;
+export type TableCellMerge = {
+  id: TableCellMergeKey;
+  a: TableCoords;
+  b: TableCoords;
+};
+
 export type TableShape = Shape &
   CommonStyle & {
     [K in TableColumnKey]?: TableColumn;
   } & {
     [K in TableRowKey]?: TableRow;
+  } & {
+    [K in TableCellMergeKey]?: TableCellMerge;
   };
 
 /**
@@ -69,24 +80,27 @@ export type TableShape = Shape &
 export type TableShapeInfo = {
   columns: TableColumn[];
   rows: TableRow[];
+  merges: TableCellMerge[];
 };
 
 export const struct: ShapeStruct<TableShape> = {
   label: "Table",
   create(arg = {}) {
-    const info = getTableShapeInfo(arg);
+    const info = getTableShapeInfoRow(arg);
     const ret = {
       ...createBaseShape(arg),
       type: "table",
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
     };
-    if (info) {
-      return { ...ret, ...toMap(info.columns), ...toMap(info.rows) };
+
+    if (info.rows.length * info.columns.length > 0) {
+      return { ...ret, ...toMap(info.columns), ...toMap(info.rows), ...toMap(info.merges) };
     } else {
       const findexList = generateNKeysBetweenAllowSame(undefined, undefined, 6);
       return {
         ...ret,
+        ...toMap(info.merges),
         c_0: { id: "c_0", size: DEFAULT_CELL_WIDTH, findex: findexList[0] },
         c_1: { id: "c_1", size: DEFAULT_CELL_WIDTH, findex: findexList[1] },
         c_2: { id: "c_2", size: DEFAULT_CELL_WIDTH, findex: findexList[2] },
@@ -285,10 +299,20 @@ function getLocalRectPolygon(shape: TableShape) {
 
 /**
  * Returns "undefined" when tha table is invalid
+ * Returned value contains:
+ * - rows and columns in order
+ * - merges with normalized range
  */
 export function getTableShapeInfo(shape: Partial<TableShape>): TableShapeInfo | undefined {
+  const rawInfo = getTableShapeInfoRow(shape);
+  if (rawInfo.columns.length * rawInfo.rows.length === 0) return;
+  return rawInfo;
+}
+
+function getTableShapeInfoRow(shape: Partial<TableShape>): TableShapeInfo {
   const columns: TableColumn[] = [];
   const rows: TableRow[] = [];
+  const merges: TableCellMerge[] = [];
   const keys = Object.keys(shape) as (keyof TableShape)[];
   keys.forEach((key) => {
     if (!shape[key]) return;
@@ -297,13 +321,31 @@ export function getTableShapeInfo(shape: Partial<TableShape>): TableShapeInfo | 
       columns.push(shape[key] as TableColumn);
     } else if (key.startsWith("r_")) {
       rows.push(shape[key] as TableRow);
+    } else if (key.startsWith("m_")) {
+      merges.push(shape[key] as TableCellMerge);
     }
   });
-  if (columns.length * rows.length === 0) return;
 
   columns.sort(findexSortFn);
   rows.sort(findexSortFn);
-  return { columns, rows };
+
+  const tableInfoRaw = { columns, rows, merges };
+  const rowIndexById = new Map(tableInfoRaw.rows.map((r, i) => [r.id, i]));
+  const columnIndexById = new Map(tableInfoRaw.columns.map((c, i) => [c.id, i]));
+  const adjustedMerged: TableCellMerge[] = [];
+  tableInfoRaw.merges.forEach((m) => {
+    const ra = rowIndexById.get(m.a[0]);
+    const rb = rowIndexById.get(m.b[0]);
+    const ca = columnIndexById.get(m.a[1]);
+    const cb = columnIndexById.get(m.b[1]);
+    if (ra === undefined || rb === undefined || ca === undefined || cb === undefined) return;
+
+    const [r0, r1] = ra <= rb ? [m.a[0], m.b[0]] : [m.b[0], m.a[0]];
+    const [c0, c1] = ca <= cb ? [m.a[1], m.b[1]] : [m.b[1], m.a[1]];
+    adjustedMerged.push({ id: m.id, a: [r0, c0], b: [r1, c1] });
+  });
+
+  return { columns, rows, merges: adjustedMerged };
 }
 
 export function getInnerBorders(tableInfo: TableShapeInfo, size: Size): ISegment[] {
@@ -377,4 +419,26 @@ export function parseTableMeta(meta?: string): TableCoords | undefined {
 
   const result = meta.split(/\s*:\s*/);
   return result.length === 2 ? (result as TableCoords) : undefined;
+}
+
+export function formatMerges(tableInfo: TableShapeInfo): MergeArea[] {
+  const rowIndexById = new Map(tableInfo.rows.map((r, i) => [r.id, i]));
+  const columnIndexById = new Map(tableInfo.columns.map((c, i) => [c.id, i]));
+  // MergeArea: [from: [row, column], to: [row, column]]
+  const mergedRangeById = new Map<string, MergeArea>();
+  tableInfo.merges.forEach((m) => {
+    const ra = rowIndexById.get(m.a[0]);
+    const rb = rowIndexById.get(m.b[0]);
+    const ca = columnIndexById.get(m.a[1]);
+    const cb = columnIndexById.get(m.b[1]);
+    if (ra === undefined || rb === undefined || ca === undefined || cb === undefined) return;
+
+    mergedRangeById.set(m.id, [
+      [ra, ca],
+      [rb, cb],
+    ]);
+  });
+
+  const optimised = optimiseMergeAreas(Array.from(mergedRangeById.values()), true);
+  return optimised;
 }
