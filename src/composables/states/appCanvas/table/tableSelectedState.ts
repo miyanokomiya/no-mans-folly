@@ -380,7 +380,25 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                 });
                 return ctx.states.newSelectionHubState;
               }
+              default: {
+                return;
+              }
             }
+          }
+          case "shape-updated": {
+            if (Object.keys(ctx.getSelectedShapeIdMap()).some((id) => event.data.keys.has(id))) {
+              const nextTarget = ctx.getShapeComposite().mergedShapeMap[targetShape.id];
+              if (!nextTarget) return ctx.states.newSelectionHubState;
+
+              // Keep this state when the change is only related to cell style
+              // => Cell style won't affect any handling in this state.
+              const nonStyleKyes = Object.keys(targetShape).filter((key) => !key.startsWith("s_"));
+              const nonStyleKyesNext = Object.keys(nextTarget).filter((key) => !key.startsWith("s_"));
+              if (nonStyleKyes.join("&") !== nonStyleKyesNext.join("&")) return ctx.states.newSelectionHubState;
+
+              return null;
+            }
+            return;
           }
         }
       },

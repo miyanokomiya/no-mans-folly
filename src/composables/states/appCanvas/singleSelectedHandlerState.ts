@@ -287,7 +287,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
             return handleIntransientEvent(ctx, event);
         }
 
-        return src.handleEvent(ctx, event);
+        return res;
       },
       render,
     };
