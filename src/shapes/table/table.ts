@@ -298,6 +298,8 @@ function getLocalRectPolygon(shape: TableShape) {
   return getRectPoints(rect).map((p) => rotateFn(p));
 }
 
+const tableInfoCache = new WeakMap<Partial<TableShape>, TableShapeInfo>();
+
 /**
  * Returns "undefined" when tha table is invalid
  * Returned value contains:
@@ -305,8 +307,13 @@ function getLocalRectPolygon(shape: TableShape) {
  * - merges with normalized range
  */
 export function getTableShapeInfo(shape: Partial<TableShape>): TableShapeInfo | undefined {
+  const cached = tableInfoCache.get(shape);
+  if (cached) return cached;
+
   const rawInfo = getTableShapeInfoRow(shape);
   if (rawInfo.columns.length * rawInfo.rows.length === 0) return;
+
+  tableInfoCache.set(shape, rawInfo);
   return rawInfo;
 }
 
