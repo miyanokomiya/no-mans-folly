@@ -19,8 +19,11 @@ import {
   getTableSizeByInfo,
   isTableShape,
   parseTableMeta,
+  TableCellArea,
   TableCellMerge,
   TableCellMergeKey,
+  TableCellStyleKey,
+  TableCellStyleValue,
   TableColumn,
   TableColumnKey,
   TableCoords,
@@ -30,10 +33,12 @@ import {
   TableShapeInfo,
 } from "../../shapes/table/table";
 import {
+  CellInfo,
   getDistanceBetweenPointAndRect,
   getRectPoints,
   getRotateFn,
   getRotationAffines,
+  groupCellsIntoRectangles,
   ISegment,
   isInMergeArea,
   isMergeAreaOverlapping,
@@ -452,7 +457,7 @@ export function renderHighlightCells(
   });
 }
 
-function getEffectiveCells(tableInfo: TableShapeInfo, cells: TableCoords[]): TableCoords[] {
+export function getEffectiveCells(tableInfo: TableShapeInfo, cells: TableCoords[]): TableCoords[] {
   const coordsByKey = new Map<string, TableCoords>();
   cells.forEach((cell) => {
     const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, [cell]);
@@ -1002,4 +1007,85 @@ export function getPatchByUnmergeCells(table: TableShape, coordsList: TableCoord
     patch[id] = undefined;
   });
   return patch;
+}
+
+export function getPatchByApplyCellStyle(
+  tableInfo: TableShapeInfo,
+  coords: TableCoords[],
+  styleValue: TableCellStyleValue | undefined,
+  generateUuid: () => string,
+): Partial<TableShape> {
+  const patch: Partial<TableShape> = {};
+  const effectiveCells = getEffectiveCells(tableInfo, coords);
+
+  const rowIndexById = new Map(tableInfo.rows.map((r, i) => [r.id, i]));
+  const columnIndexById = new Map(tableInfo.columns.map((c, i) => [c.id, i]));
+  const cellAreas = optimizeCoords(rowIndexById, columnIndexById, effectiveCells);
+
+  cellAreas.forEach((cellArea) => {
+    // Add new style only when the new value isn't undefined
+    // => Because style is set undefined by default
+    if (styleValue) {
+      const id: TableCellStyleKey = `s_${generateUuid()}`;
+      patch[id] = { id, ...cellArea, ...styleValue };
+    }
+  });
+
+  const bounds: Exclude<ReturnType<typeof getCoordsBoundsInfo>, undefined>["bounds"][] = [];
+  effectiveCells.forEach((coords) => {
+    const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, [coords]);
+    if (!coordsBoundsInfo) return;
+    bounds.push(coordsBoundsInfo.bounds);
+  });
+
+  // Delete current styles that are encompassed by the new style area
+  bounds.forEach((b) => {
+    const bar = rowIndexById.get(b[0][0]);
+    const bac = columnIndexById.get(b[0][1]);
+    const bbr = rowIndexById.get(b[1][0]);
+    const bbc = columnIndexById.get(b[1][1]);
+    if (bar === undefined || bac === undefined || bbr === undefined || bbc === undefined) return;
+
+    tableInfo.styles.forEach((s) => {
+      const sar = rowIndexById.get(s.a[0]);
+      const sac = columnIndexById.get(s.a[1]);
+      const sbr = rowIndexById.get(s.b[0]);
+      const sbc = columnIndexById.get(s.b[1]);
+      if (sar === undefined || sac === undefined || sbr === undefined || sbc === undefined) return;
+      if (bar <= sar && bac <= sac && sbr <= bbr && sbc <= bbc) {
+        patch[s.id] = undefined;
+      }
+    });
+  });
+
+  return patch;
+}
+
+function optimizeCoords(
+  rowIndexById: Map<string, number>,
+  columnIndexById: Map<string, number>,
+  coordsList: TableCoords[],
+): TableCellArea[] {
+  const coordsWithIndex: CellInfo<TableCoords>[] = [];
+  coordsList.map((coords) => {
+    const r0 = rowIndexById.get(coords[0]);
+    const c0 = columnIndexById.get(coords[1]);
+    if (r0 === undefined || c0 === undefined) return;
+
+    coordsWithIndex.push([coords, r0, c0]);
+  });
+  const groups = groupCellsIntoRectangles(coordsWithIndex);
+  return groups.map<TableCellArea>((group) => {
+    let r0 = group[0];
+    let r1 = group[0];
+    let c0 = group[0];
+    let c1 = group[0];
+    group.forEach((cell) => {
+      r0 = cell[1] < r0[1] ? cell : r0;
+      r1 = r1[1] < cell[1] ? cell : r1;
+      c0 = cell[2] < c0[2] ? cell : c0;
+      c1 = c1[2] < cell[2] ? cell : c1;
+    });
+    return { a: [r0[0][0], c0[0][1]], b: [r1[0][0], c1[0][1]] };
+  });
 }

@@ -2,12 +2,15 @@ import { describe, test, expect } from "vitest";
 import {
   formatMerges,
   getInnerBordersWithMerge,
+  getStyleAreaInfo,
+  getTableCoordsLocations,
   getTableShapeInfo,
   getTableSizeByInfo,
   struct,
   TableShape,
 } from "./table";
 import { generateNKeysBetweenAllowSame } from "../../utils/findex";
+import { createFillStyle } from "../../utils/fillStyle";
 
 describe("getTableShapeInfo", () => {
   test("should return table info", () => {
@@ -69,6 +72,8 @@ describe("getTableShapeInfo", () => {
           [1, 1],
         ],
       ],
+      styles: [],
+      styleAreas: [],
     });
   });
 });
@@ -273,5 +278,39 @@ describe("formatMerges", () => {
         [2, 2],
       ],
     ]);
+  });
+});
+
+describe("getStyleAreaInfo", () => {
+  const findexList = generateNKeysBetweenAllowSame(undefined, undefined, 6);
+  const table = struct.create({
+    c_1: { id: "c_1", size: 20, findex: findexList[1] },
+    c_2: { id: "c_2", size: 20, findex: findexList[2] },
+    c_0: { id: "c_0", size: 20, findex: findexList[0] },
+    r_1: { id: "r_1", size: 10, findex: findexList[4] },
+    r_0: { id: "r_0", size: 10, findex: findexList[3] },
+    r_2: { id: "r_2", size: 10, findex: findexList[5] },
+    m_0: { id: "m_0", a: ["r_1", "c_0"], b: ["r_1", "c_1"] },
+  });
+  const info = getTableShapeInfo(table)!;
+  const coordsLocations = getTableCoordsLocations(info);
+
+  test("", () => {
+    const value = { fill: createFillStyle() };
+    expect(getStyleAreaInfo(info, coordsLocations, [[0, 0], [0, 1], value])).toEqual({
+      rects: [{ x: 0, y: 0, width: 40, height: 10 }],
+      value: value,
+    });
+    expect(getStyleAreaInfo(info, coordsLocations, [[0, 0], [1, 0], value])).toEqual({
+      rects: [
+        { x: 0, y: 0, width: 20, height: 20 },
+        { x: 0, y: 10, width: 40, height: 10 },
+      ],
+      value: value,
+    });
+    expect(getStyleAreaInfo(info, coordsLocations, [[1, 1], [2, 1], value])).toEqual({
+      rects: [{ x: 20, y: 10, width: 20, height: 20 }],
+      value: value,
+    });
   });
 });

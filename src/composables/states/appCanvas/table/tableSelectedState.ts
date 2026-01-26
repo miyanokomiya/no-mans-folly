@@ -50,6 +50,21 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
       return shapeAtPoint?.id === targetShape.id;
     }
 
+    function handleFloatMenuForCell(ctx: AppCanvasStateContext) {
+      if (tableSelectable.getSelectedCoords().length > 0) {
+        const targetShape = getters.getTargetShape();
+        ctx.showFloatMenu({
+          type: "table-cell",
+          data: {
+            tableId: targetShape.id,
+            selectedCoords: tableSelectable.getSelectedCoords(),
+          },
+        });
+      } else {
+        ctx.showFloatMenu();
+      }
+    }
+
     return {
       getLabel: () => "TableSelected",
       onStart: () => {
@@ -58,6 +73,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
       },
       onResume: (ctx) => {
         getters.refresh(ctx);
+        handleFloatMenuForCell(ctx);
       },
       handleEvent: (ctx, event) => {
         const targetShape = getters.getTargetShape();
@@ -132,6 +148,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
 
                     if (event.data.options.ctrl) {
                       tableSelectable.selectRow(row.id, event.data.options.ctrl);
+                      handleFloatMenuForCell(ctx);
                       ctx.redraw();
                       return null;
                     }
@@ -160,6 +177,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
 
                     if (event.data.options.ctrl) {
                       tableSelectable.selectColumn(column.id, event.data.options.ctrl);
+                      handleFloatMenuForCell(ctx);
                       ctx.redraw();
                       return null;
                     }
@@ -190,6 +208,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     if (!row || !column) return;
 
                     tableSelectable.selectCell(row.id, column.id, event.data.options.ctrl);
+                    handleFloatMenuForCell(ctx);
                     ctx.redraw();
                     return null;
                   }
@@ -209,6 +228,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     const row = tableInfo?.rows[hitResult.coord];
                     if (row && !tableSelectable.getSelectedRows().includes(row.id)) {
                       tableSelectable.selectRow(row.id, event.data.options.ctrl);
+                      handleFloatMenuForCell(ctx);
                       ctx.redraw();
                     }
                     return null;
@@ -218,6 +238,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     const column = tableInfo?.columns[hitResult.coord];
                     if (column && !tableSelectable.getSelectedColumns().includes(column.id)) {
                       tableSelectable.selectColumn(column.id, event.data.options.ctrl);
+                      handleFloatMenuForCell(ctx);
                       ctx.redraw();
                     }
                     return null;
@@ -228,6 +249,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     const column = tableInfo?.columns[hitResult.coords[1]];
                     if (row && column && !tableSelectable.isSelectedCell([row.id, column.id])) {
                       tableSelectable.selectCell(row.id, column.id, event.data.options.ctrl);
+                      handleFloatMenuForCell(ctx);
                       ctx.redraw();
                     }
                     return null;
@@ -277,6 +299,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
               const column = tableInfo?.columns[hitResult.coords[1]];
               if (row && column) {
                 tableSelectable.selectCell(row.id, column.id, event.data.ctrl, true);
+                handleFloatMenuForCell(ctx);
                 ctx.redraw();
               }
             }

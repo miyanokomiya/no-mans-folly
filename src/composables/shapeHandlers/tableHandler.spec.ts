@@ -2,6 +2,7 @@ import { describe, test, expect } from "vitest";
 import {
   generateTableMeta,
   getCoordsBoundsInfo,
+  getPatchByApplyCellStyle,
   getPatchByDeleteLines,
   getPatchInfoByAddColumns,
   getPatchInfoByAddRows,
@@ -10,6 +11,7 @@ import { generateTable, getTableShapeInfo } from "../../shapes/table/table";
 import { generateNKeysBetweenAllowSame } from "../../utils/findex";
 import { newShapeComposite } from "../shapeComposite";
 import { createShape, getCommonStruct } from "../../shapes";
+import { createFillStyle } from "../../utils/fillStyle";
 
 describe("getCoordsBoundsInfo", () => {
   test("should regard merge areas", () => {
@@ -202,6 +204,51 @@ describe("getPatchByDeleteLines", () => {
         [shape01.id]: { parentMeta: "r_0:c_0" },
       },
       delete: [],
+    });
+  });
+});
+
+describe("getPatchByApplyCellStyle", () => {
+  test("should return patch by apply cell style", () => {
+    const table = generateTable(3, 3, { width: 20, height: 10 });
+    table.s_0 = { id: "s_0", a: ["r_0", "c_0"], b: ["r_0", "c_1"], fill: createFillStyle({ disabled: false }) };
+    let count = 0;
+    const generateUuid = () => `id_${count++}`;
+
+    expect(
+      getPatchByApplyCellStyle(
+        getTableShapeInfo(table)!,
+        [["r_0", "c_0"]],
+        { fill: createFillStyle({ disabled: false }) },
+        generateUuid,
+      ),
+    ).toEqual({
+      s_id_0: {
+        a: ["r_0", "c_0"],
+        b: ["r_0", "c_0"],
+        fill: createFillStyle({ disabled: false }),
+        id: "s_id_0",
+      },
+    });
+
+    count = 0;
+    expect(
+      getPatchByApplyCellStyle(
+        getTableShapeInfo(table)!,
+        [
+          ["r_0", "c_0"],
+          ["r_0", "c_1"],
+        ],
+        { fill: createFillStyle({ disabled: false }) },
+        generateUuid,
+      ),
+    ).toEqual({
+      s_id_0: {
+        a: ["r_0", "c_0"],
+        b: ["r_0", "c_1"],
+        fill: createFillStyle({ disabled: false }),
+        id: "s_id_0",
+      },
     });
   });
 });

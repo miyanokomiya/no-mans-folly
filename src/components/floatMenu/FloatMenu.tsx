@@ -12,6 +12,7 @@ import { FloatMenuSmartBranch } from "./FloatMenuSmartBranch";
 import { FloatMenuLineSegment } from "./FloatMenuLineSegment";
 import { FloatMenuOption } from "../../composables/states/commons";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
+import { FloatMenuTableCell } from "./FloatMenuTableCell";
 
 type Option = FloatMenuOption & {
   canvasState: any;
@@ -133,6 +134,8 @@ export const FloatMenu: React.FC<Option> = ({
           <FloatMenuSmartBranch />
         ) : type === "line-segment" ? (
           <FloatMenuLineSegment {...data} />
+        ) : type === "table-cell" ? (
+          <FloatMenuTableCell {...data} focusBack={focusBack} onContextMenu={onContextMenu} />
         ) : (
           <FloatMenuInspector
             canvasState={canvasState}
