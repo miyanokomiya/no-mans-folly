@@ -1,5 +1,12 @@
 import { describe, test, expect } from "vitest";
-import { formatMerges, getTableShapeInfo, struct, TableShape } from "./table";
+import {
+  formatMerges,
+  getInnerBordersWithMerge,
+  getTableShapeInfo,
+  getTableSizeByInfo,
+  struct,
+  TableShape,
+} from "./table";
 import { generateNKeysBetweenAllowSame } from "../../utils/findex";
 
 describe("getTableShapeInfo", () => {
@@ -56,7 +63,167 @@ describe("getTableShapeInfo", () => {
           b: ["r_1", "c_1"],
         },
       ],
+      mergeAreas: [
+        [
+          [0, 0],
+          [1, 1],
+        ],
+      ],
     });
+  });
+});
+
+describe("getInnerBordersWithMerge", () => {
+  const findexList = generateNKeysBetweenAllowSame(undefined, undefined, 7);
+  const table = struct.create({
+    c_0: { id: "c_0", size: 10, findex: findexList[0] },
+    c_1: { id: "c_1", size: 10, findex: findexList[1] },
+    c_2: { id: "c_2", size: 10, findex: findexList[2] },
+    r_0: { id: "r_0", size: 10, findex: findexList[3] },
+    r_1: { id: "r_1", size: 10, findex: findexList[4] },
+    r_2: { id: "r_2", size: 10, findex: findexList[5] },
+    r_3: { id: "r_3", size: 10, findex: findexList[6] },
+  });
+
+  test("should return borders with regarding merges", () => {
+    const tableInfo0 = getTableShapeInfo({ ...table, m_0: { id: "m_0", a: ["r_0", "c_0"], b: ["r_0", "c_0"] } })!;
+    expect(getInnerBordersWithMerge(tableInfo0, getTableSizeByInfo(tableInfo0))).toEqual([
+      [
+        { x: 10, y: 0 },
+        { x: 10, y: 40 },
+      ],
+      [
+        { x: 20, y: 0 },
+        { x: 20, y: 40 },
+      ],
+
+      [
+        { x: 0, y: 10 },
+        { x: 30, y: 10 },
+      ],
+      [
+        { x: 0, y: 20 },
+        { x: 30, y: 20 },
+      ],
+      [
+        { x: 0, y: 30 },
+        { x: 30, y: 30 },
+      ],
+    ]);
+
+    const tableInfo1 = getTableShapeInfo({ ...table, m_0: { id: "m_0", a: ["r_0", "c_0"], b: ["r_0", "c_1"] } })!;
+    expect(getInnerBordersWithMerge(tableInfo1, getTableSizeByInfo(tableInfo1))).toEqual([
+      [
+        { x: 10, y: 10 },
+        { x: 10, y: 40 },
+      ],
+      [
+        { x: 20, y: 0 },
+        { x: 20, y: 40 },
+      ],
+
+      [
+        { x: 0, y: 10 },
+        { x: 30, y: 10 },
+      ],
+      [
+        { x: 0, y: 20 },
+        { x: 30, y: 20 },
+      ],
+      [
+        { x: 0, y: 30 },
+        { x: 30, y: 30 },
+      ],
+    ]);
+
+    const tableInfo2 = getTableShapeInfo({ ...table, m_0: { id: "m_0", a: ["r_1", "c_1"], b: ["r_2", "c_2"] } })!;
+    expect(getInnerBordersWithMerge(tableInfo2, getTableSizeByInfo(tableInfo2))).toEqual([
+      [
+        { x: 10, y: 0 },
+        { x: 10, y: 40 },
+      ],
+      [
+        { x: 20, y: 0 },
+        { x: 20, y: 10 },
+      ],
+      [
+        { x: 20, y: 30 },
+        { x: 20, y: 40 },
+      ],
+
+      [
+        { x: 0, y: 10 },
+        { x: 30, y: 10 },
+      ],
+      [
+        { x: 0, y: 20 },
+        { x: 10, y: 20 },
+      ],
+      [
+        { x: 0, y: 30 },
+        { x: 30, y: 30 },
+      ],
+    ]);
+
+    const tableInfo3 = getTableShapeInfo({ ...table, m_0: { id: "m_0", a: ["r_1", "c_1"], b: ["r_3", "c_2"] } })!;
+    expect(getInnerBordersWithMerge(tableInfo3, getTableSizeByInfo(tableInfo3))).toEqual([
+      [
+        { x: 10, y: 0 },
+        { x: 10, y: 40 },
+      ],
+      [
+        { x: 20, y: 0 },
+        { x: 20, y: 10 },
+      ],
+
+      [
+        { x: 0, y: 10 },
+        { x: 30, y: 10 },
+      ],
+      [
+        { x: 0, y: 20 },
+        { x: 10, y: 20 },
+      ],
+      [
+        { x: 0, y: 30 },
+        { x: 10, y: 30 },
+      ],
+    ]);
+  });
+
+  test("should handle merge areas in random order", () => {
+    const tableInfo0 = getTableShapeInfo({
+      ...table,
+      m_0: { id: "m_0", a: ["r_2", "c_0"], b: ["r_2", "c_1"] },
+      m_1: { id: "m_1", a: ["r_0", "c_0"], b: ["r_0", "c_1"] },
+    })!;
+    expect(getInnerBordersWithMerge(tableInfo0, getTableSizeByInfo(tableInfo0))).toEqual([
+      [
+        { x: 10, y: 10 },
+        { x: 10, y: 20 },
+      ],
+      [
+        { x: 10, y: 30 },
+        { x: 10, y: 40 },
+      ],
+      [
+        { x: 20, y: 0 },
+        { x: 20, y: 40 },
+      ],
+
+      [
+        { x: 0, y: 10 },
+        { x: 30, y: 10 },
+      ],
+      [
+        { x: 0, y: 20 },
+        { x: 30, y: 20 },
+      ],
+      [
+        { x: 0, y: 30 },
+        { x: 30, y: 30 },
+      ],
+    ]);
   });
 });
 

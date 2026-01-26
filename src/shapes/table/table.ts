@@ -81,6 +81,7 @@ export type TableShapeInfo = {
   columns: TableColumn[];
   rows: TableRow[];
   merges: TableCellMerge[];
+  mergeAreas: MergeArea[];
 };
 
 export const struct: ShapeStruct<TableShape> = {
@@ -130,7 +131,7 @@ export const struct: ShapeStruct<TableShape> = {
       }
 
       ctx.beginPath();
-      getInnerBorders(info, rect).forEach((seg) => {
+      getInnerBordersWithMerge(info, rect).forEach((seg) => {
         ctx.moveTo(seg[0].x, seg[0].y);
         ctx.lineTo(seg[1].x, seg[1].y);
       });
@@ -150,7 +151,7 @@ export const struct: ShapeStruct<TableShape> = {
     const rect = getTableLocalBounds(shape);
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
-    const elems = getInnerBorders(info, rect).map((seg) => ({
+    const elems = getInnerBordersWithMerge(info, rect).map((seg) => ({
       tag: "line",
       attributes: {
         x1: seg[0].x,
@@ -313,6 +314,7 @@ function getTableShapeInfoRow(shape: Partial<TableShape>): TableShapeInfo {
   const columns: TableColumn[] = [];
   const rows: TableRow[] = [];
   const merges: TableCellMerge[] = [];
+  const mergeAreas: MergeArea[] = [];
   const keys = Object.keys(shape) as (keyof TableShape)[];
   keys.forEach((key) => {
     if (!shape[key]) return;
@@ -343,9 +345,15 @@ function getTableShapeInfoRow(shape: Partial<TableShape>): TableShapeInfo {
     const [r0, r1] = ra <= rb ? [m.a[0], m.b[0]] : [m.b[0], m.a[0]];
     const [c0, c1] = ca <= cb ? [m.a[1], m.b[1]] : [m.b[1], m.a[1]];
     adjustedMerged.push({ id: m.id, a: [r0, c0], b: [r1, c1] });
+    const [ri0, ri1] = ra <= rb ? [ra, rb] : [rb, ra];
+    const [ci0, ci1] = ca <= cb ? [ca, cb] : [cb, ca];
+    mergeAreas.push([
+      [ri0, ci0],
+      [ri1, ci1],
+    ]);
   });
 
-  return { columns, rows, merges: adjustedMerged };
+  return { columns, rows, merges: adjustedMerged, mergeAreas };
 }
 
 export function getInnerBorders(tableInfo: TableShapeInfo, size: Size): ISegment[] {
@@ -372,6 +380,80 @@ export function getInnerBorders(tableInfo: TableShapeInfo, size: Size): ISegment
         { x: 0, y },
         { x: size.width, y },
       ]);
+    });
+  }
+  return ret;
+}
+
+export function getInnerBordersWithMerge(tableInfo: TableShapeInfo, size: Size): ISegment[] {
+  if (tableInfo.mergeAreas.length === 0) return getInnerBorders(tableInfo, size);
+
+  const coordsLocations = getTableCoordsLocations(tableInfo);
+  const mergeAreasByFromRow: Record<string, MergeArea[]> = {};
+  const mergeAreasByFromColumn: Record<string, MergeArea[]> = {};
+
+  tableInfo.mergeAreas.forEach((m) => {
+    for (let i = m[0][0]; i < m[1][0]; i++) {
+      mergeAreasByFromRow[i] ??= [];
+      mergeAreasByFromRow[i].push(m);
+    }
+  });
+  tableInfo.mergeAreas.forEach((m) => {
+    for (let i = m[0][1]; i < m[1][1]; i++) {
+      mergeAreasByFromColumn[i] ??= [];
+      mergeAreasByFromColumn[i].push(m);
+    }
+  });
+
+  const ret: ISegment[] = [];
+  {
+    let x = 0;
+    tableInfo.columns.forEach((column, i) => {
+      if (i === tableInfo.columns.length - 1) return;
+
+      const mergeAreas = mergeAreasByFromColumn[i]?.toSorted((a, b) => a[0][0] - b[0][0]) ?? [];
+      const ranges: [number, number][] = [];
+      let range: [number, number] = [0, tableInfo.rows.length];
+      mergeAreas.forEach((m) => {
+        if (m[0][1] < m[1][1] && range[0] <= m[0][0]) {
+          if (m[0][0] > 0) ranges.push([range[0], m[0][0]]);
+          range = [m[1][0] + 1, range[1]];
+        }
+      });
+      if (range[0] < range[1]) ranges.push(range);
+
+      x += column.size;
+      ranges.forEach((range) =>
+        ret.push([
+          { x, y: coordsLocations.rows[range[0]] },
+          { x, y: coordsLocations.rows[range[1]] },
+        ]),
+      );
+    });
+  }
+  {
+    let y = 0;
+    tableInfo.rows.forEach((row, i) => {
+      if (i === tableInfo.rows.length - 1) return;
+
+      const mergeAreas = mergeAreasByFromRow[i]?.toSorted((a, b) => a[0][1] - b[0][1]) ?? [];
+      const ranges: [number, number][] = [];
+      let range: [number, number] = [0, tableInfo.columns.length];
+      mergeAreas.forEach((m) => {
+        if (m[0][0] < m[1][0] && range[0] <= m[0][1]) {
+          if (m[0][1] > 0) ranges.push([range[0], m[0][1]]);
+          range = [m[1][1] + 1, range[1]];
+        }
+      });
+      if (range[0] < range[1]) ranges.push(range);
+
+      y += row.size;
+      ranges.forEach((range) =>
+        ret.push([
+          { x: coordsLocations.columns[range[0]], y },
+          { x: coordsLocations.columns[range[1]], y },
+        ]),
+      );
     });
   }
   return ret;
