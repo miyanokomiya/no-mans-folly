@@ -153,19 +153,27 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
   }
 
   function hitTestCellAnchor(adjustedP: IVec2): CellAnchor | undefined {
-    if (adjustedP.x < 0 || adjustedP.y < 0) return;
+    if (!tableInfo || adjustedP.x < 0 || adjustedP.y < 0) return;
 
-    const row = coordsLocations.rows.findIndex((y, i) => i > 0 && adjustedP.y < y);
-    const column = coordsLocations.columns.findIndex((x, i) => i > 0 && adjustedP.x < x);
+    const row = coordsLocations.rows.findIndex((y, i) => i > 0 && adjustedP.y < y) - 1;
+    const column = coordsLocations.columns.findIndex((x, i) => i > 0 && adjustedP.x < x) - 1;
     if (row < 0 || column < 0) return;
 
-    const left = coordsLocations.columns[column - 1];
-    const right = coordsLocations.columns[column];
-    const top = coordsLocations.rows[row - 1];
-    const bottom = coordsLocations.rows[row];
+    const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, [[tableInfo.rows[row].id, tableInfo.columns[column].id]]);
+    if (!coordsBoundsInfo) return;
+
+    const adjustedRowFrom = tableInfo.rows.findIndex((r) => r.id === coordsBoundsInfo.bounds[0][0]);
+    const adjustedColumnFrom = tableInfo.columns.findIndex((c) => c.id === coordsBoundsInfo.bounds[0][1]);
+    const adjustedRowTo = tableInfo.rows.findIndex((r) => r.id === coordsBoundsInfo.bounds[1][0]);
+    const adjustedColumnTo = tableInfo.columns.findIndex((c) => c.id === coordsBoundsInfo.bounds[1][1]);
+
+    const left = coordsLocations.columns[adjustedColumnFrom];
+    const right = coordsLocations.columns[adjustedColumnTo + 1];
+    const top = coordsLocations.rows[adjustedRowFrom];
+    const bottom = coordsLocations.rows[adjustedRowTo + 1];
     return {
       type: "cell",
-      coords: [row - 1, column - 1],
+      coords: [adjustedRowFrom, adjustedColumnFrom],
       rect: { x: left, y: top, width: right - left, height: bottom - top },
     };
   }
@@ -290,6 +298,7 @@ export function newMovingInTableHandler(option: MovingInTableHandlerOption) {
   const shapeMap = shapeComposite.shapeMap;
   const table = shapeMap[option.tableId] as TableShape;
   const tableInfo = getTableShapeInfo(table);
+  const coordsLocations = getTableCoordsLocations(tableInfo);
 
   const tableRect = {
     x: table.p.x,
@@ -305,33 +314,32 @@ export function newMovingInTableHandler(option: MovingInTableHandlerOption) {
     const derotatedP = applyAffine(derotateAffine, p);
 
     let y = table.p.y;
-    let rangeV = [y, y];
     const row =
       tableInfo.rows.find((r) => {
-        rangeV[0] = y;
         y += r.size;
-        rangeV[1] = y;
         return derotatedP.y < y;
       }) ?? tableInfo.rows.at(-1);
-
     let x = table.p.x;
-    let rangeH = [x, x];
     const column =
       tableInfo.columns.find((c) => {
-        rangeH[0] = x;
         x += c.size;
-        rangeH[1] = x;
         return derotatedP.x < x;
       }) ?? tableInfo.columns.at(-1);
-
     if (!row || !column) return;
 
+    const baseCell: TableCoords = [row.id, column.id];
+    const effectiveCells = getEffectiveCells(tableInfo, [baseCell]);
+    const effectiveCoordsSet = new Set(effectiveCells.map((cell) => generateTableMeta(cell)));
+    const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, [baseCell]);
+    if (!coordsBoundsInfo) return;
+
+    const indexCell = coordsBoundsInfo.bounds[0];
     const siblingIds = shapeComposite.mergedShapeTreeMap[table.id].children
       .map((c) => c.id)
       .filter((id) => {
         const s = shapeMap[id];
-        const coords = parseTableMeta(s.parentMeta);
-        return coords && coords[0] === row.id && coords[1] === column.id;
+        const coordsMeta = parseTableMeta(s.parentMeta);
+        return coordsMeta && effectiveCoordsSet.has(generateTableMeta(coordsMeta));
       });
     const siblingRects = siblingIds.map<[string, IRectangle]>((id) => {
       const rectPolygon = shapeComposite.getRectPolygonForLayout(shapeMap[id]);
@@ -341,12 +349,16 @@ export function newMovingInTableHandler(option: MovingInTableHandlerOption) {
 
     if (siblingRects.length === 0) {
       // No siblings
+      const effectiveCellRect = getEffectiveCellRect(tableInfo, coordsLocations, baseCell);
+      const segX = table.p.x + effectiveCellRect.x + effectiveCellRect.width / 2;
+      const segY0 = table.p.y + effectiveCellRect.y;
+      const segY1 = table.p.y + effectiveCellRect.y + effectiveCellRect.height;
       result = {
         seg: [
-          { x: (rangeH[0] + rangeH[1]) / 2, y: rangeV[0] },
-          { x: (rangeH[0] + rangeH[1]) / 2, y: rangeV[1] },
+          { x: segX, y: segY0 },
+          { x: segX, y: segY1 },
         ],
-        coords: [row.id, column.id],
+        coords: [indexCell[0], indexCell[1]],
         findexBetween: [table.findex, null],
       };
     } else {
@@ -365,7 +377,7 @@ export function newMovingInTableHandler(option: MovingInTableHandlerOption) {
             { x: closestRect.x, y: closestRect.y },
             { x: closestRect.x, y: closestRect.y + closestRect.height },
           ],
-          coords: [row.id, column.id],
+          coords: [indexCell[0], indexCell[1]],
           findexBetween: [
             closestIndex === 0 ? null : shapeMap[siblingIds[closestIndex - 1]].findex,
             closestShape.findex,
@@ -377,7 +389,7 @@ export function newMovingInTableHandler(option: MovingInTableHandlerOption) {
             { x: closestRect.x + closestRect.width, y: closestRect.y },
             { x: closestRect.x + closestRect.width, y: closestRect.y + closestRect.height },
           ],
-          coords: [row.id, column.id],
+          coords: [indexCell[0], indexCell[1]],
           findexBetween: [
             closestShape.findex,
             closestIndex === siblingIds.length - 1 ? null : shapeMap[siblingIds[closestIndex + 1]].findex,
@@ -416,7 +428,8 @@ export function renderHighlightCells(
   tableInfo: TableShapeInfo,
   cells: TableCoords[],
 ) {
-  if (cells.length === 0) return;
+  const effectiveCells = getEffectiveCells(tableInfo, cells);
+  if (effectiveCells.length === 0) return;
 
   const coordsLocations = getTableCoordsLocations(tableInfo);
   const rowIndexMap = new Map<string, number>(tableInfo.rows.map((row, r) => [row.id, r]));
@@ -424,7 +437,7 @@ export function renderHighlightCells(
   scaleGlobalAlpha(ctx, 0.2, () => {
     applyFillStyle(ctx, { color: style.selectionPrimary });
     ctx.beginPath();
-    cells.forEach((coord) => {
+    effectiveCells.forEach((coord) => {
       const r = rowIndexMap.get(coord[0]);
       const c = columnIndexMap.get(coord[1]);
       if (r === undefined || c === undefined) return;
@@ -437,6 +450,42 @@ export function renderHighlightCells(
     });
     ctx.fill();
   });
+}
+
+function getEffectiveCells(tableInfo: TableShapeInfo, cells: TableCoords[]): TableCoords[] {
+  const coordsByKey = new Map<string, TableCoords>();
+  cells.forEach((cell) => {
+    const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, [cell]);
+    if (!coordsBoundsInfo) return;
+
+    for (let r = coordsBoundsInfo.mergeArea[0][0]; r <= coordsBoundsInfo.mergeArea[1][0]; r++) {
+      for (let c = coordsBoundsInfo.mergeArea[0][1]; c <= coordsBoundsInfo.mergeArea[1][1]; c++) {
+        const coords: TableCoords = [tableInfo.rows[r].id, tableInfo.columns[c].id];
+        coordsByKey.set(generateTableMeta(coords), coords);
+      }
+    }
+  });
+  return Array.from(coordsByKey.values());
+}
+
+function getEffectiveCellRect(
+  tableInfo: TableShapeInfo,
+  coordsLocations: { rows: number[]; columns: number[] },
+  cell: TableCoords,
+): IRectangle {
+  const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, [cell]);
+  if (!coordsBoundsInfo) return { x: 0, y: 0, width: 0, height: 0 };
+
+  const adjustedRowFrom = tableInfo.rows.findIndex((r) => r.id === coordsBoundsInfo.bounds[0][0]);
+  const adjustedColumnFrom = tableInfo.columns.findIndex((c) => c.id === coordsBoundsInfo.bounds[0][1]);
+  const adjustedRowTo = tableInfo.rows.findIndex((r) => r.id === coordsBoundsInfo.bounds[1][0]);
+  const adjustedColumnTo = tableInfo.columns.findIndex((c) => c.id === coordsBoundsInfo.bounds[1][1]);
+
+  const left = coordsLocations.columns[adjustedColumnFrom];
+  const right = coordsLocations.columns[adjustedColumnTo + 1];
+  const top = coordsLocations.rows[adjustedRowFrom];
+  const bottom = coordsLocations.rows[adjustedRowTo + 1];
+  return { x: left, y: top, width: right - left, height: bottom - top };
 }
 
 export function generateTableMeta(coords: TableCoords): string {
@@ -766,14 +815,15 @@ function adjustPatchByKeepPosition(
   return patch;
 }
 
-export function getCoordsBoundsInfo(
+function getCoordsBoundsRawInfo(
   tableInfo: TableShapeInfo,
   coordsList: TableCoords[],
 ):
   | {
       bounds: [from: [TableRowKey, TableColumnKey], to: [TableRowKey, TableColumnKey]];
-      enclaveIds: TableCellMergeKey[];
-      touchIds: TableCellMergeKey[];
+      mergeArea: MergeArea;
+      rowIndexById: Map<TableRowKey, number>;
+      columnIndexById: Map<TableColumnKey, number>;
     }
   | undefined {
   const rowIndexById = new Map(tableInfo.rows.map((r, i) => [r.id, i]));
@@ -806,7 +856,35 @@ export function getCoordsBoundsInfo(
     [r0[0], c0[0]],
     [r1[0], c1[0]],
   ];
+  return {
+    bounds: [
+      [r0[1], c0[1]],
+      [r1[1], c1[1]],
+    ],
+    mergeArea,
+    rowIndexById,
+    columnIndexById,
+  };
+}
 
+/**
+ * Returned "bounds" covers all coords with merge areas regarded
+ */
+export function getCoordsBoundsInfo(
+  tableInfo: TableShapeInfo,
+  coordsList: TableCoords[],
+):
+  | {
+      bounds: [from: [TableRowKey, TableColumnKey], to: [TableRowKey, TableColumnKey]];
+      mergeArea: MergeArea;
+      enclaveIds: TableCellMergeKey[];
+      touchIds: TableCellMergeKey[];
+    }
+  | undefined {
+  const boundsRawInfo = getCoordsBoundsRawInfo(tableInfo, coordsList);
+  if (!boundsRawInfo) return;
+
+  const { bounds, mergeArea, rowIndexById, columnIndexById } = boundsRawInfo;
   const enclaveIds: Set<TableCellMergeKey> = new Set();
   const touchIds: Set<TableCellMergeKey> = new Set();
   tableInfo.merges.forEach((m) => {
@@ -828,6 +906,34 @@ export function getCoordsBoundsInfo(
     }
   });
 
+  const touchList = tableInfo.merges.filter((m) => touchIds.has(m.id));
+  let r0: [index: number, TableRowKey] = [mergeArea[0][0], bounds[0][0]];
+  let r1: [index: number, TableRowKey] = [mergeArea[1][0], bounds[1][0]];
+  let c0: [index: number, TableColumnKey] = [mergeArea[0][1], bounds[0][1]];
+  let c1: [index: number, TableColumnKey] = [mergeArea[1][1], bounds[1][1]];
+  touchList.forEach((m) => {
+    const aRowIndex = rowIndexById.get(m.a[0]);
+    const aColumnIndex = columnIndexById.get(m.a[1]);
+    if (aRowIndex === undefined || aColumnIndex === undefined) return;
+
+    const bRowIndex = rowIndexById.get(m.b[0]);
+    const bColumnIndex = columnIndexById.get(m.b[1]);
+    if (bRowIndex === undefined || bColumnIndex === undefined) return;
+
+    if (r0 === undefined || aRowIndex < r0[0]) {
+      r0 = [aRowIndex, m.a[0]];
+    }
+    if (r1 === undefined || r1[0] < bRowIndex) {
+      r1 = [bRowIndex, m.b[0]];
+    }
+    if (c0 === undefined || aColumnIndex < c0[0]) {
+      c0 = [aColumnIndex, m.a[1]];
+    }
+    if (c1 === undefined || c1[0] < bColumnIndex) {
+      c1 = [bColumnIndex, m.b[1]];
+    }
+  });
+
   return {
     bounds: [
       [r0[1], c0[1]],
@@ -835,6 +941,10 @@ export function getCoordsBoundsInfo(
     ],
     enclaveIds: Array.from(enclaveIds),
     touchIds: Array.from(touchIds),
+    mergeArea: [
+      [r0[0], c0[0]],
+      [r1[0], c1[0]],
+    ],
   };
 }
 
@@ -850,7 +960,7 @@ export function getPatchByMergeCells(
   const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, coordsList);
   if (!coordsBoundsInfo) return {};
 
-  const { bounds: coordsBounds, enclaveIds } = coordsBoundsInfo;
+  const { bounds: coordsBounds, touchIds } = coordsBoundsInfo;
   const merge: TableCellMerge = {
     id: `m_${generateUuid()}`,
     a: [coordsBounds[0][0], coordsBounds[0][1]],
@@ -858,7 +968,7 @@ export function getPatchByMergeCells(
   };
 
   patch[merge.id] = merge;
-  enclaveIds.forEach((id) => {
+  touchIds.forEach((id) => {
     patch[id] = undefined;
   });
 
