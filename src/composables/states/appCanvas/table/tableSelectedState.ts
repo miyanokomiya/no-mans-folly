@@ -332,19 +332,13 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
               case CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_ROW.key: {
                 const rows = tableSelectable.getSelectedRows();
                 const info = getPatchByDeleteLines(shapeComposite, targetShape, rows);
-                ctx.updateShapes({
-                  update: { [targetShape.id]: info.patch },
-                  delete: info.delete,
-                });
+                ctx.updateShapes(info);
                 return ctx.states.newSelectionHubState;
               }
               case CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_COLUMN.key: {
                 const columns = tableSelectable.getSelectedColumns();
                 const info = getPatchByDeleteLines(shapeComposite, targetShape, columns);
-                ctx.updateShapes({
-                  update: { [targetShape.id]: info.patch },
-                  delete: info.delete,
-                });
+                ctx.updateShapes(info);
                 return ctx.states.newSelectionHubState;
               }
               case CONTEXT_MENU_ITEM_SRC.MERGE_TABLE_CELLS.key: {

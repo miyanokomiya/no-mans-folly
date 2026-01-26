@@ -12,7 +12,7 @@ import {
   rotate,
   sub,
 } from "okageo";
-import { Shape, StyleScheme } from "../../models";
+import { EntityPatchInfo, Shape, StyleScheme } from "../../models";
 import {
   getTableCoordsLocations,
   getTableShapeInfo,
@@ -532,12 +532,13 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
       coords: parseTableMeta(shape.parentMeta),
       fullH: shape.lcH === 1,
       fullV: shape.lcV === 1,
+      mergeAreas: tableInfo?.mergeAreas,
     });
 
     treeNode.children.forEach((c) => {
       const child = shapeComposite.mergedShapeMap[c.id];
       const coords = parseTableMeta(child.parentMeta);
-      if (!coords) return;
+      if (!shapeComposite.isInTableCell(child) || !coords) return;
 
       const childRectPolygon = shapeComposite.getRectPolygonForLayout(child);
       const childC = getRectCenter(shapeComposite.getWrapperRect(child));
@@ -773,7 +774,10 @@ export function getPatchByDeleteLines(
   shapeComposite: ShapeComposite,
   table: TableShape,
   lineIds: string[],
-): { patch: Partial<TableShape>; delete: string[] } {
+): EntityPatchInfo<Shape> {
+  const tableInfo = getTableShapeInfo(table);
+  if (!tableInfo) return {};
+
   let patch: Partial<TableShape> = {};
 
   lineIds.forEach((id: any) => {
@@ -787,18 +791,28 @@ export function getPatchByDeleteLines(
 
   const idSet = new Set(lineIds);
 
+  const update = { [table.id]: patch };
+  const deleteIds: string[] = [];
+  shapeComposite.shapes.forEach((s) => {
+    if (s.parentId !== table.id) return;
+
+    const coords = parseTableMeta(s.parentMeta);
+    if (!coords) return;
+
+    const info = getCoordsBoundsInfo(tableInfo, [coords]);
+    const indexCoords = info?.bounds[0] ?? coords;
+    if (idSet.has(indexCoords[0]) || idSet.has(indexCoords[1])) {
+      // Delete only when the index cell is deleted
+      deleteIds.push(s.id);
+    } else if (idSet.has(coords[0]) || idSet.has(coords[1])) {
+      // Move to the index cell when the original cell is deleted
+      update[s.id] = { parentMeta: generateTableMeta(indexCoords) };
+    }
+  });
+
   return {
-    patch,
-    delete: shapeComposite.shapes
-      .filter((s) => {
-        if (s.parentId !== table.id) return;
-
-        const coords = parseTableMeta(s.parentMeta);
-        if (!coords) return;
-
-        return idSet.has(coords[0]) || idSet.has(coords[1]);
-      })
-      .map((s) => s.id),
+    update,
+    delete: deleteIds,
   };
 }
 

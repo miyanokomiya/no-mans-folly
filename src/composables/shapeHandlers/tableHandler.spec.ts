@@ -151,17 +151,57 @@ describe("getPatchByDeleteLines", () => {
     });
 
     const result0 = getPatchByDeleteLines(shapeComposite, table, ["r_0"]);
-    expect(result0.patch).toHaveProperty("r_0");
+    expect(result0.update?.[table.id]).toHaveProperty("r_0");
     expect(result0).toEqual({
-      patch: { r_0: undefined },
+      update: {
+        [table.id]: { r_0: undefined },
+      },
       delete: [shape00.id, shape01.id],
     });
 
     const result1 = getPatchByDeleteLines(shapeComposite, table, ["c_0"]);
-    expect(result1.patch).toHaveProperty("c_0");
+    expect(result1.update?.[table.id]).toHaveProperty("c_0");
     expect(result1).toEqual({
-      patch: { c_0: undefined },
+      update: {
+        [table.id]: { c_0: undefined },
+      },
       delete: [shape00.id, shape10.id],
+    });
+  });
+
+  test("should handle cell merges", () => {
+    const table = generateTable(3, 3, { width: 20, height: 10 });
+    table.m_0 = { id: "m_0", a: ["r_0", "c_0"], b: ["r_1", "c_1"] };
+    const shape00 = createShape(getCommonStruct, "rectangle", {
+      id: "shape00",
+      parentId: table.id,
+      parentMeta: generateTableMeta(["r_0", "c_0"]),
+    });
+    const shape01 = {
+      ...shape00,
+      id: "shape01",
+      parentMeta: generateTableMeta(["r_0", "c_1"]),
+    };
+    const shapeComposite = newShapeComposite({
+      shapes: [table, shape00, shape01],
+      getStruct: getCommonStruct,
+    });
+
+    const result0 = getPatchByDeleteLines(shapeComposite, table, ["c_0"]);
+    expect(result0).toEqual({
+      update: {
+        [table.id]: { c_0: undefined },
+      },
+      delete: [shape00.id, shape01.id],
+    });
+
+    const result1 = getPatchByDeleteLines(shapeComposite, table, ["c_1"]);
+    expect(result1).toEqual({
+      update: {
+        [table.id]: { c_1: undefined },
+        [shape01.id]: { parentMeta: "r_0:c_0" },
+      },
+      delete: [],
     });
   });
 });
