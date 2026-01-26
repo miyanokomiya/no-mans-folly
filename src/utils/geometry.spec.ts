@@ -100,6 +100,7 @@ import {
   MergeArea,
   isInMergeArea,
   isMergeAreaOverlapping,
+  groupCellsIntoRectangles,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -2423,6 +2424,68 @@ describe("optimiseMergeAreas", () => {
         [0, 0],
         [40, 50],
       ],
+    ]);
+  });
+});
+
+describe("groupCellsIntoRectangles", () => {
+  test("should group cells into rectangles", () => {
+    expect(
+      groupCellsIntoRectangles([
+        ["0_0", 0, 0],
+        ["0_2", 0, 2],
+      ]),
+    ).toEqual([[["0_0", 0, 0]], [["0_2", 0, 2]]]);
+    expect(
+      groupCellsIntoRectangles([
+        ["0_0", 0, 0],
+        ["0_1", 0, 1],
+        ["0_2", 0, 2],
+      ]),
+    ).toEqual([
+      [
+        ["0_0", 0, 0],
+        ["0_1", 0, 1],
+        ["0_2", 0, 2],
+      ],
+    ]);
+    expect(
+      groupCellsIntoRectangles([
+        ["0_0", 0, 0],
+        ["0_1", 0, 1],
+        ["0_2", 0, 2],
+        ["1_0", 1, 0],
+        ["1_1", 1, 1],
+      ]),
+    ).toEqual([
+      [
+        ["0_0", 0, 0],
+        ["0_1", 0, 1],
+        ["0_2", 0, 2],
+      ],
+      [
+        ["1_0", 1, 0],
+        ["1_1", 1, 1],
+      ],
+    ]);
+    expect(
+      groupCellsIntoRectangles([
+        ["0_0", 0, 0],
+        ["0_2", 0, 2],
+        ["1_0", 1, 0],
+        ["1_1", 1, 1],
+        ["1_2", 1, 2],
+      ]),
+    ).toEqual([
+      [
+        ["0_0", 0, 0],
+        ["1_0", 1, 0],
+      ],
+      [
+        ["0_2", 0, 2],
+        ["1_2", 1, 2],
+      ],
+      [["1_1", 1, 1]],
     ]);
   });
 });

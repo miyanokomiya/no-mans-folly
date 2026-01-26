@@ -1583,3 +1583,66 @@ export function optimiseMergeAreas(merges: MergeArea[], allowBorder = false): Me
   // => New union may now overlap with something else in the list.
   return hasChanged ? optimiseMergeAreas(result, allowBorder) : result;
 }
+
+export type CellInfo<T> = [val: T, rowIndex: number, columnIndex: number];
+
+/**
+ * Groups cells into the minimum number of rectangular blocks.
+ * This doesn't always return optimal solution.
+ * Refs: Grid-merging problem
+ */
+export function groupCellsIntoRectangles<T>(selectedCells: CellInfo<T>[]): CellInfo<T>[][] {
+  const getKey = (r: number, c: number) => `${r}:${c}`;
+
+  // 1. Create a Set of "available" coordinates for O(1) lookup
+  const cellMap = new Map<string, CellInfo<T>>();
+  selectedCells.forEach((cell) => cellMap.set(getKey(cell[1], cell[2]), cell));
+
+  const remaining = new Set(selectedCells.map((c) => getKey(c[1], c[2])));
+  const groups: CellInfo<T>[][] = [];
+
+  // 2. Sort to always start from the top-left-most cell
+  const sortedCells = selectedCells.toSorted((a, b) => a[1] - b[1] || a[2] - b[2]);
+
+  for (const startCell of sortedCells) {
+    const startKey = getKey(startCell[1], startCell[2]);
+    if (!remaining.has(startKey)) continue;
+
+    const [, startR, startC] = startCell;
+    let maxR = startR;
+    let maxC = startC;
+
+    // Expand Right
+    while (remaining.has(getKey(startR, maxC + 1))) {
+      maxC++;
+    }
+
+    // Expand Down (must verify the entire row width is present for each new row)
+    while (true) {
+      let nextRow = maxR + 1;
+      let rowComplete = true;
+      for (let c = startC; c <= maxC; c++) {
+        if (!remaining.has(getKey(nextRow, c))) {
+          rowComplete = false;
+          break;
+        }
+      }
+      if (rowComplete) maxR++;
+      else break;
+    }
+
+    // 3. Extract the group and mark as used
+    const currentGroup: CellInfo<T>[] = [];
+    for (let r = startR; r <= maxR; r++) {
+      for (let c = startC; c <= maxC; c++) {
+        const key = getKey(r, c);
+        const cellInfo = cellMap.get(key);
+        if (cellInfo) currentGroup.push(cellInfo);
+        remaining.delete(key);
+      }
+    }
+    groups.push(currentGroup);
+  }
+
+  return groups;
+}
