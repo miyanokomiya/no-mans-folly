@@ -99,6 +99,7 @@ import {
   optimiseMergeAreas,
   MergeArea,
   isInMergeArea,
+  isMergeAreaOverlapping,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -2291,6 +2292,56 @@ describe("isZeroSize", () => {
     expect(isZeroSize({ width: 0, height: -1 })).toBe(true);
     expect(isZeroSize({ width: 1e-10, height: 1e-10 })).toBe(true);
     expect(isZeroSize({ width: 1, height: -1 })).toBe(false);
+  });
+});
+
+describe("isMergeAreaOverlapping", () => {
+  test("should return true when two areas overlap", () => {
+    const a1: MergeArea = [
+      [0, 0],
+      [10, 10],
+    ];
+    expect(isMergeAreaOverlapping(a1, a1)).toBe(true);
+    expect(
+      isMergeAreaOverlapping(a1, [
+        [-1, 1],
+        [0, 9],
+      ]),
+    ).toBe(false);
+    expect(
+      isMergeAreaOverlapping(
+        a1,
+        [
+          [-1, 1],
+          [0, 9],
+        ],
+        true,
+      ),
+    ).toBe(true);
+    expect(
+      isMergeAreaOverlapping(a1, [
+        [-1, 1],
+        [-9, 9],
+      ]),
+    ).toBe(false);
+    expect(
+      isMergeAreaOverlapping(a1, [
+        [1, -1],
+        [9, -9],
+      ]),
+    ).toBe(false);
+    expect(
+      isMergeAreaOverlapping(a1, [
+        [1, 1],
+        [9, 9],
+      ]),
+    ).toBe(true);
+    expect(
+      isMergeAreaOverlapping(a1, [
+        [-1, 1],
+        [9, 9],
+      ]),
+    ).toBe(true);
   });
 });
 

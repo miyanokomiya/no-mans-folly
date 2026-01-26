@@ -1519,7 +1519,7 @@ export function isZeroSize(size: Size): boolean {
 /**
  * Checks if two merge areas overlap.
  */
-function isMergeAreaOverlapping(m1: MergeArea, m2: MergeArea, allowBorder = false): boolean {
+export function isMergeAreaOverlapping(m1: MergeArea, m2: MergeArea, allowBorder = false): boolean {
   if (allowBorder) {
     return !(m1[1][0] < m2[0][0] || m1[0][0] > m2[1][0] || m1[1][1] < m2[0][1] || m1[0][1] > m2[1][1]);
   } else {

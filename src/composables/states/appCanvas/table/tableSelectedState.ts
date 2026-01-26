@@ -8,8 +8,10 @@ import { createStrokeStyle } from "../../../../utils/strokeStyle";
 import { newBoundingBox } from "../../../boundingBox";
 import {
   generateTableMeta,
+  getCoordsBoundsInfo,
   getPatchByDeleteLines,
   getPatchByMergeCells,
+  getPatchByUnmergeCells,
   getPatchInfoByInsertColumn,
   getPatchInfoByInsertRow,
   newResizeColumn,
@@ -24,6 +26,7 @@ import { newResizingState } from "../resizingState";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
 import { AppCanvasStateContext } from "../core";
 import { newMovingTableLineState } from "./movingTableLineState";
+import { ContextMenuItem } from "../../types";
 
 interface Option {
   tableSelectable?: TableSelectable;
@@ -299,18 +302,27 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                 return null;
               }
               case "cell": {
+                const items: ContextMenuItem[] = [];
                 if (tableSelectable.getSelectedCoords().length > 1) {
-                  ctx.setContextMenuList({
-                    items: [
-                      CONTEXT_MENU_ITEM_SRC.MERGE_TABLE_CELLS,
-                      CONTEXT_MENU_ITEM_SRC.SEPARATOR,
-                      ...getMenuItemsForSelectedShapes(ctx),
-                    ],
-                    point: event.data.point,
-                  });
-                  return null;
+                  items.push(CONTEXT_MENU_ITEM_SRC.MERGE_TABLE_CELLS);
                 }
-                break;
+
+                const tableInfo = getTableShapeInfo(targetShape);
+                if (tableInfo) {
+                  const coordsList = tableSelectable.getSelectedCoords();
+                  const boundsInfo = getCoordsBoundsInfo(tableInfo, coordsList);
+                  if (boundsInfo && boundsInfo.touchIds.length > 0) {
+                    items.push(CONTEXT_MENU_ITEM_SRC.UNMERGE_TABLE_CELLS);
+                  }
+                }
+                ctx.setContextMenuList({
+                  items:
+                    items.length > 0
+                      ? [...items, CONTEXT_MENU_ITEM_SRC.SEPARATOR, ...getMenuItemsForSelectedShapes(ctx)]
+                      : getMenuItemsForSelectedShapes(ctx),
+                  point: event.data.point,
+                });
+                return null;
               }
             }
             return;
@@ -338,6 +350,14 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
               case CONTEXT_MENU_ITEM_SRC.MERGE_TABLE_CELLS.key: {
                 const coordsList = tableSelectable.getSelectedCoords();
                 const patch = getPatchByMergeCells(targetShape, coordsList, ctx.generateUuid);
+                ctx.updateShapes({
+                  update: { [targetShape.id]: patch },
+                });
+                return ctx.states.newSelectionHubState;
+              }
+              case CONTEXT_MENU_ITEM_SRC.UNMERGE_TABLE_CELLS.key: {
+                const coordsList = tableSelectable.getSelectedCoords();
+                const patch = getPatchByUnmergeCells(targetShape, coordsList);
                 ctx.updateShapes({
                   update: { [targetShape.id]: patch },
                 });

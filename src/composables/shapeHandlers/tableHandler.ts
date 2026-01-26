@@ -36,6 +36,7 @@ import {
   getRotationAffines,
   ISegment,
   isInMergeArea,
+  isMergeAreaOverlapping,
   isPointCloseToSegment,
   isPointOnRectangle,
   MergeArea,
@@ -765,16 +766,16 @@ function adjustPatchByKeepPosition(
   return patch;
 }
 
-export function getPatchByMergeCells(
-  table: TableShape,
+export function getCoordsBoundsInfo(
+  tableInfo: TableShapeInfo,
   coordsList: TableCoords[],
-  generateUuid: () => string,
-): Partial<TableShape> {
-  let patch: Partial<TableShape> = {};
-
-  const tableInfo = getTableShapeInfo(table);
-  if (!tableInfo) return {};
-
+):
+  | {
+      bounds: [from: [TableRowKey, TableColumnKey], to: [TableRowKey, TableColumnKey]];
+      enclaveIds: TableCellMergeKey[];
+      touchIds: TableCellMergeKey[];
+    }
+  | undefined {
   const rowIndexById = new Map(tableInfo.rows.map((r, i) => [r.id, i]));
   const columnIndexById = new Map(tableInfo.columns.map((c, i) => [c.id, i]));
   let r0: [index: number, TableRowKey] | undefined;
@@ -799,15 +800,15 @@ export function getPatchByMergeCells(
       c1 = [columnIndex, columnId];
     }
   });
-  if (!r0 || !r1 || !c0 || !c1) return {};
+  if (!r0 || !r1 || !c0 || !c1) return;
 
-  const merge: TableCellMerge = { id: `m_${generateUuid()}`, a: [r0[1], c0[1]], b: [r1[1], c1[1]] };
   const mergeArea: MergeArea = [
     [r0[0], c0[0]],
     [r1[0], c1[0]],
   ];
 
-  const enclaveIds: TableCellMergeKey[] = [];
+  const enclaveIds: Set<TableCellMergeKey> = new Set();
+  const touchIds: Set<TableCellMergeKey> = new Set();
   tableInfo.merges.forEach((m) => {
     const ra = rowIndexById.get(m.a[0]);
     const rb = rowIndexById.get(m.b[0]);
@@ -820,14 +821,61 @@ export function getPatchByMergeCells(
       [rb, cb],
     ];
     if (isInMergeArea(mergeArea, area, true)) {
-      enclaveIds.push(m.id);
+      enclaveIds.add(m.id);
+      touchIds.add(m.id);
+    } else if (isMergeAreaOverlapping(mergeArea, area, true)) {
+      touchIds.add(m.id);
     }
   });
+
+  return {
+    bounds: [
+      [r0[1], c0[1]],
+      [r1[1], c1[1]],
+    ],
+    enclaveIds: Array.from(enclaveIds),
+    touchIds: Array.from(touchIds),
+  };
+}
+
+export function getPatchByMergeCells(
+  table: TableShape,
+  coordsList: TableCoords[],
+  generateUuid: () => string,
+): Partial<TableShape> {
+  let patch: Partial<TableShape> = {};
+  const tableInfo = getTableShapeInfo(table);
+  if (!tableInfo) return {};
+
+  const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, coordsList);
+  if (!coordsBoundsInfo) return {};
+
+  const { bounds: coordsBounds, enclaveIds } = coordsBoundsInfo;
+  const merge: TableCellMerge = {
+    id: `m_${generateUuid()}`,
+    a: [coordsBounds[0][0], coordsBounds[0][1]],
+    b: [coordsBounds[1][0], coordsBounds[1][1]],
+  };
 
   patch[merge.id] = merge;
   enclaveIds.forEach((id) => {
     patch[id] = undefined;
   });
 
+  return patch;
+}
+
+export function getPatchByUnmergeCells(table: TableShape, coordsList: TableCoords[]): Partial<TableShape> {
+  let patch: Partial<TableShape> = {};
+  const tableInfo = getTableShapeInfo(table);
+  if (!tableInfo) return {};
+
+  const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, coordsList);
+  if (!coordsBoundsInfo) return {};
+
+  const { touchIds } = coordsBoundsInfo;
+  touchIds.forEach((id) => {
+    patch[id] = undefined;
+  });
   return patch;
 }
