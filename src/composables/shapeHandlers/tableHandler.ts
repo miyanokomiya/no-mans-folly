@@ -62,7 +62,7 @@ const ANCHOR_SIZE = 8;
 type BorderAnchor = { type: "border-row" | "border-column"; coord: number; segment: ISegment };
 type AddLineAnchor = { type: "add-row" | "add-column"; coord: number; p: IVec2 };
 type LineHeadAnchor = { type: "head-row" | "head-column"; coord: number; rect: IRectangle };
-type CellAnchor = { type: "cell"; coords: [number, number]; rect: IRectangle };
+type CellAnchor = { type: "area-cell"; coords: [number, number]; rect: IRectangle };
 
 export type TableHitResult = BorderAnchor | AddLineAnchor | LineHeadAnchor | CellAnchor;
 
@@ -174,7 +174,7 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
     const top = coordsLocations.rows[adjustedRowFrom];
     const bottom = coordsLocations.rows[adjustedRowTo + 1];
     return {
-      type: "cell",
+      type: "area-cell",
       coords: [adjustedRowFrom, adjustedColumnFrom],
       rect: { x: left, y: top, width: right - left, height: bottom - top },
     };

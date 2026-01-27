@@ -72,9 +72,10 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       } else {
         ctx.setTmpShapeMap({});
         ctx.patchShapes({ [tableId]: patch });
+        focusBack?.();
       }
     },
-    [getCtx, selectedCoords, tableInfo, indexCellStyle, indexCellFill, tableId],
+    [focusBack, getCtx, selectedCoords, tableInfo, indexCellStyle, indexCellFill, tableId],
   );
 
   const onFillChanged = useCallback(
@@ -89,9 +90,10 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       } else {
         ctx.setTmpShapeMap({});
         ctx.patchShapes({ [table.id]: patch });
+        focusBack?.();
       }
     },
-    [getCtx, table],
+    [focusBack, getCtx, table],
   );
 
   const onStrokeChanged = useCallback(
@@ -106,9 +108,29 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       } else {
         ctx.setTmpShapeMap({});
         ctx.patchShapes({ [table.id]: patch });
+        focusBack?.();
       }
     },
-    [getCtx, table],
+    [focusBack, getCtx, table],
+  );
+
+  const bodyStroke = table.bodyStroke ?? table.stroke;
+  const onBodyStrokeChanged = useCallback(
+    (val: Partial<FillStyle>, draft = false) => {
+      const ctx = getCtx();
+      const patch: Partial<TableShape> = {
+        bodyStroke: { ...bodyStroke, ...val },
+      };
+
+      if (draft) {
+        ctx.setTmpShapeMap({ [tableId]: patch });
+      } else {
+        ctx.setTmpShapeMap({});
+        ctx.patchShapes({ [tableId]: patch });
+        focusBack?.();
+      }
+    },
+    [focusBack, getCtx, tableId, bodyStroke],
   );
 
   const handleContextMenuClick = useCallback(
@@ -141,6 +163,24 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
           <div
             className="w-1.5 h-9 border rounded-xs rotate-45"
             style={{ backgroundColor: rednerRGBA(table.stroke.color) }}
+          ></div>
+        </div>
+      </PopupButton>
+      <PopupButton
+        name="body-stroke"
+        opened={popupedKey === "body-stroke"}
+        popup={<StrokePanel stroke={bodyStroke} onChanged={onBodyStrokeChanged} />}
+        onClick={onClickPopupButton}
+        defaultDirection={popupDefaultDirection}
+      >
+        <div className="w-8 h-8 relative">
+          <div
+            className="w-8 h-1.5 border rounded-xs absolute top-1/2 left-0 -translate-y-1/2"
+            style={{ backgroundColor: rednerRGBA(bodyStroke.color) }}
+          ></div>
+          <div
+            className="w-1.5 h-8 border rounded-xs absolute top-0 left-1/2 -translate-x-1/2"
+            style={{ backgroundColor: rednerRGBA(bodyStroke.color) }}
           ></div>
         </div>
       </PopupButton>

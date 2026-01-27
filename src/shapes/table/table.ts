@@ -8,7 +8,7 @@ import {
   isSame,
   pathSegmentRawsToString,
 } from "okageo";
-import { CommonStyle, FillStyle, Shape, Size } from "../../models";
+import { CommonStyle, FillStyle, Shape, Size, StrokeStyle } from "../../models";
 import { findBackward, findexSortFn, toMap } from "../../utils/commons";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "../core";
 import {
@@ -81,6 +81,8 @@ export type TableStyleArea = [MergeArea[0], MergeArea[1], TableCellStyleValue];
 
 export type TableShape = Shape &
   CommonStyle & {
+    bodyStroke?: StrokeStyle; // When undefined, "stroke" should be used instead
+  } & {
     [K in TableColumnKey]?: TableColumn;
   } & {
     [K in TableRowKey]?: TableRow;
@@ -110,8 +112,9 @@ export const struct: ShapeStruct<TableShape> = {
     const ret = {
       ...createBaseShape(arg),
       type: "table",
-      fill: arg.fill ?? createFillStyle(),
+      fill: arg.fill ?? createFillStyle({ disabled: true }),
       stroke: arg.stroke ?? createStrokeStyle(),
+      bodyStroke: arg.bodyStroke,
     };
 
     if (info.rows.length * info.columns.length > 0) {
@@ -204,19 +207,23 @@ export const struct: ShapeStruct<TableShape> = {
         ctx.fill();
       });
 
+      const bodyStroke = shape.bodyStroke ?? shape.stroke;
+      if (!bodyStroke.disabled) {
+        ctx.beginPath();
+        getInnerBordersWithMerge(info, rect).forEach((seg) => {
+          ctx.moveTo(seg[0].x, seg[0].y);
+          ctx.lineTo(seg[1].x, seg[1].y);
+        });
+        applyStrokeStyle(ctx, bodyStroke);
+        ctx.stroke();
+      }
+
       if (!shape.stroke.disabled) {
         ctx.beginPath();
         ctx.rect(0, 0, rect.width, rect.height);
         applyStrokeStyle(ctx, shape.stroke);
         ctx.stroke();
       }
-
-      ctx.beginPath();
-      getInnerBordersWithMerge(info, rect).forEach((seg) => {
-        ctx.moveTo(seg[0].x, seg[0].y);
-        ctx.lineTo(seg[1].x, seg[1].y);
-      });
-      ctx.stroke();
     });
   },
   getClipPath(shape) {
@@ -294,6 +301,7 @@ export const struct: ShapeStruct<TableShape> = {
       });
     });
 
+    const bodyStroke = shape.bodyStroke ?? shape.stroke;
     const borderElms: SVGElementInfo[] = getInnerBordersWithMerge(info, rect).map((seg) => ({
       tag: "line",
       attributes: {
@@ -306,10 +314,7 @@ export const struct: ShapeStruct<TableShape> = {
 
     return {
       tag: "g",
-      attributes: {
-        transform: renderTransform(affine),
-        ...renderStrokeSVGAttributes(shape.stroke),
-      },
+      attributes: { transform: renderTransform(affine) },
       children: [
         ...(clipPathCommandList.length > 0
           ? [
@@ -338,6 +343,7 @@ export const struct: ShapeStruct<TableShape> = {
           attributes: {
             width: rect.width,
             height: rect.height,
+            stroke: "none",
             ...renderFillSVGAttributes(shape.fill),
           },
         },
@@ -347,7 +353,20 @@ export const struct: ShapeStruct<TableShape> = {
           children: fillElms,
         },
         ...mergeFillElms,
-        ...borderElms,
+        {
+          tag: "g",
+          attributes: renderStrokeSVGAttributes(bodyStroke),
+          children: borderElms,
+        },
+        {
+          tag: "rect",
+          attributes: {
+            width: rect.width,
+            height: rect.height,
+            fill: "none",
+            ...renderStrokeSVGAttributes(shape.stroke),
+          },
+        },
       ],
     };
   },

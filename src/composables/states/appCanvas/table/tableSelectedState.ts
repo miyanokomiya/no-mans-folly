@@ -92,6 +92,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                 shapeHandler.saveHitResult(hitResult);
                 if (!hitResult) return;
 
+                ctx.setContextMenuList();
                 switch (hitResult.type) {
                   case "border-row": {
                     const resizeRow = newResizeRow(targetShape, hitResult.coord);
@@ -203,7 +204,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                         }),
                     };
                   }
-                  case "cell": {
+                  case "area-cell": {
                     if (!event.data.options.shift && !isOnTable(ctx, event.data.point)) return;
 
                     const tableInfo = getTableShapeInfo(targetShape);
@@ -247,7 +248,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     }
                     return null;
                   }
-                  case "cell": {
+                  case "area-cell": {
                     const tableInfo = getTableShapeInfo(targetShape);
                     const row = tableInfo?.rows[hitResult.coords[0]];
                     const column = tableInfo?.columns[hitResult.coords[1]];
@@ -268,7 +269,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
           }
           case "pointerdoubleclick": {
             const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
-            if (hitResult?.type !== "cell") return;
+            if (hitResult?.type !== "area-cell") return;
             if (!isOnTable(ctx, event.data.point)) return;
 
             const tableInfo = getTableShapeInfo(targetShape);
@@ -319,7 +320,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                   }
                   return;
                 }
-                case "cell": {
+                case "area-cell": {
                   const tableInfo = getTableShapeInfo(targetShape);
                   const row = tableInfo?.rows[hitResult.coords[0]];
                   const column = tableInfo?.columns[hitResult.coords[1]];
@@ -361,7 +362,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                 });
                 return null;
               }
-              case "cell": {
+              case "area-cell": {
                 const items: ContextMenuItem[] = [];
                 if (tableSelectable.getSelectedCoords().length > 1) {
                   items.push(CONTEXT_MENU_ITEM_SRC.MERGE_TABLE_CELLS);
@@ -437,12 +438,14 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
               const nextTarget = ctx.getShapeComposite().mergedShapeMap[targetShape.id];
               if (!nextTarget) return ctx.states.newSelectionHubState;
 
-              // Keep this state when the change is only related to cell style
-              // => Cell style won't affect any handling in this state.
-              const nonStyleKyes = Object.keys(targetShape).filter((key) => !key.startsWith("s_"));
-              const nonStyleKyesNext = Object.keys(nextTarget).filter((key) => !key.startsWith("s_"));
-              if (nonStyleKyes.join("&") !== nonStyleKyesNext.join("&")) return ctx.states.newSelectionHubState;
-
+              // Reset the state while keeping "tableSelectable"
+              getters.refresh(ctx);
+              const nextTableSelectable = newTableSelectable({ table: getters.getTargetShape() });
+              tableSelectable.getSelectedCoords().forEach((coords) => {
+                nextTableSelectable.selectCell(coords[0], coords[1], false, true);
+              });
+              tableSelectable = nextTableSelectable;
+              handleFloatMenuForCell(ctx);
               return null;
             }
             return;
@@ -459,7 +462,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
         ];
         const shapeHandler = getters.getShapeHandler();
         const hitResult = shapeHandler.retrieveHitResult();
-        if (hitResult?.type === "cell" && isOnTable(ctx, ctx.getCursorPoint())) {
+        if (hitResult?.type === "area-cell" && isOnTable(ctx, ctx.getCursorPoint())) {
           renderFns.push(() => {
             scaleGlobalAlpha(renderCtx, 0.2, () => {
               applyFillStyle(renderCtx, { color: style.selectionPrimary });

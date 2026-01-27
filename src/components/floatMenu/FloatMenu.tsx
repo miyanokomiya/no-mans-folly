@@ -97,7 +97,7 @@ export const FloatMenu: React.FC<Option> = ({
 
   useEffect(() => {
     updateRootAttrs();
-  }, [updateRootAttrs]);
+  }, [updateRootAttrs, type]); // "type" affects the content
 
   const handleMenuAnchorDrag = useCallback(
     (e: React.PointerEvent) => {

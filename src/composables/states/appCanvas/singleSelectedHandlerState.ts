@@ -122,12 +122,16 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
 
     return {
       ...src,
-      hasHitResult: () =>
-        !!shapeHandler.retrieveHitResult() ||
-        // Exclude "area" for layout shapes => Inner shapes are selectable
-        (!!boundingBox.retrieveHitResult() && boundingBox.retrieveHitResult()?.type !== "area") ||
-        !!smartBranchHandler?.retrieveHitResult() ||
-        !!shapeAttachmentHandler.retrieveHitResult(),
+      hasHitResult: () => {
+        return (
+          // Exclude "area" prefix for layout shapes => Inner shapes are selectable
+          // FIXME: This prefix detection is fragile but it's tough to implement robust detection
+          (!!shapeHandler.retrieveHitResult() && !shapeHandler.retrieveHitResult()?.type.startsWith("area")) ||
+          (!!boundingBox.retrieveHitResult() && !boundingBox.retrieveHitResult()?.type.startsWith("area")) ||
+          !!smartBranchHandler?.retrieveHitResult() ||
+          !!shapeAttachmentHandler.retrieveHitResult()
+        );
+      },
       onStart: (ctx) => {
         targetShape = ctx.getShapeComposite().shapeMap[ctx.getLastSelectedShapeId() ?? ""] as S;
         if (!targetShape) return ctx.states.newSelectionHubState;

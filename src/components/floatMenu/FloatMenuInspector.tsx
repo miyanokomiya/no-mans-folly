@@ -40,6 +40,7 @@ import { isLinePolygonShape, LinePolygonShape } from "../../shapes/polygons/line
 import { canMakePolygon, patchLineFromLinePolygon, patchLinePolygonFromLine } from "../../shapes/utils/linePolygon";
 import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
 import { FloatMenuVnNodeItems } from "./FloatMenuVnNodeItems";
+import { isTableShape, TableShape } from "../../shapes/table/table";
 
 interface Props {
   canvasState: any;
@@ -437,6 +438,35 @@ export const FloatMenuInspector: React.FC<Props> = ({
     [shapeStore, setTmpShapeMap, patchShapes],
   );
 
+  const indexTableShape = useMemo(() => {
+    return indexShape && isTableShape(indexShape) ? indexShape : undefined;
+  }, [indexShape]);
+  const tableBodyStroke = indexTableShape?.bodyStroke ?? indexTableShape?.stroke;
+  const onBodyStrokeChanged = useCallback(
+    (val: Partial<StrokeStyle>, draft = false) => {
+      if (!indexTableShape || !tableBodyStroke) return;
+
+      const ids = Object.keys(shapeStore.getSelected());
+      const shapeMap = shapeStore.shapeComposite.shapeMap;
+      const patch = ids.reduce<{ [id: string]: Partial<TableShape> }>((p, id) => {
+        const shape = shapeMap[id];
+        if (isTableShape(shape)) {
+          p[id] = { bodyStroke: { ...(shape.bodyStroke ?? shape.stroke), ...val } };
+        }
+        return p;
+      }, {});
+
+      if (draft) {
+        setTmpShapeMap(patch);
+      } else {
+        setTmpShapeMap({});
+        patchShapes(patch);
+        focusBack?.();
+      }
+    },
+    [focusBack, shapeStore, patchShapes, setTmpShapeMap, indexTableShape, tableBodyStroke],
+  );
+
   const handleContextMenuClick = useCallback(
     (e: React.MouseEvent) => {
       const bounds = (e.target as HTMLElement).getBoundingClientRect();
@@ -479,6 +509,26 @@ export const FloatMenuInspector: React.FC<Props> = ({
             <div
               className="w-1.5 h-9 border rounded-xs rotate-45"
               style={{ backgroundColor: rednerRGBA(indexCommonStyle.stroke.color) }}
+            ></div>
+          </div>
+        </PopupButton>
+      ) : undefined}
+      {indexTableShape && tableBodyStroke ? (
+        <PopupButton
+          name="body-stroke"
+          opened={popupedKey === "body-stroke"}
+          popup={<StrokePanel stroke={tableBodyStroke} onChanged={onBodyStrokeChanged} />}
+          onClick={onClickPopupButton}
+          defaultDirection={popupDefaultDirection}
+        >
+          <div className="w-8 h-8 relative">
+            <div
+              className="w-8 h-1.5 border rounded-xs absolute top-1/2 left-0 -translate-y-1/2"
+              style={{ backgroundColor: rednerRGBA(tableBodyStroke.color) }}
+            ></div>
+            <div
+              className="w-1.5 h-8 border rounded-xs absolute top-0 left-1/2 -translate-x-1/2"
+              style={{ backgroundColor: rednerRGBA(tableBodyStroke.color) }}
             ></div>
           </div>
         </PopupButton>
