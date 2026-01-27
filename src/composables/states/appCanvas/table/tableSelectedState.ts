@@ -27,6 +27,8 @@ import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState"
 import { AppCanvasStateContext } from "../core";
 import { newMovingTableLineState } from "./movingTableLineState";
 import { ContextMenuItem } from "../../types";
+import { getCommonCommandExams } from "../commons";
+import { COMMAND_EXAM_SRC } from "../commandExams";
 
 interface Option {
   tableSelectable?: TableSelectable;
@@ -67,7 +69,9 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
 
     return {
       getLabel: () => "TableSelected",
-      onStart: () => {
+      onStart: (ctx) => {
+        ctx.setCommandExams([COMMAND_EXAM_SRC.TABLE_SHIFT_SELECT, ...getCommonCommandExams(ctx)]);
+
         const targetShape = getters.getTargetShape();
         tableSelectable = newTableSelectable({ table: targetShape });
       },
@@ -293,14 +297,39 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
           }
           case "pointerhover": {
             const hitResult = shapeHandler.retrieveHitResult();
-            if (event.data.shift && hitResult?.type === "cell") {
-              const tableInfo = getTableShapeInfo(targetShape);
-              const row = tableInfo?.rows[hitResult.coords[0]];
-              const column = tableInfo?.columns[hitResult.coords[1]];
-              if (row && column) {
-                tableSelectable.selectCell(row.id, column.id, event.data.ctrl, true);
-                handleFloatMenuForCell(ctx);
-                ctx.redraw();
+            if (event.data.shift && hitResult) {
+              switch (hitResult.type) {
+                case "head-row": {
+                  const tableInfo = getTableShapeInfo(targetShape);
+                  const row = tableInfo?.rows[hitResult.coord];
+                  if (row) {
+                    tableSelectable.selectRow(row.id, event.data.ctrl, true);
+                    handleFloatMenuForCell(ctx);
+                    ctx.redraw();
+                  }
+                  return;
+                }
+                case "head-column": {
+                  const tableInfo = getTableShapeInfo(targetShape);
+                  const column = tableInfo?.columns[hitResult.coord];
+                  if (column) {
+                    tableSelectable.selectColumn(column.id, event.data.ctrl, true);
+                    handleFloatMenuForCell(ctx);
+                    ctx.redraw();
+                  }
+                  return;
+                }
+                case "cell": {
+                  const tableInfo = getTableShapeInfo(targetShape);
+                  const row = tableInfo?.rows[hitResult.coords[0]];
+                  const column = tableInfo?.columns[hitResult.coords[1]];
+                  if (row && column) {
+                    tableSelectable.selectCell(row.id, column.id, event.data.ctrl, true);
+                    handleFloatMenuForCell(ctx);
+                    ctx.redraw();
+                  }
+                  return;
+                }
               }
             }
             return;

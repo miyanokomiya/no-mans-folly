@@ -61,4 +61,6 @@ export const COMMAND_EXAM_SRC = {
 
   TREE_NEW_CHILD: { command: "Tab", title: "New child" },
   TREE_NEW_SIBLING: { command: "Shift + Enter", title: "New sibling" },
+
+  TABLE_SHIFT_SELECT: { command: "Shift + Hover", title: "Select cells" },
 } satisfies { [key: string]: CommandExam };
