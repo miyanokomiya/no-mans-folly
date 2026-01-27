@@ -95,7 +95,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                 ctx.setContextMenuList();
                 switch (hitResult.type) {
                   case "border-row": {
-                    const resizeRow = newResizeRow(targetShape, hitResult.coord);
+                    const resizeRow = newResizeRow(targetShape, hitResult.coord, hitResult.opposite);
                     if (!resizeRow) return;
 
                     const boundingBox = newBoundingBox({
@@ -104,14 +104,14 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     return () =>
                       newResizingState({
                         boundingBox,
-                        hitResult: { type: "segment", index: hitResult.coord === 0 ? 0 : 2 },
+                        hitResult: { type: "segment", index: hitResult.opposite ? 0 : 2 },
                         resizeFn: (_, affine) => {
                           return { [targetShape.id]: resizeRow.resizeFn(affine) };
                         },
                       });
                   }
                   case "border-column": {
-                    const resizeColumn = newResizeColumn(targetShape, hitResult.coord);
+                    const resizeColumn = newResizeColumn(targetShape, hitResult.coord, hitResult.opposite);
                     if (!resizeColumn) return;
 
                     const boundingBox = newBoundingBox({
@@ -120,7 +120,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     return () =>
                       newResizingState({
                         boundingBox,
-                        hitResult: { type: "segment", index: hitResult.coord === 0 ? 3 : 1 },
+                        hitResult: { type: "segment", index: hitResult.opposite ? 3 : 1 },
                         resizeFn: (_, affine) => {
                           return { [targetShape.id]: resizeColumn.resizeFn(affine) };
                         },

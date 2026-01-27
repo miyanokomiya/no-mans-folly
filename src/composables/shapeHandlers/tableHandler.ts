@@ -50,16 +50,16 @@ import { CanvasCTX } from "../../utils/types";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
 import { getNextLayout, LayoutNodeWithMeta } from "./layoutHandler";
 import { defineShapeHandler } from "./core";
-import { applyLocalSpace, renderPlusIcon, scaleGlobalAlpha } from "../../utils/renderer";
+import { applyLocalSpace, applyPath, renderPlusIcon, scaleGlobalAlpha } from "../../utils/renderer";
 import { generateNKeysBetweenAllowSame } from "../../utils/findex";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
 
-const BORDER_THRESHOLD = 5;
+const BORDER_THRESHOLD = 6;
 const ANCHOR_SIZE = 8;
 
 // "coord" is from 0 to the number of lines. 0 refers to the head line.
-type BorderAnchor = { type: "border-row" | "border-column"; coord: number; segment: ISegment };
+type BorderAnchor = { type: "border-row" | "border-column"; coord: number; segment: ISegment; opposite?: boolean };
 type AddLineAnchor = { type: "add-row" | "add-column"; coord: number; p: IVec2 };
 type LineHeadAnchor = { type: "head-row" | "head-column"; coord: number; rect: IRectangle };
 type CellAnchor = { type: "area-cell"; coords: [number, number]; rect: IRectangle };
@@ -83,25 +83,86 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
   function getBorderAnchors(scale: number): BorderAnchor[] {
     const ret: BorderAnchor[] = [];
     const extra = 40 * scale;
+    const margin = (BORDER_THRESHOLD * scale) / 2;
     coordsLocations.rows.forEach((y, r) => {
-      ret.push({
-        type: "border-row",
-        coord: r,
-        segment: [
-          { x: -extra, y },
-          { x: 0, y },
-        ],
-      });
+      if (r === 0) {
+        ret.push({
+          type: "border-row",
+          coord: r,
+          segment: [
+            { x: -extra, y: y },
+            { x: 0, y: y },
+          ],
+          opposite: true,
+        });
+      } else if (r === coordsLocations.rows.length - 1) {
+        ret.push({
+          type: "border-row",
+          coord: r,
+          segment: [
+            { x: -extra, y: y },
+            { x: 0, y: y },
+          ],
+        });
+      } else {
+        ret.push({
+          type: "border-row",
+          coord: r,
+          segment: [
+            { x: -extra, y: y - margin },
+            { x: 0, y: y - margin },
+          ],
+        });
+        ret.push({
+          type: "border-row",
+          coord: r + 1,
+          segment: [
+            { x: -extra, y: y + margin },
+            { x: 0, y: y + margin },
+          ],
+          opposite: true,
+        });
+      }
     });
     coordsLocations.columns.forEach((x, c) => {
-      ret.push({
-        type: "border-column",
-        coord: c,
-        segment: [
-          { x, y: -extra },
-          { x, y: 0 },
-        ],
-      });
+      if (c === 0) {
+        ret.push({
+          type: "border-column",
+          coord: c,
+          segment: [
+            { x, y: -extra },
+            { x, y: 0 },
+          ],
+          opposite: true,
+        });
+      } else if (c === coordsLocations.columns.length - 1) {
+        ret.push({
+          type: "border-column",
+          coord: c,
+          segment: [
+            { x, y: -extra },
+            { x, y: 0 },
+          ],
+        });
+      } else {
+        ret.push({
+          type: "border-column",
+          coord: c,
+          segment: [
+            { x: x - margin, y: -extra },
+            { x: x - margin, y: 0 },
+          ],
+        });
+        ret.push({
+          type: "border-column",
+          coord: c + 1,
+          segment: [
+            { x: x + margin, y: -extra },
+            { x: x + margin, y: 0 },
+          ],
+          opposite: true,
+        });
+      }
     });
     return ret;
   }
@@ -224,8 +285,9 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
         ctx.fill();
       }
 
+      const borderAnchorSize = (BORDER_THRESHOLD - 1) * scale;
       const borderAnchors = getBorderAnchors(scale);
-      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 4 * scale });
+      applyStrokeStyle(ctx, { color: style.selectionPrimary, width: borderAnchorSize });
       ctx.beginPath();
       borderAnchors.forEach((a) => {
         ctx.moveTo(a.segment[0].x, a.segment[0].y);
@@ -234,17 +296,21 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
       ctx.stroke();
 
       if (hitResult?.type === "border-row") {
-        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 4 * scale });
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: borderAnchorSize });
         ctx.beginPath();
-        ctx.moveTo(hitResult.segment[0].x, hitResult.segment[0].y);
-        ctx.lineTo(size.width, hitResult.segment[1].y);
+        const y0 = coordsLocations.rows[Math.max(0, hitResult.coord - 1)];
+        const y1 = coordsLocations.rows[Math.max(1, hitResult.coord)];
+        ctx.rect(0, y0, size.width, y1 - y0);
+        applyPath(ctx, hitResult.segment);
         ctx.stroke();
       }
       if (hitResult?.type === "border-column") {
-        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 4 * scale });
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: borderAnchorSize });
         ctx.beginPath();
-        ctx.moveTo(hitResult.segment[0].x, hitResult.segment[0].y);
-        ctx.lineTo(hitResult.segment[1].x, size.height);
+        const x0 = coordsLocations.columns[Math.max(0, hitResult.coord - 1)];
+        const x1 = coordsLocations.columns[Math.max(1, hitResult.coord)];
+        ctx.rect(x0, 0, x1 - x0, size.height);
+        applyPath(ctx, hitResult.segment);
         ctx.stroke();
       }
 
@@ -273,10 +339,10 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
     render,
     isSameHitResult: (a, b) => {
       if (a?.type === "border-row" && b?.type === "border-row") {
-        return a.coord === b.coord;
+        return a.coord === b.coord && a.opposite === b.opposite;
       }
       if (a?.type === "border-column" && b?.type === "border-column") {
-        return a.coord === b.coord;
+        return a.coord === b.coord && a.opposite === b.opposite;
       }
       return false;
     },
@@ -568,12 +634,12 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
 /**
  * "resizeFn" receives affine matrix that transforms the bounds of the target line.
  */
-export function newResizeColumn(table: TableShape, coord: number) {
+export function newResizeColumn(table: TableShape, coord: number, opposite = false) {
   const info = getColumnBoundsInfo(table, coord);
   if (!info) return;
 
   const { path, rotateFn, column, lineBounds } = info;
-  const origin = coord === 0 ? path[2] : path[0];
+  const origin = opposite ? path[2] : path[0];
 
   return {
     linePath: path,
@@ -587,7 +653,7 @@ export function newResizeColumn(table: TableShape, coord: number) {
       } as any;
       const nextTarget = { ...table, ...patch } as TableShape;
       const nextInfo = getColumnBoundsInfo(nextTarget, coord)!;
-      const nextOrigin = coord === 0 ? nextInfo.path[2] : nextInfo.path[0];
+      const nextOrigin = opposite ? nextInfo.path[2] : nextInfo.path[0];
       if (!isSame(origin, nextOrigin)) {
         patch.p = add(nextTarget.p, sub(origin, nextOrigin));
       }
@@ -623,12 +689,12 @@ function getColumnBoundsInfo(table: TableShape, coord: number) {
 /**
  * "resizeFn" receives affine matrix that transforms the bounds of the target line.
  */
-export function newResizeRow(table: TableShape, coord: number) {
+export function newResizeRow(table: TableShape, coord: number, opposite = false) {
   const info = getRowBoundsInfo(table, coord);
   if (!info) return;
 
   const { path, rotateFn, row, lineBounds } = info;
-  const origin = coord === 0 ? path[2] : path[0];
+  const origin = opposite ? path[2] : path[0];
 
   return {
     linePath: path,
@@ -642,7 +708,7 @@ export function newResizeRow(table: TableShape, coord: number) {
       } as any;
       const nextTarget = { ...table, ...patch } as TableShape;
       const nextInfo = getRowBoundsInfo(nextTarget, coord)!;
-      const nextOrigin = coord === 0 ? nextInfo.path[2] : nextInfo.path[0];
+      const nextOrigin = opposite ? nextInfo.path[2] : nextInfo.path[0];
       if (!isSame(origin, nextOrigin)) {
         patch.p = add(nextTarget.p, sub(origin, nextOrigin));
       }
