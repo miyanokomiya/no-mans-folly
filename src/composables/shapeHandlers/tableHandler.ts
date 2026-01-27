@@ -55,8 +55,10 @@ import { generateNKeysBetweenAllowSame } from "../../utils/findex";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
 
-const BORDER_THRESHOLD = 6;
-const ANCHOR_SIZE = 8;
+const BORDER_THRESHOLD = 8;
+const ANCHOR_SIZE = 10;
+const HEAD_ANCHOR_MARGIN = 30;
+const ADD_ANCHOR_MARGIN = HEAD_ANCHOR_MARGIN + ANCHOR_SIZE;
 
 // "coord" is from 0 to the number of lines. 0 refers to the head line.
 type BorderAnchor = { type: "border-row" | "border-column"; coord: number; segment: ISegment; opposite?: boolean };
@@ -82,16 +84,16 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
 
   function getBorderAnchors(scale: number): BorderAnchor[] {
     const ret: BorderAnchor[] = [];
-    const extra = 40 * scale;
-    const margin = (BORDER_THRESHOLD * scale) / 2;
+    const extra = HEAD_ANCHOR_MARGIN * scale;
+    const borderThreshold = BORDER_THRESHOLD * scale;
     coordsLocations.rows.forEach((y, r) => {
       if (r === 0) {
         ret.push({
           type: "border-row",
           coord: r,
           segment: [
-            { x: -extra, y: y },
-            { x: 0, y: y },
+            { x: -extra, y: y + borderThreshold / 2 },
+            { x: 0, y: y + borderThreshold / 2 },
           ],
           opposite: true,
         });
@@ -100,8 +102,8 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
           type: "border-row",
           coord: r,
           segment: [
-            { x: -extra, y: y },
-            { x: 0, y: y },
+            { x: -extra, y: y - borderThreshold / 2 },
+            { x: 0, y: y - borderThreshold / 2 },
           ],
         });
       } else {
@@ -109,16 +111,16 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
           type: "border-row",
           coord: r,
           segment: [
-            { x: -extra, y: y - margin },
-            { x: 0, y: y - margin },
+            { x: -extra, y: y - borderThreshold },
+            { x: 0, y: y - borderThreshold },
           ],
         });
         ret.push({
           type: "border-row",
           coord: r + 1,
           segment: [
-            { x: -extra, y: y + margin },
-            { x: 0, y: y + margin },
+            { x: -extra, y: y + borderThreshold },
+            { x: 0, y: y + borderThreshold },
           ],
           opposite: true,
         });
@@ -130,8 +132,8 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
           type: "border-column",
           coord: c,
           segment: [
-            { x, y: -extra },
-            { x, y: 0 },
+            { x: x + borderThreshold / 2, y: -extra },
+            { x: x + borderThreshold / 2, y: 0 },
           ],
           opposite: true,
         });
@@ -140,8 +142,8 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
           type: "border-column",
           coord: c,
           segment: [
-            { x, y: -extra },
-            { x, y: 0 },
+            { x: x - borderThreshold / 2, y: -extra },
+            { x: x - borderThreshold / 2, y: 0 },
           ],
         });
       } else {
@@ -149,16 +151,16 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
           type: "border-column",
           coord: c,
           segment: [
-            { x: x - margin, y: -extra },
-            { x: x - margin, y: 0 },
+            { x: x - borderThreshold, y: -extra },
+            { x: x - borderThreshold, y: 0 },
           ],
         });
         ret.push({
           type: "border-column",
           coord: c + 1,
           segment: [
-            { x: x + margin, y: -extra },
-            { x: x + margin, y: 0 },
+            { x: x + borderThreshold, y: -extra },
+            { x: x + borderThreshold, y: 0 },
           ],
           opposite: true,
         });
@@ -169,7 +171,7 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
 
   function getAddLineAnchors(scale: number): AddLineAnchor[] {
     const ret: AddLineAnchor[] = [];
-    const extra = 40 * scale;
+    const extra = ADD_ANCHOR_MARGIN * scale;
     coordsLocations.rows.forEach((y, r) => {
       ret.push({
         type: "add-row",
@@ -189,7 +191,7 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
 
   function getHeadAnchors(scale: number): LineHeadAnchor[] {
     const ret: LineHeadAnchor[] = [];
-    const extra = 25 * scale;
+    const extra = HEAD_ANCHOR_MARGIN * scale;
     const margin = 5 * scale;
     coordsLocations.rows.forEach((y, r) => {
       if (r >= coordsLocations.rows.length - 1) return;
@@ -285,7 +287,7 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
         ctx.fill();
       }
 
-      const borderAnchorSize = (BORDER_THRESHOLD - 1) * scale;
+      const borderAnchorSize = 2 * BORDER_THRESHOLD * scale;
       const borderAnchors = getBorderAnchors(scale);
       applyStrokeStyle(ctx, { color: style.selectionPrimary, width: borderAnchorSize });
       ctx.beginPath();
@@ -295,26 +297,51 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
       });
       ctx.stroke();
 
+      // Separators between adjacent border anchors
+      const addLineAnchorsExtra = HEAD_ANCHOR_MARGIN * scale;
+      const addLineAnchors = getAddLineAnchors(scale);
+      applyStrokeStyle(ctx, { color: COLORS.BLACK, width: 2 * scale });
+      ctx.beginPath();
+      coordsLocations.columns.forEach((column, i) => {
+        if (i === 0 || i === coordsLocations.columns.length - 1) return;
+        ctx.moveTo(column, 0);
+        ctx.lineTo(column, -addLineAnchorsExtra);
+      });
+      coordsLocations.rows.forEach((row, i) => {
+        if (i === 0 || i === coordsLocations.rows.length - 1) return;
+        ctx.moveTo(0, row);
+        ctx.lineTo(-addLineAnchorsExtra, row);
+      });
+      ctx.stroke();
+
+      const lineHighlightSize = 6 * scale;
       if (hitResult?.type === "border-row") {
-        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: borderAnchorSize });
         ctx.beginPath();
         const y0 = coordsLocations.rows[Math.max(0, hitResult.coord - 1)];
         const y1 = coordsLocations.rows[Math.max(1, hitResult.coord)];
         ctx.rect(0, y0, size.width, y1 - y0);
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: lineHighlightSize });
+        ctx.stroke();
+
+        ctx.beginPath();
         applyPath(ctx, hitResult.segment);
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: borderAnchorSize });
         ctx.stroke();
       }
       if (hitResult?.type === "border-column") {
-        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: borderAnchorSize });
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: lineHighlightSize });
         ctx.beginPath();
         const x0 = coordsLocations.columns[Math.max(0, hitResult.coord - 1)];
         const x1 = coordsLocations.columns[Math.max(1, hitResult.coord)];
         ctx.rect(x0, 0, x1 - x0, size.height);
+        ctx.stroke();
+
+        ctx.beginPath();
         applyPath(ctx, hitResult.segment);
+        applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: borderAnchorSize });
         ctx.stroke();
       }
 
-      const addLineAnchors = getAddLineAnchors(scale);
       applyFillStyle(ctx, { color: COLORS.WHITE });
       applyStrokeStyle(ctx, { color: style.selectionPrimary, width: 3 * scale });
       addLineAnchors.forEach((a) => {
