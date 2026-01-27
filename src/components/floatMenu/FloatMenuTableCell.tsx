@@ -17,6 +17,7 @@ import {
 import { useShapeComposite } from "../../hooks/storeHooks";
 import { createFillStyle } from "../../utils/fillStyle";
 import { getPatchByApplyCellStyle } from "../../composables/shapeHandlers/tableHandler";
+import { StrokePanel } from "./StrokePanel";
 
 interface Props {
   tableId: string;
@@ -31,11 +32,11 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
   const table = shapeComposite.shapeMap[tableId] as TableShape;
   const tableInfo = useMemo(() => getTableShapeInfo(table), [table]);
   const indexCoords = selectedCoords[0];
-  const indexStyle = useMemo<TableCellStyleValue>(() => {
+  const indexCellStyle = useMemo<TableCellStyleValue>(() => {
     if (!tableInfo) return {};
     return getIndexStyleValueAt(tableInfo, indexCoords);
   }, [indexCoords, tableInfo]);
-  const indexFill = useMemo(() => indexStyle.fill ?? createFillStyle({ disabled: true }), [indexStyle]);
+  const indexCellFill = useMemo(() => indexCellStyle.fill ?? createFillStyle({ disabled: true }), [indexCellStyle]);
 
   const popupDefaultDirection: PopupDirection = "top";
   const [popupedKey, setPopupedKey] = useState("");
@@ -54,7 +55,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
     [popupedKey, focusBack],
   );
 
-  const onFillChanged = useCallback(
+  const onCellFillChanged = useCallback(
     (val: Partial<FillStyle>, draft = false) => {
       if (!tableInfo) return;
 
@@ -62,7 +63,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       const patch = getPatchByApplyCellStyle(
         tableInfo,
         selectedCoords,
-        getTableCellStyleValue({ ...indexStyle, fill: { ...indexFill, ...val } }),
+        getTableCellStyleValue({ ...indexCellStyle, fill: { ...indexCellFill, ...val } }),
         ctx.generateUuid,
       );
 
@@ -73,7 +74,41 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
         ctx.patchShapes({ [tableId]: patch });
       }
     },
-    [getCtx, selectedCoords, tableInfo, indexStyle, indexFill, tableId],
+    [getCtx, selectedCoords, tableInfo, indexCellStyle, indexCellFill, tableId],
+  );
+
+  const onFillChanged = useCallback(
+    (val: Partial<FillStyle>, draft = false) => {
+      const ctx = getCtx();
+      const patch: Partial<TableShape> = {
+        fill: { ...table.fill, ...val },
+      };
+
+      if (draft) {
+        ctx.setTmpShapeMap({ [table.id]: patch });
+      } else {
+        ctx.setTmpShapeMap({});
+        ctx.patchShapes({ [table.id]: patch });
+      }
+    },
+    [getCtx, table],
+  );
+
+  const onStrokeChanged = useCallback(
+    (val: Partial<FillStyle>, draft = false) => {
+      const ctx = getCtx();
+      const patch: Partial<TableShape> = {
+        stroke: { ...table.stroke, ...val },
+      };
+
+      if (draft) {
+        ctx.setTmpShapeMap({ [table.id]: patch });
+      } else {
+        ctx.setTmpShapeMap({});
+        ctx.patchShapes({ [table.id]: patch });
+      }
+    },
+    [getCtx, table],
   );
 
   const handleContextMenuClick = useCallback(
@@ -89,11 +124,37 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       <PopupButton
         name="fill"
         opened={popupedKey === "fill"}
-        popup={<FillPanel fill={indexFill} onChanged={onFillChanged} />}
+        popup={<FillPanel fill={table.fill} onChanged={onFillChanged} />}
         onClick={onClickPopupButton}
         defaultDirection={popupDefaultDirection}
       >
-        <div className="w-8 h-8 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(indexFill.color) }}></div>
+        <div className="w-8 h-8 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(table.fill.color) }}></div>
+      </PopupButton>
+      <PopupButton
+        name="stroke"
+        opened={popupedKey === "stroke"}
+        popup={<StrokePanel stroke={table.stroke} onChanged={onStrokeChanged} />}
+        onClick={onClickPopupButton}
+        defaultDirection={popupDefaultDirection}
+      >
+        <div className="w-8 h-8 flex justify-center items-center">
+          <div
+            className="w-1.5 h-9 border rounded-xs rotate-45"
+            style={{ backgroundColor: rednerRGBA(table.stroke.color) }}
+          ></div>
+        </div>
+      </PopupButton>
+      <div className="h-8 mx-0.5 border"></div>
+      <PopupButton
+        name="cell-fill"
+        opened={popupedKey === "cell-fill"}
+        popup={<FillPanel fill={indexCellFill} onChanged={onCellFillChanged} />}
+        onClick={onClickPopupButton}
+        defaultDirection={popupDefaultDirection}
+      >
+        <div className="w-8 h-8 flex items-center justify-center">
+          <div className="w-8 h-6 border-2 rounded" style={{ backgroundColor: rednerRGBA(indexCellFill.color) }}></div>
+        </div>
       </PopupButton>
       <button
         type="button"
