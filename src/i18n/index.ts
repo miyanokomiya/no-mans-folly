@@ -162,6 +162,7 @@ const en = {
         "column.delete": "Delete column",
         merge_cells: "Merge cells",
         unmerge_cells: "Unmerge cells",
+        clear_cell_styles: "Clear styles",
       },
     },
 
@@ -337,6 +338,7 @@ const ja: TranslationResource = {
         "column.delete": "列削除",
         merge_cells: "セル結合",
         unmerge_cells: "セル結合解除",
+        clear_cell_styles: "スタイル解除",
       },
     },
 

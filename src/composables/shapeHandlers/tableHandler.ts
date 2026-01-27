@@ -39,6 +39,7 @@ import {
   groupCellsIntoRectangles,
   ISegment,
   isInMergeArea,
+  isMergeAreaOverlapping,
   isPointCloseToSegment,
   isPointOnRectangle,
   TAU,
@@ -874,12 +875,12 @@ export function getPatchByUnmergeCells(table: TableShape, coordsList: TableCoord
 
 export function getPatchByApplyCellStyle(
   tableInfo: TableShapeInfo,
-  coords: TableCoords[],
+  coordsList: TableCoords[],
   styleValue: TableCellStyleValue,
   generateUuid: () => string,
 ): Partial<TableShape> {
   const patch: Partial<TableShape> = {};
-  const effectiveCells = getEffectiveCells(tableInfo, coords);
+  const effectiveCells = getEffectiveCells(tableInfo, coordsList);
 
   const rowIndexById = new Map(tableInfo.rows.map((r, i) => [r.id, i]));
   const columnIndexById = new Map(tableInfo.columns.map((c, i) => [c.id, i]));
@@ -907,6 +908,8 @@ export function getPatchByApplyCellStyle(
     const bbc = columnIndexById.get(b[1][1]) ?? Infinity;
 
     tableInfo.styles.forEach((s) => {
+      if (s.id in patch) return;
+
       const sar = rowIndexById.get(s.a[0]);
       const sac = columnIndexById.get(s.a[1]);
       const sbr = rowIndexById.get(s.b[0]);
@@ -915,6 +918,59 @@ export function getPatchByApplyCellStyle(
         patch[s.id] = undefined;
       } else if (
         isInMergeArea(
+          [
+            [bar, bac],
+            [bbr, bbc],
+          ],
+          [
+            [sar, sac],
+            [sbr, sbc],
+          ],
+          true,
+        )
+      ) {
+        patch[s.id] = undefined;
+      }
+    });
+  });
+
+  return patch;
+}
+
+/**
+ * Clears all styles tounching the area.
+ */
+export function getPatchByClearCellStyle(tableInfo: TableShapeInfo, coordsList: TableCoords[]): Partial<TableShape> {
+  const patch: Partial<TableShape> = {};
+  const effectiveCells = getEffectiveCells(tableInfo, coordsList);
+
+  const boundsList: Exclude<ReturnType<typeof getCoordsBoundsInfo>, undefined>["bounds"][] = [];
+  effectiveCells.forEach((coords) => {
+    const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, [coords]);
+    if (!coordsBoundsInfo) return;
+    boundsList.push(coordsBoundsInfo.bounds);
+  });
+
+  const rowIndexById = new Map(tableInfo.rows.map((r, i) => [r.id, i]));
+  const columnIndexById = new Map(tableInfo.columns.map((c, i) => [c.id, i]));
+  boundsList.forEach((b) => {
+    const bar = rowIndexById.get(b[0][0]);
+    const bac = columnIndexById.get(b[0][1]);
+    const bbr = rowIndexById.get(b[1][0]);
+    const bbc = columnIndexById.get(b[1][1]);
+    if (bar === undefined || bac === undefined || bbr === undefined || bbc === undefined) return;
+
+    tableInfo.styles.forEach((s) => {
+      if (s.id in patch) return;
+
+      const sar = rowIndexById.get(s.a[0]);
+      const sac = columnIndexById.get(s.a[1]);
+      const sbr = rowIndexById.get(s.b[0]);
+      const sbc = columnIndexById.get(s.b[1]);
+      if (sar === undefined || sac === undefined || sbr === undefined || sbc === undefined) {
+        patch[s.id] = undefined;
+      } else if (
+        isMergeAreaOverlapping(
           [
             [bar, bac],
             [bbr, bbc],

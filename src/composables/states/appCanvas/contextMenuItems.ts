@@ -310,6 +310,12 @@ export const CONTEXT_MENU_ITEM_SRC = {
       key: "UNMERGE_TABLE_CELLS",
     };
   },
+  get CLEAR_TABLE_CELLS_STYLES() {
+    return {
+      label: i18n.t("contextmenu.table.clear_cell_styles"),
+      key: "CLEAR_TABLE_CELLS_STYLES",
+    };
+  },
 
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };

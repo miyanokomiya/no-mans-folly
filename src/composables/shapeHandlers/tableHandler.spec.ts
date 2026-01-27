@@ -2,6 +2,7 @@ import { describe, test, expect } from "vitest";
 import {
   generateTableMeta,
   getPatchByApplyCellStyle,
+  getPatchByClearCellStyle,
   getPatchByDeleteLines,
   getPatchInfoByAddColumns,
   getPatchInfoByAddRows,
@@ -219,5 +220,39 @@ describe("getPatchByApplyCellStyle", () => {
         id: "s_id_0",
       },
     });
+  });
+});
+
+describe("getPatchByClearCellStyle", () => {
+  test("should return patch by clear cell style", () => {
+    const table = generateTable(3, 3, { width: 20, height: 10 });
+    table.s_0 = { id: "s_0", a: ["r_0", "c_0"], b: ["r_0", "c_1"], fill: createFillStyle({ disabled: false }) };
+    table.s_1 = { id: "s_1", a: ["r_1", "c_1"], b: ["r_1", "c_2"], fill: createFillStyle({ disabled: false }) };
+    table.s_2 = { id: "s_2", a: ["r_2", "c_1"], b: ["r_2", "c_2"], fill: createFillStyle({ disabled: false }) };
+    table.m_0 = { id: "m_0", a: ["r_0", "c_1"], b: ["r_1", "c_1"] };
+
+    const result0 = getPatchByClearCellStyle(getTableShapeInfo(table)!, [["r_0", "c_0"]]);
+    expect(result0).toEqual({});
+    expect(result0).toHaveProperty("s_0");
+    expect(result0).not.toHaveProperty("s_1");
+    expect(result0).not.toHaveProperty("s_2");
+
+    const result1 = getPatchByClearCellStyle(getTableShapeInfo(table)!, [["r_0", "c_1"]]);
+    expect(result1).toEqual({});
+    expect(result1).toHaveProperty("s_0");
+    expect(result1).toHaveProperty("s_1");
+    expect(result1).not.toHaveProperty("s_2");
+
+    const result2 = getPatchByClearCellStyle(getTableShapeInfo(table)!, [["r_0", "c_2"]]);
+    expect(result2).toEqual({});
+    expect(result2).not.toHaveProperty("s_0");
+    expect(result2).not.toHaveProperty("s_1");
+    expect(result2).not.toHaveProperty("s_2");
+
+    const result3 = getPatchByClearCellStyle(getTableShapeInfo(table)!, [["r_1", "c_1"]]);
+    expect(result3).toEqual({});
+    expect(result3).toHaveProperty("s_0");
+    expect(result3).toHaveProperty("s_1");
+    expect(result3).not.toHaveProperty("s_2");
   });
 });

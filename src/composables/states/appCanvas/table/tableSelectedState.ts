@@ -8,6 +8,7 @@ import { createStrokeStyle } from "../../../../utils/strokeStyle";
 import { newBoundingBox } from "../../../boundingBox";
 import {
   generateTableMeta,
+  getPatchByClearCellStyle,
   getPatchByDeleteLines,
   getPatchByMergeCells,
   getPatchByUnmergeCells,
@@ -311,14 +312,22 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
             switch (hitResult.type) {
               case "head-row": {
                 ctx.setContextMenuList({
-                  items: [CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_ROW],
+                  items: [
+                    CONTEXT_MENU_ITEM_SRC.CLEAR_TABLE_CELLS_STYLES,
+                    CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+                    CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_ROW,
+                  ],
                   point: event.data.point,
                 });
                 return null;
               }
               case "head-column": {
                 ctx.setContextMenuList({
-                  items: [CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_COLUMN],
+                  items: [
+                    CONTEXT_MENU_ITEM_SRC.CLEAR_TABLE_CELLS_STYLES,
+                    CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+                    CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_COLUMN,
+                  ],
                   point: event.data.point,
                 });
                 return null;
@@ -337,11 +346,10 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     items.push(CONTEXT_MENU_ITEM_SRC.UNMERGE_TABLE_CELLS);
                   }
                 }
+
+                items.push(CONTEXT_MENU_ITEM_SRC.CLEAR_TABLE_CELLS_STYLES);
                 ctx.setContextMenuList({
-                  items:
-                    items.length > 0
-                      ? [...items, CONTEXT_MENU_ITEM_SRC.SEPARATOR, ...getMenuItemsForSelectedShapes(ctx)]
-                      : getMenuItemsForSelectedShapes(ctx),
+                  items: [...items, CONTEXT_MENU_ITEM_SRC.SEPARATOR, ...getMenuItemsForSelectedShapes(ctx)],
                   point: event.data.point,
                 });
                 return null;
@@ -374,6 +382,17 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
               case CONTEXT_MENU_ITEM_SRC.UNMERGE_TABLE_CELLS.key: {
                 const coordsList = tableSelectable.getSelectedCoords();
                 const patch = getPatchByUnmergeCells(targetShape, coordsList);
+                ctx.updateShapes({
+                  update: { [targetShape.id]: patch },
+                });
+                return ctx.states.newSelectionHubState;
+              }
+              case CONTEXT_MENU_ITEM_SRC.CLEAR_TABLE_CELLS_STYLES.key: {
+                const tableInfo = getTableShapeInfo(targetShape);
+                if (!tableInfo) return;
+
+                const coordsList = tableSelectable.getSelectedCoords();
+                const patch = getPatchByClearCellStyle(tableInfo, coordsList);
                 ctx.updateShapes({
                   update: { [targetShape.id]: patch },
                 });
