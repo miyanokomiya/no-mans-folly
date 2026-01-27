@@ -3,6 +3,7 @@ import {
   formatMerges,
   generateTable,
   getCoordsBoundsInfo,
+  getIndexStyleValueAt,
   getInnerBordersWithMerge,
   getStyleAreaInfo,
   getTableCoordsLocations,
@@ -24,7 +25,8 @@ describe("getTableShapeInfo", () => {
       r_1: { id: "r_1", size: 10, findex: findexList[4] },
       r_0: { id: "r_0", size: 10, findex: findexList[3] },
       r_2: { id: "r_2", size: 10, findex: findexList[5] },
-      m_0: { id: "m_0", a: ["r_1", "c_1"], b: ["r_0", "c_0"] },
+      m_0: { id: "m_0", a: ["r_1", "c_1"], b: ["r_0", "c_1"] },
+      s_0: { id: "s_0", a: ["r_0", "c_1"], b: ["r_0", "c_0"], fill: createFillStyle() },
     });
     expect(getTableShapeInfo(table)).toEqual({
       rows: [
@@ -64,18 +66,36 @@ describe("getTableShapeInfo", () => {
       merges: [
         {
           id: "m_0",
-          a: ["r_0", "c_0"],
+          a: ["r_0", "c_1"],
           b: ["r_1", "c_1"],
         },
       ],
       mergeAreas: [
-        [
-          [0, 0],
-          [1, 1],
-        ],
+        {
+          area: [
+            [0, 1],
+            [1, 1],
+          ],
+        },
       ],
-      styles: [],
-      styleAreas: [],
+      resolvedMergeAreas: [
+        {
+          area: [
+            [0, 1],
+            [1, 1],
+          ],
+          style: { fill: createFillStyle() },
+        },
+      ],
+      styles: [
+        {
+          id: "s_0",
+          a: ["r_0", "c_1"],
+          b: ["r_0", "c_0"],
+          fill: createFillStyle(),
+        },
+      ],
+      styleAreas: [[[0, 0], [0, 1], { fill: createFillStyle() }]],
     });
   });
 });
@@ -344,5 +364,34 @@ describe("getCoordsBoundsInfo", () => {
       [tableInfo.rows[0].id, tableInfo.columns[0].id],
       [tableInfo.rows[4].id, tableInfo.columns[4].id],
     ]);
+  });
+});
+
+describe("getIndexStyleValueAt", () => {
+  test("should return style value at the coords", () => {
+    const table = generateTable(6, 6, { width: 10, height: 10 });
+    table["m_0"] = {
+      id: "m_0",
+      a: ["r_2", "c_2"],
+      b: ["r_3", "c_3"],
+    };
+    table["s_0"] = {
+      id: "s_0",
+      a: ["r_2", "c_0"],
+      b: ["r_2", "c_4"],
+      fill: createFillStyle(),
+    };
+    const info = getTableShapeInfo(table)!;
+    expect(getIndexStyleValueAt(info, ["r_1", "c_0"])).toEqual({});
+    expect(getIndexStyleValueAt(info, ["r_2", "c_0"])).toEqual({
+      fill: createFillStyle(),
+    });
+    expect(getIndexStyleValueAt(info, ["r_2", "c_2"])).toEqual({
+      fill: createFillStyle(),
+    });
+    expect(getIndexStyleValueAt(info, ["r_2", "c_4"])).toEqual({
+      fill: createFillStyle(),
+    });
+    expect(getIndexStyleValueAt(info, ["r_3", "c_2"]), "doesn't regard cell merges").toEqual({});
   });
 });

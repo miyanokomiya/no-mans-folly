@@ -9,7 +9,7 @@ import {
   pathSegmentRawsToString,
 } from "okageo";
 import { CommonStyle, FillStyle, Shape, Size } from "../../models";
-import { findexSortFn, toMap } from "../../utils/commons";
+import { findBackward, findexSortFn, toMap } from "../../utils/commons";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "../core";
 import {
   expandRect,
@@ -21,6 +21,7 @@ import {
   getRotateFn,
   getSegments,
   ISegment,
+  isInMergeArea,
   isMergeAreaOverlapping,
   isPointOnRectangleRotated,
   isSameValue,
@@ -66,6 +67,7 @@ export type TableCellArea = {
 
 export type TableCellMergeKey = `m_${string}`;
 export type TableCellMerge = { id: TableCellMergeKey } & TableCellArea;
+export type TableCellMergeArea = { area: MergeArea; style?: TableCellStyleValue };
 
 export type TableCellStyleKey = `s_${string}`;
 export type TableCellStyleValue = {
@@ -95,7 +97,8 @@ export type TableShapeInfo = {
   columns: TableColumn[];
   rows: TableRow[];
   merges: TableCellMerge[];
-  mergeAreas: MergeArea[];
+  mergeAreas: TableCellMergeArea[];
+  resolvedMergeAreas: TableCellMergeArea[];
   styles: TableCellStyle[];
   styleAreas: TableStyleArea[];
 };
@@ -134,27 +137,78 @@ export const struct: ShapeStruct<TableShape> = {
     const rect = getTableLocalBounds(shape);
     const coordsLocations = getTableCoordsLocations(info);
     applyLocalSpace(ctx, rect, shape.rotation, () => {
-      info.styleAreas.forEach((styleArea) => {
-        const styleAreaInfo = getStyleAreaInfo(info, coordsLocations, styleArea);
-        if (styleAreaInfo.rects.length > 0 && styleAreaInfo.value.fill && !styleAreaInfo.value.fill.disabled) {
-          applyFillStyle(ctx, styleAreaInfo.value.fill);
-          ctx.beginPath();
-          styleAreaInfo.rects.forEach((rect) => ctx.rect(rect.x, rect.y, rect.width, rect.height));
-          ctx.fill();
+      if (!shape.fill.disabled) {
+        ctx.beginPath();
+        ctx.rect(0, 0, rect.width, rect.height);
+        applyFillStyle(ctx, shape.fill);
+        ctx.fill();
+      }
+
+      const styleAreaInfoList = info.styleAreas.map((styleArea) => {
+        return getStyleAreaInfo(info, coordsLocations, styleArea);
+      });
+
+      // 1. Set clip by "resolvedMergeAreas" & disabled "styleAreas"
+      // 2. Render "styleAreas"
+      // 3. Finish clip
+      // 4. Render "resolvedMergeAreas"
+      const region = new Path2D();
+      const clipFns: (() => void)[] = [];
+      info.resolvedMergeAreas.forEach((rma) => {
+        const areaRect = getAreaRect(coordsLocations, rma.area);
+        clipFns.push(() => region.rect(areaRect.x, areaRect.y, areaRect.width, areaRect.height));
+      });
+      styleAreaInfoList.forEach((styleAreaInfo) => {
+        if (styleAreaInfo.value.fill?.disabled) {
+          clipFns.push(() =>
+            styleAreaInfo.rects.forEach((styleRect) =>
+              region.rect(styleRect.x, styleRect.y, styleRect.width, styleRect.height),
+            ),
+          );
         }
       });
 
-      if (!shape.fill.disabled || !shape.stroke.disabled) {
+      const beginClip = (renderFn: () => void) => {
+        if (clipFns.length > 0) {
+          region.rect(0, 0, rect.width, rect.height);
+          clipFns.forEach((fn) => fn());
+          ctx.save();
+          ctx.clip(region, "evenodd");
+        }
+        renderFn();
+        if (clipFns.length > 0) {
+          ctx.restore();
+        }
+      };
+
+      beginClip(() => {
+        styleAreaInfoList.forEach((styleAreaInfo) => {
+          if (styleAreaInfo.value.fill && !styleAreaInfo.value.fill.disabled) {
+            applyFillStyle(ctx, styleAreaInfo.value.fill);
+            ctx.beginPath();
+            styleAreaInfo.rects.forEach((styleRect) =>
+              ctx.rect(styleRect.x, styleRect.y, styleRect.width, styleRect.height),
+            );
+            ctx.fill();
+          }
+        });
+      });
+
+      info.resolvedMergeAreas.forEach((rma) => {
+        if (!rma.style?.fill || rma.style?.fill?.disabled) return;
+
+        const areaRect = getAreaRect(coordsLocations, rma.area);
+        applyFillStyle(ctx, rma.style.fill);
+        ctx.beginPath();
+        ctx.rect(areaRect.x, areaRect.y, areaRect.width, areaRect.height);
+        ctx.fill();
+      });
+
+      if (!shape.stroke.disabled) {
         ctx.beginPath();
         ctx.rect(0, 0, rect.width, rect.height);
-        if (!shape.fill.disabled) {
-          applyFillStyle(ctx, shape.fill);
-          ctx.fill();
-        }
-        if (!shape.stroke.disabled) {
-          applyStrokeStyle(ctx, shape.stroke);
-          ctx.stroke();
-        }
+        applyStrokeStyle(ctx, shape.stroke);
+        ctx.stroke();
       }
 
       ctx.beginPath();
@@ -175,13 +229,37 @@ export const struct: ShapeStruct<TableShape> = {
     const info = getTableShapeInfo(shape);
     if (!info) return;
 
+    const coordsLocations = getTableCoordsLocations(info);
     const rect = getTableLocalBounds(shape);
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
-    const coordsLocations = getTableCoordsLocations(info);
+    const styleAreaInfoList = info.styleAreas.map((styleArea) => {
+      return getStyleAreaInfo(info, coordsLocations, styleArea);
+    });
+
+    // 1. Set clip by "resolvedMergeAreas" & disabled "styleAreas"
+    // 2. Render "styleAreas"
+    // 3. Finish clip
+    // 4. Render "resolvedMergeAreas"
+    const clipId = `clip-${shape.id}`;
+    const clipPathCommandList: string[] = [];
+
+    info.resolvedMergeAreas.forEach((rma) => {
+      const areaRect = getAreaRect(coordsLocations, rma.area);
+      const pathStr = pathSegmentRawsToString(createSVGCurvePath(getRectPoints(areaRect)));
+      clipPathCommandList.push(pathStr);
+    });
+    styleAreaInfoList.forEach((styleAreaInfo) => {
+      if (styleAreaInfo.value.fill?.disabled) {
+        styleAreaInfo.rects.forEach((areaRect) => {
+          const pathStr = pathSegmentRawsToString(createSVGCurvePath(getRectPoints(areaRect)));
+          clipPathCommandList.push(pathStr);
+        });
+      }
+    });
+
     const fillElms: SVGElementInfo[] = [];
-    info.styleAreas.forEach((styleArea) => {
-      const styleAreaInfo = getStyleAreaInfo(info, coordsLocations, styleArea);
+    styleAreaInfoList.forEach((styleAreaInfo) => {
       const fillStyle = styleAreaInfo.value.fill;
       if (fillStyle && !fillStyle.disabled) {
         styleAreaInfo.rects.forEach((areaRect) => {
@@ -197,6 +275,23 @@ export const struct: ShapeStruct<TableShape> = {
           });
         });
       }
+    });
+
+    const mergeFillElms: SVGElementInfo[] = [];
+    info.resolvedMergeAreas.forEach((rma) => {
+      if (!rma.style?.fill || rma.style?.fill?.disabled) return;
+
+      const areaRect = getAreaRect(coordsLocations, rma.area);
+      mergeFillElms.push({
+        tag: "rect",
+        attributes: {
+          x: areaRect.x,
+          y: areaRect.y,
+          width: areaRect.width,
+          height: areaRect.height,
+          ...renderFillSVGAttributes(rma.style.fill),
+        },
+      });
     });
 
     const borderElms: SVGElementInfo[] = getInnerBordersWithMerge(info, rect).map((seg) => ({
@@ -216,6 +311,28 @@ export const struct: ShapeStruct<TableShape> = {
         ...renderStrokeSVGAttributes(shape.stroke),
       },
       children: [
+        ...(clipPathCommandList.length > 0
+          ? [
+              {
+                tag: "clipPath",
+                attributes: { id: clipId, stroke: "none" },
+                children: [
+                  {
+                    tag: "path",
+                    attributes: {
+                      "clip-rule": "evenodd",
+                      d:
+                        pathSegmentRawsToString(
+                          createSVGCurvePath(getRectPoints({ x: 0, y: 0, width: rect.width, height: rect.height })),
+                        ) +
+                        " " +
+                        clipPathCommandList.join(" "),
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
         {
           tag: "rect",
           attributes: {
@@ -224,7 +341,12 @@ export const struct: ShapeStruct<TableShape> = {
             ...renderFillSVGAttributes(shape.fill),
           },
         },
-        ...fillElms,
+        {
+          tag: "g",
+          attributes: { "clip-path": clipPathCommandList.length > 0 ? `url(#${clipId})` : undefined },
+          children: fillElms,
+        },
+        ...mergeFillElms,
         ...borderElms,
       ],
     };
@@ -370,7 +492,7 @@ function getTableShapeInfoRaw(shape: Partial<TableShape>): TableShapeInfo {
   const columns: TableColumn[] = [];
   const rows: TableRow[] = [];
   const merges: TableCellMerge[] = [];
-  const mergeAreas: MergeArea[] = [];
+  const mergeAreas: TableCellMergeArea[] = [];
   const styles: TableCellStyle[] = [];
   const styleAreas: TableStyleArea[] = [];
   const keys = Object.keys(shape) as (keyof TableShape)[];
@@ -408,10 +530,12 @@ function getTableShapeInfoRaw(shape: Partial<TableShape>): TableShapeInfo {
     adjustedMerged.push({ id: m.id, a: [r0, c0], b: [r1, c1] });
     const [ri0, ri1] = ra <= rb ? [ra, rb] : [rb, ra];
     const [ci0, ci1] = ca <= cb ? [ca, cb] : [cb, ca];
-    mergeAreas.push([
-      [ri0, ci0],
-      [ri1, ci1],
-    ]);
+    mergeAreas.push({
+      area: [
+        [ri0, ci0],
+        [ri1, ci1],
+      ],
+    });
   });
 
   const adjustedStyles: TableCellStyle[] = [];
@@ -427,10 +551,33 @@ function getTableShapeInfoRaw(shape: Partial<TableShape>): TableShapeInfo {
     adjustedStyles.push({ id: s.id, a: [r0, c0], b: [r1, c1] });
     const [ri0, ri1] = ra <= rb ? [ra, rb] : [rb, ra];
     const [ci0, ci1] = ca <= cb ? [ca, cb] : [cb, ca];
-    styleAreas.push([[ri0, ci0], [ri1, ci1], s]);
+    styleAreas.push([[ri0, ci0], [ri1, ci1], getTableCellStyleValue(s)]);
   });
 
-  return { columns, rows, merges: adjustedMerged, mergeAreas, styles, styleAreas };
+  const ret: TableShapeInfo = {
+    columns,
+    rows,
+    merges: adjustedMerged,
+    mergeAreas,
+    resolvedMergeAreas: [],
+    styles,
+    styleAreas,
+  };
+
+  const checkedMergeSet = new Set<TableCellMerge>();
+  ret.merges.forEach((m) => {
+    checkedMergeSet.add(m);
+    const info = getCoordsBoundsInfo(ret, [m.a]);
+    if (!info) return;
+
+    // Prioritize newer style
+    const style = findBackward(ret.styleAreas, (s) =>
+      isInMergeArea([s[0], s[1]], [info.mergeArea[0], info.mergeArea[0]], true),
+    );
+    ret.resolvedMergeAreas.push({ area: info.mergeArea, style: style?.[2] });
+  });
+
+  return ret;
 }
 
 export function getInnerBorders(tableInfo: TableShapeInfo, size: Size): ISegment[] {
@@ -470,15 +617,15 @@ export function getInnerBordersWithMerge(tableInfo: TableShapeInfo, size: Size):
   const mergeAreasByFromColumn: Record<string, MergeArea[]> = {};
 
   tableInfo.mergeAreas.forEach((m) => {
-    for (let i = m[0][0]; i < m[1][0]; i++) {
+    for (let i = m.area[0][0]; i < m.area[1][0]; i++) {
       mergeAreasByFromRow[i] ??= [];
-      mergeAreasByFromRow[i].push(m);
+      mergeAreasByFromRow[i].push(m.area);
     }
   });
   tableInfo.mergeAreas.forEach((m) => {
-    for (let i = m[0][1]; i < m[1][1]; i++) {
+    for (let i = m.area[0][1]; i < m.area[1][1]; i++) {
       mergeAreasByFromColumn[i] ??= [];
-      mergeAreasByFromColumn[i].push(m);
+      mergeAreasByFromColumn[i].push(m.area);
     }
   });
 
@@ -618,8 +765,8 @@ export function getStyleAreaInfo(
   const styleAreaVal: MergeArea = [styleArea[0], styleArea[1]];
   const rects: IRectangle[] = [getAreaRect(coordsLocations, styleAreaVal)];
   info.mergeAreas.find((m) => {
-    if (isMergeAreaOverlapping([m[0], m[0]], styleAreaVal, true)) {
-      rects.push(getAreaRect(coordsLocations, m));
+    if (isMergeAreaOverlapping([m.area[0], m.area[0]], styleAreaVal, true)) {
+      rects.push(getAreaRect(coordsLocations, m.area));
     }
   });
   return { rects, value: styleArea[2] };
@@ -654,16 +801,15 @@ function getCoordsBoundsRawInfo(
   });
   if (!r0 || !r1 || !c0 || !c1) return;
 
-  const mergeArea: MergeArea = [
-    [r0[0], c0[0]],
-    [r1[0], c1[0]],
-  ];
   return {
     bounds: [
       [r0[1], c0[1]],
       [r1[1], c1[1]],
     ],
-    mergeArea,
+    mergeArea: [
+      [r0[0], c0[0]],
+      [r1[0], c1[0]],
+    ],
     rowIndexById,
     columnIndexById,
   };
@@ -728,10 +874,30 @@ export function getCoordsBoundsInfo(
       [r0[1], c0[1]],
       [r1[1], c1[1]],
     ],
-    touchIds: Array.from(touchIds),
     mergeArea: [
       [r0[0], c0[0]],
       [r1[0], c1[0]],
     ],
+    touchIds: Array.from(touchIds),
   };
+}
+
+export function getTableCellStyleValue(val: TableCellStyle | TableCellStyleValue): TableCellStyleValue {
+  return { fill: val.fill };
+}
+
+export function getIndexStyleValueAt(tableInfo: TableShapeInfo, coords: TableCoords): TableCellStyleValue {
+  const rIndex = tableInfo.rows.findIndex((r) => r.id === coords[0]);
+  const cIndex = tableInfo.columns.findIndex((c) => c.id === coords[1]);
+  if (rIndex < 0 || cIndex < 0) return {};
+
+  const coordsArea: MergeArea = [
+    [rIndex, cIndex],
+    [rIndex, cIndex],
+  ];
+  return (
+    findBackward(tableInfo?.styleAreas ?? [], (sa) => {
+      return isInMergeArea([sa[0], sa[1]], coordsArea, true);
+    })?.[2] ?? {}
+  );
 }

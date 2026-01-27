@@ -38,6 +38,7 @@ import {
   getRotationAffines,
   groupCellsIntoRectangles,
   ISegment,
+  isInMergeArea,
   isPointCloseToSegment,
   isPointOnRectangle,
   TAU,
@@ -532,7 +533,7 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
       coords: parseTableMeta(shape.parentMeta),
       fullH: shape.lcH === 1,
       fullV: shape.lcV === 1,
-      mergeAreas: tableInfo?.mergeAreas,
+      mergeAreas: tableInfo?.mergeAreas.map((m) => m.area),
     });
 
     treeNode.children.forEach((c) => {
@@ -874,7 +875,7 @@ export function getPatchByUnmergeCells(table: TableShape, coordsList: TableCoord
 export function getPatchByApplyCellStyle(
   tableInfo: TableShapeInfo,
   coords: TableCoords[],
-  styleValue: TableCellStyleValue | undefined,
+  styleValue: TableCellStyleValue,
   generateUuid: () => string,
 ): Partial<TableShape> {
   const patch: Partial<TableShape> = {};
@@ -885,36 +886,46 @@ export function getPatchByApplyCellStyle(
   const cellAreas = optimizeCoords(rowIndexById, columnIndexById, effectiveCells);
 
   cellAreas.forEach((cellArea) => {
-    // Add new style only when the new value isn't undefined
-    // => Because style is set undefined by default
-    if (styleValue) {
-      const id: TableCellStyleKey = `s_${generateUuid()}`;
-      patch[id] = { id, ...cellArea, ...styleValue };
-    }
+    // Always add new style even if it's disabled
+    // => To override cell styles come from other area
+    const id: TableCellStyleKey = `s_${generateUuid()}`;
+    patch[id] = { id, ...cellArea, ...styleValue };
   });
 
-  const bounds: Exclude<ReturnType<typeof getCoordsBoundsInfo>, undefined>["bounds"][] = [];
+  const boundsList: Exclude<ReturnType<typeof getCoordsBoundsInfo>, undefined>["bounds"][] = [];
   effectiveCells.forEach((coords) => {
     const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, [coords]);
     if (!coordsBoundsInfo) return;
-    bounds.push(coordsBoundsInfo.bounds);
+    boundsList.push(coordsBoundsInfo.bounds);
   });
 
   // Delete current styles that are encompassed by the new style area
-  bounds.forEach((b) => {
-    const bar = rowIndexById.get(b[0][0]);
-    const bac = columnIndexById.get(b[0][1]);
-    const bbr = rowIndexById.get(b[1][0]);
-    const bbc = columnIndexById.get(b[1][1]);
-    if (bar === undefined || bac === undefined || bbr === undefined || bbc === undefined) return;
+  boundsList.forEach((b) => {
+    const bar = rowIndexById.get(b[0][0]) ?? -Infinity;
+    const bac = columnIndexById.get(b[0][1]) ?? -Infinity;
+    const bbr = rowIndexById.get(b[1][0]) ?? Infinity;
+    const bbc = columnIndexById.get(b[1][1]) ?? Infinity;
 
     tableInfo.styles.forEach((s) => {
       const sar = rowIndexById.get(s.a[0]);
       const sac = columnIndexById.get(s.a[1]);
       const sbr = rowIndexById.get(s.b[0]);
       const sbc = columnIndexById.get(s.b[1]);
-      if (sar === undefined || sac === undefined || sbr === undefined || sbc === undefined) return;
-      if (bar <= sar && bac <= sac && sbr <= bbr && sbc <= bbc) {
+      if (sar === undefined || sac === undefined || sbr === undefined || sbc === undefined) {
+        patch[s.id] = undefined;
+      } else if (
+        isInMergeArea(
+          [
+            [bar, bac],
+            [bbr, bbc],
+          ],
+          [
+            [sar, sac],
+            [sbr, sbc],
+          ],
+          true,
+        )
+      ) {
         patch[s.id] = undefined;
       }
     });

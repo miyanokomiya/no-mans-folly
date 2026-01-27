@@ -6,7 +6,14 @@ import { PopupButton, PopupDirection } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
 import { FillPanel } from "./FillPanel";
 import menuIcon from "../../assets/icons/three_dots_v.svg";
-import { getTableShapeInfo, TableCellStyleValue, TableCoords, TableShape } from "../../shapes/table/table";
+import {
+  getIndexStyleValueAt,
+  getTableCellStyleValue,
+  getTableShapeInfo,
+  TableCellStyleValue,
+  TableCoords,
+  TableShape,
+} from "../../shapes/table/table";
 import { useShapeComposite } from "../../hooks/storeHooks";
 import { createFillStyle } from "../../utils/fillStyle";
 import { getPatchByApplyCellStyle } from "../../composables/shapeHandlers/tableHandler";
@@ -24,18 +31,10 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
   const table = shapeComposite.shapeMap[tableId] as TableShape;
   const tableInfo = useMemo(() => getTableShapeInfo(table), [table]);
   const indexCoords = selectedCoords[0];
-  const indexStyle = useMemo<TableCellStyleValue>(
-    () =>
-      tableInfo?.styles.find((style) => {
-        return (
-          style.a[0] <= indexCoords[0] &&
-          indexCoords[0] <= style.b[0] &&
-          style.a[1] <= indexCoords[1] &&
-          indexCoords[1] <= style.b[1]
-        );
-      }) ?? {},
-    [indexCoords, tableInfo],
-  );
+  const indexStyle = useMemo<TableCellStyleValue>(() => {
+    if (!tableInfo) return {};
+    return getIndexStyleValueAt(tableInfo, indexCoords);
+  }, [indexCoords, tableInfo]);
   const indexFill = useMemo(() => indexStyle.fill ?? createFillStyle({ disabled: true }), [indexStyle]);
 
   const popupDefaultDirection: PopupDirection = "top";
@@ -63,7 +62,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       const patch = getPatchByApplyCellStyle(
         tableInfo,
         selectedCoords,
-        val.disabled ? undefined : { ...indexStyle, fill: { ...indexFill, ...val } },
+        getTableCellStyleValue({ ...indexStyle, fill: { ...indexFill, ...val } }),
         ctx.generateUuid,
       );
 
