@@ -624,3 +624,114 @@ export function getStyleAreaInfo(
   });
   return { rects, value: styleArea[2] };
 }
+
+function getCoordsBoundsRawInfo(
+  tableInfo: TableShapeInfo,
+  coordsList: TableCoords[],
+):
+  | {
+      bounds: [from: [TableRowKey, TableColumnKey], to: [TableRowKey, TableColumnKey]];
+      mergeArea: MergeArea;
+      rowIndexById: Map<TableRowKey, number>;
+      columnIndexById: Map<TableColumnKey, number>;
+    }
+  | undefined {
+  const rowIndexById = new Map(tableInfo.rows.map((r, i) => [r.id, i]));
+  const columnIndexById = new Map(tableInfo.columns.map((c, i) => [c.id, i]));
+  let r0: [index: number, TableRowKey] | undefined;
+  let r1: [index: number, TableRowKey] | undefined;
+  let c0: [index: number, TableColumnKey] | undefined;
+  let c1: [index: number, TableColumnKey] | undefined;
+  coordsList.forEach(([rowId, columnId]) => {
+    const rowIndex = rowIndexById.get(rowId);
+    const columnIndex = columnIndexById.get(columnId);
+    if (rowIndex === undefined || columnIndex === undefined) return;
+
+    r0 = r0 === undefined || rowIndex < r0[0] ? [rowIndex, rowId] : r0;
+    r1 = r1 === undefined || r1[0] < rowIndex ? [rowIndex, rowId] : r1;
+    c0 = c0 === undefined || columnIndex < c0[0] ? [columnIndex, columnId] : c0;
+    c1 = c1 === undefined || c1[0] < columnIndex ? [columnIndex, columnId] : c1;
+  });
+  if (!r0 || !r1 || !c0 || !c1) return;
+
+  const mergeArea: MergeArea = [
+    [r0[0], c0[0]],
+    [r1[0], c1[0]],
+  ];
+  return {
+    bounds: [
+      [r0[1], c0[1]],
+      [r1[1], c1[1]],
+    ],
+    mergeArea,
+    rowIndexById,
+    columnIndexById,
+  };
+}
+
+/**
+ * Returned "bounds" covers all coords with merge areas regarded
+ * Returned "touchIds" represent all cell merges overlapped by "bounds"
+ */
+export function getCoordsBoundsInfo(
+  tableInfo: TableShapeInfo,
+  coordsList: TableCoords[],
+):
+  | {
+      bounds: [from: [TableRowKey, TableColumnKey], to: [TableRowKey, TableColumnKey]];
+      mergeArea: MergeArea;
+      touchIds: TableCellMergeKey[];
+    }
+  | undefined {
+  const boundsRawInfo = getCoordsBoundsRawInfo(tableInfo, coordsList);
+  if (!boundsRawInfo) return;
+
+  const { bounds, mergeArea, rowIndexById, columnIndexById } = boundsRawInfo;
+  const touchIds: Set<TableCellMergeKey> = new Set();
+  tableInfo.merges.forEach((m) => {
+    const ra = rowIndexById.get(m.a[0]);
+    const rb = rowIndexById.get(m.b[0]);
+    const ca = columnIndexById.get(m.a[1]);
+    const cb = columnIndexById.get(m.b[1]);
+    if (ra === undefined || rb === undefined || ca === undefined || cb === undefined) return;
+
+    const area: MergeArea = [
+      [ra, ca],
+      [rb, cb],
+    ];
+    if (isMergeAreaOverlapping(mergeArea, area, true)) {
+      touchIds.add(m.id);
+    }
+  });
+
+  const touchList = tableInfo.merges.filter((m) => touchIds.has(m.id));
+  let r0: [index: number, TableRowKey] = [mergeArea[0][0], bounds[0][0]];
+  let r1: [index: number, TableRowKey] = [mergeArea[1][0], bounds[1][0]];
+  let c0: [index: number, TableColumnKey] = [mergeArea[0][1], bounds[0][1]];
+  let c1: [index: number, TableColumnKey] = [mergeArea[1][1], bounds[1][1]];
+  touchList.forEach((m) => {
+    const aRowIndex = rowIndexById.get(m.a[0]);
+    const aColumnIndex = columnIndexById.get(m.a[1]);
+    const bRowIndex = rowIndexById.get(m.b[0]);
+    const bColumnIndex = columnIndexById.get(m.b[1]);
+    if (aRowIndex === undefined || aColumnIndex === undefined || bRowIndex === undefined || bColumnIndex === undefined)
+      return;
+
+    r0 = aRowIndex < r0[0] ? [aRowIndex, m.a[0]] : r0;
+    r1 = r1[0] < bRowIndex ? [bRowIndex, m.b[0]] : r1;
+    c0 = aColumnIndex < c0[0] ? [aColumnIndex, m.a[1]] : c0;
+    c1 = c1[0] < bColumnIndex ? [bColumnIndex, m.b[1]] : c1;
+  });
+
+  return {
+    bounds: [
+      [r0[1], c0[1]],
+      [r1[1], c1[1]],
+    ],
+    touchIds: Array.from(touchIds),
+    mergeArea: [
+      [r0[0], c0[0]],
+      [r1[0], c1[0]],
+    ],
+  };
+}

@@ -14,6 +14,7 @@ import {
 } from "okageo";
 import { EntityPatchInfo, Shape, StyleScheme } from "../../models";
 import {
+  getCoordsBoundsInfo,
   getTableCoordsLocations,
   getTableShapeInfo,
   getTableSizeByInfo,
@@ -21,14 +22,11 @@ import {
   parseTableMeta,
   TableCellArea,
   TableCellMerge,
-  TableCellMergeKey,
   TableCellStyleKey,
   TableCellStyleValue,
   TableColumn,
-  TableColumnKey,
   TableCoords,
   TableRow,
-  TableRowKey,
   TableShape,
   TableShapeInfo,
 } from "../../shapes/table/table";
@@ -40,11 +38,8 @@ import {
   getRotationAffines,
   groupCellsIntoRectangles,
   ISegment,
-  isInMergeArea,
-  isMergeAreaOverlapping,
   isPointCloseToSegment,
   isPointOnRectangle,
-  MergeArea,
   TAU,
 } from "../../utils/geometry";
 import { ShapeComposite } from "../shapeComposite";
@@ -832,139 +827,6 @@ function adjustPatchByKeepPosition(
     return { ...patch, p: add(nextTable.p, v) };
   }
   return patch;
-}
-
-function getCoordsBoundsRawInfo(
-  tableInfo: TableShapeInfo,
-  coordsList: TableCoords[],
-):
-  | {
-      bounds: [from: [TableRowKey, TableColumnKey], to: [TableRowKey, TableColumnKey]];
-      mergeArea: MergeArea;
-      rowIndexById: Map<TableRowKey, number>;
-      columnIndexById: Map<TableColumnKey, number>;
-    }
-  | undefined {
-  const rowIndexById = new Map(tableInfo.rows.map((r, i) => [r.id, i]));
-  const columnIndexById = new Map(tableInfo.columns.map((c, i) => [c.id, i]));
-  let r0: [index: number, TableRowKey] | undefined;
-  let r1: [index: number, TableRowKey] | undefined;
-  let c0: [index: number, TableColumnKey] | undefined;
-  let c1: [index: number, TableColumnKey] | undefined;
-  coordsList.forEach(([rowId, columnId]) => {
-    const rowIndex = rowIndexById.get(rowId);
-    const columnIndex = columnIndexById.get(columnId);
-    if (rowIndex === undefined || columnIndex === undefined) return;
-
-    if (r0 === undefined || rowIndex < r0[0]) {
-      r0 = [rowIndex, rowId];
-    }
-    if (r1 === undefined || r1[0] < rowIndex) {
-      r1 = [rowIndex, rowId];
-    }
-    if (c0 === undefined || columnIndex < c0[0]) {
-      c0 = [columnIndex, columnId];
-    }
-    if (c1 === undefined || c1[0] < columnIndex) {
-      c1 = [columnIndex, columnId];
-    }
-  });
-  if (!r0 || !r1 || !c0 || !c1) return;
-
-  const mergeArea: MergeArea = [
-    [r0[0], c0[0]],
-    [r1[0], c1[0]],
-  ];
-  return {
-    bounds: [
-      [r0[1], c0[1]],
-      [r1[1], c1[1]],
-    ],
-    mergeArea,
-    rowIndexById,
-    columnIndexById,
-  };
-}
-
-/**
- * Returned "bounds" covers all coords with merge areas regarded
- */
-export function getCoordsBoundsInfo(
-  tableInfo: TableShapeInfo,
-  coordsList: TableCoords[],
-):
-  | {
-      bounds: [from: [TableRowKey, TableColumnKey], to: [TableRowKey, TableColumnKey]];
-      mergeArea: MergeArea;
-      enclaveIds: TableCellMergeKey[];
-      touchIds: TableCellMergeKey[];
-    }
-  | undefined {
-  const boundsRawInfo = getCoordsBoundsRawInfo(tableInfo, coordsList);
-  if (!boundsRawInfo) return;
-
-  const { bounds, mergeArea, rowIndexById, columnIndexById } = boundsRawInfo;
-  const enclaveIds: Set<TableCellMergeKey> = new Set();
-  const touchIds: Set<TableCellMergeKey> = new Set();
-  tableInfo.merges.forEach((m) => {
-    const ra = rowIndexById.get(m.a[0]);
-    const rb = rowIndexById.get(m.b[0]);
-    const ca = columnIndexById.get(m.a[1]);
-    const cb = columnIndexById.get(m.b[1]);
-    if (ra === undefined || rb === undefined || ca === undefined || cb === undefined) return;
-
-    const area: MergeArea = [
-      [ra, ca],
-      [rb, cb],
-    ];
-    if (isInMergeArea(mergeArea, area, true)) {
-      enclaveIds.add(m.id);
-      touchIds.add(m.id);
-    } else if (isMergeAreaOverlapping(mergeArea, area, true)) {
-      touchIds.add(m.id);
-    }
-  });
-
-  const touchList = tableInfo.merges.filter((m) => touchIds.has(m.id));
-  let r0: [index: number, TableRowKey] = [mergeArea[0][0], bounds[0][0]];
-  let r1: [index: number, TableRowKey] = [mergeArea[1][0], bounds[1][0]];
-  let c0: [index: number, TableColumnKey] = [mergeArea[0][1], bounds[0][1]];
-  let c1: [index: number, TableColumnKey] = [mergeArea[1][1], bounds[1][1]];
-  touchList.forEach((m) => {
-    const aRowIndex = rowIndexById.get(m.a[0]);
-    const aColumnIndex = columnIndexById.get(m.a[1]);
-    if (aRowIndex === undefined || aColumnIndex === undefined) return;
-
-    const bRowIndex = rowIndexById.get(m.b[0]);
-    const bColumnIndex = columnIndexById.get(m.b[1]);
-    if (bRowIndex === undefined || bColumnIndex === undefined) return;
-
-    if (r0 === undefined || aRowIndex < r0[0]) {
-      r0 = [aRowIndex, m.a[0]];
-    }
-    if (r1 === undefined || r1[0] < bRowIndex) {
-      r1 = [bRowIndex, m.b[0]];
-    }
-    if (c0 === undefined || aColumnIndex < c0[0]) {
-      c0 = [aColumnIndex, m.a[1]];
-    }
-    if (c1 === undefined || c1[0] < bColumnIndex) {
-      c1 = [bColumnIndex, m.b[1]];
-    }
-  });
-
-  return {
-    bounds: [
-      [r0[1], c0[1]],
-      [r1[1], c1[1]],
-    ],
-    enclaveIds: Array.from(enclaveIds),
-    touchIds: Array.from(touchIds),
-    mergeArea: [
-      [r0[0], c0[0]],
-      [r1[0], c1[0]],
-    ],
-  };
 }
 
 export function getPatchByMergeCells(

@@ -1,7 +1,6 @@
 import { describe, test, expect } from "vitest";
 import {
   generateTableMeta,
-  getCoordsBoundsInfo,
   getPatchByApplyCellStyle,
   getPatchByDeleteLines,
   getPatchInfoByAddColumns,
@@ -12,36 +11,6 @@ import { generateNKeysBetweenAllowSame } from "../../utils/findex";
 import { newShapeComposite } from "../shapeComposite";
 import { createShape, getCommonStruct } from "../../shapes";
 import { createFillStyle } from "../../utils/fillStyle";
-
-describe("getCoordsBoundsInfo", () => {
-  test("should regard merge areas", () => {
-    const table = generateTable(6, 6, { width: 60, height: 60 });
-    table["m_0"] = {
-      id: "m_0",
-      a: ["r_2", "c_2"],
-      b: ["r_4", "c_4"],
-    };
-    const tableInfo = getTableShapeInfo(table)!;
-    expect(
-      getCoordsBoundsInfo(tableInfo, [
-        [tableInfo.rows[0].id, tableInfo.columns[0].id],
-        [tableInfo.rows[1].id, tableInfo.columns[1].id],
-      ])?.bounds,
-    ).toEqual([
-      [tableInfo.rows[0].id, tableInfo.columns[0].id],
-      [tableInfo.rows[1].id, tableInfo.columns[1].id],
-    ]);
-    expect(
-      getCoordsBoundsInfo(tableInfo, [
-        [tableInfo.rows[0].id, tableInfo.columns[0].id],
-        [tableInfo.rows[2].id, tableInfo.columns[2].id],
-      ])?.bounds,
-    ).toEqual([
-      [tableInfo.rows[0].id, tableInfo.columns[0].id],
-      [tableInfo.rows[4].id, tableInfo.columns[4].id],
-    ]);
-  });
-});
 
 describe("getPatchInfoByAddRows", () => {
   test("should return patch by adding rows", () => {

@@ -1,14 +1,13 @@
 import { IVec2 } from "okageo";
 import { createShape } from "../../../../shapes";
 import { RectangleShape } from "../../../../shapes/rectangle";
-import { getTableShapeInfo, getTableSizeByInfo, TableShape } from "../../../../shapes/table/table";
+import { getCoordsBoundsInfo, getTableShapeInfo, getTableSizeByInfo, TableShape } from "../../../../shapes/table/table";
 import { applyFillStyle, createFillStyle } from "../../../../utils/fillStyle";
 import { applyLocalSpace, scaleGlobalAlpha } from "../../../../utils/renderer";
 import { createStrokeStyle } from "../../../../utils/strokeStyle";
 import { newBoundingBox } from "../../../boundingBox";
 import {
   generateTableMeta,
-  getCoordsBoundsInfo,
   getPatchByDeleteLines,
   getPatchByMergeCells,
   getPatchByUnmergeCells,
