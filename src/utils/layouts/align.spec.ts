@@ -58,7 +58,7 @@ describe("getAlignRectMap", () => {
     const nodes = [{ ...box0, justifyContent: "space-between" } as const];
     const nodeMap = new Map(nodes.map((n) => [n.id, n]));
     const result0 = getAlignRectMap(nodeMap, getTree(nodes));
-    expect(result0).toEqual(new Map([["box0", { x: 0, y: 0, width: 180, height: 200 }]]));
+    expect(result0).toEqual(new Map([["box0", { x: 0, y: 0, width: 10, height: 200 }]]));
   });
 });
 

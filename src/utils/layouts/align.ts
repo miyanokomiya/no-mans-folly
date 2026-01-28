@@ -5,8 +5,6 @@ import { LayoutFn, LayoutNode, toAbsoluteRectMap } from "./core";
 import { getWrapperRect } from "../geometry";
 import { getNegativePaddingRect } from "../boxPadding";
 
-const EMPTY_SIZE = 180;
-
 export type AlignLayoutNode = AlignLayoutBox | AlignLayoutEntity;
 
 interface AlignLayoutBase extends LayoutNode {
@@ -77,9 +75,7 @@ function calcAlignRectMapForRoot(
   ret: Map<string, IRectangle>,
   nodeMap: Map<string, AlignLayoutNode>,
   treeNode: TreeNode,
-  options = {
-    emptySize: EMPTY_SIZE,
-  },
+  options = {},
 ) {
   const node = nodeMap.get(treeNode.id)!;
   if (node.type === "box") {
@@ -100,9 +96,7 @@ function calcAlignRectMap(
   direction: Direction2,
   from: IVec2,
   remain: number,
-  options = {
-    emptySize: EMPTY_SIZE,
-  },
+  _options = {},
   top?: boolean,
 ): boolean | undefined {
   const node = nodeMap.get(treeNode.id)!;
@@ -166,7 +160,7 @@ function calcAlignRectMap(
 
       const rect = childWrapperRect
         ? getNegativePaddingRect(node.padding ? { value: node.padding } : undefined, childWrapperRect)
-        : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
+        : node.rect;
       const boxRect = {
         ...from,
         width: node.baseWidth === undefined ? rect.width : Math.max(rect.width, node.baseWidth),
@@ -228,7 +222,7 @@ function calcAlignRectMap(
 
       const rect = childWrapperRect
         ? getNegativePaddingRect(node.padding ? { value: node.padding } : undefined, childWrapperRect)
-        : { ...node.rect, ...from, width: options.emptySize, height: options.emptySize };
+        : node.rect;
       const boxRect = {
         ...from,
         width: node.baseWidth === undefined ? rect.width : Math.max(rect.width, node.baseWidth),

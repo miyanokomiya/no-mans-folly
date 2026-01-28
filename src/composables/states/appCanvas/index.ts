@@ -28,7 +28,6 @@ import { newShapeAttachingState } from "./attachments/shapeAttachingState";
 import { newMovingShapeInTableState } from "./table/movingShapeInTableState";
 import { newMovingShapeInAlignState } from "./align/movingShapeInAlignState";
 import { newTextEditingState } from "./text/textEditingState";
-import {newTableSelectedState} from "./table/tableSelectedState";
 
 // TODO: Should hoist all states here to avoid circular dependencies.
 export const stateGenerators = {
