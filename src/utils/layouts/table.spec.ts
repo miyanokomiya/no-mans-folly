@@ -259,14 +259,14 @@ describe("tableLayout", () => {
       },
     ]);
     expect(result0.map((r) => [r.id, r.rect])).toEqual([
-      ["root", { height: 141, width: 201, x: 0, y: 0 }],
+      ["root", { height: 240, width: 300, x: 0, y: 0 }],
       ["0_0", { height: 10, width: 20, x: 10, y: 0 }],
       ["0_1", { height: 10, width: 20, x: 57.5, y: 0 }],
       ["1_0", { height: 20, width: 40, x: 0, y: 12.5 }],
       ["1_1", { height: 10, width: 20, x: 40, y: 20 }],
       ["2_2", { height: 20, width: 40, x: 60, y: 15 }],
     ]);
-    expect((result0[0] as TableLayoutBox).rows.map((l) => l.size)).toEqual([10, 25, 5, 100, 1]);
-    expect((result0[0] as TableLayoutBox).columns.map((l) => l.size)).toEqual([40, 55, 5, 100, 1]);
+    expect((result0[0] as TableLayoutBox).rows.map((l) => l.size)).toEqual([10, 25, 5, 100, 100]);
+    expect((result0[0] as TableLayoutBox).columns.map((l) => l.size)).toEqual([40, 55, 5, 100, 100]);
   });
 });

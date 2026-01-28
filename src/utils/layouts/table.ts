@@ -366,10 +366,18 @@ function getLineSizeInfo(
     let size = row.size;
     if (row.fit) {
       size = row.baseSize ?? 1;
+      let hasContent = false;
       node.columns.forEach((_, columnIndex) => {
-        const contentSize = cellContentSizeMap.get(getIndexKey([rowIndex, columnIndex]))?.height ?? 0;
-        size = Math.max(size, contentSize);
+        const contentSize = cellContentSizeMap.get(getIndexKey([rowIndex, columnIndex]))?.height;
+        if (contentSize !== undefined) {
+          hasContent = true;
+          size = Math.max(size, contentSize);
+        }
       });
+      // Keep current size when there's no content
+      if (!hasContent) {
+        size = row.size;
+      }
     }
 
     return size;
@@ -378,10 +386,18 @@ function getLineSizeInfo(
     let size = column.size;
     if (column.fit) {
       size = column.baseSize ?? 1;
+      let hasContent = false;
       node.rows.forEach((_, rowIndex) => {
-        const contentSize = cellContentSizeMap.get(getIndexKey([rowIndex, columnIndex]))?.width ?? 0;
-        size = Math.max(size, contentSize);
+        const contentSize = cellContentSizeMap.get(getIndexKey([rowIndex, columnIndex]))?.width;
+        if (contentSize !== undefined) {
+          hasContent = true;
+          size = Math.max(size, contentSize);
+        }
       });
+      // Keep current size when there's no content
+      if (!hasContent) {
+        size = column.size;
+      }
     }
 
     return size;
