@@ -290,6 +290,8 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
               findex: ctx.createLastIndex(),
               parentId: targetShape.id,
               parentMeta,
+              width: column.size,
+              height: row.size,
               lcH: 1,
               lcV: 1,
               fill: createFillStyle({ disabled: true }),
