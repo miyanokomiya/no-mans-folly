@@ -191,4 +191,80 @@ describe("tableLayout", () => {
       ["2_2", { height: 10, width: 20, x: 240, y: 245 }],
     ]);
   });
+
+  test("should handle fit option of lines", () => {
+    const result0 = tableLayout([
+      {
+        ...root3x3,
+        columns: [
+          { id: "c0", size: 5, fit: true, baseSize: 1 },
+          { id: "c1", size: 5, fit: true, baseSize: 1 },
+          { id: "c2", size: 5 },
+          { id: "c3", size: 100 },
+          { id: "c4", size: 100, fit: true, baseSize: 1 },
+        ],
+        rows: [
+          { id: "r0", size: 5, fit: true, baseSize: 2 },
+          { id: "r1", size: 5, fit: true, baseSize: 1 },
+          { id: "r2", size: 5 },
+          { id: "r3", size: 100 },
+          { id: "r4", size: 100, fit: true, baseSize: 1 },
+        ],
+        mergeAreas: [
+          [
+            [1, 1],
+            [2, 2],
+          ],
+        ],
+      },
+      {
+        id: "0_0",
+        findex: "Aa",
+        type: "entity",
+        parentId: "root",
+        coords: ["r0", "c0"],
+        rect: { x: 0, y: 0, width: 20, height: 10 },
+      },
+      {
+        id: "0_1",
+        findex: "Aba",
+        type: "entity",
+        parentId: "root",
+        coords: ["r0", "c1"],
+        rect: { x: 0, y: 0, width: 20, height: 10 },
+      },
+      {
+        id: "1_0",
+        findex: "Cc",
+        type: "entity",
+        parentId: "root",
+        coords: ["r1", "c0"],
+        rect: { x: 0, y: 0, width: 40, height: 20 },
+      },
+      {
+        id: "1_1",
+        findex: "Dd",
+        type: "entity",
+        parentId: "root",
+        coords: ["r1", "c1"],
+        rect: { x: 0, y: 0, width: 20, height: 10 },
+      },
+      {
+        id: "2_2",
+        findex: "Ee",
+        type: "entity",
+        parentId: "root",
+        coords: ["r2", "c2"],
+        rect: { x: 0, y: 0, width: 40, height: 20 },
+      },
+    ]);
+    expect(result0.map((r) => [r.id, r.rect])).toEqual([
+      ["root", { height: 141, width: 201, x: 0, y: 0 }],
+      ["0_0", { height: 10, width: 20, x: 10, y: 0 }],
+      ["0_1", { height: 10, width: 20, x: 57.5, y: 0 }],
+      ["1_0", { height: 20, width: 40, x: 0, y: 12.5 }],
+      ["1_1", { height: 10, width: 20, x: 40, y: 20 }],
+      ["2_2", { height: 20, width: 40, x: 60, y: 15 }],
+    ]);
+  });
 });

@@ -1,4 +1,4 @@
-import { IRectangle, IVec2 } from "okageo";
+import { IRectangle } from "okageo";
 import { getTree, TreeNode } from "../tree";
 import { LayoutFn, LayoutNode, toAbsoluteRectMap } from "./core";
 import { divideSafely, MergeArea } from "../geometry";
@@ -20,13 +20,23 @@ export interface TableLayoutEntity extends TableLayoutBase {
   coords: TableCoords;
 }
 
-type TableLayoutColumn = { id: string; size: number };
-type TableLayoutRow = { id: string; size: number };
+/**
+ * fit: When true, the line adjust its size according to its content while keeping "baseSize" as minimum
+ */
+export type TableLayoutLineValue = {
+  size: number;
+  fit?: boolean;
+  baseSize?: number;
+};
+
+type TableLayoutLine = TableLayoutLineValue & {
+  id: string;
+};
 
 export interface TableLayoutBox extends TableLayoutBase {
   type: "box";
-  columns: TableLayoutColumn[];
-  rows: TableLayoutRow[];
+  columns: TableLayoutLine[];
+  rows: TableLayoutLine[];
   mergeAreas?: MergeArea[];
 }
 
@@ -75,7 +85,7 @@ function calcTableRectMapForRoot(
       mergeAreaIndexMap.set(getIndexKey(from), val);
     });
 
-    calcTableRectMap(ret, nodeMap, treeNode, mergeAreaIndexMap, { x: 0, y: 0 });
+    calcTableRectMap(ret, nodeMap, treeNode, mergeAreaIndexMap);
   } else {
     ret.set(node.id, node.rect);
   }
@@ -86,7 +96,6 @@ function calcTableRectMap(
   nodeMap: Map<string, TableLayoutNode>,
   treeNode: TreeNode,
   mergeAreaIndexMap: Map<string, [number, number][]>,
-  from: IVec2,
 ) {
   const node = nodeMap.get(treeNode.id)! as TableLayoutBox;
 
@@ -96,18 +105,24 @@ function calcTableRectMap(
     matrixMap.add(cNode.coords!, c);
   });
 
+  const lineSizeInfo = getLineSizeInfo(nodeMap, treeNode, mergeAreaIndexMap, matrixMap);
+
   const gapC = 0;
   let cellX = 0;
+  let tableW = 0;
   let cellY = 0;
   const checkedMap = new Map<number, Set<number>>();
 
   node.rows.forEach((row, rowIndex) => {
+    const rowSize = lineSizeInfo.rows[rowIndex];
     let y = cellY;
 
     node.columns.forEach((column, columnIndex) => {
+      const columnSize = lineSizeInfo.columns[columnIndex];
+
       const checkedSet = checkedMap.get(rowIndex);
       if (checkedSet?.has(columnIndex)) {
-        cellX += column.size;
+        cellX += columnSize;
         return;
       }
 
@@ -134,24 +149,23 @@ function calcTableRectMap(
         otherItems.forEach((item) => items.add(item));
       }
 
-      let size: Size = { width: column.size, height: row.size };
+      let effectiveCellSize: Size = { width: columnSize, height: rowSize };
       // Derive the size of the merged area
       if (mergeCellSet.length > 0) {
-        let width = size.width;
-        let height = size.height;
+        let { width, height } = effectiveCellSize;
         const checkedRow = new Set([rowIndex]);
         const checkedColumn = new Set([columnIndex]);
         mergeCellSet.forEach(([r, c]) => {
           if (!checkedRow.has(r)) {
-            height += node.rows[r].size;
+            height += lineSizeInfo.rows[r];
             checkedRow.add(r);
           }
           if (!checkedColumn.has(c)) {
-            width += node.columns[c].size;
+            width += lineSizeInfo.columns[c];
             checkedColumn.add(c);
           }
         });
-        size = { width, height };
+        effectiveCellSize = { width, height };
       }
 
       const itemList = Array.from(items).map((c) => nodeMap.get(c.id)!);
@@ -161,7 +175,6 @@ function calcTableRectMap(
       }
 
       const hasFullHItem = itemList.some((cNode) => cNode.fullH);
-
       let itemBoundsWidth = 0;
       let fixedItemBoundsWidth = 0;
       itemList.forEach((cNode) => {
@@ -170,27 +183,32 @@ function calcTableRectMap(
           fixedItemBoundsWidth += cNode.rect.width;
         }
       });
-      const remainWidth = hasFullHItem ? 0 : size.width - itemBoundsWidth;
+      const remainWidth = hasFullHItem ? 0 : effectiveCellSize.width - itemBoundsWidth;
       let x = cellX + remainWidth / 2;
 
-      const fullHScale = divideSafely(size.width - fixedItemBoundsWidth, itemBoundsWidth - fixedItemBoundsWidth, 1);
+      const fullHScale = divideSafely(
+        effectiveCellSize.width - fixedItemBoundsWidth,
+        itemBoundsWidth - fixedItemBoundsWidth,
+        1,
+      );
       itemList.forEach((cNode) => {
         const width = cNode.rect.width * (cNode.fullH ? fullHScale : 1);
-        const height = cNode.fullV ? size.height : cNode.rect.height;
-        const paddingY = (size.height - height) / 2;
+        const height = cNode.fullV ? effectiveCellSize.height : cNode.rect.height;
+        const paddingY = (effectiveCellSize.height - height) / 2;
         const cRect = { width, height, x, y: y + paddingY };
         ret.set(cNode.id, cRect);
         x += cRect.width + gapC;
       });
 
-      cellX += column.size;
+      cellX += columnSize;
     });
 
-    cellY += row.size;
+    cellY += rowSize;
+    tableW = Math.max(tableW, cellX);
     cellX = 0;
   });
 
-  const boxRect = { ...from, width: node.rect.width, height: node.rect.height };
+  const boxRect = { x: 0, y: 0, width: tableW, height: cellY };
   ret.set(node.id, boxRect);
 }
 
@@ -227,7 +245,123 @@ function newMatrixMap<T>() {
 
   return { add, get, toMap };
 }
+type MatrixMap<T> = ReturnType<typeof newMatrixMap<T>>;
 
 function getIndexKey(val: [number, number]): string {
   return `${val[0]}:${val[1]}`;
+}
+
+function getLineSizeInfo(
+  nodeMap: Map<string, TableLayoutNode>,
+  treeNode: TreeNode,
+  mergeAreaIndexMap: Map<string, [number, number][]>,
+  matrixMap: MatrixMap<TreeNode>,
+): { rows: number[]; columns: number[] } {
+  const node = nodeMap.get(treeNode.id)! as TableLayoutBox;
+  const cellContentSizeMap = new Map<string, Size>();
+  const checkedMap = new Map<number, Set<number>>();
+
+  node.rows.forEach((row, rowIndex) => {
+    node.columns.forEach((column, columnIndex) => {
+      if (checkedMap.get(rowIndex)?.has(columnIndex)) return;
+
+      const indexKey = getIndexKey([rowIndex, columnIndex]);
+      const mergeCellSet = mergeAreaIndexMap.get(indexKey) ?? [];
+      for (const [r, c] of mergeCellSet) {
+        const v = checkedMap.get(r);
+        if (v) {
+          v.add(c);
+        } else {
+          checkedMap.set(r, new Set([c]));
+        }
+      }
+
+      // Pick items in the index cell
+      const items = matrixMap.get([row.id, column.id]) ?? new Set();
+
+      // Pick items in merged cells
+      const otherItems = new Set<TreeNode>();
+      for (const [r, c] of mergeCellSet) {
+        const others = matrixMap.get([node.rows[r].id, node.columns[c].id]);
+        others?.forEach((item) => otherItems?.add(item));
+      }
+      if (otherItems.size > 0) {
+        otherItems.forEach((item) => items.add(item));
+      }
+      if (items.size === 0) return;
+
+      const contentSize: Size = { width: 0, height: 0 };
+      items.forEach((item) => {
+        const itemNode = nodeMap.get(item.id)!;
+        contentSize.width += itemNode.rect.width;
+        contentSize.height += itemNode.rect.height;
+      });
+
+      const indexCellSize: Size = { width: column.size, height: row.size };
+      let mergedCellSize: Size = indexCellSize;
+      // Derive the size of the merged area
+      if (mergeCellSet.length > 0) {
+        let width = mergedCellSize.width;
+        let height = mergedCellSize.height;
+        const checkedRow = new Set([rowIndex]);
+        const checkedColumn = new Set([columnIndex]);
+        mergeCellSet.forEach(([r, c]) => {
+          if (!checkedRow.has(r)) {
+            height += node.rows[r].size;
+            checkedRow.add(r);
+          }
+          if (!checkedColumn.has(c)) {
+            width += node.columns[c].size;
+            checkedColumn.add(c);
+          }
+        });
+        mergedCellSize = { width, height };
+      }
+
+      if (indexCellSize === mergedCellSize) {
+        cellContentSizeMap.set(indexKey, contentSize);
+      } else {
+        const otherSize = {
+          width: mergedCellSize.width - indexCellSize.width,
+          height: mergedCellSize.height - indexCellSize.height,
+        };
+        const effectiveSize = {
+          width: contentSize.width - otherSize.width,
+          height: contentSize.height - otherSize.height,
+        };
+        const indexContentSize = {
+          width: Math.max(0, effectiveSize.width),
+          height: Math.max(0, effectiveSize.height),
+        };
+        cellContentSizeMap.set(indexKey, indexContentSize);
+      }
+    });
+  });
+
+  const rows = node.rows.map((row, rowIndex) => {
+    let size = row.size;
+    if (row.fit) {
+      size = row.baseSize ?? 1;
+      node.columns.forEach((_, columnIndex) => {
+        const contentSize = cellContentSizeMap.get(getIndexKey([rowIndex, columnIndex]))?.height ?? 0;
+        size = Math.max(size, contentSize);
+      });
+    }
+
+    return size;
+  });
+  const columns = node.columns.map((column, columnIndex) => {
+    let size = column.size;
+    if (column.fit) {
+      size = column.baseSize ?? 1;
+      node.rows.forEach((_, rowIndex) => {
+        const contentSize = cellContentSizeMap.get(getIndexKey([rowIndex, columnIndex]))?.width ?? 0;
+        size = Math.max(size, contentSize);
+      });
+    }
+
+    return size;
+  });
+
+  return { rows, columns };
 }
