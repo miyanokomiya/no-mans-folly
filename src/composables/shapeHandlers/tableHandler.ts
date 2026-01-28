@@ -616,6 +616,35 @@ export function renderHighlightCells(
   });
 }
 
+export function renderHighlightCellBorderss(
+  ctx: CanvasCTX,
+  style: StyleScheme,
+  scale: number,
+  tableInfo: TableShapeInfo,
+  cells: TableCoords[],
+) {
+  const effectiveCells = getEffectiveCells(tableInfo, cells);
+  if (effectiveCells.length === 0) return;
+
+  const coordsLocations = getTableCoordsLocations(tableInfo);
+  const rowIndexMap = new Map<string, number>(tableInfo.rows.map((row, r) => [row.id, r]));
+  const columnIndexMap = new Map<string, number>(tableInfo.columns.map((column, c) => [column.id, c]));
+  applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 6 * scale });
+  ctx.beginPath();
+  effectiveCells.forEach((coord) => {
+    const r = rowIndexMap.get(coord[0]);
+    const c = columnIndexMap.get(coord[1]);
+    if (r === undefined || c === undefined) return;
+
+    const top = coordsLocations.rows[r];
+    const bottom = coordsLocations.rows[r + 1];
+    const left = coordsLocations.columns[c];
+    const right = coordsLocations.columns[c + 1];
+    ctx.rect(left, top, right - left, bottom - top);
+  });
+  ctx.stroke();
+}
+
 export function getEffectiveCells(tableInfo: TableShapeInfo, cells: TableCoords[]): TableCoords[] {
   const coordsByKey = new Map<string, TableCoords>();
   cells.forEach((cell) => {

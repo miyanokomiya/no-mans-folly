@@ -3,7 +3,7 @@ import { createShape } from "../../../../shapes";
 import { RectangleShape } from "../../../../shapes/rectangle";
 import { getCoordsBoundsInfo, getTableShapeInfo, getTableSizeByInfo, TableShape } from "../../../../shapes/table/table";
 import { applyFillStyle, createFillStyle } from "../../../../utils/fillStyle";
-import { applyLocalSpace, scaleGlobalAlpha } from "../../../../utils/renderer";
+import { applyLocalSpace } from "../../../../utils/renderer";
 import { createStrokeStyle } from "../../../../utils/strokeStyle";
 import { newBoundingBox } from "../../../boundingBox";
 import {
@@ -19,6 +19,7 @@ import {
   newResizeColumn,
   newResizeRow,
   newTableHandler,
+  renderHighlightCellBorderss,
   renderHighlightCells,
   TableHandler,
 } from "../../../shapeHandlers/tableHandler";
@@ -504,38 +505,38 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
         const tableInfo = getTableShapeInfo(targetShape);
         if (!tableInfo) return;
 
+        const style = ctx.getStyleScheme();
+        const scale = ctx.getScale();
         const renderFns: (() => void)[] = [
-          () => renderHighlightCells(renderCtx, style, tableInfo, tableSelectable.getSelectedCoords()),
+          () => renderHighlightCellBorderss(renderCtx, style, scale, tableInfo, tableSelectable.getSelectedCoords()),
         ];
         const shapeHandler = getters.getShapeHandler();
         const hitResult = shapeHandler.retrieveHitResult();
         if (hitResult?.type === "area-cell") {
           if (hitResult.marker) {
-            renderFns.push(() =>
-              scaleGlobalAlpha(renderCtx, 0.2, () => {
-                applyFillStyle(renderCtx, { color: style.selectionPrimary });
-                renderCtx.beginPath();
-                renderCtx.rect(hitResult.rect.x, hitResult.rect.y, hitResult.rect.width, hitResult.rect.height);
-                renderCtx.fill();
-              }),
-            );
+            const row = tableInfo.rows[hitResult.coords[0]];
+            const column = tableInfo.columns[hitResult.coords[1]];
+            if (row && column) {
+              renderFns.push(() => renderHighlightCells(renderCtx, style, tableInfo, [[row.id, column.id]]));
+            }
           }
 
           // Show the marker
           const markerRect = hitResult.markerRect;
-          renderFns.push(() =>
-            scaleGlobalAlpha(renderCtx, 0.5, () => {
+          renderFns.push(() => {
+            if (hitResult.marker) {
+              applyFillStyle(renderCtx, { color: style.selectionSecondaly });
+            } else {
               applyFillStyle(renderCtx, { color: style.selectionPrimary });
-              renderCtx.beginPath();
-              renderCtx.rect(markerRect.x, markerRect.y, markerRect.width, markerRect.height);
-              renderCtx.fill();
-            }),
-          );
+            }
+            renderCtx.beginPath();
+            renderCtx.rect(markerRect.x, markerRect.y, markerRect.width, markerRect.height);
+            renderCtx.fill();
+          });
         }
 
         if (renderFns.length === 0) return;
 
-        const style = ctx.getStyleScheme();
         const size = getTableSizeByInfo(tableInfo);
         const shapeRect = { x: targetShape.p.x, y: targetShape.p.y, width: size.width, height: size.height };
         applyLocalSpace(renderCtx, shapeRect, targetShape.rotation, () => {
