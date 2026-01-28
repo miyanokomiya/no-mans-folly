@@ -187,7 +187,7 @@ export function getNextLayout<T extends LayoutNode>(
         ret[s.id] = val;
       }
     } else {
-      // Need to deal with all children as well when the shape isn't align box.
+      // Need to deal with all children as well when the shape isn't layout box.
       shapeComposite.getAllTransformTargets([s.id]).forEach((target) => {
         const val = shapeComposite.transformShape(target, affine);
         if (!isObjectEmpty(val)) {

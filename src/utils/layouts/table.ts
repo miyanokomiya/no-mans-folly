@@ -43,52 +43,73 @@ export interface TableLayoutBox extends TableLayoutBase {
 export const tableLayout: LayoutFn<TableLayoutNode> = (src) => {
   const nodeMap = new Map(src.map((n) => [n.id, n]));
   const treeRoots = getTree(src);
-  const map = getLayoutRectMap(nodeMap, treeRoots);
-  return src.map((n) => ({ ...n, rect: map.get(n.id)! }));
+  const result = getLayoutRectMap(nodeMap, treeRoots);
+  return Array.from(result.nodeMap.values()).map((n) => ({ ...n, rect: result.rectMap.get(n.id)! }));
 };
 
-function getLayoutRectMap(nodeMap: Map<string, TableLayoutNode>, treeRoots: TreeNode[]): Map<string, IRectangle> {
-  const relativeMap = getTableRelativeRectMap(nodeMap, treeRoots);
-  return toAbsoluteRectMap(nodeMap, relativeMap, treeRoots);
+/**
+ * Line sizes can change when "fit" option is active
+ * => Returned "nodeMap" holds changed line sizes
+ */
+function getLayoutRectMap(
+  nodeMap: Map<string, TableLayoutNode>,
+  treeRoots: TreeNode[],
+): { rectMap: Map<string, IRectangle>; nodeMap: Map<string, TableLayoutNode> } {
+  const relativeInfo = getTableRelativeRectMap(nodeMap, treeRoots);
+  const absRectMap = toAbsoluteRectMap(nodeMap, relativeInfo.rectMap, treeRoots);
+  return { rectMap: absRectMap, nodeMap: relativeInfo.nodeMap };
 }
 
 function getTableRelativeRectMap(
   nodeMap: Map<string, TableLayoutNode>,
   treeRoots: TreeNode[],
-): Map<string, IRectangle> {
+): { rectMap: Map<string, IRectangle>; nodeMap: Map<string, TableLayoutNode> } {
   const ret = new Map<string, IRectangle>();
+  const retNodeMap = new Map<string, TableLayoutNode>();
 
   treeRoots.forEach((t) => {
-    calcTableRectMapForRoot(ret, nodeMap, t);
+    const node = nodeMap.get(t.id)!;
+    if (node.type === "box") {
+      const lineSizeInfo = calcTableRectMapForRoot(ret, nodeMap, t);
+      retNodeMap.set(node.id, {
+        ...node,
+        rows: node.rows.map((l, i) => ({ ...l, size: lineSizeInfo.rows[i] })),
+        columns: node.columns.map((l, i) => ({ ...l, size: lineSizeInfo.columns[i] })),
+      });
+
+      t.children.forEach((c) => {
+        const cNode = nodeMap.get(c.id)!;
+        retNodeMap.set(c.id, cNode);
+      });
+    } else {
+      ret.set(node.id, node.rect);
+      retNodeMap.set(node.id, node);
+    }
   });
 
-  return ret;
+  return { rectMap: ret, nodeMap: retNodeMap };
 }
 
 function calcTableRectMapForRoot(
   ret: Map<string, IRectangle>,
   nodeMap: Map<string, TableLayoutNode>,
   treeNode: TreeNode,
-) {
-  const node = nodeMap.get(treeNode.id)!;
-  if (node.type === "box") {
-    const mergeAreaIndexMap = new Map<string, [number, number][]>();
-    node.mergeAreas?.forEach((m) => {
-      const from = m[0];
-      const to = m[1];
-      const val: [number, number][] = [];
-      for (let r = from[0]; r <= to[0]; r++) {
-        for (let c = from[1]; c <= to[1]; c++) {
-          val.push([r, c]);
-        }
+): LineSizeInfo {
+  const node = nodeMap.get(treeNode.id)! as TableLayoutBox;
+  const mergeAreaIndexMap = new Map<string, [number, number][]>();
+  node.mergeAreas?.forEach((m) => {
+    const from = m[0];
+    const to = m[1];
+    const val: [number, number][] = [];
+    for (let r = from[0]; r <= to[0]; r++) {
+      for (let c = from[1]; c <= to[1]; c++) {
+        val.push([r, c]);
       }
-      mergeAreaIndexMap.set(getIndexKey(from), val);
-    });
+    }
+    mergeAreaIndexMap.set(getIndexKey(from), val);
+  });
 
-    calcTableRectMap(ret, nodeMap, treeNode, mergeAreaIndexMap);
-  } else {
-    ret.set(node.id, node.rect);
-  }
+  return calcTableRectMap(ret, nodeMap, treeNode, mergeAreaIndexMap);
 }
 
 function calcTableRectMap(
@@ -96,7 +117,7 @@ function calcTableRectMap(
   nodeMap: Map<string, TableLayoutNode>,
   treeNode: TreeNode,
   mergeAreaIndexMap: Map<string, [number, number][]>,
-) {
+): LineSizeInfo {
   const node = nodeMap.get(treeNode.id)! as TableLayoutBox;
 
   const matrixMap = newMatrixMap<TreeNode>();
@@ -210,6 +231,7 @@ function calcTableRectMap(
 
   const boxRect = { x: 0, y: 0, width: tableW, height: cellY };
   ret.set(node.id, boxRect);
+  return lineSizeInfo;
 }
 
 function newMatrixMap<T>() {
@@ -251,12 +273,14 @@ function getIndexKey(val: [number, number]): string {
   return `${val[0]}:${val[1]}`;
 }
 
+type LineSizeInfo = { rows: number[]; columns: number[] };
+
 function getLineSizeInfo(
   nodeMap: Map<string, TableLayoutNode>,
   treeNode: TreeNode,
   mergeAreaIndexMap: Map<string, [number, number][]>,
   matrixMap: MatrixMap<TreeNode>,
-): { rows: number[]; columns: number[] } {
+): LineSizeInfo {
   const node = nodeMap.get(treeNode.id)! as TableLayoutBox;
   const cellContentSizeMap = new Map<string, Size>();
   const checkedMap = new Map<number, Set<number>>();

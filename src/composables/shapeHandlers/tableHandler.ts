@@ -9,6 +9,7 @@ import {
   isSame,
   isZero,
   IVec2,
+  multiAffines,
   rotate,
   sub,
 } from "okageo";
@@ -36,6 +37,7 @@ import {
   CellInfo,
   getDistanceBetweenPointAndRect,
   getRectPoints,
+  getRotatedAtAffine,
   getRotateFn,
   getRotationAffines,
   groupCellsIntoRectangles,
@@ -47,15 +49,17 @@ import {
   TAU,
 } from "../../utils/geometry";
 import { ShapeComposite } from "../shapeComposite";
-import { tableLayout, TableLayoutNode } from "../../utils/layouts/table";
+import { tableLayout, TableLayoutBox, TableLayoutNode } from "../../utils/layouts/table";
 import { CanvasCTX } from "../../utils/types";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
-import { getNextLayout, LayoutNodeWithMeta } from "./layoutHandler";
+import { LayoutNodeWithMeta } from "./layoutHandler";
 import { defineShapeHandler } from "./core";
 import { applyLocalSpace, applyPath, renderPlusIcon, scaleGlobalAlpha } from "../../utils/renderer";
 import { generateNKeysBetweenAllowSame } from "../../utils/findex";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
+import { LayoutFn } from "../../utils/layouts/core";
+import { isObjectEmpty, toMap } from "../../utils/commons";
 
 const BORDER_THRESHOLD = 8;
 const ANCHOR_SIZE = 10;
@@ -658,6 +662,100 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
       });
     });
   }
+}
+
+function getNextLayout(
+  shapeComposite: ShapeComposite,
+  rootId: string,
+  layoutNodes: LayoutNodeWithMeta<TableLayoutNode>[],
+  layoutFn: LayoutFn<TableLayoutNode>,
+): { [id: string]: Partial<Shape> } {
+  const rootShape = shapeComposite.mergedShapeMap[rootId] as TableShape;
+  const layoutNodeMap = toMap(layoutNodes);
+  const tableNode = layoutNodeMap[rootId] as TableLayoutBox;
+  const result = layoutFn(layoutNodes);
+
+  const rootRotateAffine =
+    rootShape.rotation !== 0 ? getRotatedAtAffine(getRectCenter(tableNode.rect), rootShape.rotation) : undefined;
+  const ret: { [id: string]: Partial<Shape> } = {};
+
+  result.forEach((r) => {
+    const s = shapeComposite.shapeMap[r.id];
+    const srcNode = layoutNodeMap[r.id];
+    const v = sub(r.rect, srcNode.rect);
+    const affines: AffineMatrix[] = [];
+    if (rootRotateAffine) {
+      affines.push(rootRotateAffine);
+    }
+    if (!isZero(v)) {
+      affines.push([1, 0, 0, 1, v.x, v.y]);
+    }
+
+    // Don't handle table resize here
+    // => Its size should change via its rows and columns
+    if (s.id !== rootId && (r.rect.width !== srcNode.rect.width || r.rect.height !== srcNode.rect.height)) {
+      affines.push(
+        [1, 0, 0, 1, srcNode.rect.x, srcNode.rect.y],
+        [r.rect.width / srcNode.rect.width, 0, 0, r.rect.height / srcNode.rect.height, 0, 0],
+        [1, 0, 0, 1, -srcNode.rect.x, -srcNode.rect.y],
+      );
+    }
+
+    if (s.rotation !== 0) {
+      affines.push(getRotatedAtAffine(getRectCenter(srcNode.rect), -s.rotation));
+    }
+
+    if (s.id === rootId) {
+      let val: Partial<TableShape> = {};
+
+      // Keep top-left position of the table when it's rotated
+      if (rootRotateAffine) {
+        const originDiff = sub(
+          applyAffine(rootRotateAffine, srcNode.rect),
+          applyAffine(getRotatedAtAffine(getRectCenter(r.rect), s.rotation), r.rect),
+        );
+        if (!isZero(originDiff)) {
+          affines.push([1, 0, 0, 1, originDiff.x, originDiff.y]);
+        }
+      }
+
+      if (affines.length > 0) {
+        val = shapeComposite.transformShape(s, multiAffines(affines));
+      }
+
+      // Apply line resizings
+      const tableNodeResult = r as TableLayoutBox;
+      tableNodeResult.rows.forEach((row, i) => {
+        if (row.size !== tableNode.rows[i].size) {
+          const id = row.id as TableRowKey;
+          val[id] = { ...rootShape[id]!, size: row.size };
+        }
+      });
+      tableNodeResult.columns.forEach((column, i) => {
+        if (column.size !== tableNode.columns[i].size) {
+          const id = column.id as TableColumnKey;
+          val[id] = { ...rootShape[id]!, size: column.size };
+        }
+      });
+
+      if (!isObjectEmpty(val)) {
+        ret[s.id] = val;
+      }
+    } else {
+      if (affines.length === 0) return;
+
+      // Transfrom each child as a whole
+      const affine = multiAffines(affines);
+      shapeComposite.getAllTransformTargets([s.id]).forEach((target) => {
+        const val = shapeComposite.transformShape(target, affine);
+        if (!isObjectEmpty(val)) {
+          ret[target.id] = val;
+        }
+      });
+    }
+  });
+
+  return ret;
 }
 
 /**

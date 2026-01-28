@@ -266,5 +266,7 @@ describe("tableLayout", () => {
       ["1_1", { height: 10, width: 20, x: 40, y: 20 }],
       ["2_2", { height: 20, width: 40, x: 60, y: 15 }],
     ]);
+    expect((result0[0] as TableLayoutBox).rows.map((l) => l.size)).toEqual([10, 25, 5, 100, 1]);
+    expect((result0[0] as TableLayoutBox).columns.map((l) => l.size)).toEqual([40, 55, 5, 100, 1]);
   });
 });
