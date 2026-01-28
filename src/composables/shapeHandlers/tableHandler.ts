@@ -868,8 +868,8 @@ export function newResizeColumn(table: TableShape, coord: number, opposite = fal
       const nextLineWidth = deroratedResizedLinePath[2].x - deroratedResizedLinePath[0].x;
       const diff = nextLineWidth - lineBounds.width;
       const patch: Partial<TableShape> = {};
-      // Discard "fit" related field
-      patch[column.id] = { id: column.id, findex: column.findex, size: column.size + diff };
+      const size = column.size + diff;
+      patch[column.id] = { ...column, size, baseSize: size };
       const nextTarget = { ...table, ...patch } as TableShape;
       const nextInfo = getColumnBoundsInfo(nextTarget, coord)!;
       const nextOrigin = opposite ? nextInfo.path[2] : nextInfo.path[0];
@@ -923,8 +923,8 @@ export function newResizeRow(table: TableShape, coord: number, opposite = false)
       const nextLineHeight = deroratedResizedLinePath[2].y - deroratedResizedLinePath[0].y;
       const diff = nextLineHeight - lineBounds.height;
       const patch: Partial<TableShape> = {};
-      // Discard "fit" related field
-      patch[row.id] = { id: row.id, findex: row.findex, size: row.size + diff };
+      const size = row.size + diff;
+      patch[row.id] = { ...row, size, baseSize: size };
       const nextTarget = { ...table, ...patch } as TableShape;
       const nextInfo = getRowBoundsInfo(nextTarget, coord)!;
       const nextOrigin = opposite ? nextInfo.path[2] : nextInfo.path[0];
@@ -1277,10 +1277,9 @@ export function getPatchByClearCellStyle(tableInfo: TableShapeInfo, coordsList: 
 
 export function getPatchByFitLines(table: TableShape, lineIds: string[]): Partial<TableShape> {
   return lineIds.reduce<Partial<TableShape>>((p, v) => {
-    const key = v as TableRowKey | TableColumnKey;
-    const line = table[key];
+    const line = table[v as TableRowKey | TableColumnKey];
     if (line) {
-      p[key] = { id: line.id as any, findex: line.findex, size: line.size, fit: true };
+      p[line.id] = { ...(line as typeof line & { id: any }), baseSize: line.size, fit: true };
     }
     return p;
   }, {});
