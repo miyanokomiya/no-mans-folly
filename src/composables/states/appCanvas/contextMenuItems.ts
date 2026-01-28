@@ -325,7 +325,7 @@ export const CONTEXT_MENU_ITEM_SRC = {
   get TABLE_ROW_UNFIT_CONTENT() {
     return {
       label: i18n.t("contextmenu.table.line_unfit_content"),
-      key: "TABLE_ROW_FIT_CONTENT",
+      key: "TABLE_ROW_UNFIT_CONTENT",
     };
   },
   get TABLE_COLUMN_FIT_CONTENT() {

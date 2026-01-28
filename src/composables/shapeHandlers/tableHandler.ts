@@ -59,7 +59,7 @@ import { generateNKeysBetweenAllowSame } from "../../utils/findex";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
 import { LayoutFn } from "../../utils/layouts/core";
-import { isObjectEmpty, toMap } from "../../utils/commons";
+import { isObjectEmpty, splitList, toMap } from "../../utils/commons";
 
 const BORDER_THRESHOLD = 8;
 const ANCHOR_SIZE = 10;
@@ -295,9 +295,24 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
 
       const borderAnchorSize = 2 * BORDER_THRESHOLD * scale;
       const borderAnchors = getBorderAnchors(scale);
+      const [fitBorderAnchors, nofitBorderAnchors] = splitList(borderAnchors, (a) => {
+        const lineCoord = Math.max(0, a.coord - 1);
+        const lines = a.type === "border-row" ? tableInfo?.rows : tableInfo?.columns;
+        return !!lines?.[lineCoord]?.fit;
+      });
+
       applyStrokeStyle(ctx, { color: style.selectionPrimary, width: borderAnchorSize });
+      scaleGlobalAlpha(ctx, 0.5, () => {
+        ctx.beginPath();
+        fitBorderAnchors.forEach((a) => {
+          ctx.moveTo(a.segment[0].x, a.segment[0].y);
+          ctx.lineTo(a.segment[1].x, a.segment[1].y);
+        });
+        ctx.stroke();
+      });
+
       ctx.beginPath();
-      borderAnchors.forEach((a) => {
+      nofitBorderAnchors.forEach((a) => {
         ctx.moveTo(a.segment[0].x, a.segment[0].y);
         ctx.lineTo(a.segment[1].x, a.segment[1].y);
       });
