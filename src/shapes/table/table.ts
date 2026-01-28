@@ -409,12 +409,18 @@ export const struct: ShapeStruct<TableShape> = {
       const scale = nextWidth / srcWidth;
       info?.columns.forEach((val) => {
         ret[val.id] = { ...val, size: Math.max(0, val.size * scale) };
+        if (val.baseSize !== undefined) {
+          ret[val.id]!.baseSize = Math.max(0, val.baseSize * scale);
+        }
       });
     }
     if (srcHeight > 0 && !isSameValue(nextHeight, srcHeight)) {
       const scale = nextHeight / srcHeight;
       info?.rows.forEach((val) => {
         ret[val.id] = { ...val, size: Math.max(0, val.size * scale) };
+        if (val.baseSize !== undefined) {
+          ret[val.id]!.baseSize = Math.max(0, val.baseSize * scale);
+        }
       });
     }
 
@@ -427,9 +433,15 @@ export const struct: ShapeStruct<TableShape> = {
     const ret: Partial<TableShape> = {};
     info.columns.forEach((val) => {
       ret[val.id] = { ...val, size: Math.max(0, val.size * scaleValue.x) };
+      if (val.baseSize !== undefined) {
+        ret[val.id]!.baseSize = Math.max(0, val.baseSize * scaleValue.x);
+      }
     });
     info.rows.forEach((val) => {
       ret[val.id] = { ...val, size: Math.max(0, val.size * scaleValue.y) };
+      if (val.baseSize !== undefined) {
+        ret[val.id]!.baseSize = Math.max(0, val.baseSize * scaleValue.y);
+      }
     });
     return ret;
   },
