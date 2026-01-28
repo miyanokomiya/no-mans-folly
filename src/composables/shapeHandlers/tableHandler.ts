@@ -65,12 +65,19 @@ const BORDER_THRESHOLD = 8;
 const ANCHOR_SIZE = 10;
 const HEAD_ANCHOR_MARGIN = 30;
 const ADD_ANCHOR_MARGIN = HEAD_ANCHOR_MARGIN + ANCHOR_SIZE;
+const CELL_ANCHOR_SIZE = 20;
 
 // "coord" is from 0 to the number of lines. 0 refers to the head line.
 type BorderAnchor = { type: "border-row" | "border-column"; coord: number; segment: ISegment; opposite?: boolean };
 type AddLineAnchor = { type: "add-row" | "add-column"; coord: number; p: IVec2 };
 type LineHeadAnchor = { type: "head-row" | "head-column"; coord: number; rect: IRectangle };
-type CellAnchor = { type: "area-cell"; coords: [number, number]; rect: IRectangle };
+type CellAnchor = {
+  type: "area-cell";
+  coords: [number, number];
+  rect: IRectangle;
+  markerRect: IRectangle;
+  marker?: boolean;
+};
 
 export type TableHitResult = BorderAnchor | AddLineAnchor | LineHeadAnchor | CellAnchor;
 
@@ -223,12 +230,11 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
     return ret;
   }
 
-  function hitTestCellAnchor(adjustedP: IVec2): CellAnchor | undefined {
-    if (!tableInfo || adjustedP.x < 0 || adjustedP.y < 0) return;
-
-    const row = coordsLocations.rows.findIndex((y, i) => i > 0 && adjustedP.y < y) - 1;
-    const column = coordsLocations.columns.findIndex((x, i) => i > 0 && adjustedP.x < x) - 1;
-    if (row < 0 || column < 0) return;
+  function getEffectiveCellInfoAt(
+    row: number,
+    column: number,
+  ): { coords: [number, number]; rect: IRectangle } | undefined {
+    if (!tableInfo) return;
 
     const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, [[tableInfo.rows[row].id, tableInfo.columns[column].id]]);
     if (!coordsBoundsInfo) return;
@@ -243,9 +249,48 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
     const top = coordsLocations.rows[adjustedRowFrom];
     const bottom = coordsLocations.rows[adjustedRowTo + 1];
     return {
-      type: "area-cell",
       coords: [adjustedRowFrom, adjustedColumnFrom],
       rect: { x: left, y: top, width: right - left, height: bottom - top },
+    };
+  }
+
+  function hitTestCellAnchorMarker(adjustedP: IVec2, scale: number): CellAnchor | undefined {
+    if (!tableInfo || adjustedP.x < 0 || adjustedP.y < 0) return;
+
+    const markerSize = CELL_ANCHOR_SIZE * scale;
+    const row = coordsLocations.rows.findIndex((y) => y <= adjustedP.y && adjustedP.y < y + markerSize);
+    const column = coordsLocations.columns.findIndex((x) => x <= adjustedP.x && adjustedP.x < x + markerSize);
+    if (row < 0 || column < 0) return;
+    if (row === coordsLocations.rows.length - 1 || column === coordsLocations.columns.length - 1) return;
+
+    const info = getEffectiveCellInfoAt(row, column);
+    if (!info) return;
+
+    return {
+      type: "area-cell",
+      coords: info.coords,
+      rect: info.rect,
+      marker: true,
+      markerRect: { x: info.rect.x, y: info.rect.y, width: markerSize, height: markerSize },
+    };
+  }
+
+  function hitTestCellAnchor(adjustedP: IVec2, scale: number): CellAnchor | undefined {
+    if (!tableInfo || adjustedP.x < 0 || adjustedP.y < 0) return;
+
+    const row = coordsLocations.rows.findIndex((y, i) => i > 0 && adjustedP.y < y) - 1;
+    const column = coordsLocations.columns.findIndex((x, i) => i > 0 && adjustedP.x < x) - 1;
+    if (row < 0 || column < 0) return;
+
+    const info = getEffectiveCellInfoAt(row, column);
+    if (!info) return;
+
+    const markerSize = CELL_ANCHOR_SIZE * scale;
+    return {
+      type: "area-cell",
+      coords: info.coords,
+      rect: info.rect,
+      markerRect: { x: info.rect.x, y: info.rect.y, width: markerSize, height: markerSize },
     };
   }
 
@@ -269,7 +314,10 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
     });
     if (headAnchor) return headAnchor;
 
-    const cellAnchor = hitTestCellAnchor(adjustedP);
+    const cellAnchorMarker = hitTestCellAnchorMarker(adjustedP, scale);
+    if (cellAnchorMarker) return cellAnchorMarker;
+
+    const cellAnchor = hitTestCellAnchor(adjustedP, scale);
     if (cellAnchor) return cellAnchor;
   }
 

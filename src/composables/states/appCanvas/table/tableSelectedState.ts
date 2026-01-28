@@ -207,7 +207,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     };
                   }
                   case "area-cell": {
-                    if (!event.data.options.shift && !isOnTable(ctx, event.data.point)) return;
+                    if (!hitResult.marker) return;
 
                     const tableInfo = getTableShapeInfo(targetShape);
                     const row = tableInfo?.rows[hitResult.coords[0]];
@@ -251,6 +251,8 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     return null;
                   }
                   case "area-cell": {
+                    if (!hitResult.marker) return;
+
                     const tableInfo = getTableShapeInfo(targetShape);
                     const row = tableInfo?.rows[hitResult.coords[0]];
                     const column = tableInfo?.columns[hitResult.coords[1]];
@@ -271,8 +273,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
           }
           case "pointerdoubleclick": {
             const hitResult = shapeHandler.hitTest(event.data.point, ctx.getScale());
-            if (hitResult?.type !== "area-cell") return;
-            if (!isOnTable(ctx, event.data.point)) return;
+            if (hitResult?.type !== "area-cell" || !isOnTable(ctx, event.data.point)) return;
 
             const tableInfo = getTableShapeInfo(targetShape);
             const row = tableInfo?.rows[hitResult.coords[0]];
@@ -508,15 +509,28 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
         ];
         const shapeHandler = getters.getShapeHandler();
         const hitResult = shapeHandler.retrieveHitResult();
-        if (hitResult?.type === "area-cell" && isOnTable(ctx, ctx.getCursorPoint())) {
-          renderFns.push(() => {
-            scaleGlobalAlpha(renderCtx, 0.2, () => {
+        if (hitResult?.type === "area-cell") {
+          if (hitResult.marker) {
+            renderFns.push(() =>
+              scaleGlobalAlpha(renderCtx, 0.2, () => {
+                applyFillStyle(renderCtx, { color: style.selectionPrimary });
+                renderCtx.beginPath();
+                renderCtx.rect(hitResult.rect.x, hitResult.rect.y, hitResult.rect.width, hitResult.rect.height);
+                renderCtx.fill();
+              }),
+            );
+          }
+
+          // Show the marker
+          const markerRect = hitResult.markerRect;
+          renderFns.push(() =>
+            scaleGlobalAlpha(renderCtx, 0.5, () => {
               applyFillStyle(renderCtx, { color: style.selectionPrimary });
               renderCtx.beginPath();
-              renderCtx.rect(hitResult.rect.x, hitResult.rect.y, hitResult.rect.width, hitResult.rect.height);
+              renderCtx.rect(markerRect.x, markerRect.y, markerRect.width, markerRect.height);
               renderCtx.fill();
-            });
-          });
+            }),
+          );
         }
 
         if (renderFns.length === 0) return;
