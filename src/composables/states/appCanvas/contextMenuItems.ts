@@ -316,6 +316,30 @@ export const CONTEXT_MENU_ITEM_SRC = {
       key: "CLEAR_TABLE_CELLS_STYLES",
     };
   },
+  get TABLE_ROW_FIT_CONTENT() {
+    return {
+      label: i18n.t("contextmenu.table.line_fit_content"),
+      key: "TABLE_ROW_FIT_CONTENT",
+    };
+  },
+  get TABLE_ROW_UNFIT_CONTENT() {
+    return {
+      label: i18n.t("contextmenu.table.line_unfit_content"),
+      key: "TABLE_ROW_FIT_CONTENT",
+    };
+  },
+  get TABLE_COLUMN_FIT_CONTENT() {
+    return {
+      label: i18n.t("contextmenu.table.line_fit_content"),
+      key: "TABLE_COLUMN_FIT_CONTENT",
+    };
+  },
+  get TABLE_COLUMN_UNFIT_CONTENT() {
+    return {
+      label: i18n.t("contextmenu.table.line_unfit_content"),
+      key: "TABLE_COLUMN_UNFIT_CONTENT",
+    };
+  },
 
   SEPARATOR: { separator: true },
 } satisfies { [key: string]: ContextMenuItem };

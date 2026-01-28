@@ -40,6 +40,7 @@ import {
   renderStrokeSVGAttributes,
 } from "../../utils/strokeStyle";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../utils/fillStyle";
+import { TableLayoutLineValue } from "../../utils/layouts/table";
 
 const DEFAULT_CELL_WIDTH = 100;
 const DEFAULT_CELL_HEIGHT = 50;
@@ -48,15 +49,13 @@ export type TableColumnKey = `c_${string}`;
 export type TableRowKey = `r_${string}`;
 export type TableCoords = [rowId: TableRowKey, columnId: TableColumnKey];
 
-export type TableColumn = {
+export type TableColumn = TableLayoutLineValue & {
   id: TableColumnKey;
-  size: number;
   findex: string;
 };
 
-export type TableRow = {
+export type TableRow = TableLayoutLineValue & {
   id: TableRowKey;
-  size: number;
   findex: string;
 };
 

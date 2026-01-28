@@ -10,7 +10,9 @@ import {
   generateTableMeta,
   getPatchByClearCellStyle,
   getPatchByDeleteLines,
+  getPatchByFitLines,
   getPatchByMergeCells,
+  getPatchByUnfitLines,
   getPatchByUnmergeCells,
   getPatchInfoByInsertColumn,
   getPatchInfoByInsertRow,
@@ -341,25 +343,39 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
 
             switch (hitResult.type) {
               case "head-row": {
-                ctx.setContextMenuList({
-                  items: [
-                    CONTEXT_MENU_ITEM_SRC.CLEAR_TABLE_CELLS_STYLES,
-                    CONTEXT_MENU_ITEM_SRC.SEPARATOR,
-                    CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_ROW,
-                  ],
-                  point: event.data.point,
-                });
+                const tableInfo = getTableShapeInfo(targetShape);
+                const row = tableInfo?.rows[hitResult.coord];
+                if (row) {
+                  ctx.setContextMenuList({
+                    items: [
+                      ...(row.fit
+                        ? [CONTEXT_MENU_ITEM_SRC.TABLE_ROW_UNFIT_CONTENT]
+                        : [CONTEXT_MENU_ITEM_SRC.TABLE_ROW_FIT_CONTENT]),
+                      CONTEXT_MENU_ITEM_SRC.CLEAR_TABLE_CELLS_STYLES,
+                      CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+                      CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_ROW,
+                    ],
+                    point: event.data.point,
+                  });
+                }
                 return null;
               }
               case "head-column": {
-                ctx.setContextMenuList({
-                  items: [
-                    CONTEXT_MENU_ITEM_SRC.CLEAR_TABLE_CELLS_STYLES,
-                    CONTEXT_MENU_ITEM_SRC.SEPARATOR,
-                    CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_COLUMN,
-                  ],
-                  point: event.data.point,
-                });
+                const tableInfo = getTableShapeInfo(targetShape);
+                const column = tableInfo?.columns[hitResult.coord];
+                if (column) {
+                  ctx.setContextMenuList({
+                    items: [
+                      ...(column.fit
+                        ? [CONTEXT_MENU_ITEM_SRC.TABLE_COLUMN_UNFIT_CONTENT]
+                        : [CONTEXT_MENU_ITEM_SRC.TABLE_COLUMN_FIT_CONTENT]),
+                      CONTEXT_MENU_ITEM_SRC.CLEAR_TABLE_CELLS_STYLES,
+                      CONTEXT_MENU_ITEM_SRC.SEPARATOR,
+                      CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_COLUMN,
+                    ],
+                    point: event.data.point,
+                  });
+                }
                 return null;
               }
               case "area-cell": {
@@ -399,6 +415,34 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                 const columns = tableSelectable.getSelectedColumns();
                 const info = getPatchByDeleteLines(shapeComposite, targetShape, columns);
                 ctx.updateShapes(info);
+                return ctx.states.newSelectionHubState;
+              }
+              case CONTEXT_MENU_ITEM_SRC.TABLE_ROW_FIT_CONTENT.key: {
+                const rows = tableSelectable.getSelectedRows();
+                ctx.updateShapes({
+                  update: { [targetShape.id]: getPatchByFitLines(targetShape, rows) },
+                });
+                return ctx.states.newSelectionHubState;
+              }
+              case CONTEXT_MENU_ITEM_SRC.TABLE_ROW_UNFIT_CONTENT.key: {
+                const rows = tableSelectable.getSelectedRows();
+                ctx.updateShapes({
+                  update: { [targetShape.id]: getPatchByUnfitLines(targetShape, rows) },
+                });
+                return ctx.states.newSelectionHubState;
+              }
+              case CONTEXT_MENU_ITEM_SRC.TABLE_COLUMN_FIT_CONTENT.key: {
+                const columns = tableSelectable.getSelectedColumns();
+                ctx.updateShapes({
+                  update: { [targetShape.id]: getPatchByFitLines(targetShape, columns) },
+                });
+                return ctx.states.newSelectionHubState;
+              }
+              case CONTEXT_MENU_ITEM_SRC.TABLE_COLUMN_UNFIT_CONTENT.key: {
+                const columns = tableSelectable.getSelectedColumns();
+                ctx.updateShapes({
+                  update: { [targetShape.id]: getPatchByUnfitLines(targetShape, columns) },
+                });
                 return ctx.states.newSelectionHubState;
               }
               case CONTEXT_MENU_ITEM_SRC.MERGE_TABLE_CELLS.key: {

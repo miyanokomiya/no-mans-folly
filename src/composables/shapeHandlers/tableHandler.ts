@@ -25,8 +25,10 @@ import {
   TableCellStyleKey,
   TableCellStyleValue,
   TableColumn,
+  TableColumnKey,
   TableCoords,
   TableRow,
+  TableRowKey,
   TableShape,
   TableShapeInfo,
 } from "../../shapes/table/table";
@@ -675,9 +677,9 @@ export function newResizeColumn(table: TableShape, coord: number, opposite = fal
       const deroratedResizedLinePath = resizedLinePath.map((p) => rotateFn(p, true));
       const nextLineWidth = deroratedResizedLinePath[2].x - deroratedResizedLinePath[0].x;
       const diff = nextLineWidth - lineBounds.width;
-      const patch: Partial<TableShape> = {
-        [column.id]: { ...column, size: column.size + diff },
-      } as any;
+      const patch: Partial<TableShape> = {};
+      // Discard "fit" related field
+      patch[column.id] = { id: column.id, findex: column.findex, size: column.size + diff };
       const nextTarget = { ...table, ...patch } as TableShape;
       const nextInfo = getColumnBoundsInfo(nextTarget, coord)!;
       const nextOrigin = opposite ? nextInfo.path[2] : nextInfo.path[0];
@@ -730,9 +732,9 @@ export function newResizeRow(table: TableShape, coord: number, opposite = false)
       const deroratedResizedLinePath = resizedLinePath.map((p) => rotateFn(p, true));
       const nextLineHeight = deroratedResizedLinePath[2].y - deroratedResizedLinePath[0].y;
       const diff = nextLineHeight - lineBounds.height;
-      const patch: Partial<TableShape> = {
-        [row.id]: { ...row, size: row.size + diff },
-      } as any;
+      const patch: Partial<TableShape> = {};
+      // Discard "fit" related field
+      patch[row.id] = { id: row.id, findex: row.findex, size: row.size + diff };
       const nextTarget = { ...table, ...patch } as TableShape;
       const nextInfo = getRowBoundsInfo(nextTarget, coord)!;
       const nextOrigin = opposite ? nextInfo.path[2] : nextInfo.path[0];
@@ -1081,6 +1083,28 @@ export function getPatchByClearCellStyle(tableInfo: TableShapeInfo, coordsList: 
   });
 
   return patch;
+}
+
+export function getPatchByFitLines(table: TableShape, lineIds: string[]): Partial<TableShape> {
+  return lineIds.reduce<Partial<TableShape>>((p, v) => {
+    const key = v as TableRowKey | TableColumnKey;
+    const line = table[key];
+    if (line) {
+      p[key] = { id: line.id as any, findex: line.findex, size: line.size, fit: true };
+    }
+    return p;
+  }, {});
+}
+
+export function getPatchByUnfitLines(table: TableShape, lineIds: string[]): Partial<TableShape> {
+  return lineIds.reduce<Partial<TableShape>>((p, v) => {
+    const key = v as TableRowKey | TableColumnKey;
+    const line = table[key];
+    if (line) {
+      p[key] = { id: line.id as any, findex: line.findex, size: line.size };
+    }
+    return p;
+  }, {});
 }
 
 function optimizeCoords(

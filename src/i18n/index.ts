@@ -163,6 +163,8 @@ const en = {
         merge_cells: "Merge cells",
         unmerge_cells: "Unmerge cells",
         clear_cell_styles: "Clear styles",
+        line_fit_content: "Fit content",
+        line_unfit_content: "Unfit content",
       },
     },
 
@@ -339,6 +341,8 @@ const ja: TranslationResource = {
         merge_cells: "セル結合",
         unmerge_cells: "セル結合解除",
         clear_cell_styles: "スタイル解除",
+        line_fit_content: "自動サイズ",
+        line_unfit_content: "自動サイズ解除",
       },
     },
 
