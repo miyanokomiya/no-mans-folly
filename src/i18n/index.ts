@@ -158,6 +158,8 @@ const en = {
       "segment.refine": "Refine segment",
       "line.combine": "[[COMBINE_LINES]]",
       table: {
+        "row.duplicate": "Duplicate row",
+        "column.duplicate": "Duplicate column",
         "row.delete": "Delete row",
         "column.delete": "Delete column",
         merge_cells: "Merge cells",
@@ -336,6 +338,8 @@ const ja: TranslationResource = {
       "segment.refine": "辺精密編集",
       "line.combine": "[[COMBINE_LINES]]",
       table: {
+        "row.duplicate": "行複製",
+        "column.duplicate": "列複製",
         "row.delete": "行削除",
         "column.delete": "列削除",
         merge_cells: "セル結合",

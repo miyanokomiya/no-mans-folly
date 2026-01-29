@@ -980,6 +980,9 @@ export function getPatchInfoByAddColumns(
   return adjustPatchByKeepPosition(shapeComposite, table, getPatchInfoByAddLines(tableInfo?.columns ?? [], coord, src));
 }
 
+/**
+ * "coord" represent the border between lines for the insertion
+ */
 export function getPatchInfoByInsertRow(
   shapeComposite: ShapeComposite,
   table: TableShape,
@@ -1001,6 +1004,9 @@ export function getPatchInfoByInsertRow(
   );
 }
 
+/**
+ * "coord" represent the border between lines for the insertion
+ */
 export function getPatchInfoByInsertColumn(
   shapeComposite: ShapeComposite,
   table: TableShape,
@@ -1027,7 +1033,7 @@ export function getPatchInfoByInsertColumn(
  * "src" is added as new lines with adjusted findex.
  * => Their IDs should already be unique in the table.
  */
-function getPatchInfoByAddLines<T extends TableRow | TableColumn>(
+export function getPatchInfoByAddLines<T extends TableRow | TableColumn>(
   lines: TableShapeInfo["rows"] | TableShapeInfo["columns"],
   coord: number,
   src: T[],
@@ -1103,7 +1109,34 @@ export function getPatchByDeleteLines(
   };
 }
 
-function adjustPatchByKeepPosition(
+/**
+ * Returned item has "coords" that represents the index cell
+ */
+export function getShapesInTableLines(
+  shapeComposite: ShapeComposite,
+  tableId: string,
+  tableInfo: TableShapeInfo,
+  lineIds: (TableRowKey | TableColumnKey)[],
+): { id: string; coords: TableCoords }[] {
+  const idSet = new Set(lineIds);
+
+  const ret: { id: string; coords: TableCoords }[] = [];
+  shapeComposite.shapes.forEach((s) => {
+    if (s.parentId !== tableId) return;
+
+    const coords = parseTableMeta(s.parentMeta);
+    if (!coords) return;
+
+    const info = getCoordsBoundsInfo(tableInfo, [coords]);
+    const indexCoords = info?.bounds[0] ?? coords;
+    if (idSet.has(indexCoords[0]) || idSet.has(indexCoords[1])) {
+      ret.push({ id: s.id, coords: indexCoords });
+    }
+  });
+  return ret;
+}
+
+export function adjustPatchByKeepPosition(
   shapeComposite: ShapeComposite,
   table: TableShape,
   patch: Partial<TableShape>,

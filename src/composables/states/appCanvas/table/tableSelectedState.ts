@@ -1,7 +1,14 @@
 import { IVec2 } from "okageo";
 import { createShape } from "../../../../shapes";
 import { RectangleShape } from "../../../../shapes/rectangle";
-import { getCoordsBoundsInfo, getTableShapeInfo, getTableSizeByInfo, TableShape } from "../../../../shapes/table/table";
+import {
+  getCoordsBoundsInfo,
+  getTableShapeInfo,
+  getTableSizeByInfo,
+  TableColumnKey,
+  TableRowKey,
+  TableShape,
+} from "../../../../shapes/table/table";
 import { applyFillStyle, createFillStyle } from "../../../../utils/fillStyle";
 import { applyLocalSpace } from "../../../../utils/renderer";
 import { createStrokeStyle } from "../../../../utils/strokeStyle";
@@ -32,6 +39,7 @@ import { newMovingTableLineState } from "./movingTableLineState";
 import { ContextMenuItem } from "../../types";
 import { getCommonCommandExams } from "../commons";
 import { COMMAND_EXAM_SRC } from "../commandExams";
+import { getPatchInfoByDuplicateColumns, getPatchInfoByDuplicateRows } from "../../../shapeHandlers/tableDuplicator";
 
 interface Option {
   tableSelectable?: TableSelectable;
@@ -355,6 +363,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                       ...(row.fit
                         ? [CONTEXT_MENU_ITEM_SRC.TABLE_ROW_UNFIT_CONTENT]
                         : [CONTEXT_MENU_ITEM_SRC.TABLE_ROW_FIT_CONTENT]),
+                      CONTEXT_MENU_ITEM_SRC.DUPLICATE_TABLE_ROW,
                       CONTEXT_MENU_ITEM_SRC.CLEAR_TABLE_CELLS_STYLES,
                       CONTEXT_MENU_ITEM_SRC.SEPARATOR,
                       CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_ROW,
@@ -373,6 +382,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                       ...(column.fit
                         ? [CONTEXT_MENU_ITEM_SRC.TABLE_COLUMN_UNFIT_CONTENT]
                         : [CONTEXT_MENU_ITEM_SRC.TABLE_COLUMN_FIT_CONTENT]),
+                      CONTEXT_MENU_ITEM_SRC.DUPLICATE_TABLE_COLUMN,
                       CONTEXT_MENU_ITEM_SRC.CLEAR_TABLE_CELLS_STYLES,
                       CONTEXT_MENU_ITEM_SRC.SEPARATOR,
                       CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_COLUMN,
@@ -409,6 +419,32 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
           }
           case "contextmenu-item": {
             switch (event.data.key) {
+              case CONTEXT_MENU_ITEM_SRC.DUPLICATE_TABLE_ROW.key: {
+                const info = getPatchInfoByDuplicateRows(
+                  shapeComposite,
+                  Object.entries(ctx.getDocumentMap()),
+                  ctx.generateUuid,
+                  targetShape,
+                  tableSelectable.getSelectedRows() as TableRowKey[],
+                );
+                if (!info) return;
+
+                ctx.updateShapes(info.patch, info.docMap);
+                return ctx.states.newSelectionHubState;
+              }
+              case CONTEXT_MENU_ITEM_SRC.DUPLICATE_TABLE_COLUMN.key: {
+                const info = getPatchInfoByDuplicateColumns(
+                  shapeComposite,
+                  Object.entries(ctx.getDocumentMap()),
+                  ctx.generateUuid,
+                  targetShape,
+                  tableSelectable.getSelectedColumns() as TableColumnKey[],
+                );
+                if (!info) return;
+
+                ctx.updateShapes(info.patch, info.docMap);
+                return ctx.states.newSelectionHubState;
+              }
               case CONTEXT_MENU_ITEM_SRC.DELETE_TABLE_ROW.key: {
                 const rows = tableSelectable.getSelectedRows();
                 const info = getPatchByDeleteLines(shapeComposite, targetShape, rows);

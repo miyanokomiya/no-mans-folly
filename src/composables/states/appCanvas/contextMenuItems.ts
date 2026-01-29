@@ -284,6 +284,18 @@ export const CONTEXT_MENU_ITEM_SRC = {
     };
   },
 
+  get DUPLICATE_TABLE_ROW() {
+    return {
+      label: i18n.t("contextmenu.table.row.duplicate"),
+      key: "DUPLICATE_TABLE_ROW",
+    };
+  },
+  get DUPLICATE_TABLE_COLUMN() {
+    return {
+      label: i18n.t("contextmenu.table.column.duplicate"),
+      key: "DUPLICATE_TABLE_COLUMN",
+    };
+  },
   get DELETE_TABLE_ROW() {
     return {
       label: i18n.t("contextmenu.table.row.delete"),
