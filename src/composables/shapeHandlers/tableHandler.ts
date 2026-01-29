@@ -23,6 +23,7 @@ import {
   parseTableMeta,
   TableCellArea,
   TableCellMerge,
+  TableCellStyle,
   TableCellStyleKey,
   TableCellStyleValue,
   TableColumn,
@@ -1204,19 +1205,28 @@ export function getPatchByApplyCellStyle(
   const columnIndexById = new Map(tableInfo.columns.map((c, i) => [c.id, i]));
   const cellAreas = optimizeCoords(rowIndexById, columnIndexById, effectiveCells);
 
+  type Bounds = Exclude<ReturnType<typeof getCoordsBoundsInfo>, undefined>["bounds"];
+  const styleIdByBounds = new Map<Bounds, TableCellStyleKey>();
+
   cellAreas.forEach((cellArea) => {
     // Always add new style even if it's disabled
     // => To override cell styles come from other area
     const id: TableCellStyleKey = `s_${generateUuid()}`;
-    patch[id] = { id, ...cellArea, ...styleValue };
+    patch[id] = { ...cellArea, ...styleValue, id };
+    styleIdByBounds.set([cellArea.a, cellArea.b], id);
   });
 
-  const boundsList: Exclude<ReturnType<typeof getCoordsBoundsInfo>, undefined>["bounds"][] = [];
+  const boundsList: Bounds[] = [];
+  styleIdByBounds.forEach((_, bounds) => {
+    boundsList.push(bounds);
+  });
   effectiveCells.forEach((coords) => {
     const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, [coords]);
     if (!coordsBoundsInfo) return;
     boundsList.push(coordsBoundsInfo.bounds);
   });
+
+  const processedSet = new Set<string>();
 
   // Delete current styles that are encompassed by the new style area
   boundsList.forEach((b) => {
@@ -1234,20 +1244,33 @@ export function getPatchByApplyCellStyle(
       const sbc = columnIndexById.get(s.b[1]);
       if (sar === undefined || sac === undefined || sbr === undefined || sbc === undefined) {
         patch[s.id] = undefined;
-      } else if (
-        isInMergeArea(
-          [
-            [bar, bac],
-            [bbr, bbc],
-          ],
-          [
-            [sar, sac],
-            [sbr, sbc],
-          ],
-          true,
-        )
-      ) {
-        patch[s.id] = undefined;
+      } else {
+        const styleIdOfBounds = styleIdByBounds.get(b);
+        if (styleIdOfBounds && bar === sar && bac == sac && bbr === sbr && bbc === sbc) {
+          if (processedSet.has(styleIdOfBounds)) {
+            // Discard this style since new one is already inherited
+            patch[s.id] = undefined;
+          } else {
+            // Overwrite the style data when it has the same bounds of a newly created style
+            patch[s.id] = { ...(patch[styleIdOfBounds] as TableCellStyle), id: s.id };
+            delete patch[styleIdOfBounds];
+            processedSet.add(styleIdOfBounds);
+          }
+        } else if (
+          isInMergeArea(
+            [
+              [bar, bac],
+              [bbr, bbc],
+            ],
+            [
+              [sar, sac],
+              [sbr, sbc],
+            ],
+            true,
+          )
+        ) {
+          patch[s.id] = undefined;
+        }
       }
     });
   });

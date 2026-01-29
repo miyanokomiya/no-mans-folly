@@ -212,12 +212,13 @@ describe("getPatchByApplyCellStyle", () => {
         { fill: createFillStyle({ disabled: false }) },
         generateUuid,
       ),
+      "Overwrite existing style having the same bounds",
     ).toEqual({
-      s_id_0: {
+      s_0: {
         a: ["r_0", "c_0"],
         b: ["r_0", "c_1"],
         fill: createFillStyle({ disabled: false }),
-        id: "s_id_0",
+        id: "s_0",
       },
     });
   });
