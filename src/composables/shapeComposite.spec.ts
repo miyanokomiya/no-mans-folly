@@ -26,6 +26,7 @@ import { generateKeyBetween } from "../utils/findex";
 import { Shape } from "../models";
 import { EllipseShape } from "../shapes/ellipse";
 import { GroupShape } from "../shapes/group";
+import { generateTableMeta } from "./shapeHandlers/tableHandler";
 
 describe("newShapeComposite", () => {
   test("should compose shape tree", () => {
@@ -312,6 +313,41 @@ describe("newShapeComposite", () => {
       expect(result0[shapes[1].id].rotation).toBeCloseTo(Math.PI / 2);
       expect(result0[shapes[2].id].p).toEqualPoint({ x: 65, y: 260 });
       expect(result0[shapes[2].id].rotation).toBeCloseTo(Math.PI / 2);
+    });
+  });
+
+  describe("getAllTransparentIds", () => {
+    test("should return all transparent shape IDs from the src", () => {
+      const table0 = createShape(getCommonStruct, "table", {
+        id: "table0",
+      });
+      const table1 = createShape(getCommonStruct, "table", {
+        id: "table1",
+        parentId: table0.id,
+        parentMeta: generateTableMeta(["r_0", "c_0"]),
+      });
+      const rect0 = createShape(getCommonStruct, "rectangle", {
+        id: "rect0",
+        parentId: table1.id,
+        parentMeta: generateTableMeta(["r_0", "c_0"]),
+      });
+      const group = createShape(getCommonStruct, "group", {
+        id: "group",
+        parentId: table0.id,
+        parentMeta: generateTableMeta(["r_0", "c_0"]),
+      });
+      const rect1 = createShape(getCommonStruct, "rectangle", {
+        id: "rect1",
+        parentId: group.id,
+      });
+      const shapes = [table0, table1, rect0, group, rect1];
+      const target = newShapeComposite({
+        shapes,
+        getStruct: getCommonStruct,
+      });
+      expect(target.getAllTransparentIds([table0.id])).toEqual([table0.id, table1.id, rect0.id, group.id]);
+      expect(target.getAllTransparentIds([group.id])).toEqual([group.id]);
+      expect(target.getAllTransparentIds([table1.id])).toEqual([table1.id, rect0.id]);
     });
   });
 

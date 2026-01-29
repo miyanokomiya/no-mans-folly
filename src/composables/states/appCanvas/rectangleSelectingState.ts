@@ -3,7 +3,6 @@ import type { AppCanvasState } from "./core";
 import { newRectInRectHitTest } from "../../shapeHitTest";
 import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { applyCurvePath, scaleGlobalAlpha } from "../../../utils/renderer";
-import { isTransparentSelection } from "../../../shapes";
 import { isStrictRootScope, ShapeSelectionScope } from "../../../shapes/core";
 import { handleCommonWheel } from "../commons";
 import { newAutoPanningState } from "../autoPanningState";
@@ -68,14 +67,7 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
 
           const candidateIds = currentScope
             ? composite.getMergedShapesInSelectionScope(currentScope).map((s) => s.id)
-            : composite.mergedShapeTree.flatMap((t) => {
-                const shape = shapeMap[t.id];
-                if (isTransparentSelection(composite.getShapeStruct, shape)) {
-                  return [t.id, ...t.children.map((c) => c.id)];
-                } else {
-                  return [t.id];
-                }
-              });
+            : composite.getAllTransparentIds(composite.mergedShapeTree.map((t) => t.id));
 
           targetIdSet = new Set(
             candidateIds

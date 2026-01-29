@@ -145,6 +145,22 @@ export function newShapeComposite(option: Option) {
     return shapeModule.createClipSVGPath(getStruct, shape, mergedShapeContext);
   }
 
+  /**
+   * Returned value includes "srcIds"
+   */
+  function getAllTransparentIds(srcIds: string[]): string[] {
+    let ret: string[] = [];
+    srcIds.forEach((id) => {
+      const t = mergedShapeTreeMap[id];
+      const shape = shapeMap[id];
+      ret.push(id);
+      if (shapeModule.isTransparentSelection(getStruct, shape)) {
+        ret = ret.concat(getAllTransparentIds(t.children.map((c) => c.id)));
+      }
+    });
+    return ret;
+  }
+
   function findShapeAt(
     p: IVec2,
     scope?: ShapeSelectionScope,
@@ -477,6 +493,7 @@ export function newShapeComposite(option: Option) {
     createSVGElementInfo,
     createClipSVGPath,
 
+    getAllTransparentIds,
     findShapeAt,
     findFrontMostShapeWithDoc,
     isPointOn,
