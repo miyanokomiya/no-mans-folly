@@ -74,6 +74,7 @@ function getPatchInfoByDuplicateLines<T extends TableRow | TableColumn>(
 ) {
   const generateLineId = targetCoordIndex === 0 ? () => `r_${generateUuid()}` : () => `c_${generateUuid()}`;
   const lines = targetCoordIndex === 0 ? tableInfo.rows : tableInfo.columns;
+  const otherCoordIndex = targetCoordIndex === 0 ? 1 : 0;
 
   const src = coordsList.map((v) => table[v]! as T);
   const duplicatedLineIdByOldId = new Map<string, string>(src.map((l) => [l.id, generateLineId()]));
@@ -87,41 +88,6 @@ function getPatchInfoByDuplicateLines<T extends TableRow | TableColumn>(
     table,
     getPatchInfoByAddLines(lines, coordToInsert, duplicatedLines),
   );
-
-  const contents = getShapesInTableLines(
-    shapeComposite,
-    table.id,
-    tableInfo,
-    src.map((l) => l.id),
-  );
-  const srcShapes = shapeComposite.getAllBranchMergedShapes(contents.map((c) => c.id));
-  const lastFIndex = srcShapes.toSorted(findexSortFn).at(-1)?.findex ?? table.findex;
-  const availableIdSet = new Set(shapeComposite.shapes.map((s) => s.id));
-  const duplicatedShapeInfo = duplicateShapes(
-    shapeComposite.getShapeStruct,
-    srcShapes,
-    docs,
-    generateUuid,
-    lastFIndex,
-    availableIdSet,
-    undefined,
-    true,
-  );
-  const duplicatedShapes = duplicatedShapeInfo.shapes.map((s) => {
-    if (s.parentId !== table.id) return s;
-
-    const srcCoord = parseTableMeta(s.parentMeta);
-    if (!srcCoord) return s;
-
-    const [targetCoord, otherCoord] = targetCoordIndex === 0 ? srcCoord : [srcCoord[1], srcCoord[0]];
-    const duplicatedCoord = duplicatedLineIdByOldId.get(targetCoord);
-    if (!duplicatedCoord) return s;
-
-    const parentMeta = generateTableMeta(
-      (targetCoordIndex === 0 ? [duplicatedCoord, otherCoord] : [otherCoord, duplicatedCoord]) as TableCoords,
-    );
-    return { ...s, parentMeta };
-  });
 
   const patch = { ...tablePatch };
   const duplicatedStyles = getPatchInfoByDuplicateLineStyles(
@@ -155,6 +121,68 @@ function getPatchInfoByDuplicateLines<T extends TableRow | TableColumn>(
   );
   duplicatedMerges.forEach((s) => {
     patch[s.id] = s;
+  });
+
+  const nextTable: TableShape = { ...table, ...patch };
+  const nextTableInfo = getTableShapeInfo(nextTable);
+
+  let contents = getShapesInTableLines(
+    shapeComposite,
+    table.id,
+    tableInfo,
+    src.map((l) => l.id),
+  );
+
+  // Avoid duplicating shapes that end up belonging to the same merge area
+  if (nextTableInfo) {
+    contents = contents.filter((c) => {
+      const nextIndexLine = duplicatedLineIdByOldId.get(c.coords[targetCoordIndex]);
+      // Should not duplicate the shape when next index line isn't duplicated
+      // => This is unlikely due to the nature of "contents"
+      if (!nextIndexLine) return false;
+
+      const merge = tableInfo.merges.find(
+        (m) =>
+          m.a[targetCoordIndex] === c.coords[targetCoordIndex] && m.a[otherCoordIndex] === c.coords[otherCoordIndex],
+      );
+      // Should duplicate the shape when the belonging cell isn't merged
+      if (!merge) return true;
+
+      const nextMerge = nextTableInfo.merges.find(
+        (m) => m.a[targetCoordIndex] === nextIndexLine && m.a[otherCoordIndex] === c.coords[otherCoordIndex],
+      );
+      // Should duplicate the shape when the merge for the index cell is duplicated
+      return nextMerge;
+    });
+  }
+
+  const srcShapes = shapeComposite.getAllBranchMergedShapes(contents.map((c) => c.id));
+  const lastFIndex = srcShapes.toSorted(findexSortFn).at(-1)?.findex ?? table.findex;
+  const availableIdSet = new Set(shapeComposite.shapes.map((s) => s.id));
+  const duplicatedShapeInfo = duplicateShapes(
+    shapeComposite.getShapeStruct,
+    srcShapes,
+    docs,
+    generateUuid,
+    lastFIndex,
+    availableIdSet,
+    undefined,
+    true,
+  );
+  const duplicatedShapes = duplicatedShapeInfo.shapes.map((s) => {
+    if (s.parentId !== table.id) return s;
+
+    const srcCoord = parseTableMeta(s.parentMeta);
+    if (!srcCoord) return s;
+
+    const [targetCoord, otherCoord] = targetCoordIndex === 0 ? srcCoord : [srcCoord[1], srcCoord[0]];
+    const duplicatedCoord = duplicatedLineIdByOldId.get(targetCoord);
+    if (!duplicatedCoord) return s;
+
+    const parentMeta = generateTableMeta(
+      (targetCoordIndex === 0 ? [duplicatedCoord, otherCoord] : [otherCoord, duplicatedCoord]) as TableCoords,
+    );
+    return { ...s, parentMeta };
   });
 
   return {

@@ -40,6 +40,61 @@ describe("getPatchInfoByDuplicateRows", () => {
     });
   });
 
+  test("should duplicate rows: with children in merge area", () => {
+    const table = generateTable(3, 3, { width: 20, height: 10 }, { id: "table", findex: "a0" });
+    table.m_0 = { id: "m_0", a: ["r_0", "c_0"], b: ["r_1", "c_0"] };
+    const child0 = createShape(getCommonStruct, "rectangle", {
+      id: "child0",
+      parentId: table.id,
+      parentMeta: generateTableMeta(["r_0", "c_0"]),
+      findex: "a1",
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [table, child0],
+      getStruct: getCommonStruct,
+    });
+    let count = 0;
+    const generateUuid = () => `id_${count++}`;
+
+    const result0 = getPatchInfoByDuplicateRows(shapeComposite, [], generateUuid, table, ["r_0"]);
+    expect(result0?.patch, "shouldn't duplicate shapes when the whole merge area isn't duplciated").toEqual({
+      update: {
+        [table.id]: {
+          r_id_0: {
+            findex: "a0V",
+            id: "r_id_0",
+            size: 10,
+          },
+        },
+      },
+    });
+
+    count = 0;
+    const result1 = getPatchInfoByDuplicateRows(shapeComposite, [], generateUuid, table, ["r_0", "r_1"]);
+    expect(result1?.patch, "shouldn duplicate shapes when the whole merge area is duplciated").toEqual({
+      update: {
+        [table.id]: {
+          r_id_0: {
+            findex: "a1F",
+            id: "r_id_0",
+            size: 10,
+          },
+          r_id_1: {
+            findex: "a1V",
+            id: "r_id_1",
+            size: 10,
+          },
+          m_id_2: {
+            a: ["r_id_0", "c_0"],
+            b: ["r_id_1", "c_0"],
+            id: "m_id_2",
+          },
+        },
+      },
+      add: [{ ...child0, id: "id_3", findex: "a2", parentMeta: generateTableMeta(["r_id_0", "c_0"]) }],
+    });
+  });
+
   test("should duplicate rows: with style", () => {
     const table = generateTable(6, 3, { width: 20, height: 10 }, { id: "table", findex: "a0" });
     table.r_0!.size = 10;
