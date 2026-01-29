@@ -162,7 +162,7 @@ describe("getPatchByDeleteLines", () => {
     const result0 = getPatchByDeleteLines(shapeComposite, table, ["c_0"]);
     expect(result0).toEqual({
       update: {
-        [table.id]: { c_0: undefined },
+        [table.id]: { c_0: undefined, m_0: { id: "m_0", a: ["r_0", "c_1"], b: ["r_1", "c_1"] } },
       },
       delete: [shape00.id, shape01.id],
     });
@@ -170,10 +170,67 @@ describe("getPatchByDeleteLines", () => {
     const result1 = getPatchByDeleteLines(shapeComposite, table, ["c_1"]);
     expect(result1).toEqual({
       update: {
-        [table.id]: { c_1: undefined },
+        [table.id]: { c_0: undefined, m_0: { id: "m_0", a: ["r_0", "c_0"], b: ["r_1", "c_0"] } },
         [shape01.id]: { parentMeta: "r_0:c_0" },
       },
-      delete: [],
+    });
+  });
+
+  test("should handle cell styles", () => {
+    const table = generateTable(3, 3, { width: 20, height: 10 });
+    table.s_0 = { id: "s_0", a: ["r_0", "c_0"], b: ["r_2", "c_1"], fill: createFillStyle() };
+    const shapeComposite = newShapeComposite({
+      shapes: [table],
+      getStruct: getCommonStruct,
+    });
+
+    const result0 = getPatchByDeleteLines(shapeComposite, table, ["r_0"]);
+    expect(result0).toEqual({
+      update: {
+        [table.id]: {
+          r_0: undefined,
+          s_0: { id: "s_0", a: ["r_1", "c_0"], b: ["r_2", "c_1"], fill: createFillStyle() },
+        },
+      },
+    });
+
+    const result1 = getPatchByDeleteLines(shapeComposite, table, ["r_1"]);
+    expect(result1).toEqual({
+      update: {
+        [table.id]: {
+          r_1: undefined,
+        },
+      },
+    });
+
+    const result2 = getPatchByDeleteLines(shapeComposite, table, ["r_2"]);
+    expect(result2).toEqual({
+      update: {
+        [table.id]: {
+          r_2: undefined,
+          s_0: { id: "s_0", a: ["r_0", "c_0"], b: ["r_1", "c_1"], fill: createFillStyle() },
+        },
+      },
+    });
+
+    const result01 = getPatchByDeleteLines(shapeComposite, table, ["r_0", "r_1"]);
+    expect(result01).toEqual({
+      update: {
+        [table.id]: {
+          r_2: undefined,
+          s_0: { id: "s_0", a: ["r_2", "c_0"], b: ["r_2", "c_1"], fill: createFillStyle() },
+        },
+      },
+    });
+
+    const result12 = getPatchByDeleteLines(shapeComposite, table, ["r_1", "r_2"]);
+    expect(result12).toEqual({
+      update: {
+        [table.id]: {
+          r_2: undefined,
+          s_0: { id: "s_0", a: ["r_0", "c_0"], b: ["r_0", "c_1"], fill: createFillStyle() },
+        },
+      },
     });
   });
 });

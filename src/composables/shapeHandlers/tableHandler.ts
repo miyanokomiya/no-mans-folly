@@ -47,6 +47,7 @@ import {
   isMergeAreaOverlapping,
   isPointCloseToSegment,
   isPointOnRectangle,
+  MergeArea,
   TAU,
 } from "../../utils/geometry";
 import { ShapeComposite } from "../shapeComposite";
@@ -266,6 +267,9 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
 
     const info = getEffectiveCellInfoAt(row, column);
     if (!info) return;
+
+    const markerRect = { x: info.rect.x, y: info.rect.y, width: markerSize, height: markerSize };
+    if (!isPointOnRectangle(markerRect, adjustedP)) return;
 
     return {
       type: "area-cell",
@@ -617,7 +621,7 @@ export function renderHighlightCells(
   });
 }
 
-export function renderHighlightCellBorderss(
+export function renderHighlightCellBorders(
   ctx: CanvasCTX,
   style: StyleScheme,
   scale: number,
@@ -628,19 +632,20 @@ export function renderHighlightCellBorderss(
   if (effectiveCells.length === 0) return;
 
   const coordsLocations = getTableCoordsLocations(tableInfo);
-  const rowIndexMap = new Map<string, number>(tableInfo.rows.map((row, r) => [row.id, r]));
-  const columnIndexMap = new Map<string, number>(tableInfo.columns.map((column, c) => [column.id, c]));
+  const areas: MergeArea[] = [];
+  effectiveCells.forEach((coords) => {
+    const coordsBoundsInfo = getCoordsBoundsInfo(tableInfo, [coords]);
+    if (!coordsBoundsInfo) return;
+    areas.push(coordsBoundsInfo.mergeArea);
+  });
+
   applyStrokeStyle(ctx, { color: style.selectionSecondaly, width: 6 * scale });
   ctx.beginPath();
-  effectiveCells.forEach((coord) => {
-    const r = rowIndexMap.get(coord[0]);
-    const c = columnIndexMap.get(coord[1]);
-    if (r === undefined || c === undefined) return;
-
-    const top = coordsLocations.rows[r];
-    const bottom = coordsLocations.rows[r + 1];
-    const left = coordsLocations.columns[c];
-    const right = coordsLocations.columns[c + 1];
+  areas.forEach((area) => {
+    const top = coordsLocations.rows[area[0][0]];
+    const bottom = coordsLocations.rows[area[1][0] + 1];
+    const left = coordsLocations.columns[area[0][1]];
+    const right = coordsLocations.columns[area[1][1] + 1];
     ctx.rect(left, top, right - left, bottom - top);
   });
   ctx.stroke();
@@ -1083,6 +1088,13 @@ export function getPatchByDeleteLines(
     ...adjustPatchByKeepPosition(shapeComposite, table, patch),
   };
 
+  const targetLineIdSet = new Set(lineIds);
+  const rowIds = tableInfo.rows.map((r) => r.id);
+  const columnIds = tableInfo.columns.map((c) => c.id);
+  const patchForMerge = getPatchForAreaByDeleteLines(tableInfo, rowIds, columnIds, targetLineIdSet, tableInfo.merges);
+  const patchForStyle = getPatchForAreaByDeleteLines(tableInfo, rowIds, columnIds, targetLineIdSet, tableInfo.styles);
+  patch = { ...patch, ...patchForMerge, ...patchForStyle };
+
   const idSet = new Set(lineIds);
 
   const update = { [table.id]: patch };
@@ -1106,8 +1118,66 @@ export function getPatchByDeleteLines(
 
   return {
     update,
-    delete: deleteIds,
+    delete: deleteIds.length > 0 ? deleteIds : undefined,
   };
+}
+
+function getNextAvailableLineId(
+  lineIds: string[],
+  target: string,
+  disabledSet: Set<string>,
+): [number, string] | undefined {
+  const targetIndex = lineIds.findLastIndex((id) => id === target);
+  if (targetIndex < 0) return;
+
+  for (let i = targetIndex + 1; i < lineIds.length; i++) {
+    const id = lineIds[i];
+    if (!disabledSet.has(id)) {
+      return [i, id];
+    }
+  }
+}
+
+function getPatchForAreaByDeleteLines<T extends TableCellMerge | TableCellStyle>(
+  tableInfo: TableShapeInfo,
+  rowIds: string[],
+  columnIds: string[],
+  targetLineIdSet: Set<string>,
+  areas: T[],
+) {
+  const patch: Record<string, T | undefined> = {};
+  areas.forEach((s) => {
+    if (targetLineIdSet.has(s.a[0])) {
+      const adjustedId = getNextAvailableLineId(rowIds, s.a[0], targetLineIdSet);
+      patch[s.id] = adjustedId ? { ...s, a: [tableInfo.rows[adjustedId[0]].id, s.a[1]] } : undefined;
+    } else if (targetLineIdSet.has(s.b[0])) {
+      const adjustedId = getPreviousAvailableLineId(rowIds, s.b[0], targetLineIdSet);
+      patch[s.id] = adjustedId ? { ...s, b: [tableInfo.rows[adjustedId[0]].id, s.b[1]] } : undefined;
+    } else if (targetLineIdSet.has(s.a[1])) {
+      const adjustedId = getNextAvailableLineId(columnIds, s.a[1], targetLineIdSet);
+      patch[s.id] = adjustedId ? { ...s, a: [s.a[0], tableInfo.columns[adjustedId[0]].id] } : undefined;
+    } else if (targetLineIdSet.has(s.b[1])) {
+      const adjustedId = getPreviousAvailableLineId(columnIds, s.b[1], targetLineIdSet);
+      patch[s.id] = adjustedId ? { ...s, b: [s.b[0], tableInfo.columns[adjustedId[0]].id] } : undefined;
+    }
+  });
+  return patch;
+}
+
+function getPreviousAvailableLineId(
+  lineIds: string[],
+  target: string,
+  disabledSet: Set<string>,
+): [number, string] | undefined {
+  const targetIndex = lineIds.findLastIndex((id) => id === target);
+  if (targetIndex < 0) return;
+
+  for (let i = targetIndex - 1; 0 <= i; i--) {
+    const id = lineIds[i];
+    if (!disabledSet.has(id)) {
+      return [i, id];
+    }
+  }
 }
 
 /**

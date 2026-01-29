@@ -740,11 +740,12 @@ export function generateTable(
   row: number,
   column: number,
   cellSize: Size = { width: DEFAULT_CELL_WIDTH, height: DEFAULT_CELL_HEIGHT },
+  arg?: Partial<TableShape>,
 ) {
   const rowFindexList = generateNKeysBetweenAllowSame(undefined, undefined, row);
   const columnFindexList = generateNKeysBetweenAllowSame(undefined, undefined, column);
   return struct.create({
-    id: "table",
+    ...arg,
     ...toMap(rowFindexList.map((findex, i) => ({ id: `r_${i}`, findex, size: cellSize.height }))),
     ...toMap(columnFindexList.map((findex, i) => ({ id: `c_${i}`, findex, size: cellSize.width }))),
   });

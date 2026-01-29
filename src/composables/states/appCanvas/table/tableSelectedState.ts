@@ -26,7 +26,7 @@ import {
   newResizeColumn,
   newResizeRow,
   newTableHandler,
-  renderHighlightCellBorderss,
+  renderHighlightCellBorders,
   renderHighlightCells,
   TableHandler,
 } from "../../../shapeHandlers/tableHandler";
@@ -544,7 +544,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
         const style = ctx.getStyleScheme();
         const scale = ctx.getScale();
         const renderFns: (() => void)[] = [
-          () => renderHighlightCellBorderss(renderCtx, style, scale, tableInfo, tableSelectable.getSelectedCoords()),
+          () => renderHighlightCellBorders(renderCtx, style, scale, tableInfo, tableSelectable.getSelectedCoords()),
         ];
         const shapeHandler = getters.getShapeHandler();
         const hitResult = shapeHandler.retrieveHitResult();
