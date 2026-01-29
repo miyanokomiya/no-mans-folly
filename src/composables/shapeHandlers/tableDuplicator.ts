@@ -3,6 +3,7 @@ import { DocOutput } from "../../models/document";
 import {
   getTableShapeInfo,
   parseTableMeta,
+  TableCellMerge,
   TableCellStyle,
   TableColumn,
   TableColumnKey,
@@ -122,6 +123,7 @@ function getPatchInfoByDuplicateLines<T extends TableRow | TableColumn>(
     return { ...s, parentMeta };
   });
 
+  const patch = { ...tablePatch };
   const duplicatedStyles = getPatchInfoByDuplicateLineStyles(
     (src, start, end) => ({
       ...src,
@@ -135,14 +137,29 @@ function getPatchInfoByDuplicateLines<T extends TableRow | TableColumn>(
     coordsList,
     duplicatedLineIdByOldId,
   );
-  const patch = { ...tablePatch };
   duplicatedStyles.forEach((s) => {
+    patch[s.id] = s;
+  });
+  const duplicatedMerges = getPatchInfoByDuplicateLineMerges(
+    (src, start, end) => ({
+      ...src,
+      id: `m_${generateUuid()}`,
+      a: targetCoordIndex === 0 ? [start as any, src.a[1]] : [src.a[0], start as any],
+      b: targetCoordIndex === 0 ? [end as any, src.b[1]] : [src.b[0], end as any],
+    }),
+    targetCoordIndex,
+    tableInfo,
+    lines,
+    coordsList,
+    duplicatedLineIdByOldId,
+  );
+  duplicatedMerges.forEach((s) => {
     patch[s.id] = s;
   });
 
   return {
     patch: {
-      add: duplicatedShapes,
+      add: duplicatedShapes.length > 0 ? duplicatedShapes : undefined,
       update: { [table.id]: patch },
     },
     docMap: duplicatedShapeInfo.docMap,
@@ -178,12 +195,47 @@ function getPatchInfoByDuplicateLineStyles<T extends TableRow | TableColumn>(
 
       let b: string;
       const saRange = sa[1][targetCoordIndex] - sa[0][targetCoordIndex];
-      if (saRange < items.length) {
-        b = duplicatedLineIdByOldId.get(items[saRange + Math.max(0, padding)][0][1])!;
+      if (padding + saRange < items.length) {
+        b = duplicatedLineIdByOldId.get(items[padding + saRange][0][1])!;
       } else {
         b = duplicatedLineIdByOldId.get(tail[0][1])!;
       }
       duplicated.push(generateStyle(style, a, b));
+    });
+  });
+  return duplicated;
+}
+
+function getPatchInfoByDuplicateLineMerges<T extends TableRow | TableColumn>(
+  generateMerge: (src: TableCellMerge, start: string, end: string) => TableCellMerge,
+  targetCoordIndex: 0 | 1,
+  tableInfo: TableShapeInfo,
+  lines: TableRow[] | TableColumn[],
+  coordsList: GetLineKey<T>[],
+  duplicatedLineIdByOldId: Map<string, string>,
+): TableCellMerge[] {
+  const lineIndexMapById = new Map(lines.map((l, i) => [l.id, i]));
+  const lineIndexList = coordsList.map<[number, string]>((c) => [lineIndexMapById.get(c)!, c]);
+  const grouped = splitIntoRangeGroups(lineIndexList.map((v) => [v, v[0]]));
+  const duplicated: TableCellMerge[] = [];
+  grouped.forEach((group) => {
+    if (group.length === 0) return;
+    const items = group.toSorted((a, b) => a[0][0] - b[0][0]);
+
+    const head = items[0];
+    const tail = items[items.length - 1];
+    tableInfo.mergeAreas.forEach((ma, i) => {
+      // Can be duplicated only when the merge area is encompassed by the duplication
+      if (ma.area[0][targetCoordIndex] < head[0][0]) return;
+      if (tail[0][0] < ma.area[1][targetCoordIndex]) return;
+
+      const merge = tableInfo.merges[i];
+      const padding = head[0][0] - ma.area[0][targetCoordIndex];
+      const a = duplicatedLineIdByOldId.get(items[padding][0][1])!;
+
+      const maRange = ma.area[1][targetCoordIndex] - ma.area[0][targetCoordIndex];
+      const b = duplicatedLineIdByOldId.get(items[padding + maRange][0][1])!;
+      duplicated.push(generateMerge(merge, a, b));
     });
   });
   return duplicated;
