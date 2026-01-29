@@ -3,6 +3,7 @@ import { DocOutput } from "../../models/document";
 import {
   getTableShapeInfo,
   parseTableMeta,
+  TableCellStyle,
   TableColumn,
   TableColumnKey,
   TableCoords,
@@ -13,6 +14,7 @@ import {
 } from "../../shapes/table/table";
 import { duplicateShapes } from "../../shapes/utils/duplicator";
 import { findexSortFn } from "../../utils/commons";
+import { splitIntoRangeGroups } from "../../utils/geometry";
 import { ShapeComposite } from "../shapeComposite";
 import {
   adjustPatchByKeepPosition,
@@ -34,18 +36,7 @@ export function getPatchInfoByDuplicateRows(
   const tableInfo = getTableShapeInfo(table);
   if (!tableInfo) return;
 
-  return getPatchInfoByDuplicateLines(
-    shapeComposite,
-    docs,
-    generateUuid,
-    () => `r_${generateUuid()}`,
-    (coords) => ({ target: coords[0], other: coords[1] }),
-    (target, other) => generateTableMeta([target, other] as TableCoords),
-    table,
-    tableInfo,
-    tableInfo.rows,
-    coordsList,
-  );
+  return getPatchInfoByDuplicateLines(shapeComposite, docs, generateUuid, 0, table, tableInfo, coordsList);
 }
 
 /**
@@ -61,23 +52,10 @@ export function getPatchInfoByDuplicateColumns(
   const tableInfo = getTableShapeInfo(table);
   if (!tableInfo) return;
 
-  return getPatchInfoByDuplicateLines(
-    shapeComposite,
-    docs,
-    generateUuid,
-    () => `c_${generateUuid()}`,
-    (coords) => ({ target: coords[1], other: coords[0] }),
-    (target, other) => generateTableMeta([other, target] as TableCoords),
-    table,
-    tableInfo,
-    tableInfo.columns,
-    coordsList,
-  );
+  return getPatchInfoByDuplicateLines(shapeComposite, docs, generateUuid, 1, table, tableInfo, coordsList);
 }
 
 type GetLineKey<T> = T extends TableRow ? TableRowKey : TableColumnKey;
-type GetOtherLineKye<T> = T extends TableRow ? TableColumnKey : TableRowKey;
-type GetLineList<T> = T extends TableRow ? TableRow[] : TableColumn[];
 
 /**
  * "coordList" represent the lines for the duplication.
@@ -88,14 +66,14 @@ function getPatchInfoByDuplicateLines<T extends TableRow | TableColumn>(
   shapeComposite: ShapeComposite,
   docs: [id: string, doc: DocOutput][],
   generateUuid: () => string,
-  generateLineId: () => string,
-  getCoordsInfo: (coords: TableCoords) => { target: GetLineKey<T>; other: GetOtherLineKye<T> },
-  generateMeta: (target: string, other: string) => string,
+  targetCoordIndex: 0 | 1,
   table: TableShape,
   tableInfo: TableShapeInfo,
-  lines: GetLineList<T>,
   coordsList: GetLineKey<T>[],
 ) {
+  const generateLineId = targetCoordIndex === 0 ? () => `r_${generateUuid()}` : () => `c_${generateUuid()}`;
+  const lines = targetCoordIndex === 0 ? tableInfo.rows : tableInfo.columns;
+
   const src = coordsList.map((v) => table[v]! as T);
   const duplicatedLineIdByOldId = new Map<string, string>(src.map((l) => [l.id, generateLineId()]));
   const duplicatedLines = src.map<T>((s) => ({ ...s, id: duplicatedLineIdByOldId.get(s.id)! }));
@@ -134,18 +112,79 @@ function getPatchInfoByDuplicateLines<T extends TableRow | TableColumn>(
     const srcCoord = parseTableMeta(s.parentMeta);
     if (!srcCoord) return s;
 
-    const coordsInfo = getCoordsInfo(srcCoord);
-    const duplicatedCoord = duplicatedLineIdByOldId.get(coordsInfo.target);
+    const [targetCoord, otherCoord] = targetCoordIndex === 0 ? srcCoord : [srcCoord[1], srcCoord[0]];
+    const duplicatedCoord = duplicatedLineIdByOldId.get(targetCoord);
     if (!duplicatedCoord) return s;
 
-    return { ...s, parentMeta: generateMeta(duplicatedCoord, coordsInfo.other) };
+    const parentMeta = generateTableMeta(
+      (targetCoordIndex === 0 ? [duplicatedCoord, otherCoord] : [otherCoord, duplicatedCoord]) as TableCoords,
+    );
+    return { ...s, parentMeta };
+  });
+
+  const duplicatedStyles = getPatchInfoByDuplicateLineStyles(
+    (src, start, end) => ({
+      ...src,
+      id: `s_${generateUuid()}`,
+      a: targetCoordIndex === 0 ? [start as any, src.a[1]] : [src.a[0], start as any],
+      b: targetCoordIndex === 0 ? [end as any, src.b[1]] : [src.b[0], end as any],
+    }),
+    targetCoordIndex,
+    tableInfo,
+    lines,
+    coordsList,
+    duplicatedLineIdByOldId,
+  );
+  const patch = { ...tablePatch };
+  duplicatedStyles.forEach((s) => {
+    patch[s.id] = s;
   });
 
   return {
     patch: {
       add: duplicatedShapes,
-      update: { [table.id]: tablePatch },
+      update: { [table.id]: patch },
     },
     docMap: duplicatedShapeInfo.docMap,
   };
+}
+
+function getPatchInfoByDuplicateLineStyles<T extends TableRow | TableColumn>(
+  generateStyle: (src: TableCellStyle, start: string, end: string) => TableCellStyle,
+  targetCoordIndex: 0 | 1,
+  tableInfo: TableShapeInfo,
+  lines: TableRow[] | TableColumn[],
+  coordsList: GetLineKey<T>[],
+  duplicatedLineIdByOldId: Map<string, string>,
+): TableCellStyle[] {
+  const lineIndexMapById = new Map(lines.map((l, i) => [l.id, i]));
+  const lineIndexList = coordsList.map<[number, string]>((c) => [lineIndexMapById.get(c)!, c]);
+  const grouped = splitIntoRangeGroups(lineIndexList.map((v) => [v, v[0]]));
+  const duplicated: TableCellStyle[] = [];
+  grouped.forEach((group) => {
+    if (group.length === 0) return;
+    const items = group.toSorted((a, b) => a[0][0] - b[0][0]);
+
+    const head = items[0];
+    const tail = items[items.length - 1];
+    tableInfo.styleAreas.forEach((sa, i) => {
+      if (sa[1][targetCoordIndex] < head[0][0]) return;
+      if (tail[0][0] < sa[0][targetCoordIndex]) return;
+
+      const style = tableInfo.styles[i];
+      const padding = sa[0][targetCoordIndex] - head[0][0];
+      const a =
+        padding < 0 ? duplicatedLineIdByOldId.get(head[0][1])! : duplicatedLineIdByOldId.get(items[padding][0][1])!;
+
+      let b: string;
+      const saRange = sa[1][targetCoordIndex] - sa[0][targetCoordIndex];
+      if (saRange < items.length) {
+        b = duplicatedLineIdByOldId.get(items[saRange + Math.max(0, padding)][0][1])!;
+      } else {
+        b = duplicatedLineIdByOldId.get(tail[0][1])!;
+      }
+      duplicated.push(generateStyle(style, a, b));
+    });
+  });
+  return duplicated;
 }

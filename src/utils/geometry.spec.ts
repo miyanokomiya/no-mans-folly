@@ -101,6 +101,7 @@ import {
   isInMergeArea,
   isMergeAreaOverlapping,
   groupCellsIntoRectangles,
+  splitIntoRangeGroups,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -2452,6 +2453,19 @@ describe("groupCellsIntoRectangles", () => {
     expect(
       groupCellsIntoRectangles([
         ["0_0", 0, 0],
+        ["1_0", 1, 0],
+        ["2_0", 2, 0],
+      ]),
+    ).toEqual([
+      [
+        ["0_0", 0, 0],
+        ["1_0", 1, 0],
+        ["2_0", 2, 0],
+      ],
+    ]);
+    expect(
+      groupCellsIntoRectangles([
+        ["0_0", 0, 0],
         ["0_1", 0, 1],
         ["0_2", 0, 2],
         ["1_0", 1, 0],
@@ -2486,6 +2500,32 @@ describe("groupCellsIntoRectangles", () => {
         ["1_2", 1, 2],
       ],
       [["1_1", 1, 1]],
+    ]);
+  });
+});
+
+describe("splitIntoRangeGroups", () => {
+  test("should split into range groups", () => {
+    expect(
+      splitIntoRangeGroups([
+        ["-3", -3],
+        ["-1", -1],
+        ["0", 0],
+        ["1", 1],
+        ["3", 3],
+        ["4", 4],
+      ]),
+    ).toEqual([
+      [["-3", -3]],
+      [
+        ["-1", -1],
+        ["0", 0],
+        ["1", 1],
+      ],
+      [
+        ["3", 3],
+        ["4", 4],
+      ],
     ]);
   });
 });

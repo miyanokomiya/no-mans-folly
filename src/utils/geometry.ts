@@ -1646,3 +1646,27 @@ export function groupCellsIntoRectangles<T>(selectedCells: CellInfo<T>[]): CellI
 
   return groups;
 }
+
+export function splitIntoRangeGroups<T>(values: [T, number][]): [T, number][][] {
+  if (values.length === 0) return [];
+
+  const ret: [T, number][][] = [];
+  let current: [T, number][] = [];
+  let i = values[0][1];
+  values.forEach((v) => {
+    if (i === v[1] || i + 1 === v[1]) {
+      current.push(v);
+    } else {
+      if (current.length > 0) {
+        ret.push(current);
+        current = [v];
+      }
+    }
+    i = v[1];
+  });
+
+  if (current.length > 0) {
+    ret.push(current);
+  }
+  return ret;
+}
