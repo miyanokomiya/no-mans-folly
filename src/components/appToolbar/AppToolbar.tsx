@@ -64,6 +64,12 @@ export const AppToolbar: React.FC = () => {
         template = generateBoardTemplate(ctx);
       } else if (type === "align_box") {
         template = generateAlignTemplate(ctx);
+      } else if (type === "table") {
+        const shape = createShape(ctx.getShapeStruct, type, {
+          id: ctx.generateUuid(),
+          findex: acctx.shapeStore.createLastIndex(),
+        });
+        template = { shapes: [shape] };
       } else {
         const shape = createShape(ctx.getShapeStruct, type, {
           id: ctx.generateUuid(),
