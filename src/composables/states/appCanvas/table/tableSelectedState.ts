@@ -506,7 +506,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                 if (!tableInfo) return;
 
                 const coordsList = tableSelectable.getSelectedCoords();
-                const patch = getPatchByClearCellStyle(tableInfo, coordsList);
+                const patch = getPatchByClearCellStyle(tableInfo, coordsList, ctx.generateUuid);
                 ctx.updateShapes({
                   update: { [targetShape.id]: patch },
                 });
