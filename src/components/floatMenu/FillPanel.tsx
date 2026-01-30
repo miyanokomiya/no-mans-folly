@@ -12,14 +12,14 @@ interface Props {
 export const FillPanel: React.FC<Props> = ({ fill, onChanged }) => {
   const onColorChange = useCallback(
     (color: Color, draft = false) => {
-      onChanged?.({ color: { ...color, a: fill.color.a } }, draft);
+      onChanged?.({ color: { ...color, a: fill.color.a }, disabled: false }, draft);
     },
     [fill, onChanged],
   );
 
   const onAlphaChanged = useCallback(
     (val: number, draft = false) => {
-      onChanged?.({ color: { ...fill.color, a: val } }, draft);
+      onChanged?.({ color: { ...fill.color, a: val }, disabled: false }, draft);
     },
     [onChanged, fill],
   );
@@ -38,7 +38,7 @@ export const FillPanel: React.FC<Props> = ({ fill, onChanged }) => {
           Disabled
         </ToggleInput>
       </div>
-      <div className={fill.disabled ? "opacity-50 pointer-events-none" : ""}>
+      <div className={fill.disabled ? "opacity-50" : ""}>
         <div className="mt-2 flex items-center">
           <span>Alpha:</span>
           <div className="ml-2 flex-1">

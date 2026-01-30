@@ -23,21 +23,21 @@ interface Props {
 export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
   const onColorChange = useCallback(
     (color: Color, draft = false) => {
-      onChanged?.({ color: { ...color, a: stroke.color.a } }, draft);
+      onChanged?.({ color: { ...color, a: stroke.color.a }, disabled: false }, draft);
     },
     [stroke, onChanged],
   );
 
   const onAlphaChanged = useCallback(
     (val: number, draft = false) => {
-      onChanged?.({ color: { ...stroke.color, a: val } }, draft);
+      onChanged?.({ color: { ...stroke.color, a: val }, disabled: false }, draft);
     },
     [onChanged, stroke],
   );
 
   const onWidthChanged = useCallback(
     (val: number, draft = false) => {
-      onChanged?.({ width: val }, draft);
+      onChanged?.({ width: val, disabled: false }, draft);
     },
     [onChanged],
   );
@@ -51,14 +51,14 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
 
   const onCapChanged = useCallback(
     (val: CanvasLineCap) => {
-      onChanged?.({ lineCap: val });
+      onChanged?.({ lineCap: val, disabled: false });
     },
     [onChanged],
   );
 
   const onJoinChanged = useCallback(
     (val: CanvasLineJoin) => {
-      onChanged?.({ lineJoin: val });
+      onChanged?.({ lineJoin: val, disabled: false });
     },
     [onChanged],
   );
@@ -70,30 +70,30 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
           Disabled
         </ToggleInput>
       </div>
-      <div className="mt-2 flex items-center">
-        <span>Width:</span>
-        <div className="ml-2 flex-1">
-          <SliderInput min={1} max={20} step={1} value={stroke.width ?? 1} onChanged={onWidthChanged} showValue />
+      <div className={stroke.disabled ? "opacity-50" : ""}>
+        <div className="mt-2 flex items-center">
+          <span>Width:</span>
+          <div className="ml-2 flex-1">
+            <SliderInput min={1} max={20} step={1} value={stroke.width ?? 1} onChanged={onWidthChanged} showValue />
+          </div>
         </div>
-      </div>
-      <BlockGroupField label="Stroke styles" accordionKey="stroke-style">
-        <InlineField label="Cap:">
-          <RadioSelectInput
-            value={getLineCap(stroke.lineCap)}
-            options={useMemo(() => getLineCapOptions(), [])}
-            onChange={onCapChanged}
-          />
-        </InlineField>
-        <InlineField label="Join:">
-          <RadioSelectInput
-            value={getLineJoin(stroke.lineJoin)}
-            options={useMemo(() => getLineJoinOptions(), [])}
-            onChange={onJoinChanged}
-          />
-        </InlineField>
-        <LineDashField stroke={stroke} onChange={onChanged} />
-      </BlockGroupField>
-      <div className={stroke.disabled ? "opacity-50 pointer-events-none" : ""}>
+        <BlockGroupField label="Stroke styles" accordionKey="stroke-style">
+          <InlineField label="Cap:">
+            <RadioSelectInput
+              value={getLineCap(stroke.lineCap)}
+              options={useMemo(() => getLineCapOptions(), [])}
+              onChange={onCapChanged}
+            />
+          </InlineField>
+          <InlineField label="Join:">
+            <RadioSelectInput
+              value={getLineJoin(stroke.lineJoin)}
+              options={useMemo(() => getLineJoinOptions(), [])}
+              onChange={onJoinChanged}
+            />
+          </InlineField>
+          <LineDashField stroke={stroke} onChange={onChanged} />
+        </BlockGroupField>
         <div className="mt-2 flex items-center">
           <span>Alpha:</span>
           <div className="ml-2 flex-1">
@@ -116,7 +116,7 @@ interface LineDashFieldProps {
 const LineDashField: React.FC<LineDashFieldProps> = ({ stroke, onChange }) => {
   const onDashChanged = useCallback(
     (val: LineDash) => {
-      onChange?.({ dash: val === "solid" ? undefined : val });
+      onChange?.({ dash: val === "solid" ? undefined : val, disabled: false });
     },
     [onChange],
   );
@@ -136,7 +136,7 @@ const LineDashField: React.FC<LineDashFieldProps> = ({ stroke, onChange }) => {
   }, [stroke]);
 
   const commitDashCustom = useCallback(() => {
-    onChange?.({ dashCustom: stroke.dashCustom });
+    onChange?.({ dashCustom: stroke.dashCustom, disabled: false });
   }, [onChange, stroke]);
 
   const onDashCustomValueChange = useCallback(
@@ -144,7 +144,7 @@ const LineDashField: React.FC<LineDashFieldProps> = ({ stroke, onChange }) => {
       const current = parseLineDashCustomValue(customDashValue);
       const dash = parseLineDashCustomValue(val);
       if (current.join(",") !== dash.join(",")) {
-        onChange?.({ dashCustom: { dash, valueType: "scale", offset: 0 } }, true);
+        onChange?.({ dashCustom: { dash, valueType: "scale", offset: 0 }, disabled: false }, true);
       }
       setCustomDashValue(val);
     },
@@ -154,7 +154,7 @@ const LineDashField: React.FC<LineDashFieldProps> = ({ stroke, onChange }) => {
   const onDashCustomOffsetChange = useCallback(
     (val: number, draft = false) => {
       const dash = parseLineDashCustomValue(customDashValue);
-      onChange?.({ dashCustom: { dash, valueType: "scale", offset: val } }, draft);
+      onChange?.({ dashCustom: { dash, valueType: "scale", offset: val }, disabled: false }, draft);
     },
     [onChange, customDashValue],
   );
