@@ -3,7 +3,7 @@ import { getTree, TreeNode } from "../tree";
 import { LayoutFn, LayoutNode, toAbsoluteRectMap } from "./core";
 import { divideSafely, MergeArea } from "../geometry";
 import { Size } from "../../models";
-import { findexSortFn } from "../commons";
+import { findBackward, findexSortFn } from "../commons";
 
 type TableCoords = [rowId: string, columnId: string];
 
@@ -11,6 +11,9 @@ export interface CellAlign {
   hAlign?: "left" | "center" | "right"; // "undefined" should mean "center"
   vAlign?: "top" | "center" | "bottom"; // "undefined" should mean "center"
 }
+
+type CellStyleValue = CellAlign;
+type CellStyleArea = [MergeArea[0], MergeArea[1], CellStyleValue];
 
 export type TableLayoutNode = TableLayoutBox | TableLayoutEntity;
 
@@ -44,6 +47,7 @@ export interface TableLayoutBox extends TableLayoutBase {
   columns: TableLayoutLine[];
   rows: TableLayoutLine[];
   mergeAreas?: MergeArea[];
+  styleAreas?: CellStyleArea[];
 }
 
 export const tableLayout: LayoutFn<TableLayoutNode> = (src) => {
@@ -124,7 +128,7 @@ function calcTableRectMap(
   treeNode: TreeNode,
   mergeAreaIndexMap: Map<string, [number, number][]>,
 ): LineSizeInfo {
-  const node = nodeMap.get(treeNode.id)! as TableLayoutBox;
+  const tableNode = nodeMap.get(treeNode.id)! as TableLayoutBox;
 
   const matrixMap = newMatrixMap<TreeNode>();
   treeNode.children.forEach((c) => {
@@ -134,17 +138,23 @@ function calcTableRectMap(
 
   const lineSizeInfo = getLineSizeInfo(nodeMap, treeNode, mergeAreaIndexMap, matrixMap);
 
-  const gapC = 0;
   let cellX = 0;
   let tableW = 0;
   let cellY = 0;
   const checkedMap = new Map<number, Set<number>>();
 
-  node.rows.forEach((row, rowIndex) => {
+  tableNode.rows.forEach((row, rowIndex) => {
     const rowSize = lineSizeInfo.rows[rowIndex];
     let y = cellY;
 
-    node.columns.forEach((column, columnIndex) => {
+    const styleAreaCandidatesForRow: CellStyleArea[] = [];
+    tableNode.styleAreas?.forEach((sa) => {
+      if (sa[0][0] <= rowIndex && rowIndex <= sa[1][0]) {
+        styleAreaCandidatesForRow.push(sa);
+      }
+    });
+
+    tableNode.columns.forEach((column, columnIndex) => {
       const columnSize = lineSizeInfo.columns[columnIndex];
 
       const checkedSet = checkedMap.get(rowIndex);
@@ -169,7 +179,7 @@ function calcTableRectMap(
       // Pick items in merged cells
       const otherItems = new Set<TreeNode>();
       for (const [r, c] of mergeCellSet) {
-        const others = matrixMap.get([node.rows[r].id, node.columns[c].id]);
+        const others = matrixMap.get([tableNode.rows[r].id, tableNode.columns[c].id]);
         others?.forEach((item) => otherItems?.add(item));
       }
       if (otherItems.size > 0) {
@@ -201,7 +211,6 @@ function calcTableRectMap(
         itemList.sort(findexSortFn);
       }
 
-      const hasFullHItem = itemList.some((cNode) => cNode.fullH);
       let itemBoundsWidth = 0;
       let fixedItemBoundsWidth = 0;
       itemList.forEach((cNode) => {
@@ -210,21 +219,29 @@ function calcTableRectMap(
           fixedItemBoundsWidth += cNode.rect.width;
         }
       });
-      const remainWidth = hasFullHItem ? 0 : effectiveCellSize.width - itemBoundsWidth;
-      let x = cellX + remainWidth / 2;
 
+      const indexStyleArea = findBackward(styleAreaCandidatesForRow, (sa) => {
+        return sa[0][1] <= columnIndex && columnIndex <= sa[1][1];
+      });
+      const hPaddingRate = getPaddingRateH(indexStyleArea?.[2].hAlign);
+      const vPaddingRate = getPaddingRateV(indexStyleArea?.[2].vAlign);
+
+      const hasFullHItem = itemList.some((cNode) => cNode.fullH);
+      const remainWidth = hasFullHItem ? 0 : effectiveCellSize.width - itemBoundsWidth;
       const fullHScale = divideSafely(
         effectiveCellSize.width - fixedItemBoundsWidth,
         itemBoundsWidth - fixedItemBoundsWidth,
         1,
       );
+
+      let x = cellX + remainWidth * hPaddingRate;
       itemList.forEach((cNode) => {
         const width = cNode.rect.width * (cNode.fullH ? fullHScale : 1);
         const height = cNode.fullV ? effectiveCellSize.height : cNode.rect.height;
-        const paddingY = (effectiveCellSize.height - height) / 2;
-        const cRect = { width, height, x, y: y + paddingY };
+        const remainHeight = effectiveCellSize.height - height;
+        const cRect = { width, height, x, y: y + remainHeight * vPaddingRate };
         ret.set(cNode.id, cRect);
-        x += cRect.width + gapC;
+        x += cRect.width;
       });
 
       cellX += columnSize;
@@ -236,7 +253,7 @@ function calcTableRectMap(
   });
 
   const boxRect = { x: 0, y: 0, width: tableW, height: cellY };
-  ret.set(node.id, boxRect);
+  ret.set(tableNode.id, boxRect);
   return lineSizeInfo;
 }
 
@@ -410,4 +427,32 @@ function getLineSizeInfo(
   });
 
   return { rows, columns };
+}
+
+function getPaddingRateH(hAlign?: CellAlign["hAlign"]): number {
+  switch (hAlign) {
+    case "left": {
+      return 0;
+    }
+    case "right": {
+      return 1;
+    }
+    default: {
+      return 0.5;
+    }
+  }
+}
+
+function getPaddingRateV(vAlign?: CellAlign["vAlign"]): number {
+  switch (vAlign) {
+    case "top": {
+      return 0;
+    }
+    case "bottom": {
+      return 1;
+    }
+    default: {
+      return 0.5;
+    }
+  }
 }

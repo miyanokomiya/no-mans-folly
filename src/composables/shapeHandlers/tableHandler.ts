@@ -732,6 +732,7 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
       fullH: shape.lcH === 1,
       fullV: shape.lcV === 1,
       mergeAreas: tableInfo?.mergeAreas.map((m) => m.area),
+      styleAreas: tableInfo?.styleAreas,
     });
 
     treeNode.children.forEach((c) => {

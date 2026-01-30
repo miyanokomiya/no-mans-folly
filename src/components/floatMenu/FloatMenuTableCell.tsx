@@ -95,7 +95,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
         ctx.setTmpShapeMap({ [tableId]: patch });
       } else {
         ctx.setTmpShapeMap({});
-        ctx.patchShapes({ [tableId]: patch });
+        ctx.updateShapes({ update: { [tableId]: patch } });
         focusBack?.();
       }
     },
