@@ -64,18 +64,15 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
     }
 
     function handleFloatMenuForCell(ctx: AppCanvasStateContext) {
-      if (tableSelectable.getSelectedCoords().length > 0) {
-        const targetShape = getters.getTargetShape();
-        ctx.showFloatMenu({
-          type: "table-cell",
-          data: {
-            tableId: targetShape.id,
-            selectedCoords: tableSelectable.getSelectedCoords(),
-          },
-        });
-      } else {
-        ctx.showFloatMenu();
-      }
+      const selectedCoords = tableSelectable.getSelectedCoords();
+      const targetShape = getters.getTargetShape();
+      ctx.showFloatMenu({
+        type: "table-cell",
+        data: {
+          tableId: targetShape.id,
+          selectedCoords: selectedCoords.length > 0 ? selectedCoords : tableSelectable.getAllCoords(),
+        },
+      });
     }
 
     return {
@@ -85,6 +82,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
 
         const targetShape = getters.getTargetShape();
         tableSelectable = newTableSelectable({ table: targetShape });
+        handleFloatMenuForCell(ctx);
       },
       onResume: (ctx) => {
         getters.refresh(ctx);

@@ -75,6 +75,10 @@ export function newTableSelectable(option: TableSelectableOption) {
     return getSelectedCoords().some((val) => val[0] === coords[0] && val[1] === coords[1]);
   }
 
+  function getAllCoords(): TableCoords[] {
+    return Object.values(items);
+  }
+
   function getSelectedCoords() {
     return selectable.getSelectedItemList();
   }
@@ -104,6 +108,7 @@ export function newTableSelectable(option: TableSelectableOption) {
   return {
     clearAll: selectable.clearAll,
     isSelectedCell,
+    getAllCoords,
     getSelectedCoords,
     getSelectedRows,
     getSelectedColumns,
