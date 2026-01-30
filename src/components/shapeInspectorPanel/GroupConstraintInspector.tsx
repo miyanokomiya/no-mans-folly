@@ -9,8 +9,6 @@ import gcIcon3 from "../../assets/icons/group_constraints_3.svg";
 import gcIcon4 from "../../assets/icons/group_constraints_4.svg";
 import gcIcon5 from "../../assets/icons/group_constraints_5.svg";
 import gcIcon6 from "../../assets/icons/group_constraints_6.svg";
-import { ToggleInput } from "../atoms/inputs/ToggleInput";
-import { InlineField } from "../atoms/InlineField";
 
 const gcIcons = [gcIcon0, gcIcon1, gcIcon2, gcIcon3, gcIcon4, gcIcon5, gcIcon6];
 const gcVAlts = ["None", "Top", "Height", "Bottom", "Top & Height", "Top & Bottom", "Height & Bottom"];
@@ -69,33 +67,6 @@ export const GroupConstraintInspector: React.FC<Props> = ({ targetShape, updateT
   );
 };
 
-export const TableConstraintInspector: React.FC<Props> = ({ targetShape, updateTargetShape }) => {
-  const handleVStretchChange = useCallback(
-    (val: boolean) => {
-      updateTargetShape({ lcV: val ? 1 : 0 });
-    },
-    [updateTargetShape],
-  );
-
-  const handleHStretchChange = useCallback(
-    (val: boolean) => {
-      updateTargetShape({ lcH: val ? 1 : 0 });
-    },
-    [updateTargetShape],
-  );
-
-  return (
-    <BlockGroupField label="Table constraints" accordionKey="group-constraint-inspector">
-      <InlineField label="Vertical stretch">
-        <ToggleInput value={targetShape.lcV === 1} onChange={handleVStretchChange} />
-      </InlineField>
-      <InlineField label="Horinzontal stretch">
-        <ToggleInput value={targetShape.lcH === 1} onChange={handleHStretchChange} />
-      </InlineField>
-    </BlockGroupField>
-  );
-};
-
 interface ItemButtonProps {
   value: GroupConstraint;
   icon: string;
@@ -113,7 +84,7 @@ const ItemButton: React.FC<ItemButtonProps> = ({ value, icon, vertical, selected
   const highlightClassName = value === (selectedValue ?? 0) ? " border-2 border-cyan-400" : "";
 
   return (
-    <button type="button" onClick={handleClick} className={"relative w-12 h-12"}>
+    <button type="button" onClick={handleClick} className={"relative w-12 h-12"} title={alt}>
       <div className={"absolute inset-0" + highlightClassName} />
       <img src={icon} alt={alt} className={"absolute inset-0" + (vertical ? " rotate-90" : "")} />
     </button>

@@ -7,7 +7,8 @@ import { AppStateContext, AppStateMachineContext, GetAppStateContext } from "../
 import { Shape, ShapeAttachment } from "../../models";
 import { LineShapeInspector } from "./LineShapeInspector";
 import { LineShape, isLineShape } from "../../shapes/line";
-import { GroupConstraintInspector, TableConstraintInspector } from "./GroupConstraintInspector";
+import { GroupConstraintInspector } from "./GroupConstraintInspector";
+import { TableConstraintInspector } from "./TableConstraintInspector";
 import { MultipleShapesInspector } from "./MultipleShapesInspector";
 import { canClip, canShapeGrouped } from "../../shapes";
 import { GroupShape, isGroupShape } from "../../shapes/group";
