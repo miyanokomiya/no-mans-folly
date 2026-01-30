@@ -18,6 +18,7 @@ import { useShapeComposite } from "../../hooks/storeHooks";
 import { createFillStyle } from "../../utils/fillStyle";
 import { getPatchByApplyCellStyle } from "../../composables/shapeHandlers/tableHandler";
 import { StrokePanel } from "./StrokePanel";
+import { CellAlignButton } from "./CellAlignButton";
 
 interface Props {
   tableId: string;
@@ -76,6 +77,29 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       }
     },
     [focusBack, getCtx, selectedCoords, tableInfo, indexCellStyle, indexCellFill, tableId],
+  );
+
+  const onCellFieldChanged = useCallback(
+    (val: TableCellStyleValue, draft = false) => {
+      if (!tableInfo) return;
+
+      const ctx = getCtx();
+      const patch = getPatchByApplyCellStyle(
+        tableInfo,
+        selectedCoords,
+        getTableCellStyleValue({ ...indexCellStyle, ...val }),
+        ctx.generateUuid,
+      );
+
+      if (draft) {
+        ctx.setTmpShapeMap({ [tableId]: patch });
+      } else {
+        ctx.setTmpShapeMap({});
+        ctx.patchShapes({ [tableId]: patch });
+        focusBack?.();
+      }
+    },
+    [focusBack, getCtx, selectedCoords, tableInfo, indexCellStyle, tableId],
   );
 
   const onFillChanged = useCallback(
@@ -196,6 +220,13 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
           <div className="w-8 h-6 border-2 rounded" style={{ backgroundColor: rednerRGBA(indexCellFill.color) }}></div>
         </div>
       </PopupButton>
+      <CellAlignButton
+        popupedKey={popupedKey}
+        setPopupedKey={setPopupedKey}
+        defaultDirection={popupDefaultDirection}
+        cellAlign={indexCellStyle}
+        onChange={onCellFieldChanged}
+      />
       <button
         type="button"
         className="w-10.5 h-10.5 border rounded-xs bg-white flex justify-center items-center"

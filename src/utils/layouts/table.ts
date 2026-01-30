@@ -6,6 +6,12 @@ import { Size } from "../../models";
 import { findexSortFn } from "../commons";
 
 type TableCoords = [rowId: string, columnId: string];
+
+export interface CellAlign {
+  hAlign?: "left" | "center" | "right"; // "undefined" should mean "center"
+  vAlign?: "top" | "center" | "bottom"; // "undefined" should mean "center"
+}
+
 export type TableLayoutNode = TableLayoutBox | TableLayoutEntity;
 
 interface TableLayoutBase extends LayoutNode {

@@ -40,7 +40,7 @@ import {
   renderStrokeSVGAttributes,
 } from "../../utils/strokeStyle";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../utils/fillStyle";
-import { TableLayoutLineValue } from "../../utils/layouts/table";
+import { CellAlign, TableLayoutLineValue } from "../../utils/layouts/table";
 
 const DEFAULT_CELL_WIDTH = 100;
 const DEFAULT_CELL_HEIGHT = 50;
@@ -69,7 +69,7 @@ export type TableCellMerge = { id: TableCellMergeKey } & TableCellArea;
 export type TableCellMergeArea = { area: MergeArea; style?: TableCellStyleValue };
 
 export type TableCellStyleKey = `s_${string}`;
-export type TableCellStyleValue = {
+export type TableCellStyleValue = CellAlign & {
   fill?: FillStyle;
 };
 export type TableCellStyle = {
@@ -914,7 +914,7 @@ export function getCoordsBoundsInfo(
 }
 
 export function getTableCellStyleValue(val: TableCellStyle | TableCellStyleValue): TableCellStyleValue {
-  return { fill: val.fill };
+  return { fill: val.fill, hAlign: val.hAlign, vAlign: val.vAlign };
 }
 
 export function getIndexStyleValueAt(tableInfo: TableShapeInfo, coords: TableCoords): TableCellStyleValue {
