@@ -237,7 +237,7 @@ describe("getPatchByDeleteLines", () => {
 describe("getPatchByApplyCellStyle", () => {
   test("should return patch by apply cell style", () => {
     const table = generateTable(3, 3, { width: 20, height: 10 });
-    table.s_0 = { id: "s_0", a: ["r_0", "c_0"], b: ["r_0", "c_1"], fill: createFillStyle({ disabled: false }) };
+    table.s_0 = { id: "s_0", a: ["r_0", "c_0"], b: ["r_0", "c_1"], fill: createFillStyle({ disabled: true }) };
     let count = 0;
     const generateUuid = () => `id_${count++}`;
 
@@ -275,6 +275,85 @@ describe("getPatchByApplyCellStyle", () => {
         b: ["r_0", "c_1"],
         fill: createFillStyle({ disabled: false }),
         id: "s_0",
+      },
+    });
+  });
+
+  test("should not delete encompassed style with additional field", () => {
+    const table = generateTable(3, 3, { width: 20, height: 10 });
+    table.s_0 = {
+      id: "s_0",
+      a: ["r_0", "c_0"],
+      b: ["r_0", "c_1"],
+      fill: createFillStyle({ disabled: true }),
+      hAlign: "left",
+    };
+    let count = 0;
+    const generateUuid = () => `id_${count++}`;
+
+    expect(
+      getPatchByApplyCellStyle(
+        getTableShapeInfo(table)!,
+        [
+          ["r_0", "c_0"],
+          ["r_0", "c_1"],
+        ],
+        { fill: createFillStyle({ disabled: false }) },
+        generateUuid,
+      ),
+      "Patch existing style having the same bounds",
+    ).toEqual({
+      s_0: {
+        a: ["r_0", "c_0"],
+        b: ["r_0", "c_1"],
+        fill: createFillStyle({ disabled: false }),
+        hAlign: "left",
+        id: "s_0",
+      },
+    });
+
+    count = 0;
+    expect(
+      getPatchByApplyCellStyle(
+        getTableShapeInfo(table)!,
+        [
+          ["r_0", "c_0"],
+          ["r_0", "c_1"],
+        ],
+        { vAlign: "bottom" },
+        generateUuid,
+      ),
+      "Patch existing style having the same bounds",
+    ).toEqual({
+      s_0: {
+        a: ["r_0", "c_0"],
+        b: ["r_0", "c_1"],
+        fill: createFillStyle({ disabled: true }),
+        hAlign: "left",
+        vAlign: "bottom",
+        id: "s_0",
+      },
+    });
+
+    count = 0;
+    expect(
+      getPatchByApplyCellStyle(
+        getTableShapeInfo(table)!,
+        [
+          ["r_0", "c_0"],
+          ["r_0", "c_1"],
+          ["r_0", "c_2"],
+        ],
+        { fill: createFillStyle({ disabled: false }) },
+        generateUuid,
+      ),
+      "Preserve encompassed style with additional field",
+    ).toEqual({
+      s_id_0: {
+        a: ["r_0", "c_0"],
+        b: ["r_0", "c_2"],
+        fill: createFillStyle({ disabled: false }),
+        id: "s_id_0",
       },
     });
   });

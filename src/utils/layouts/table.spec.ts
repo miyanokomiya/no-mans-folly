@@ -347,4 +347,46 @@ describe("tableLayout", () => {
       ["1_1", { height: 10, width: 20, x: 180, y: 190 }],
     ]);
   });
+
+  test("should handle align style in separate data", () => {
+    const result0 = tableLayout([
+      {
+        ...root3x3,
+        styleAreas: [
+          [[0, 1], [1, 1], { hAlign: "right" }],
+          [[0, 1], [1, 1], { vAlign: "bottom" }],
+        ],
+      },
+      {
+        id: "0_0",
+        findex: "Ab",
+        type: "entity",
+        parentId: "root",
+        coords: ["r0", "c0"],
+        rect: { x: 0, y: 0, width: 20, height: 10 },
+      },
+      {
+        id: "0_1",
+        findex: "Aa",
+        type: "entity",
+        parentId: "root",
+        coords: ["r0", "c1"],
+        rect: { x: 0, y: 0, width: 20, height: 10 },
+      },
+      {
+        id: "1_1",
+        findex: "Cc",
+        type: "entity",
+        parentId: "root",
+        coords: ["r1", "c1"],
+        rect: { x: 0, y: 0, width: 20, height: 10 },
+      },
+    ]);
+    expect(result0.map((r) => [r.id, r.rect])).toEqual([
+      ["root", { height: 300, width: 300, x: 0, y: 0 }],
+      ["0_0", { height: 10, width: 20, x: 40, y: 45 }],
+      ["0_1", { height: 10, width: 20, x: 180, y: 90 }],
+      ["1_1", { height: 10, width: 20, x: 180, y: 190 }],
+    ]);
+  });
 });

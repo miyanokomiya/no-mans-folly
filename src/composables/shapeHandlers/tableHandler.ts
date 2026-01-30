@@ -44,7 +44,6 @@ import {
   groupCellsIntoRectangles,
   ISegment,
   isInMergeArea,
-  isMergeAreaOverlapping,
   isPointCloseToSegment,
   isPointOnRectangle,
   MergeArea,
@@ -1299,7 +1298,7 @@ export function getPatchByApplyCellStyle(
 
   const processedSet = new Set<string>();
 
-  // Delete current styles that are encompassed by the new style area
+  // Delete current styles that are encompassed by the new style area and don't have additional fields.
   boundsList.forEach((b) => {
     const bar = rowIndexById.get(b[0][0]) ?? -Infinity;
     const bac = columnIndexById.get(b[0][1]) ?? -Infinity;
@@ -1322,8 +1321,8 @@ export function getPatchByApplyCellStyle(
             // Discard this style since new one is already inherited
             patch[s.id] = undefined;
           } else {
-            // Overwrite the style data when it has the same bounds of a newly created style
-            patch[s.id] = { ...(patch[styleIdOfBounds] as TableCellStyle), id: s.id };
+            // Patch the style data when it has the same bounds of a newly created style
+            patch[s.id] = { ...s, ...(patch[styleIdOfBounds] as TableCellStyle), id: s.id };
             delete patch[styleIdOfBounds];
             processedSet.add(styleIdOfBounds);
           }
@@ -1340,7 +1339,10 @@ export function getPatchByApplyCellStyle(
             true,
           )
         ) {
-          patch[s.id] = undefined;
+          // Delete the current one only when every its field exists in new one.
+          if (Object.keys(s).every((key) => key in styleValue)) {
+            patch[s.id] = undefined;
+          }
         }
       }
     });

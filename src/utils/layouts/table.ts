@@ -147,10 +147,10 @@ function calcTableRectMap(
     const rowSize = lineSizeInfo.rows[rowIndex];
     let y = cellY;
 
-    const styleAreaCandidatesForRow: CellStyleArea[] = [];
+    const effectiveStyleAreasByRow: CellStyleArea[] = [];
     tableNode.styleAreas?.forEach((sa) => {
       if (sa[0][0] <= rowIndex && rowIndex <= sa[1][0]) {
-        styleAreaCandidatesForRow.push(sa);
+        effectiveStyleAreasByRow.push(sa);
       }
     });
 
@@ -220,11 +220,9 @@ function calcTableRectMap(
         }
       });
 
-      const indexStyleArea = findBackward(styleAreaCandidatesForRow, (sa) => {
-        return sa[0][1] <= columnIndex && columnIndex <= sa[1][1];
-      });
-      const hPaddingRate = getPaddingRateH(indexStyleArea?.[2].hAlign);
-      const vPaddingRate = getPaddingRateV(indexStyleArea?.[2].vAlign);
+      const effectiveStyleValue = pickCellStyleValueByColumn(effectiveStyleAreasByRow, columnIndex);
+      const hPaddingRate = getPaddingRateH(effectiveStyleValue.hAlign);
+      const vPaddingRate = getPaddingRateV(effectiveStyleValue.vAlign);
 
       const hasFullHItem = itemList.some((cNode) => cNode.fullH);
       const remainWidth = hasFullHItem ? 0 : effectiveCellSize.width - itemBoundsWidth;
@@ -455,4 +453,22 @@ function getPaddingRateV(vAlign?: CellAlign["vAlign"]): number {
       return 0.5;
     }
   }
+}
+
+/**
+ * "effectiveStyleAreasByRow" should have been filtered by row.
+ */
+function pickCellStyleValueByColumn(effectiveStyleAreasByRow: CellStyleArea[], columnIndex: number): CellStyleValue {
+  let hAlign: CellStyleValue["hAlign"];
+  let vAlign: CellStyleValue["vAlign"];
+  findBackward(effectiveStyleAreasByRow, (sa) => {
+    if (sa[0][1] <= columnIndex && columnIndex <= sa[1][1]) {
+      hAlign ??= sa[2].hAlign;
+      vAlign ??= sa[2].vAlign;
+      return !!(hAlign && vAlign);
+    } else {
+      return false;
+    }
+  });
+  return { hAlign, vAlign };
 }

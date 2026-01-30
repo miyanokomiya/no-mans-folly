@@ -69,9 +69,15 @@ export type TableCellMerge = { id: TableCellMergeKey } & TableCellArea;
 export type TableCellMergeArea = { area: MergeArea; style?: TableCellStyleValue };
 
 export type TableCellStyleKey = `s_${string}`;
+
+/**
+ * Newer value should be prioritized over older one.
+ * Older one should be used when newer one has undefined value.
+ */
 export type TableCellStyleValue = CellAlign & {
   fill?: FillStyle;
 };
+
 export type TableCellStyle = {
   id: TableCellStyleKey;
 } & TableCellStyleValue &
