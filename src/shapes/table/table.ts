@@ -72,8 +72,24 @@ export type TableCellMergeArea = { area: MergeArea; style?: TableCellStyleValueR
 export type TableCellStyleKey = `s_${string}`;
 
 /**
- * Newer value should be prioritized over older one.
- * Older one should be used when newer one has undefined value.
+ * Each field belongs to certain group and a object is exclusive for a group.
+ * - fill group: fill
+ * - align group: vAlign, hAlign
+ *
+ * e.g.
+ * - { fill }, { vAlign } and { vAlign, hAlign } are valid
+ * - { fill, vAlign } is invalid
+ *
+ * Each object has its timestamp "t" that is used for sorting them in respective group.
+ * Newer one should be prioritized over older one in the same group.
+ * Older one should be used when newer one has undefined value in the same group.
+ *
+ * e.g.
+ * - { vAlign: a, t: 10 } and { hAlign: b, t: 20 } turn into { vAlign: a, hAlign: b }
+ * - { vAlign: a, t: 10 } and { vAlign: b, t: 20 } turn into { vAlign: b }
+ *
+ * This orthogonal grouping strategy enables to discard older value for the same group while preserving ones for other group.
+ *
  */
 export type TableCellStyleValueRaw = CellAlign & { fill?: FillStyle };
 export type TableCellStyleValue = { t: number } & TableCellStyleValueRaw;
@@ -98,7 +114,8 @@ export type TableShape = Shape &
   };
 
 /**
- * Detailed table info derived from a table shape
+ * Detailed table info derived from a table shape.
+ * Style values are split into groups.
  */
 export type TableShapeInfo = {
   columns: TableColumn[];
