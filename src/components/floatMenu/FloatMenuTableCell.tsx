@@ -8,7 +8,6 @@ import { FillPanel } from "./FillPanel";
 import menuIcon from "../../assets/icons/three_dots_v.svg";
 import {
   getIndexStyleValueAt,
-  getTableCellStyleValue,
   getTableShapeInfo,
   TableCellStyleValueRaw,
   TableCoords,
@@ -64,7 +63,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       const patch = getPatchByApplyCellStyle(
         tableInfo,
         selectedCoords,
-        { ...getTableCellStyleValue({ ...indexCellStyle, fill: { ...indexCellFill, ...val } }), t: Date.now() },
+        { fill: { ...indexCellFill, ...val }, t: Date.now() },
         ctx.generateUuid,
       );
 
@@ -76,7 +75,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
         focusBack?.();
       }
     },
-    [focusBack, getCtx, selectedCoords, tableInfo, indexCellStyle, indexCellFill, tableId],
+    [focusBack, getCtx, selectedCoords, tableInfo, indexCellFill, tableId],
   );
 
   const onCellFieldChanged = useCallback(
@@ -84,12 +83,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       if (!tableInfo) return;
 
       const ctx = getCtx();
-      const patch = getPatchByApplyCellStyle(
-        tableInfo,
-        selectedCoords,
-        { ...getTableCellStyleValue({ ...indexCellStyle, ...val }), t: Date.now() },
-        ctx.generateUuid,
-      );
+      const patch = getPatchByApplyCellStyle(tableInfo, selectedCoords, { ...val, t: Date.now() }, ctx.generateUuid);
 
       if (draft) {
         ctx.setTmpShapeMap({ [tableId]: patch });
@@ -99,7 +93,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
         focusBack?.();
       }
     },
-    [focusBack, getCtx, selectedCoords, tableInfo, indexCellStyle, tableId],
+    [focusBack, getCtx, selectedCoords, tableInfo, tableId],
   );
 
   const onFillChanged = useCallback(

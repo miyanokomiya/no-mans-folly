@@ -567,8 +567,8 @@ function getTableShapeInfoRaw(shape: Partial<TableShape>): TableShapeInfo {
 
   columns.sort(findexSortFn);
   rows.sort(findexSortFn);
-  fillStyles.sort((a, b) => a.t - b.t);
-  alignStyles.sort((a, b) => a.t - b.t);
+  fillStyles.sort(compareStyleValue);
+  alignStyles.sort(compareStyleValue);
 
   const rowIndexById = new Map(rows.map((r, i) => [r.id, i]));
   const columnIndexById = new Map(columns.map((c, i) => [c.id, i]));
@@ -1002,4 +1002,9 @@ function getAdjustedStyles(
     adjustedAreas.push([[ri0, ci0], [ri1, ci1], getTableCellStyleValue(s)]);
   });
   return { items: adjustedItems, areas: adjustedAreas };
+}
+
+function compareStyleValue(a: { t?: number }, b: { t?: number }): number {
+  // Regard "undefined" for backward compatibility with prototype data
+  return (a.t ?? 0) - (b.t ?? 0);
 }
