@@ -29,7 +29,7 @@ interface Props {
 export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, focusBack, onContextMenu }) => {
   const getCtx = useContext(GetAppStateContext);
   const shapeComposite = useShapeComposite();
-  const table = shapeComposite.shapeMap[tableId] as TableShape;
+  const table = shapeComposite.mergedShapeMap[tableId] as TableShape;
   const tableInfo = useMemo(() => getTableShapeInfo(table), [table]);
   const indexCoords = selectedCoords[0];
   const indexCellStyle = useMemo<TableCellStyleValueRaw>(() => {
