@@ -9,7 +9,7 @@ import {
   pathSegmentRawsToString,
 } from "okageo";
 import { CommonStyle, FillStyle, Shape, Size, StrokeStyle } from "../../models";
-import { findBackward, findexSortFn, toMap } from "../../utils/commons";
+import { findBackward, findexSortFn, forEachBackward, toMap } from "../../utils/commons";
 import { ShapeStruct, createBaseShape, getCommonStyle, updateCommonStyle } from "../core";
 import {
   expandRect,
@@ -41,6 +41,7 @@ import {
 } from "../../utils/strokeStyle";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../../utils/fillStyle";
 import { CellAlign, TableLayoutLineValue } from "../../utils/layouts/table";
+import { newClipoutRenderer, newSVGClipoutRenderer } from "../../composables/clipRenderer";
 
 const DEFAULT_CELL_WIDTH = 100;
 const DEFAULT_CELL_HEIGHT = 50;
@@ -164,51 +165,44 @@ export const struct: ShapeStruct<TableShape> = {
         return getStyleAreaInfo(info, coordsLocations, styleArea);
       });
 
-      // 1. Set clip by "resolvedMergeAreas" & disabled "styleAreas"
-      // 2. Render "styleAreas"
-      // 3. Finish clip
-      // 4. Render "resolvedMergeAreas"
-      const region = new Path2D();
-      const clipFns: (() => void)[] = [];
-      info.resolvedMergeAreas.forEach((rma) => {
-        const areaRect = getAreaRect(coordsLocations, rma.area);
-        clipFns.push(() => region.rect(areaRect.x, areaRect.y, areaRect.width, areaRect.height));
-      });
-      styleAreaInfoList.forEach((styleAreaInfo) => {
-        if (styleAreaInfo.value.fill?.disabled) {
-          clipFns.push(() =>
-            styleAreaInfo.rects.forEach((styleRect) =>
-              region.rect(styleRect.x, styleRect.y, styleRect.width, styleRect.height),
-            ),
-          );
-        }
+      // 1. Clip by "resolvedMergeAreas"
+      // 2. For each "styleAreas"
+      //   2.1. Render the areas
+      //   2.2. Clip by the areas
+      // 3. Clear clip and render "resolvedMergeAreas"
+
+      const { applyClip } = newClipoutRenderer({
+        ctx,
+        fillRange: (region) => region.rect(0, 0, rect.width, rect.height),
       });
 
-      const beginClip = (renderFn: () => void) => {
-        if (clipFns.length > 0) {
-          region.rect(0, 0, rect.width, rect.height);
-          clipFns.forEach((fn) => fn());
-          ctx.save();
-          ctx.clip(region, "evenodd");
-        }
-        renderFn();
-        if (clipFns.length > 0) {
-          ctx.restore();
-        }
-      };
+      ctx.save();
 
-      beginClip(() => {
-        styleAreaInfoList.forEach((styleAreaInfo) => {
-          if (styleAreaInfo.value.fill && !styleAreaInfo.value.fill.disabled) {
-            applyFillStyle(ctx, styleAreaInfo.value.fill);
-            ctx.beginPath();
-            styleAreaInfo.rects.forEach((styleRect) =>
-              ctx.rect(styleRect.x, styleRect.y, styleRect.width, styleRect.height),
-            );
-            ctx.fill();
-          }
+      applyClip((region) => {
+        info.resolvedMergeAreas.forEach((rma) => {
+          const areaRect = getAreaRect(coordsLocations, rma.area);
+          region.rect(areaRect.x, areaRect.y, areaRect.width, areaRect.height);
         });
       });
+
+      forEachBackward(styleAreaInfoList, (styleAreaInfo) => {
+        if (styleAreaInfo.value.fill && !styleAreaInfo.value.fill.disabled) {
+          applyFillStyle(ctx, styleAreaInfo.value.fill);
+          ctx.beginPath();
+          styleAreaInfo.rects.forEach((styleRect) =>
+            ctx.rect(styleRect.x, styleRect.y, styleRect.width, styleRect.height),
+          );
+          ctx.fill();
+        }
+
+        applyClip((region) => {
+          styleAreaInfo.rects.forEach((styleRect) =>
+            region.rect(styleRect.x, styleRect.y, styleRect.width, styleRect.height),
+          );
+        });
+      });
+
+      ctx.restore();
 
       info.resolvedMergeAreas.forEach((rma) => {
         if (!rma.style?.fill || rma.style?.fill?.disabled) return;
@@ -257,31 +251,31 @@ export const struct: ShapeStruct<TableShape> = {
       return getStyleAreaInfo(info, coordsLocations, styleArea);
     });
 
-    // 1. Set clip by "resolvedMergeAreas" & disabled "styleAreas"
-    // 2. Render "styleAreas"
-    // 3. Finish clip
-    // 4. Render "resolvedMergeAreas"
-    const clipId = `clip-${shape.id}`;
-    const clipPathCommandList: string[] = [];
+    // 1. Clip by "resolvedMergeAreas"
+    // 2. For each "styleAreas"
+    //   2.1. Render the areas
+    //   2.2. Clip by the areas
+    // 3. Clear clip and render "resolvedMergeAreas"
 
-    info.resolvedMergeAreas.forEach((rma) => {
-      const areaRect = getAreaRect(coordsLocations, rma.area);
-      const pathStr = pathSegmentRawsToString(createSVGCurvePath(getRectPoints(areaRect)));
-      clipPathCommandList.push(pathStr);
+    const { applyClip, getCurrentClipId, getClipElementList } = newSVGClipoutRenderer({
+      clipId: `clip-${shape.id}`,
+      rangeStr: pathSegmentRawsToString(
+        createSVGCurvePath(getRectPoints({ x: 0, y: 0, width: rect.width, height: rect.height })),
+      ),
     });
-    styleAreaInfoList.forEach((styleAreaInfo) => {
-      if (styleAreaInfo.value.fill?.disabled) {
-        styleAreaInfo.rects.forEach((areaRect) => {
-          const pathStr = pathSegmentRawsToString(createSVGCurvePath(getRectPoints(areaRect)));
-          clipPathCommandList.push(pathStr);
-        });
-      }
-    });
+
+    applyClip(
+      info.resolvedMergeAreas.map((rma) => {
+        const areaRect = getAreaRect(coordsLocations, rma.area);
+        return pathSegmentRawsToString(createSVGCurvePath(getRectPoints(areaRect)));
+      }),
+    );
 
     const fillElms: SVGElementInfo[] = [];
-    styleAreaInfoList.forEach((styleAreaInfo) => {
+    forEachBackward(styleAreaInfoList, (styleAreaInfo) => {
       const fillStyle = styleAreaInfo.value.fill;
       if (fillStyle && !fillStyle.disabled) {
+        const clipId = getCurrentClipId();
         styleAreaInfo.rects.forEach((areaRect) => {
           fillElms.push({
             tag: "rect",
@@ -290,11 +284,16 @@ export const struct: ShapeStruct<TableShape> = {
               y: areaRect.y,
               width: areaRect.width,
               height: areaRect.height,
+              "clip-path": clipId ? `url(#${clipId})` : undefined,
               ...renderFillSVGAttributes(fillStyle),
             },
           });
         });
       }
+
+      applyClip(
+        styleAreaInfo.rects.map((styleRect) => pathSegmentRawsToString(createSVGCurvePath(getRectPoints(styleRect)))),
+      );
     });
 
     const mergeFillElms: SVGElementInfo[] = [];
@@ -329,28 +328,7 @@ export const struct: ShapeStruct<TableShape> = {
       tag: "g",
       attributes: { transform: renderTransform(affine) },
       children: [
-        ...(clipPathCommandList.length > 0
-          ? [
-              {
-                tag: "clipPath",
-                attributes: { id: clipId, stroke: "none" },
-                children: [
-                  {
-                    tag: "path",
-                    attributes: {
-                      "clip-rule": "evenodd",
-                      d:
-                        pathSegmentRawsToString(
-                          createSVGCurvePath(getRectPoints({ x: 0, y: 0, width: rect.width, height: rect.height })),
-                        ) +
-                        " " +
-                        clipPathCommandList.join(" "),
-                    },
-                  },
-                ],
-              },
-            ]
-          : []),
+        ...getClipElementList(),
         {
           tag: "rect",
           attributes: {
@@ -360,11 +338,7 @@ export const struct: ShapeStruct<TableShape> = {
             ...renderFillSVGAttributes(shape.fill),
           },
         },
-        {
-          tag: "g",
-          attributes: { "clip-path": clipPathCommandList.length > 0 ? `url(#${clipId})` : undefined },
-          children: fillElms,
-        },
+        ...fillElms,
         ...mergeFillElms,
         {
           tag: "g",

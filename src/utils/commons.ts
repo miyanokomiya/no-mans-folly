@@ -30,6 +30,13 @@ export function findBackward<T>(list: T[], predicate: (value: T, index: number, 
   return ret;
 }
 
+export function forEachBackward<T>(list: T[], predicate: (value: T, index: number, obj: T[]) => void): void {
+  for (let i = list.length - 1; 0 <= i; i--) {
+    const d = list[i];
+    predicate(d, i, list);
+  }
+}
+
 export function mergeMap<T>(src: { [key: string]: T }, override: { [key: string]: T }): { [key: string]: T } {
   const finished = new Set<string>();
 
