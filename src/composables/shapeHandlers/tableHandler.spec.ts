@@ -178,6 +178,7 @@ describe("getPatchByDeleteLines", () => {
   test("should handle cell styles", () => {
     const table = generateTable(3, 3, { width: 20, height: 10 });
     table.s_0 = { id: "s_0", a: ["r_0", "c_0"], b: ["r_2", "c_1"], t: 0, fill: createFillStyle() };
+    table.s_1 = { id: "s_1", a: ["r_0", "c_0"], b: ["r_2", "c_2"], t: 1, vAlign: "top" };
     const shapeComposite = newShapeComposite({
       shapes: [table],
       getStruct: getCommonStruct,
@@ -189,6 +190,7 @@ describe("getPatchByDeleteLines", () => {
         [table.id]: {
           r_0: undefined,
           s_0: { id: "s_0", a: ["r_1", "c_0"], b: ["r_2", "c_1"], t: 0, fill: createFillStyle() },
+          s_1: { id: "s_1", a: ["r_1", "c_0"], b: ["r_2", "c_2"], t: 1, vAlign: "top" },
         },
       },
     });
@@ -208,6 +210,7 @@ describe("getPatchByDeleteLines", () => {
         [table.id]: {
           r_2: undefined,
           s_0: { id: "s_0", a: ["r_0", "c_0"], b: ["r_1", "c_1"], t: 0, fill: createFillStyle() },
+          s_1: { id: "s_1", a: ["r_0", "c_0"], b: ["r_1", "c_2"], t: 1, vAlign: "top" },
         },
       },
     });
@@ -218,6 +221,7 @@ describe("getPatchByDeleteLines", () => {
         [table.id]: {
           r_2: undefined,
           s_0: { id: "s_0", a: ["r_2", "c_0"], b: ["r_2", "c_1"], t: 0, fill: createFillStyle() },
+          s_1: { id: "s_1", a: ["r_2", "c_0"], b: ["r_2", "c_2"], t: 1, vAlign: "top" },
         },
       },
     });
@@ -228,6 +232,17 @@ describe("getPatchByDeleteLines", () => {
         [table.id]: {
           r_2: undefined,
           s_0: { id: "s_0", a: ["r_0", "c_0"], b: ["r_0", "c_1"], t: 0, fill: createFillStyle() },
+          s_1: { id: "s_1", a: ["r_0", "c_0"], b: ["r_0", "c_2"], t: 1, vAlign: "top" },
+        },
+      },
+    });
+
+    const result2c = getPatchByDeleteLines(shapeComposite, table, ["c_2"]);
+    expect(result2c, "style goups should be handled respectively").toEqual({
+      update: {
+        [table.id]: {
+          c_2: undefined,
+          s_1: { id: "s_1", a: ["r_0", "c_0"], b: ["r_2", "c_1"], t: 1, vAlign: "top" },
         },
       },
     });
@@ -281,7 +296,7 @@ describe("getPatchByApplyCellStyle", () => {
     });
   });
 
-  test("should not delete encompassed style with additional field", () => {
+  test("should not delete encompassed style with other value type", () => {
     const table = generateTable(3, 3, { width: 20, height: 10 });
     table.s_0 = {
       id: "s_0",
@@ -289,6 +304,12 @@ describe("getPatchByApplyCellStyle", () => {
       b: ["r_0", "c_1"],
       t: 0,
       fill: createFillStyle({ disabled: true }),
+    };
+    table.s_1 = {
+      id: "s_1",
+      a: ["r_0", "c_0"],
+      b: ["r_0", "c_1"],
+      t: 1,
       hAlign: "left",
     };
     let count = 0;
@@ -301,17 +322,16 @@ describe("getPatchByApplyCellStyle", () => {
           ["r_0", "c_0"],
           ["r_0", "c_1"],
         ],
-        { t: 0, fill: createFillStyle({ disabled: false }) },
+        { t: 10, fill: createFillStyle({ disabled: false }) },
         generateUuid,
       ),
       "Patch existing style having the same bounds",
-    ).toEqual({
+    ).toStrictEqual({
       s_0: {
         a: ["r_0", "c_0"],
         b: ["r_0", "c_1"],
-        t: 0,
+        t: 10,
         fill: createFillStyle({ disabled: false }),
-        hAlign: "left",
         id: "s_0",
       },
     });
@@ -324,19 +344,18 @@ describe("getPatchByApplyCellStyle", () => {
           ["r_0", "c_0"],
           ["r_0", "c_1"],
         ],
-        { t: 0, vAlign: "bottom" },
+        { t: 10, vAlign: "bottom" },
         generateUuid,
       ),
       "Patch existing style having the same bounds",
-    ).toEqual({
-      s_0: {
+    ).toStrictEqual({
+      s_1: {
         a: ["r_0", "c_0"],
         b: ["r_0", "c_1"],
-        t: 0,
-        fill: createFillStyle({ disabled: true }),
+        t: 10,
         hAlign: "left",
         vAlign: "bottom",
-        id: "s_0",
+        id: "s_1",
       },
     });
 
@@ -349,15 +368,16 @@ describe("getPatchByApplyCellStyle", () => {
           ["r_0", "c_1"],
           ["r_0", "c_2"],
         ],
-        { t: 0, fill: createFillStyle({ disabled: false }) },
+        { t: 10, fill: createFillStyle({ disabled: false }) },
         generateUuid,
       ),
-      "Preserve encompassed style with additional field",
-    ).toEqual({
+      "Delete encompassed style with the same value type",
+    ).toStrictEqual({
+      s_0: undefined,
       s_id_0: {
         a: ["r_0", "c_0"],
         b: ["r_0", "c_2"],
-        t: 0,
+        t: 10,
         fill: createFillStyle({ disabled: false }),
         id: "s_id_0",
       },

@@ -12,6 +12,7 @@ import {
   TableRowKey,
   TableShape,
   TableShapeInfo,
+  TableStyleArea,
 } from "../../shapes/table/table";
 import { duplicateShapes } from "../../shapes/utils/duplicator";
 import { findexSortFn } from "../../utils/commons";
@@ -206,17 +207,54 @@ function getPatchInfoByDuplicateLineStyles<T extends TableRow | TableColumn>(
   const lineIndexList = coordsList.map<[number, string]>((c) => [lineIndexMapById.get(c)!, c]);
   const grouped = splitIntoRangeGroups(lineIndexList.map((v) => [v, v[0]]));
   const duplicated: TableCellStyle[] = [];
+
+  const fillInfo = getPatchInfoByDuplicateLineStylesByType(
+    generateStyle,
+    targetCoordIndex,
+    duplicatedLineIdByOldId,
+    grouped,
+    tableInfo.fillStyles,
+    tableInfo.fillStyleAreas,
+  );
+  fillInfo.forEach((v) => {
+    duplicated.push(v);
+  });
+
+  const alignInfo = getPatchInfoByDuplicateLineStylesByType(
+    generateStyle,
+    targetCoordIndex,
+    duplicatedLineIdByOldId,
+    grouped,
+    tableInfo.alignStyles,
+    tableInfo.alignStyleAreas,
+  );
+  alignInfo.forEach((v) => {
+    duplicated.push(v);
+  });
+
+  return duplicated;
+}
+
+function getPatchInfoByDuplicateLineStylesByType(
+  generateStyle: (src: TableCellStyle, start: string, end: string) => TableCellStyle,
+  targetCoordIndex: 0 | 1,
+  duplicatedLineIdByOldId: Map<string, string>,
+  grouped: [[number, string], number][][],
+  styles: TableCellStyle[],
+  styleAreas: TableStyleArea[],
+) {
+  const duplicated: TableCellStyle[] = [];
   grouped.forEach((group) => {
     if (group.length === 0) return;
     const items = group.toSorted((a, b) => a[0][0] - b[0][0]);
 
     const head = items[0];
     const tail = items[items.length - 1];
-    tableInfo.fillStyleAreas.forEach((sa, i) => {
+    styleAreas.forEach((sa, i) => {
       if (sa[1][targetCoordIndex] < head[0][0]) return;
       if (tail[0][0] < sa[0][targetCoordIndex]) return;
 
-      const style = tableInfo.fillStyles[i];
+      const style = styles[i];
       const padding = sa[0][targetCoordIndex] - head[0][0];
       const a =
         padding < 0 ? duplicatedLineIdByOldId.get(head[0][1])! : duplicatedLineIdByOldId.get(items[padding][0][1])!;

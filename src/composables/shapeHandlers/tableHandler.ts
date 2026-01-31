@@ -15,6 +15,7 @@ import {
 } from "okageo";
 import { EntityPatchInfo, Shape, StyleScheme } from "../../models";
 import {
+  getCellStyleType,
   getCoordsBoundsInfo,
   getTableCoordsLocations,
   getTableShapeInfo,
@@ -60,7 +61,7 @@ import { generateNKeysBetweenAllowSame } from "../../utils/findex";
 import { applyFillStyle } from "../../utils/fillStyle";
 import { COLORS } from "../../utils/color";
 import { LayoutFn } from "../../utils/layouts/core";
-import { isObjectEmpty, splitList, toMap } from "../../utils/commons";
+import { isObjectEmpty, mapEach, splitList, toMap } from "../../utils/commons";
 
 const BORDER_THRESHOLD = 8;
 const ANCHOR_SIZE = 10;
@@ -1092,14 +1093,21 @@ export function getPatchByDeleteLines(
   const rowIds = tableInfo.rows.map((r) => r.id);
   const columnIds = tableInfo.columns.map((c) => c.id);
   const patchForMerge = getPatchForAreaByDeleteLines(tableInfo, rowIds, columnIds, targetLineIdSet, tableInfo.merges);
-  const patchForStyle = getPatchForAreaByDeleteLines(
+  const patchForFillStyle = getPatchForAreaByDeleteLines(
     tableInfo,
     rowIds,
     columnIds,
     targetLineIdSet,
     tableInfo.fillStyles,
   );
-  patch = { ...patch, ...patchForMerge, ...patchForStyle };
+  const patchForAlignStyle = getPatchForAreaByDeleteLines(
+    tableInfo,
+    rowIds,
+    columnIds,
+    targetLineIdSet,
+    tableInfo.alignStyles,
+  );
+  patch = { ...patch, ...patchForMerge, ...patchForFillStyle, ...patchForAlignStyle };
 
   const idSet = new Set(lineIds);
 
@@ -1268,6 +1276,10 @@ export function getPatchByUnmergeCells(table: TableShape, coordsList: TableCoord
   return patch;
 }
 
+/**
+ * "styleValue" has to have only one style value.
+ * e.g. It can't have both "fill" and "vAlign" at the same time.
+ */
 export function getPatchByApplyCellStyle(
   tableInfo: TableShapeInfo,
   coordsList: TableCoords[],
@@ -1302,6 +1314,49 @@ export function getPatchByApplyCellStyle(
     boundsList.push(coordsBoundsInfo.bounds);
   });
 
+  let currentStyles: TableCellStyle[];
+  switch (getCellStyleType(styleValue)) {
+    case 1: {
+      currentStyles = tableInfo.fillStyles;
+      break;
+    }
+    case 2: {
+      currentStyles = tableInfo.alignStyles;
+      break;
+    }
+  }
+
+  const resolvedPatch = getPatchByResolveCellStyle(
+    rowIndexById,
+    columnIndexById,
+    boundsList,
+    styleIdByBounds,
+    patch,
+    currentStyles,
+  );
+  mapEach(resolvedPatch, (v, k) => {
+    if (v === undefined && k in patch) {
+      // Revert the new style
+      delete patch[k];
+    } else {
+      patch[k] = v;
+    }
+  });
+
+  return patch;
+}
+
+type CoordsBounds = Exclude<ReturnType<typeof getCoordsBoundsInfo>, undefined>["bounds"];
+
+function getPatchByResolveCellStyle(
+  rowIndexById: Map<string, number>,
+  columnIndexById: Map<string, number>,
+  boundsList: CoordsBounds[],
+  styleIdByBounds: Map<CoordsBounds, TableCellStyleKey>,
+  currentPatch: Partial<TableShape>,
+  currentStyles: TableCellStyle[],
+): Pick<TableShape, TableCellStyleKey> {
+  const patch: Partial<TableShape> = {};
   const processedSet = new Set<string>();
 
   // Delete current styles that are encompassed by the new style area and don't have additional fields.
@@ -1310,8 +1365,9 @@ export function getPatchByApplyCellStyle(
     const bac = columnIndexById.get(b[0][1]) ?? -Infinity;
     const bbr = rowIndexById.get(b[1][0]) ?? Infinity;
     const bbc = columnIndexById.get(b[1][1]) ?? Infinity;
+    const styleIdOfBounds = styleIdByBounds.get(b);
 
-    tableInfo.fillStyles.forEach((s) => {
+    currentStyles.forEach((s) => {
       if (s.id in patch) return;
 
       const sar = rowIndexById.get(s.a[0]);
@@ -1321,15 +1377,14 @@ export function getPatchByApplyCellStyle(
       if (sar === undefined || sac === undefined || sbr === undefined || sbc === undefined) {
         patch[s.id] = undefined;
       } else {
-        const styleIdOfBounds = styleIdByBounds.get(b);
         if (styleIdOfBounds && bar === sar && bac == sac && bbr === sbr && bbc === sbc) {
           if (processedSet.has(styleIdOfBounds)) {
             // Discard this style since new one is already inherited
             patch[s.id] = undefined;
           } else {
             // Patch the style data when it has the same bounds of a newly created style
-            patch[s.id] = { ...s, ...(patch[styleIdOfBounds] as TableCellStyle), id: s.id };
-            delete patch[styleIdOfBounds];
+            patch[s.id] = { ...s, ...currentPatch[styleIdOfBounds], id: s.id };
+            patch[styleIdOfBounds] = undefined;
             processedSet.add(styleIdOfBounds);
           }
         } else if (
@@ -1345,10 +1400,8 @@ export function getPatchByApplyCellStyle(
             true,
           )
         ) {
-          // Delete the current one only when every its field exists in new one.
-          if (Object.keys(s).every((key) => key in styleValue)) {
-            patch[s.id] = undefined;
-          }
+          // Delete the current one
+          patch[s.id] = undefined;
         }
       }
     });

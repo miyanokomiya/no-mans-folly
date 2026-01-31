@@ -972,7 +972,7 @@ export function getIndexStyleValueAt(
  * 1: fill, 2: align
  * Note: This type value is never intended for persistence
  */
-function getCellStyleType<T extends TableCellStyle | TableCellStyleValue>(item: T): 1 | 2 {
+export function getCellStyleType<T extends TableCellStyle | TableCellStyleValue>(item: T): 1 | 2 {
   if (item.fill) {
     return 1;
   } else {

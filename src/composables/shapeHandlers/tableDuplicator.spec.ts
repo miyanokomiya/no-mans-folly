@@ -4,6 +4,7 @@ import { generateTable } from "../../shapes/table/table";
 import { newShapeComposite } from "../shapeComposite";
 import { createShape, getCommonStruct } from "../../shapes";
 import { generateTableMeta } from "./tableHandler";
+import { createFillStyle } from "../../utils/fillStyle";
 
 describe("getPatchInfoByDuplicateRows", () => {
   test("should duplicate rows: with children", () => {
@@ -104,6 +105,7 @@ describe("getPatchInfoByDuplicateRows", () => {
     table.r_4!.size = 14;
     table.r_5!.size = 15;
     table.s_0 = { id: "s_0", a: ["r_2", "c_0"], b: ["r_3", "c_0"], t: 0, vAlign: "top" };
+    table.s_1 = { id: "s_1", a: ["r_2", "c_0"], b: ["r_2", "c_0"], t: 0, fill: createFillStyle({ disabled: false }) };
     const shapeComposite = newShapeComposite({
       shapes: [table],
       getStruct: getCommonStruct,
@@ -147,6 +149,15 @@ describe("getPatchInfoByDuplicateRows", () => {
             a: ["r_id_1", "c_0"],
             b: ["r_id_1", "c_0"],
             id: "s_id_2",
+            t: 0,
+            fill: createFillStyle({ disabled: false }),
+          },
+          s_id_3: {
+            a: ["r_id_1", "c_0"],
+            b: ["r_id_1", "c_0"],
+            id: "s_id_3",
+            t: 0,
+            vAlign: "top",
           },
         },
       },
@@ -169,8 +180,17 @@ describe("getPatchInfoByDuplicateRows", () => {
           },
           s_id_2: {
             a: ["r_id_0", "c_0"],
-            b: ["r_id_1", "c_0"],
+            b: ["r_id_0", "c_0"],
             id: "s_id_2",
+            t: 0,
+            fill: createFillStyle({ disabled: false }),
+          },
+          s_id_3: {
+            a: ["r_id_0", "c_0"],
+            b: ["r_id_1", "c_0"],
+            id: "s_id_3",
+            t: 0,
+            vAlign: "top",
           },
         },
       },
@@ -195,6 +215,8 @@ describe("getPatchInfoByDuplicateRows", () => {
             a: ["r_id_0", "c_0"],
             b: ["r_id_0", "c_0"],
             id: "s_id_2",
+            t: 0,
+            vAlign: "top",
           },
         },
       },
