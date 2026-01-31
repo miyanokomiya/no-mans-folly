@@ -1,5 +1,4 @@
 import { Direction2, Shape } from "../../models";
-import { COLORS } from "../../utils/color";
 import { mapReduce } from "../../utils/commons";
 import { createFillStyle } from "../../utils/fillStyle";
 import { AlignLayoutBox } from "../../utils/layouts/align";
@@ -8,9 +7,7 @@ import { ShapeStruct, createBaseShape, textContainerModule } from "../core";
 import { RectangleShape, struct as rectangleStruct } from "../rectangle";
 
 const DEFAULT_LONG = 300;
-// It's better to use the same value as "EMPTY_SIZE" in "src/utils/layouts/align.ts".
-// Otherwise, newly created empty align box shape changes its size just by moving.
-const DEFAULT_SHORT = 180;
+const DEFAULT_SHORT = 200;
 
 export type AlignBoxShape = RectangleShape & {
   direction: Direction2;
@@ -35,7 +32,7 @@ export const struct: ShapeStruct<AlignBoxShape> = {
     return {
       ...createBaseShape(arg),
       type: "align_box",
-      fill: arg.fill ?? createFillStyle({ color: COLORS.WHITE }),
+      fill: arg.fill ?? createFillStyle({ disabled: true }),
       stroke: arg.stroke ?? createStrokeStyle(),
       width,
       height,

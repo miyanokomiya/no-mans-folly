@@ -892,22 +892,8 @@ export function generateAlignTemplate(
     gapC: 10,
     gapR: 10,
   });
-  const column0 = createShape<RectangleShape>(ctx.getShapeStruct, "rectangle", {
-    id: ctx.generateUuid(),
-    findex: generateKeyBetween(root.findex, null),
-    parentId: root.id,
-    width: 100,
-    height: 100,
-  });
-  const column1 = createShape<RectangleShape>(ctx.getShapeStruct, "rectangle", {
-    id: ctx.generateUuid(),
-    findex: generateKeyBetween(column0.findex, null),
-    parentId: root.id,
-    width: 100,
-    height: 100,
-  });
   const composite = newShapeComposite({
-    shapes: [root, column0, column1],
+    shapes: [root],
     getStruct: ctx.getShapeStruct,
   });
   const patch = getNextAlignLayout(composite, root.id);
