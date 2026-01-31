@@ -147,9 +147,10 @@ function calcTableRectMap(
     const rowSize = lineSizeInfo.rows[rowIndex];
     let y = cellY;
 
-    const effectiveStyleAreasByRow = tableNode.styleAreas?.filter((sa) => {
-      return sa[0][0] <= rowIndex && rowIndex <= sa[1][0];
-    });
+    const effectiveStyleAreasByRow =
+      tableNode.styleAreas?.filter((sa) => {
+        return sa[0][0] <= rowIndex && rowIndex <= sa[1][0];
+      }) ?? [];
 
     tableNode.columns.forEach((column, columnIndex) => {
       const columnSize = lineSizeInfo.columns[columnIndex];

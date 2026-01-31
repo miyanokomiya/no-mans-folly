@@ -95,14 +95,14 @@ exports[`struct > createSVGElementInfo > should return SVG info of line heads > 
   "children": [
     {
       "attributes": {
-        "id": "clip-a",
-        "stroke-width": 2,
+        "clip-path": undefined,
+        "id": "clip-a-0",
       },
       "children": [
         {
           "attributes": {
             "clip-rule": "evenodd",
-            "d": "M -1.0526315789473684 -1.0526315789473684 L 101.05263157894737 -1.0526315789473684 L 101.05263157894737 101.05263157894737 L -1.0526315789473684 101.05263157894737 M 0 0 L 4.242640687119284 12.727922061357855 L 12.727922061357855 4.2426406871192865 Z M 100 100 L 95.75735931288071 87.27207793864214 L 87.27207793864214 95.75735931288071 Z",
+            "d": "M 0 0 L 4.242640687119284 12.727922061357855 L 12.727922061357855 4.2426406871192865 Z M -1.0526315789473684 -1.0526315789473684 L 101.05263157894737 -1.0526315789473684 L 101.05263157894737 101.05263157894737 L -1.0526315789473684 101.05263157894737",
           },
           "tag": "path",
         },
@@ -111,7 +111,23 @@ exports[`struct > createSVGElementInfo > should return SVG info of line heads > 
     },
     {
       "attributes": {
-        "clip-path": "url(#clip-a)",
+        "clip-path": "url(#clip-a-0)",
+        "id": "clip-a-1",
+      },
+      "children": [
+        {
+          "attributes": {
+            "clip-rule": "evenodd",
+            "d": "M 100 100 L 95.75735931288071 87.27207793864214 L 87.27207793864214 95.75735931288071 Z M -1.0526315789473684 -1.0526315789473684 L 101.05263157894737 -1.0526315789473684 L 101.05263157894737 101.05263157894737 L -1.0526315789473684 101.05263157894737",
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "clipPath",
+    },
+    {
+      "attributes": {
+        "clip-path": "url(#clip-a-1)",
         "fill": "none",
       },
       "children": [
@@ -171,14 +187,14 @@ exports[`struct > createSVGElementInfo > should return SVG info of line heads > 
   "children": [
     {
       "attributes": {
-        "id": "clip-a",
-        "stroke-width": 2,
+        "clip-path": undefined,
+        "id": "clip-a-0",
       },
       "children": [
         {
           "attributes": {
             "clip-rule": "evenodd",
-            "d": "M -9.53791295318594 -9.53791295318594 L 109.53791295318594 -9.53791295318594 L 109.53791295318594 109.53791295318594 L -9.53791295318594 109.53791295318594 M -6 0 a 6 6 0 0 0 12 0 a 6 6 0 0 0 -12 0 M 94 100 a 6 6 0 0 0 12 0 a 6 6 0 0 0 -12 0",
+            "d": "M -6 0 a 6 6 0 0 0 12 0 a 6 6 0 0 0 -12 0 M -9.53791295318594 -9.53791295318594 L 109.53791295318594 -9.53791295318594 L 109.53791295318594 109.53791295318594 L -9.53791295318594 109.53791295318594",
           },
           "tag": "path",
         },
@@ -187,7 +203,23 @@ exports[`struct > createSVGElementInfo > should return SVG info of line heads > 
     },
     {
       "attributes": {
-        "clip-path": "url(#clip-a)",
+        "clip-path": "url(#clip-a-0)",
+        "id": "clip-a-1",
+      },
+      "children": [
+        {
+          "attributes": {
+            "clip-rule": "evenodd",
+            "d": "M 94 100 a 6 6 0 0 0 12 0 a 6 6 0 0 0 -12 0 M -9.53791295318594 -9.53791295318594 L 109.53791295318594 -9.53791295318594 L 109.53791295318594 109.53791295318594 L -9.53791295318594 109.53791295318594",
+          },
+          "tag": "path",
+        },
+      ],
+      "tag": "clipPath",
+    },
+    {
+      "attributes": {
+        "clip-path": "url(#clip-a-1)",
         "fill": "none",
       },
       "children": [
@@ -252,14 +284,14 @@ exports[`struct > createSVGElementInfo > should return SVG info of line heads > 
   "children": [
     {
       "attributes": {
-        "id": "clip-a",
-        "stroke-width": 2,
+        "clip-path": undefined,
+        "id": "clip-a-0",
       },
       "children": [
         {
           "attributes": {
             "clip-rule": "evenodd",
-            "d": "M -1.0526315789473684 -1.0526315789473684 L 109.53791295318594 -1.0526315789473684 L 109.53791295318594 109.53791295318594 L -1.0526315789473684 109.53791295318594 M 94 100 a 6 6 0 0 0 12 0 a 6 6 0 0 0 -12 0",
+            "d": "M 94 100 a 6 6 0 0 0 12 0 a 6 6 0 0 0 -12 0 M -1.0526315789473684 -1.0526315789473684 L 109.53791295318594 -1.0526315789473684 L 109.53791295318594 109.53791295318594 L -1.0526315789473684 109.53791295318594",
           },
           "tag": "path",
         },
@@ -268,7 +300,7 @@ exports[`struct > createSVGElementInfo > should return SVG info of line heads > 
     },
     {
       "attributes": {
-        "clip-path": "url(#clip-a)",
+        "clip-path": "url(#clip-a-0)",
         "fill": "none",
       },
       "children": [
