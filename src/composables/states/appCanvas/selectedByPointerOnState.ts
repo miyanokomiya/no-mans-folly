@@ -2,6 +2,7 @@ import type { AppCanvasState } from "./core";
 import { startTextEditingIfPossible } from "./commons";
 import { isRigidShape } from "../../../shapes";
 import { newFuzzyDrag } from "../../pointer";
+import { findBackward } from "../../../utils/commons";
 
 interface Option {
   concurrent?: boolean; // Set true, when the target shape has already been selected.
@@ -45,13 +46,22 @@ export function newSelectedByPointerOnState(option?: Option): AppCanvasState {
           }
 
           const isRigid = isRigidShape(shapeComposite.getShapeStruct, shape);
-          if (!option?.concurrent && isRigid) {
-            // Deselect the rigid shape and activate rect-select.
-            ctx.selectShape(shape.id, true);
-            return () => ctx.states.newRectangleSelectingState({ keepSelection: event.data.ctrl });
+          if (option?.concurrent || !isRigid) return () => ctx.states.newMovingHubState({ ...event.data });
+
+          const parentPath = shapeComposite.getBranchPathTo(shape.id);
+          const unrigidParentId = findBackward(
+            parentPath,
+            (id) => !isRigidShape(shapeComposite.getShapeStruct, shapeComposite.shapeMap[id]),
+          );
+          if (unrigidParentId) {
+            // Select and move the closest unrigid parent when it exists
+            ctx.selectShape(unrigidParentId);
+            return () => ctx.states.newMovingHubState({ ...event.data });
           }
 
-          return () => ctx.states.newMovingHubState({ ...event.data });
+          // Deselect the rigid shape and activate rect-select
+          ctx.selectShape(shape.id, true);
+          return () => ctx.states.newRectangleSelectingState({ keepSelection: event.data.ctrl });
         }
         case "pointerup": {
           if (!event.data.options.ctrl && option?.concurrent && Date.now() - fuzzyDrag.getTimestampOnDown() < 200) {
