@@ -58,6 +58,7 @@ import {
 } from "../utils/path";
 import { SVGElementInfo } from "../utils/svgElements";
 import { CanvasCTX } from "../utils/types";
+import { newClipoutRenderer, newSVGClipoutRenderer } from "../composables/clipRenderer";
 
 export type LineType = undefined | "stright" | "elbow"; // undefined means "stright"
 export type CurveType = undefined | "auto";
@@ -131,34 +132,39 @@ export const struct: ShapeStruct<LineShape> = {
     const hasLabels = treeNode && treeNode.children.length > 0;
     const { pAffine, qAffine } = getHeadAffines(shape);
 
-    let region: Path2D | undefined;
+    let fillRange: ((region: Path2D) => void) | undefined;
 
     if (pAffine || qAffine || hasLabels) {
       const outline = struct.getWrapperRect(shape, shapeContext, true);
-      region = new Path2D();
-      region.rect(outline.x, outline.y, outline.width, outline.height);
+      fillRange = (region) => region.rect(outline.x, outline.y, outline.width, outline.height);
     }
 
-    if (region && pAffine) {
-      clipLineHead(region, shape.pHead!, pAffine, ctx.lineWidth);
+    const clipoutRenderer = fillRange ? newClipoutRenderer({ ctx, fillRange }) : undefined;
+    if (clipoutRenderer) {
+      ctx.save();
     }
 
-    if (region && qAffine) {
-      clipLineHead(region, shape.qHead!, qAffine, ctx.lineWidth);
-    }
-
-    if (region && hasLabels) {
-      treeNode.children.forEach((n) => {
-        const label = shapeContext.shapeMap[n.id];
-        if (label && isTextShape(label)) {
-          applyPath(region!, textStruct.getLocalRectPolygon(label, shapeContext), true);
-        }
+    if (clipoutRenderer && pAffine) {
+      clipoutRenderer.applyClip((region) => {
+        clipLineHead(region, shape.pHead!, pAffine, ctx.lineWidth);
       });
     }
 
-    if (region) {
-      ctx.save();
-      ctx.clip(region, "evenodd");
+    if (clipoutRenderer && qAffine) {
+      clipoutRenderer.applyClip((region) => {
+        clipLineHead(region, shape.qHead!, qAffine, ctx.lineWidth);
+      });
+    }
+
+    if (clipoutRenderer && hasLabels) {
+      clipoutRenderer.applyClip((region) => {
+        treeNode.children.forEach((n) => {
+          const label = shapeContext.shapeMap[n.id];
+          if (label && isTextShape(label)) {
+            applyPath(region!, textStruct.getLocalRectPolygon(label, shapeContext), true);
+          }
+        });
+      });
     }
 
     ctx.beginPath();
@@ -167,7 +173,7 @@ export const struct: ShapeStruct<LineShape> = {
 
     renderLineStroke(ctx, shape);
 
-    if (region) {
+    if (clipoutRenderer) {
       ctx.restore();
     }
 
@@ -186,28 +192,31 @@ export const struct: ShapeStruct<LineShape> = {
     const hasLabels = treeNode && treeNode.children.length > 0;
     const { pAffine, qAffine } = getHeadAffines(shape);
     const defaultWidth = getStrokeWidth({ ...shape.stroke, disabled: false });
-    const outline = struct.getWrapperRect(shape, shapeContext, true);
 
-    const clipId = `clip-${shape.id}`;
-    const clipPathCommandList: string[] = [];
+    const clipoutRenderer = newSVGClipoutRenderer({
+      clipId: `clip-${shape.id}`,
+      rangeStr: pathSegmentRawsToString(
+        createSVGCurvePath(getRectPoints(struct.getWrapperRect(shape, shapeContext, true))),
+      ),
+    });
 
     if (pAffine) {
       const command = createLineHeadSVGClipPathCommand(shape.pHead!, pAffine, defaultWidth);
-      if (command) clipPathCommandList.push(command);
+      if (command) clipoutRenderer.applyClip([command]);
     }
 
     if (qAffine) {
       const command = createLineHeadSVGClipPathCommand(shape.qHead!, qAffine, defaultWidth);
-      if (command) clipPathCommandList.push(command);
+      if (command) clipoutRenderer.applyClip([command]);
     }
 
     if (hasLabels) {
       treeNode.children.forEach((n) => {
         const label = shapeContext.shapeMap[n.id];
         if (label && isTextShape(label)) {
-          clipPathCommandList.push(
+          clipoutRenderer.applyClip([
             pathSegmentRawsToString(createSVGCurvePath(textStruct.getLocalRectPolygon(label, shapeContext), [], true)),
-          );
+          ]);
         }
       });
     }
@@ -220,32 +229,14 @@ export const struct: ShapeStruct<LineShape> = {
     if (pHeadInfo) heads.push(pHeadInfo);
     if (qHeadInfo) heads.push(qHeadInfo);
 
+    const clipId = clipoutRenderer.getCurrentClipId();
     return {
       tag: "g",
       children: [
-        ...(clipPathCommandList.length > 0
-          ? [
-              {
-                tag: "clipPath",
-                attributes: { id: clipId, "stroke-width": defaultWidth },
-                children: [
-                  {
-                    tag: "path",
-                    attributes: {
-                      "clip-rule": "evenodd",
-                      d:
-                        pathSegmentRawsToString(createSVGCurvePath(getRectPoints(outline))) +
-                        " " +
-                        clipPathCommandList.join(" "),
-                    },
-                  },
-                ],
-              },
-            ]
-          : []),
+        ...clipoutRenderer.getClipElementList(),
         {
           tag: "g",
-          attributes: { fill: "none", "clip-path": clipPathCommandList.length > 0 ? `url(#${clipId})` : undefined },
+          attributes: { fill: "none", "clip-path": clipId ? `url(#${clipId})` : undefined },
           children: createLineStrokeSVGElementInfo(shape, pathStr),
         },
         ...(heads.length > 0
