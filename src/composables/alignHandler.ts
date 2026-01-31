@@ -17,7 +17,6 @@ import { ShapeComposite, newShapeComposite } from "./shapeComposite";
 import { AppCanvasStateContext } from "./states/appCanvas/core";
 import { DocOutput } from "../models/document";
 import { createShape } from "../shapes";
-import { RectangleShape } from "../shapes/rectangle";
 import {
   ISegment,
   TAU,
