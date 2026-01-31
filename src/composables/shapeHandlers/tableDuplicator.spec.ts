@@ -103,7 +103,7 @@ describe("getPatchInfoByDuplicateRows", () => {
     table.r_3!.size = 13;
     table.r_4!.size = 14;
     table.r_5!.size = 15;
-    table.s_0 = { id: "s_0", a: ["r_2", "c_0"], b: ["r_3", "c_0"] };
+    table.s_0 = { id: "s_0", a: ["r_2", "c_0"], b: ["r_3", "c_0"], t: 0, vAlign: "top" };
     const shapeComposite = newShapeComposite({
       shapes: [table],
       getStruct: getCommonStruct,

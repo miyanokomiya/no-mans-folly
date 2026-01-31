@@ -25,8 +25,9 @@ describe("getTableShapeInfo", () => {
       r_1: { id: "r_1", size: 10, findex: findexList[4] },
       r_0: { id: "r_0", size: 10, findex: findexList[3] },
       r_2: { id: "r_2", size: 10, findex: findexList[5] },
-      m_0: { id: "m_0", a: ["r_1", "c_1"], b: ["r_0", "c_1"] },
-      s_0: { id: "s_0", a: ["r_0", "c_1"], b: ["r_0", "c_0"], fill: createFillStyle() },
+      m_0: { id: "m_0", a: ["r_1", "c_1"], b: ["r_0", "c_0"] },
+      s_0: { id: "s_0", a: ["r_0", "c_1"], b: ["r_0", "c_0"], t: 0, fill: createFillStyle() },
+      s_1: { id: "s_1", a: ["r_1", "c_0"], b: ["r_0", "c_0"], t: 1, vAlign: "top" },
     });
     expect(getTableShapeInfo(table)).toEqual({
       rows: [
@@ -66,14 +67,14 @@ describe("getTableShapeInfo", () => {
       merges: [
         {
           id: "m_0",
-          a: ["r_0", "c_1"],
+          a: ["r_0", "c_0"],
           b: ["r_1", "c_1"],
         },
       ],
       mergeAreas: [
         {
           area: [
-            [0, 1],
+            [0, 0],
             [1, 1],
           ],
         },
@@ -81,21 +82,32 @@ describe("getTableShapeInfo", () => {
       resolvedMergeAreas: [
         {
           area: [
-            [0, 1],
+            [0, 0],
             [1, 1],
           ],
-          style: { fill: createFillStyle() },
+          style: { fill: createFillStyle(), vAlign: "top" },
         },
       ],
-      styles: [
+      fillStyles: [
         {
           id: "s_0",
-          a: ["r_0", "c_1"],
-          b: ["r_0", "c_0"],
+          a: ["r_0", "c_0"],
+          b: ["r_0", "c_1"],
+          t: 0,
           fill: createFillStyle(),
         },
       ],
-      styleAreas: [[[0, 0], [0, 1], { fill: createFillStyle() }]],
+      fillStyleAreas: [[[0, 0], [0, 1], { fill: createFillStyle() }]],
+      alignStyles: [
+        {
+          id: "s_1",
+          a: ["r_0", "c_0"],
+          b: ["r_1", "c_0"],
+          t: 1,
+          vAlign: "top",
+        },
+      ],
+      alignStyleAreas: [[[0, 0], [1, 0], { vAlign: "top" }]],
     });
   });
 });
@@ -379,6 +391,7 @@ describe("getIndexStyleValueAt", () => {
       id: "s_0",
       a: ["r_2", "c_0"],
       b: ["r_2", "c_4"],
+      t: 0,
       fill: createFillStyle(),
     };
     const info = getTableShapeInfo(table)!;

@@ -10,7 +10,7 @@ import {
   getIndexStyleValueAt,
   getTableCellStyleValue,
   getTableShapeInfo,
-  TableCellStyleValue,
+  TableCellStyleValueRaw,
   TableCoords,
   TableShape,
 } from "../../shapes/table/table";
@@ -33,7 +33,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
   const table = shapeComposite.shapeMap[tableId] as TableShape;
   const tableInfo = useMemo(() => getTableShapeInfo(table), [table]);
   const indexCoords = selectedCoords[0];
-  const indexCellStyle = useMemo<TableCellStyleValue>(() => {
+  const indexCellStyle = useMemo<TableCellStyleValueRaw>(() => {
     if (!tableInfo) return {};
     return getIndexStyleValueAt(tableInfo, indexCoords);
   }, [indexCoords, tableInfo]);
@@ -64,7 +64,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       const patch = getPatchByApplyCellStyle(
         tableInfo,
         selectedCoords,
-        getTableCellStyleValue({ ...indexCellStyle, fill: { ...indexCellFill, ...val } }),
+        { ...getTableCellStyleValue({ ...indexCellStyle, fill: { ...indexCellFill, ...val } }), t: Date.now() },
         ctx.generateUuid,
       );
 
@@ -80,14 +80,14 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
   );
 
   const onCellFieldChanged = useCallback(
-    (val: TableCellStyleValue, draft = false) => {
+    (val: TableCellStyleValueRaw, draft = false) => {
       if (!tableInfo) return;
 
       const ctx = getCtx();
       const patch = getPatchByApplyCellStyle(
         tableInfo,
         selectedCoords,
-        getTableCellStyleValue({ ...indexCellStyle, ...val }),
+        { ...getTableCellStyleValue({ ...indexCellStyle, ...val }), t: Date.now() },
         ctx.generateUuid,
       );
 

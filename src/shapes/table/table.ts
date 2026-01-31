@@ -66,7 +66,7 @@ export type TableCellArea = {
 
 export type TableCellMergeKey = `m_${string}`;
 export type TableCellMerge = { id: TableCellMergeKey } & TableCellArea;
-export type TableCellMergeArea = { area: MergeArea; style?: TableCellStyleValue };
+export type TableCellMergeArea = { area: MergeArea; style?: TableCellStyleValueRaw };
 
 export type TableCellStyleKey = `s_${string}`;
 
@@ -74,15 +74,14 @@ export type TableCellStyleKey = `s_${string}`;
  * Newer value should be prioritized over older one.
  * Older one should be used when newer one has undefined value.
  */
-export type TableCellStyleValue = CellAlign & {
-  fill?: FillStyle;
-};
+export type TableCellStyleValueRaw = CellAlign & { fill?: FillStyle };
+export type TableCellStyleValue = { t: number } & TableCellStyleValueRaw;
 
 export type TableCellStyle = {
   id: TableCellStyleKey;
 } & TableCellStyleValue &
   TableCellArea;
-export type TableStyleArea = [MergeArea[0], MergeArea[1], TableCellStyleValue];
+export type TableStyleArea = [MergeArea[0], MergeArea[1], TableCellStyleValueRaw];
 
 export type TableShape = Shape &
   CommonStyle & {
@@ -106,8 +105,10 @@ export type TableShapeInfo = {
   merges: TableCellMerge[];
   mergeAreas: TableCellMergeArea[];
   resolvedMergeAreas: TableCellMergeArea[];
-  styles: TableCellStyle[];
-  styleAreas: TableStyleArea[];
+  fillStyles: TableCellStyle[];
+  fillStyleAreas: TableStyleArea[];
+  alignStyles: TableCellStyle[];
+  alignStyleAreas: TableStyleArea[];
 };
 
 export const struct: ShapeStruct<TableShape> = {
@@ -123,7 +124,14 @@ export const struct: ShapeStruct<TableShape> = {
     };
 
     if (info.rows.length * info.columns.length > 0) {
-      return { ...ret, ...toMap(info.columns), ...toMap(info.rows), ...toMap(info.merges), ...toMap(info.styles) };
+      return {
+        ...ret,
+        ...toMap(info.columns),
+        ...toMap(info.rows),
+        ...toMap(info.merges),
+        ...toMap(info.fillStyles),
+        ...toMap(info.alignStyles),
+      };
     } else {
       const findexList = generateNKeysBetweenAllowSame(undefined, undefined, 6);
       return {
@@ -152,7 +160,7 @@ export const struct: ShapeStruct<TableShape> = {
         ctx.fill();
       }
 
-      const styleAreaInfoList = info.styleAreas.map((styleArea) => {
+      const styleAreaInfoList = info.fillStyleAreas.map((styleArea) => {
         return getStyleAreaInfo(info, coordsLocations, styleArea);
       });
 
@@ -245,7 +253,7 @@ export const struct: ShapeStruct<TableShape> = {
     const rect = getTableLocalBounds(shape);
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
-    const styleAreaInfoList = info.styleAreas.map((styleArea) => {
+    const styleAreaInfoList = info.fillStyleAreas.map((styleArea) => {
       return getStyleAreaInfo(info, coordsLocations, styleArea);
     });
 
@@ -529,8 +537,9 @@ function getTableShapeInfoRaw(shape: Partial<TableShape>): TableShapeInfo {
   const rows: TableRow[] = [];
   const merges: TableCellMerge[] = [];
   const mergeAreas: TableCellMergeArea[] = [];
-  const styles: TableCellStyle[] = [];
-  const styleAreas: TableStyleArea[] = [];
+  const fillStyles: TableCellStyle[] = [];
+  const alignStyles: TableCellStyle[] = [];
+
   const keys = Object.keys(shape) as (keyof TableShape)[];
   keys.forEach((key) => {
     if (!shape[key]) return;
@@ -542,19 +551,30 @@ function getTableShapeInfoRaw(shape: Partial<TableShape>): TableShapeInfo {
     } else if (key.startsWith("m_")) {
       merges.push(shape[key] as TableCellMerge);
     } else if (key.startsWith("s_")) {
-      styles.push(shape[key] as TableCellStyle);
+      const val = shape[key] as TableCellStyle;
+      switch (getCellStyleType(val)) {
+        case 1: {
+          fillStyles.push(shape[key] as TableCellStyle);
+          break;
+        }
+        default: {
+          alignStyles.push(shape[key] as TableCellStyle);
+          break;
+        }
+      }
     }
   });
 
   columns.sort(findexSortFn);
   rows.sort(findexSortFn);
+  fillStyles.sort((a, b) => a.t - b.t);
+  alignStyles.sort((a, b) => a.t - b.t);
 
-  const tableInfoRaw = { columns, rows, merges, styles };
-  const rowIndexById = new Map(tableInfoRaw.rows.map((r, i) => [r.id, i]));
-  const columnIndexById = new Map(tableInfoRaw.columns.map((c, i) => [c.id, i]));
+  const rowIndexById = new Map(rows.map((r, i) => [r.id, i]));
+  const columnIndexById = new Map(columns.map((c, i) => [c.id, i]));
 
   const adjustedMerged: TableCellMerge[] = [];
-  tableInfoRaw.merges.forEach((m) => {
+  merges.forEach((m) => {
     const ra = rowIndexById.get(m.a[0]);
     const rb = rowIndexById.get(m.b[0]);
     const ca = columnIndexById.get(m.a[1]);
@@ -574,21 +594,8 @@ function getTableShapeInfoRaw(shape: Partial<TableShape>): TableShapeInfo {
     });
   });
 
-  const adjustedStyles: TableCellStyle[] = [];
-  tableInfoRaw.styles.forEach((s) => {
-    const ra = rowIndexById.get(s.a[0]);
-    const rb = rowIndexById.get(s.b[0]);
-    const ca = columnIndexById.get(s.a[1]);
-    const cb = columnIndexById.get(s.b[1]);
-    if (ra === undefined || rb === undefined || ca === undefined || cb === undefined) return;
-
-    const [r0, r1] = ra <= rb ? [s.a[0], s.b[0]] : [s.b[0], s.a[0]];
-    const [c0, c1] = ca <= cb ? [s.a[1], s.b[1]] : [s.b[1], s.a[1]];
-    adjustedStyles.push({ id: s.id, a: [r0, c0], b: [r1, c1] });
-    const [ri0, ri1] = ra <= rb ? [ra, rb] : [rb, ra];
-    const [ci0, ci1] = ca <= cb ? [ca, cb] : [cb, ca];
-    styleAreas.push([[ri0, ci0], [ri1, ci1], getTableCellStyleValue(s)]);
-  });
+  const adjustedFillInfo = getAdjustedStyles(rowIndexById, columnIndexById, fillStyles);
+  const adjustedAlignInfo = getAdjustedStyles(rowIndexById, columnIndexById, alignStyles);
 
   const ret: TableShapeInfo = {
     columns,
@@ -596,8 +603,10 @@ function getTableShapeInfoRaw(shape: Partial<TableShape>): TableShapeInfo {
     merges: adjustedMerged,
     mergeAreas,
     resolvedMergeAreas: [],
-    styles,
-    styleAreas,
+    fillStyles: adjustedFillInfo.items,
+    fillStyleAreas: adjustedFillInfo.areas,
+    alignStyles: adjustedAlignInfo.items,
+    alignStyleAreas: adjustedAlignInfo.areas,
   };
 
   const checkedMergeSet = new Set<TableCellMerge>();
@@ -606,11 +615,7 @@ function getTableShapeInfoRaw(shape: Partial<TableShape>): TableShapeInfo {
     const info = getCoordsBoundsInfo(ret, [m.a]);
     if (!info) return;
 
-    // Prioritize newer style
-    const style = findBackward(ret.styleAreas, (s) =>
-      isInMergeArea([s[0], s[1]], [info.mergeArea[0], info.mergeArea[0]], true),
-    );
-    ret.resolvedMergeAreas.push({ area: info.mergeArea, style: style?.[2] });
+    ret.resolvedMergeAreas.push({ area: info.mergeArea, style: getIndexStyleValueAt(ret, m.a) });
   });
 
   return ret;
@@ -798,7 +803,7 @@ export function getStyleAreaInfo(
   info: TableShapeInfo,
   coordsLocations: { rows: number[]; columns: number[] },
   styleArea: TableStyleArea,
-): { rects: IRectangle[]; value: TableCellStyleValue } {
+): { rects: IRectangle[]; value: TableCellStyleValueRaw } {
   const styleAreaVal: MergeArea = [styleArea[0], styleArea[1]];
   const rects: IRectangle[] = [getAreaRect(coordsLocations, styleAreaVal)];
   info.mergeAreas.find((m) => {
@@ -919,11 +924,18 @@ export function getCoordsBoundsInfo(
   };
 }
 
-export function getTableCellStyleValue(val: TableCellStyle | TableCellStyleValue): TableCellStyleValue {
-  return { fill: val.fill, hAlign: val.hAlign, vAlign: val.vAlign };
+export function getTableCellStyleValue(val: TableCellStyle | TableCellStyleValueRaw): TableCellStyleValueRaw {
+  const ret: TableCellStyleValueRaw = {};
+  if (val.fill) ret.fill = val.fill;
+  if (val.hAlign) ret.hAlign = val.hAlign;
+  if (val.vAlign) ret.vAlign = val.vAlign;
+  return ret;
 }
 
-export function getIndexStyleValueAt(tableInfo: TableShapeInfo, coords: TableCoords): TableCellStyleValue {
+export function getIndexStyleValueAt(
+  tableInfo: Pick<TableShapeInfo, "rows" | "columns" | "fillStyleAreas" | "alignStyleAreas">,
+  coords: TableCoords,
+): TableCellStyleValueRaw {
   const rIndex = tableInfo.rows.findIndex((r) => r.id === coords[0]);
   const cIndex = tableInfo.columns.findIndex((c) => c.id === coords[1]);
   if (rIndex < 0 || cIndex < 0) return {};
@@ -932,9 +944,62 @@ export function getIndexStyleValueAt(tableInfo: TableShapeInfo, coords: TableCoo
     [rIndex, cIndex],
     [rIndex, cIndex],
   ];
-  return (
-    findBackward(tableInfo?.styleAreas ?? [], (sa) => {
-      return isInMergeArea([sa[0], sa[1]], coordsArea, true);
-    })?.[2] ?? {}
-  );
+  let fill: TableCellStyleValue["fill"];
+  findBackward(tableInfo.fillStyleAreas, (sa) => {
+    if (isInMergeArea([sa[0], sa[1]], coordsArea, true)) {
+      fill ??= sa[2].fill;
+      return !!fill;
+    } else {
+      return false;
+    }
+  });
+
+  let hAlign: TableCellStyleValue["hAlign"];
+  let vAlign: TableCellStyleValue["vAlign"];
+  findBackward(tableInfo.alignStyleAreas, (sa) => {
+    if (isInMergeArea([sa[0], sa[1]], coordsArea, true)) {
+      hAlign ??= sa[2].hAlign;
+      vAlign ??= sa[2].vAlign;
+      return !!(hAlign && vAlign);
+    } else {
+      return false;
+    }
+  });
+  return { fill, hAlign, vAlign };
+}
+
+/**
+ * 1: fill, 2: align
+ * Note: This type value is never intended for persistence
+ */
+function getCellStyleType<T extends TableCellStyle | TableCellStyleValue>(item: T): 1 | 2 {
+  if (item.fill) {
+    return 1;
+  } else {
+    return 2;
+  }
+}
+
+function getAdjustedStyles(
+  rowIndexById: Map<TableRowKey, number>,
+  columnIndexById: Map<TableColumnKey, number>,
+  items: TableCellStyle[],
+): { items: TableCellStyle[]; areas: TableStyleArea[] } {
+  const adjustedItems: TableCellStyle[] = [];
+  const adjustedAreas: TableStyleArea[] = [];
+  items.forEach((s) => {
+    const ra = rowIndexById.get(s.a[0]);
+    const rb = rowIndexById.get(s.b[0]);
+    const ca = columnIndexById.get(s.a[1]);
+    const cb = columnIndexById.get(s.b[1]);
+    if (ra === undefined || rb === undefined || ca === undefined || cb === undefined) return;
+
+    const [r0, r1] = ra <= rb ? [s.a[0], s.b[0]] : [s.b[0], s.a[0]];
+    const [c0, c1] = ca <= cb ? [s.a[1], s.b[1]] : [s.b[1], s.a[1]];
+    adjustedItems.push({ ...s, a: [r0, c0], b: [r1, c1] });
+    const [ri0, ri1] = ra <= rb ? [ra, rb] : [rb, ra];
+    const [ci0, ci1] = ca <= cb ? [ca, cb] : [cb, ca];
+    adjustedAreas.push([[ri0, ci0], [ri1, ci1], getTableCellStyleValue(s)]);
+  });
+  return { items: adjustedItems, areas: adjustedAreas };
 }

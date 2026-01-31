@@ -731,7 +731,7 @@ function treeToLayoutNode(result: TableLayoutNodeWithMeta[], shapeComposite: Sha
       fullH: shape.lcH === 1,
       fullV: shape.lcV === 1,
       mergeAreas: tableInfo?.mergeAreas.map((m) => m.area),
-      styleAreas: tableInfo?.styleAreas,
+      styleAreas: tableInfo?.alignStyleAreas,
     });
 
     treeNode.children.forEach((c) => {
@@ -1092,7 +1092,13 @@ export function getPatchByDeleteLines(
   const rowIds = tableInfo.rows.map((r) => r.id);
   const columnIds = tableInfo.columns.map((c) => c.id);
   const patchForMerge = getPatchForAreaByDeleteLines(tableInfo, rowIds, columnIds, targetLineIdSet, tableInfo.merges);
-  const patchForStyle = getPatchForAreaByDeleteLines(tableInfo, rowIds, columnIds, targetLineIdSet, tableInfo.styles);
+  const patchForStyle = getPatchForAreaByDeleteLines(
+    tableInfo,
+    rowIds,
+    columnIds,
+    targetLineIdSet,
+    tableInfo.fillStyles,
+  );
   patch = { ...patch, ...patchForMerge, ...patchForStyle };
 
   const idSet = new Set(lineIds);
@@ -1305,7 +1311,7 @@ export function getPatchByApplyCellStyle(
     const bbr = rowIndexById.get(b[1][0]) ?? Infinity;
     const bbc = columnIndexById.get(b[1][1]) ?? Infinity;
 
-    tableInfo.styles.forEach((s) => {
+    tableInfo.fillStyles.forEach((s) => {
       if (s.id in patch) return;
 
       const sar = rowIndexById.get(s.a[0]);
@@ -1359,8 +1365,9 @@ export function getPatchByClearCellStyle(
   tableInfo: TableShapeInfo,
   coordsList: TableCoords[],
   generateUuid: () => string,
+  getTimestamp: () => number,
 ): Partial<TableShape> {
-  return getPatchByApplyCellStyle(tableInfo, coordsList, {}, generateUuid);
+  return getPatchByApplyCellStyle(tableInfo, coordsList, { t: getTimestamp() }, generateUuid);
 }
 
 export function getPatchByFitLines(table: TableShape, lineIds: string[]): Partial<TableShape> {

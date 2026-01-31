@@ -212,11 +212,11 @@ function getPatchInfoByDuplicateLineStyles<T extends TableRow | TableColumn>(
 
     const head = items[0];
     const tail = items[items.length - 1];
-    tableInfo.styleAreas.forEach((sa, i) => {
+    tableInfo.fillStyleAreas.forEach((sa, i) => {
       if (sa[1][targetCoordIndex] < head[0][0]) return;
       if (tail[0][0] < sa[0][targetCoordIndex]) return;
 
-      const style = tableInfo.styles[i];
+      const style = tableInfo.fillStyles[i];
       const padding = sa[0][targetCoordIndex] - head[0][0];
       const a =
         padding < 0 ? duplicatedLineIdByOldId.get(head[0][1])! : duplicatedLineIdByOldId.get(items[padding][0][1])!;
