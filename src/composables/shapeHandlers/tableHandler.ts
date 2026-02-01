@@ -54,7 +54,7 @@ import { ShapeComposite } from "../shapeComposite";
 import { tableLayout, TableLayoutBox, TableLayoutNode } from "../../utils/layouts/table";
 import { CanvasCTX } from "../../utils/types";
 import { applyStrokeStyle } from "../../utils/strokeStyle";
-import { LayoutNodeWithMeta } from "./layoutHandler";
+import { isGeneralLayoutShape, LayoutNodeWithMeta } from "./layoutHandler";
 import { defineShapeHandler } from "./core";
 import { applyLocalSpace, applyPath, renderPlusIcon, scaleGlobalAlpha } from "../../utils/renderer";
 import { generateNKeysBetweenAllowSame } from "../../utils/findex";
@@ -790,18 +790,24 @@ function getNextLayout(
       affines.push([1, 0, 0, 1, v.x, v.y]);
     }
 
+    const affinesWithoutScaling = affines.slice();
+
     // Don't handle table resize here
     // => Its size should change via its rows and columns
-    if (s.id !== rootId && (r.rect.width !== srcNode.rect.width || r.rect.height !== srcNode.rect.height)) {
-      affines.push(
-        [1, 0, 0, 1, srcNode.rect.x, srcNode.rect.y],
-        [r.rect.width / srcNode.rect.width, 0, 0, r.rect.height / srcNode.rect.height, 0, 0],
-        [1, 0, 0, 1, -srcNode.rect.x, -srcNode.rect.y],
-      );
+    if (s.id !== rootId) {
+      if (r.rect.width !== srcNode.rect.width || r.rect.height !== srcNode.rect.height) {
+        affines.push(
+          [1, 0, 0, 1, srcNode.rect.x, srcNode.rect.y],
+          [r.rect.width / srcNode.rect.width, 0, 0, r.rect.height / srcNode.rect.height, 0, 0],
+          [1, 0, 0, 1, -srcNode.rect.x, -srcNode.rect.y],
+        );
+      }
     }
 
     if (s.rotation !== 0) {
-      affines.push(getRotatedAtAffine(getRectCenter(srcNode.rect), -s.rotation));
+      const rotationAffine = getRotatedAtAffine(getRectCenter(srcNode.rect), -s.rotation);
+      affines.push(rotationAffine);
+      affinesWithoutScaling.push(rotationAffine);
     }
 
     if (s.id === rootId) {
@@ -843,12 +849,22 @@ function getNextLayout(
     } else {
       if (affines.length === 0) return;
 
-      // Transfrom each child as a whole
       const affine = multiAffines(affines);
-      shapeComposite.getAllTransformTargets([s.id]).forEach((target) => {
-        const val = shapeComposite.transformShape(target, affine);
+      const val = shapeComposite.transformShape(s, affine);
+      if (!isObjectEmpty(val)) {
+        ret[s.id] = val;
+      }
+
+      // Avoid scaling children of general layouts except the root
+      const affineForChild = isGeneralLayoutShape(s) ? multiAffines(affinesWithoutScaling) : affine;
+
+      // Transfrom each child as a whole
+      shapeComposite.getAllBranchMergedShapes([s.id]).forEach((child) => {
+        if (child.id === s.id) return;
+
+        const val = shapeComposite.transformShape(child, affineForChild);
         if (!isObjectEmpty(val)) {
-          ret[target.id] = val;
+          ret[child.id] = val;
         }
       });
     }

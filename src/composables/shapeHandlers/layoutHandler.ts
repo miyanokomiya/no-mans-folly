@@ -13,6 +13,10 @@ import { getBranchPath } from "../../utils/tree";
 import { getClosestShapeByTypes, ShapeComposite } from "../shapeComposite";
 import { DependencyMap, topSortHierarchy } from "../../utils/graph";
 
+export function isGeneralLayoutShape(shape: Shape): boolean {
+  return isAlignBoxShape(shape) || isTableShape(shape);
+}
+
 export function canJoinGeneralLayout(shapeComposite: ShapeComposite, shape: Shape): boolean {
   if (hasSpecialOrderPriority(shapeComposite.getShapeStruct, shape)) return false;
   // It may be better to let shape structs decide whether the shape can be joined or not.

@@ -15,7 +15,7 @@ import { getLineAttachmentPatch } from "./lineAttachmentHandler";
 import { getLineLabelPatch } from "./lineLabelHandler";
 import { getShapeAttachmentPatch } from "./shapeAttachmentHandler";
 import { ShapeComposite, getDeleteTargetIds, getNextShapeComposite } from "./shapeComposite";
-import { getModifiedLayoutIdsInOrder } from "./shapeHandlers/layoutHandler";
+import { getModifiedLayoutIdsInOrder, isGeneralLayoutShape } from "./shapeHandlers/layoutHandler";
 import { getNextTableLayout } from "./shapeHandlers/tableHandler";
 import { getTreeLayoutPatchFunctions } from "./shapeHandlers/treeHandler";
 import { getLineRelatedDependantMap } from "./shapeRelation";
@@ -288,7 +288,36 @@ function getLayoutPatchList(shapeComposite: ShapeComposite, patchInfo: EntityPat
         ids.map((id) => () => {
           const s = latestShapeComposite.mergedShapeMap[id];
           if (isTableShape(s)) {
-            return getNextTableLayout(latestShapeComposite, id);
+            const result = getNextTableLayout(latestShapeComposite, id);
+
+            const stretchedLayoutChildren = latestShapeComposite.mergedShapeTreeMap[s.id].children.filter((ct) => {
+              const c = latestShapeComposite.shapeMap[ct.id];
+              return (c.lcH || c.lcV) && isGeneralLayoutShape(c);
+            });
+            if (stretchedLayoutChildren.length === 0) return result;
+
+            // FIXME: This look back strategy ends up requiring exponential order of operations to apply all layered children.
+            let localSC = getNextShapeComposite(latestShapeComposite, { update: result });
+            return patchPipe<Shape>(
+              [
+                ...stretchedLayoutChildren.map((t) => () => {
+                  const c = localSC.shapeMap[t.id];
+                  if (isTableShape(c)) {
+                    return getNextTableLayout(localSC, t.id);
+                  } else if (isAlignBoxShape(c)) {
+                    return getNextAlignLayout(localSC, t.id);
+                  } else {
+                    return {};
+                  }
+                }),
+                (_, subpatch) => {
+                  localSC = getNextShapeComposite(latestShapeComposite, { update: subpatch });
+                  return getNextTableLayout(localSC, s.id);
+                },
+              ],
+              current,
+              result,
+            ).patch;
           } else if (isAlignBoxShape(s)) {
             return getNextAlignLayout(latestShapeComposite, id);
           } else {
