@@ -213,7 +213,7 @@ export function getModifiedLayoutIdsInOrder(
   nextComposite: ShapeComposite,
   patchInfo: EntityPatchInfo<Shape>,
   isLayoutShape: (s: Shape) => boolean,
-  isStableLayoutShape?: (s: Shape) => boolean,
+  isConstraintLayoutShape?: (s: Shape) => boolean,
 ): string[][] {
   const depMap: DependencyMap = new Map();
 
@@ -231,12 +231,8 @@ export function getModifiedLayoutIdsInOrder(
     const tail = layoutBranchPath.at(-1);
     if (!tail) return;
 
-    if (isStableLayoutShape?.(nextComposite.shapeMap[tail])) {
-      if (tail === id) {
-        layoutBranchPath = layoutBranchPath.slice(-2);
-      } else {
-        layoutBranchPath = layoutBranchPath.slice(-1);
-      }
+    if (isConstraintLayoutShape) {
+      collectConstraintChildLayoutIds(depMap, nextComposite, isConstraintLayoutShape, id);
     }
 
     layoutBranchPath.forEach((branchId, i) => {
@@ -245,8 +241,8 @@ export function getModifiedLayoutIdsInOrder(
         deps = new Set();
         depMap.set(branchId, deps);
       }
-      for (let j = i + 1; j < layoutBranchPath.length; j++) {
-        deps.add(layoutBranchPath[j]);
+      if (layoutBranchPath[i + 1]) {
+        deps.add(layoutBranchPath[i + 1]);
       }
     });
   };
@@ -264,4 +260,29 @@ export function getModifiedLayoutIdsInOrder(
 
   const sorted = topSortHierarchy(depMap);
   return sorted;
+}
+
+export function collectConstraintChildLayoutIds(
+  depMap: DependencyMap,
+  sc: ShapeComposite,
+  isConstraintLayoutShape: (s: Shape) => boolean,
+  targetId: string,
+) {
+  const target = sc.shapeMap[targetId];
+  if (!isConstraintLayoutShape(target)) return [];
+
+  sc.mergedShapeTreeMap[targetId].children.forEach((ct) => {
+    const child = sc.shapeMap[ct.id];
+    const localParent = child.parentId ? sc.shapeMap[child.parentId] : undefined;
+    if (localParent && isConstraintLayoutShape(localParent) && (child.lcH || child.lcV)) {
+      let deps = depMap.get(targetId);
+      if (!deps) {
+        deps = new Set();
+        depMap.set(targetId, deps);
+      }
+      deps.add(child.id);
+      depMap.set(child.id, new Set());
+      collectConstraintChildLayoutIds(depMap, sc, isConstraintLayoutShape, child.id);
+    }
+  });
 }

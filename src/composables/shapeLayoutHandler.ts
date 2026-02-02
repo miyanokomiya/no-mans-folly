@@ -269,7 +269,7 @@ function applyAddAndDelete(shapeComposite: ShapeComposite, patchInfo: EntityPatc
 
 function getLayoutPatchList(shapeComposite: ShapeComposite, patchInfo: EntityPatchInfo<Shape>) {
   const nextShapeComposite = getNextShapeComposite(shapeComposite, patchInfo);
-  const sorted = getModifiedLayoutIdsInOrder(
+  const sorted0 = getModifiedLayoutIdsInOrder(
     shapeComposite,
     nextShapeComposite,
     patchInfo,
@@ -278,8 +278,98 @@ function getLayoutPatchList(shapeComposite: ShapeComposite, patchInfo: EntityPat
   );
 
   let latestShapeComposite = nextShapeComposite;
-  return patchPipe<Shape>(
-    sorted.map((ids) => (current, patch) => {
+  const result0 = getPatchInfoByLayoutsStep(latestShapeComposite, sorted0);
+  if (result0.recalculateIdGroups.length === 0) return result0.patch;
+
+  // Step 1.
+  // General layout shapes may change both its size and its child sizes.
+  // Calculation order: grand children -> children -> parent
+  //
+  // Step 2.
+  // When those children are general layout shapes as well, they have to recalculate their layout.
+  // Calculation order: parent (can be omit due to duplication of Step 1) -> children -> grand children
+  //
+  // Step 3.
+  // After Step 2, the layered layout shapes have to recalculate their layout again.
+  // Calculation order: grand children (can be omit due to duplication of Step 2) -> children -> parent
+  //
+  // e.g. Root table with row and column size fit > Child table with row and column size fit and witdh stretched > Align box with width stretched
+  // 0. Update the root table: Expand its column size
+  // 1. Calculate each layout in order: Align box, Child table, Root table
+  //    => Align box has incorrect properties because this calculation was based on Child table that hadn't been calculated
+  //    => Child table has incorrect properties due to incorrect Align box properties
+  //    => Root table may have incorrect row size due to incorrect Child table properties.
+  //    => Root table has "the correct updated column size" and lets Child table has "the correct width" accordingly
+  // 2. Calculate each layout in order: Root table, Child table, Align box
+  //    => Child table already has had "the correct stretched width and column size" due to Step 1
+  //    => Align box has "the correct stretched width" due to the correct column size of Child table. It may also change its height according to its layout
+  // 3. Calculate each layout in order: Align box, Child table, Root table
+  //    => Align box already has had "the correct properties" due to Step 2
+  //    => All shallower parents should have the correct properties due to correct layered children
+  // 4. Cellect the correct patch of each shape
+
+  const { deepestSet, shallowestSet } = result0;
+  const deepestRelatedSet = new Set<string>(
+    shapeComposite.getAllBranchMergedShapes(Array.from(deepestSet)).map((s) => s.id),
+  );
+
+  const lastPatch: Record<string, Partial<Shape>> = {};
+  patchPipe(
+    [
+      (_, patch) => {
+        // Pick correct properties of the shallowest shapes
+        latestShapeComposite = getNextShapeComposite(nextShapeComposite, {
+          update: mapFilter(patch, (_, id) => shallowestSet.has(id)),
+        });
+        return getPatchInfoByLayoutsStep(latestShapeComposite, result0.recalculateIdGroups.toReversed()).patch;
+      },
+      (_, patch) => {
+        // Pick correct properties of the deepest shapes
+        mapEach(patch, (p, id) => {
+          if (deepestRelatedSet.has(id)) {
+            lastPatch[id] = p;
+          }
+        });
+        latestShapeComposite = getNextShapeComposite(nextShapeComposite, {
+          update: lastPatch,
+        });
+        const result = getPatchInfoByLayoutsStep(latestShapeComposite, result0.recalculateIdGroups).patch;
+        // Pick correct properties of shapes
+        mapEach(result, (p, id) => {
+          if (deepestRelatedSet.has(id)) {
+            // The deepest shapes may still change their positions by the parent layout
+            lastPatch[id] = { ...lastPatch[id], ...p };
+          } else {
+            // Pick patch for shallower shapes (Discard their intermediate patch since it's incorrect)
+            lastPatch[id] = p;
+          }
+        });
+        return result;
+      },
+    ],
+    latestShapeComposite.shapeMap,
+    result0.patch,
+  );
+  return lastPatch;
+}
+
+function getPatchInfoByLayoutsStep(
+  shapeComposite: ShapeComposite,
+  targetIdGroups: string[][],
+): {
+  patch: Record<string, Partial<Shape>>;
+  recalculateIdGroups: string[][];
+  deepestSet: Set<string>;
+  shallowestSet: Set<string>;
+} {
+  let latestShapeComposite = shapeComposite;
+  const recalculateIdGroups: string[][] = [];
+  const checkedSet = new Set<string>();
+  const deepestSet = new Set<string>();
+  const allIdSet = new Set(targetIdGroups.flat());
+  const shallowestSet = new Set<string>(allIdSet);
+  const patchResult = patchPipe<Shape>(
+    targetIdGroups.map((ids) => (current, patch) => {
       if (!isObjectEmpty(patch)) {
         latestShapeComposite = getNextShapeComposite(latestShapeComposite, { update: patch });
       }
@@ -287,40 +377,50 @@ function getLayoutPatchList(shapeComposite: ShapeComposite, patchInfo: EntityPat
       return patchPipe<Shape>(
         ids.map((id) => () => {
           const s = latestShapeComposite.mergedShapeMap[id];
+
           if (isTableShape(s)) {
             const result = getNextTableLayout(latestShapeComposite, id);
 
-            const stretchedLayoutChildren = latestShapeComposite.mergedShapeTreeMap[s.id].children.filter((ct) => {
+            const generalLayoutChildren = latestShapeComposite.mergedShapeTreeMap[s.id].children.filter((ct) => {
+              shallowestSet.delete(ct.id);
               const c = latestShapeComposite.shapeMap[ct.id];
-              return (c.lcH || c.lcV) && isGeneralLayoutShape(c);
+              return allIdSet.has(ct.id) && isGeneralLayoutShape(c);
             });
-            if (stretchedLayoutChildren.length === 0) return result;
+            if (generalLayoutChildren.length === 0) {
+              deepestSet.add(id);
+            }
 
-            // FIXME: This look back strategy ends up requiring exponential order of operations to apply all layered children.
-            let localSC = getNextShapeComposite(latestShapeComposite, { update: result });
-            return patchPipe<Shape>(
-              [
-                ...stretchedLayoutChildren.map((t) => () => {
-                  const c = localSC.shapeMap[t.id];
-                  if (isTableShape(c)) {
-                    return getNextTableLayout(localSC, t.id);
-                  } else if (isAlignBoxShape(c)) {
-                    return getNextAlignLayout(localSC, t.id);
-                  } else {
-                    return {};
-                  }
-                }),
-                (_, subpatch) => {
-                  localSC = getNextShapeComposite(latestShapeComposite, { update: subpatch });
-                  return getNextTableLayout(localSC, s.id);
-                },
-              ],
-              current,
-              result,
-            ).patch;
+            const stretchedChildren = generalLayoutChildren.filter((ct) => {
+              const c = latestShapeComposite.shapeMap[ct.id];
+              return c.lcH || c.lcV;
+            });
+            if (stretchedChildren.length > 0) {
+              const adjustedIds: string[] = [];
+              stretchedChildren.forEach((ct) => {
+                if (checkedSet.has(ct.id)) return;
+
+                checkedSet.add(ct.id);
+                adjustedIds.push(ct.id);
+              });
+              if (adjustedIds.length > 0) {
+                recalculateIdGroups.push(adjustedIds);
+              }
+
+              if (!checkedSet.has(id)) {
+                recalculateIdGroups.push([id]);
+                checkedSet.add(id);
+              }
+            }
+
+            return result;
           } else if (isAlignBoxShape(s)) {
+            latestShapeComposite.mergedShapeTreeMap[s.id].children.forEach((ct) => {
+              shallowestSet.delete(ct.id);
+            });
+            deepestSet.add(id);
             return getNextAlignLayout(latestShapeComposite, id);
           } else {
+            shallowestSet.delete(id);
             return {};
           }
         }),
@@ -329,4 +429,6 @@ function getLayoutPatchList(shapeComposite: ShapeComposite, patchInfo: EntityPat
     }),
     latestShapeComposite.shapeMap,
   ).patch;
+
+  return { patch: patchResult, recalculateIdGroups, deepestSet, shallowestSet };
 }

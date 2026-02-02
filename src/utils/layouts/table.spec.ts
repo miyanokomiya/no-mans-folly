@@ -198,17 +198,17 @@ describe("tableLayout", () => {
         ...root3x3,
         columns: [
           { id: "c0", size: 5, fit: true, baseSize: 1 },
-          { id: "c1", size: 5, fit: true, baseSize: 1 },
+          { id: "c1", size: 5, fit: true, baseSize: 2 },
           { id: "c2", size: 5 },
           { id: "c3", size: 100 },
-          { id: "c4", size: 100, fit: true, baseSize: 1 },
+          { id: "c4", size: 100, fit: true, baseSize: 4 },
         ],
         rows: [
           { id: "r0", size: 5, fit: true, baseSize: 2 },
           { id: "r1", size: 5, fit: true, baseSize: 1 },
           { id: "r2", size: 5 },
           { id: "r3", size: 100 },
-          { id: "r4", size: 100, fit: true, baseSize: 1 },
+          { id: "r4", size: 100, fit: true, baseSize: 5 },
         ],
         mergeAreas: [
           [
@@ -259,15 +259,15 @@ describe("tableLayout", () => {
       },
     ]);
     expect(result0.map((r) => [r.id, r.rect])).toEqual([
-      ["root", { height: 240, width: 300, x: 0, y: 0 }],
+      ["root", { height: 145, width: 204, x: 0, y: 0 }],
       ["0_0", { height: 10, width: 20, x: 10, y: 0 }],
       ["0_1", { height: 10, width: 20, x: 57.5, y: 0 }],
       ["1_0", { height: 20, width: 40, x: 0, y: 12.5 }],
       ["1_1", { height: 10, width: 20, x: 40, y: 20 }],
       ["2_2", { height: 20, width: 40, x: 60, y: 15 }],
     ]);
-    expect((result0[0] as TableLayoutBox).rows.map((l) => l.size)).toEqual([10, 25, 5, 100, 100]);
-    expect((result0[0] as TableLayoutBox).columns.map((l) => l.size)).toEqual([40, 55, 5, 100, 100]);
+    expect((result0[0] as TableLayoutBox).rows.map((l) => l.size)).toEqual([10, 25, 5, 100, 5]);
+    expect((result0[0] as TableLayoutBox).columns.map((l) => l.size)).toEqual([40, 55, 5, 100, 4]);
   });
 
   test("should handle align style: top left", () => {

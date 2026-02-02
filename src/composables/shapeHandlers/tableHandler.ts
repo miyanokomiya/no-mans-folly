@@ -849,19 +849,17 @@ function getNextLayout(
     } else {
       if (affines.length === 0) return;
 
+      // Transfrom the layout entity independently from its children
       const affine = multiAffines(affines);
       const val = shapeComposite.transformShape(s, affine);
       if (!isObjectEmpty(val)) {
         ret[s.id] = val;
       }
 
-      // Avoid scaling children of general layouts except the root
+      // Avoid scaling the children of general layouts except the root
       const affineForChild = isGeneralLayoutShape(s) ? multiAffines(affinesWithoutScaling) : affine;
-
-      // Transfrom each child as a whole
-      shapeComposite.getAllBranchMergedShapes([s.id]).forEach((child) => {
-        if (child.id === s.id) return;
-
+      const childIds = shapeComposite.mergedShapeTreeMap[s.id].children.map((ct) => ct.id);
+      shapeComposite.getAllBranchMergedShapes(childIds).forEach((child) => {
         const val = shapeComposite.transformShape(child, affineForChild);
         if (!isObjectEmpty(val)) {
           ret[child.id] = val;
