@@ -1,18 +1,16 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
-import { applyFillStyle } from "../../../../utils/fillStyle";
-import { findBetterShapeAt, getClosestShapeByType, newShapeComposite, ShapeComposite } from "../../../shapeComposite";
+import { findBetterShapeAt, getClosestShapeByType, ShapeComposite } from "../../../shapeComposite";
 import { findexSortFn } from "../../../../utils/commons";
-import { IVec2, add, sub } from "okageo";
-import { newShapeRenderer } from "../../../shapeRenderer";
+import { AffineMatrix, IVec2, sub } from "okageo";
 import { Shape } from "../../../../models";
 import { BoundingBox } from "../../../boundingBox";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
 import { AlignHitResult, AlignHandler, newAlignHandler } from "../../../alignHandler";
-import { isFrameShape } from "../../../../shapes/frame";
+import { FrameShape, isFrameShape } from "../../../../shapes/frame";
 import { FrameAlignGroupShape } from "../../../../shapes/frameGroups/frameAlignGroup";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { getDummyShapeCompositeForFrameAlign } from "../../../frameGroups/frameAlignGroupHandler";
+import { getRootShapeIdsByFrame } from "../../../frame";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -22,9 +20,13 @@ interface Option {
 /**
  * This state is supposed to be stacked on "MovingShape".
  * => "startDragging" and other methods aren't called by this state because of that.
+ *
+ * This state can't leave shapes that are on the target frames at their original locations.
+ * => "getPatchByLayouts" doesn't provide that flexibility.
  */
 export function newMovingFrameInAlignState(option: Option): AppCanvasState {
-  let frameShapes: Shape[];
+  let frameShapes: FrameShape[];
+  let movingIds: string[];
   let alignBoxId = option.alignBoxId;
   let alignHandler: AlignHandler;
   let dummyShapeComposite: ShapeComposite;
@@ -46,16 +48,22 @@ export function newMovingFrameInAlignState(option: Option): AppCanvasState {
   return {
     getLabel: () => "MovingFrameInAlign",
     onStart: (ctx) => {
-      const shapeComposite = ctx.getShapeComposite();
-      const shapeMap = shapeComposite.shapeMap;
-      const ids = Object.keys(ctx.getSelectedShapeIdMap());
-      frameShapes = ids
+      // Need to use the composite without tmp info to collect shapes on target frames
+      const staticShapeComposite = ctx.getShapeComposite().getShapeCompositeWithoutTmpInfo();
+      const shapeMap = staticShapeComposite.shapeMap;
+      const selectedIds = Object.keys(ctx.getSelectedShapeIdMap());
+      frameShapes = selectedIds
         .map((id) => shapeMap[id])
-        .filter((s) => isFrameShape(s))
+        .filter(isFrameShape)
         .sort(findexSortFn);
 
+      const movingIdSet = new Set(selectedIds);
+      frameShapes.forEach((s) => {
+        getRootShapeIdsByFrame(staticShapeComposite, s).forEach((id) => movingIdSet.add(id));
+      });
+      movingIds = Array.from(movingIdSet);
+
       initHandler(ctx);
-      ctx.setTmpShapeMap({});
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
@@ -86,6 +94,20 @@ export function newMovingFrameInAlignState(option: Option): AppCanvasState {
           }
 
           diff = sub(event.data.current, event.data.startAbs);
+          const affine: AffineMatrix = [1, 0, 0, 1, diff.x, diff.y];
+          const shapeIdSet = new Set(movingIds);
+          ctx.setTmpShapeMap(
+            shapeComposite.getAllTransformTargets(movingIds).reduce<Record<string, Partial<Shape>>>((p, { id }) => {
+              const s = shapeComposite.shapeMap[id];
+              p[s.id] = { ...shapeComposite.transformShape(s, affine) };
+              if (shapeIdSet.has(id)) {
+                // Make the target shapes translucent
+                p[s.id].alpha = (s.alpha ?? 1) * 0.5;
+              }
+              return p;
+            }, {}),
+          );
+
           const result = alignHandler.hitTest(event.data.current);
           hitResult = result;
           ctx.redraw();
@@ -121,32 +143,7 @@ export function newMovingFrameInAlignState(option: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
-      const shapeComposite = ctx.getShapeComposite();
-
-      applyFillStyle(renderCtx, { color: style.selectionPrimary });
-      frameShapes.forEach((s) => {
-        const path = shapeComposite.getLocalRectPolygon(s);
-        renderCtx.beginPath();
-        applyPath(renderCtx, path);
-        scaleGlobalAlpha(renderCtx, 0.3, () => {
-          renderCtx.fill();
-        });
-      });
-
       alignHandler.render(renderCtx, style, ctx.getScale(), hitResult);
-
-      if (diff) {
-        const shapeRenderer = newShapeRenderer({
-          shapeComposite: newShapeComposite({
-            shapes: frameShapes.map((s) => ({ ...s, p: add(s.p, diff) })),
-            getStruct: shapeComposite.getShapeStruct,
-          }),
-          getDocumentMap: ctx.getDocumentMap,
-        });
-        scaleGlobalAlpha(renderCtx, 0.5, () => {
-          shapeRenderer.render(renderCtx);
-        });
-      }
     },
   };
 }

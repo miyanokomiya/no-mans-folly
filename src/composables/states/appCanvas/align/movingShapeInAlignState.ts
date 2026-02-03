@@ -1,10 +1,7 @@
 import type { AppCanvasState, AppCanvasStateContext } from "../core";
-import { applyPath, scaleGlobalAlpha } from "../../../../utils/renderer";
-import { applyFillStyle } from "../../../../utils/fillStyle";
-import { findBetterShapeAt, getNextShapeComposite, newShapeComposite } from "../../../shapeComposite";
+import { findBetterShapeAt, getNextShapeComposite } from "../../../shapeComposite";
 import { findexSortFn } from "../../../../utils/commons";
-import { IVec2, add, sub } from "okageo";
-import { newShapeRenderer } from "../../../shapeRenderer";
+import { AffineMatrix, sub } from "okageo";
 import { Shape } from "../../../../models";
 import { BoundingBox } from "../../../boundingBox";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
@@ -15,7 +12,6 @@ import { handleNextLayoutShape } from "../utils/layoutShapes";
 
 interface Option {
   boundingBox?: BoundingBox;
-  diff?: IVec2;
   alignBoxId: string;
 }
 
@@ -28,7 +24,6 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
   let alignBoxId = option.alignBoxId;
   let alignHandler: AlignHandler;
   let hitResult: AlignHitResult | undefined;
-  let diff = option.diff;
 
   function initHandler(ctx: AppCanvasStateContext) {
     hitResult = undefined;
@@ -50,7 +45,6 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
         .sort(findexSortFn);
 
       initHandler(ctx);
-      ctx.setTmpShapeMap({});
     },
     handleEvent: (ctx, event) => {
       switch (event.type) {
@@ -67,7 +61,23 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
           );
           if (!shapeAtPoint) return { type: "break" };
 
-          diff = sub(event.data.current, event.data.startAbs);
+          const diff = sub(event.data.current, event.data.startAbs);
+          const affine: AffineMatrix = [1, 0, 0, 1, diff.x, diff.y];
+          const shapeIdSet = new Set(shapes.map((s) => s.id));
+          ctx.setTmpShapeMap(
+            shapeComposite
+              .getAllTransformTargets(shapes.map((s) => s.id))
+              .reduce<Record<string, Partial<Shape>>>((p, { id }) => {
+                const s = shapeComposite.shapeMap[id];
+                p[s.id] = { ...shapeComposite.transformShape(s, affine) };
+                if (shapeIdSet.has(id)) {
+                  // Make the target shapes translucent
+                  p[s.id].alpha = (s.alpha ?? 1) * 0.5;
+                }
+                return p;
+              }, {}),
+          );
+
           const layoutShape = getClosestLayoutShapeAt(shapeComposite, shapeAtPoint.id);
           const layoutHandling = handleNextLayoutShape(ctx, layoutShape, alignBoxId, {
             boundingBox: option.boundingBox,
@@ -120,33 +130,7 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
-      const shapeComposite = ctx.getShapeComposite();
-
-      applyFillStyle(renderCtx, { color: style.selectionPrimary });
-      shapes.forEach((s) => {
-        const path = shapeComposite.getLocalRectPolygon(s);
-        renderCtx.beginPath();
-        applyPath(renderCtx, path);
-        scaleGlobalAlpha(renderCtx, 0.3, () => {
-          renderCtx.fill();
-        });
-      });
-
       alignHandler.render(renderCtx, style, ctx.getScale(), hitResult);
-
-      if (diff) {
-        const d = diff;
-        const shapeRenderer = newShapeRenderer({
-          shapeComposite: newShapeComposite({
-            shapes: shapes.map((s) => ({ ...s, p: add(s.p, d) })),
-            getStruct: shapeComposite.getShapeStruct,
-          }),
-          getDocumentMap: ctx.getDocumentMap,
-        });
-        scaleGlobalAlpha(renderCtx, 0.5, () => {
-          shapeRenderer.render(renderCtx);
-        });
-      }
     },
   };
 }

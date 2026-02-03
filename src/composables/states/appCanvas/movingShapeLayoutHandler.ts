@@ -6,6 +6,7 @@ import { isFrameShape } from "../../../shapes/frame";
 import { FrameAlignGroupShape, isFrameAlignGroupShape } from "../../../shapes/frameGroups/frameAlignGroup";
 import { isTableShape } from "../../../shapes/table/table";
 import { findBackward, mergeMap } from "../../../utils/commons";
+import { ModifierOptions } from "../../../utils/devices";
 import { BoundingBox } from "../../boundingBox";
 import { ShapeComposite, findBetterShapeAt, getClosestShapeByType } from "../../shapeComposite";
 import { canJoinGeneralLayout, getClosestLayoutShapeAt } from "../../shapeHandlers/layoutHandler";
@@ -125,7 +126,7 @@ export function handlePointerMoveOnFrameLayout(
   event: PointerMoveEvent,
   movingIds: string[],
   indexId: string,
-  option?: { boundingBox?: BoundingBox },
+  option?: ModifierOptions & { boundingBox?: BoundingBox },
 ): TransitionValue<AppCanvasStateContext> {
   if (event.data.ctrl) return;
   if (movingIds.length === 0) return;
@@ -149,7 +150,12 @@ export function handlePointerMoveOnFrameLayout(
     if (layoutShape) {
       return {
         type: "stack-resume",
-        getState: () => newMovingFrameInAlignState({ boundingBox: option?.boundingBox, alignBoxId: layoutShape.id }),
+        getState: () =>
+          newMovingFrameInAlignState({
+            boundingBox: option?.boundingBox,
+            alignBoxId: layoutShape.id,
+            shift: option?.shift,
+          }),
       };
     }
   }
