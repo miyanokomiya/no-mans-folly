@@ -326,7 +326,7 @@ function getLayoutPatchList(shapeComposite: ShapeComposite, patchInfo: EntityPat
       (_, patch) => {
         // Pick correct properties of the deepest shapes
         mapEach(patch, (p, id) => {
-          if (deepestRelatedSet.has(id)) {
+          if (true || deepestRelatedSet.has(id)) {
             lastPatch[id] = p;
           }
         });
@@ -336,7 +336,7 @@ function getLayoutPatchList(shapeComposite: ShapeComposite, patchInfo: EntityPat
         const result = getPatchInfoByLayoutsStep(latestShapeComposite, result0.recalculateIdGroups).patch;
         // Pick correct properties of shapes
         mapEach(result, (p, id) => {
-          if (deepestRelatedSet.has(id)) {
+          if (true || deepestRelatedSet.has(id)) {
             // The deepest shapes may still change their positions by the parent layout
             lastPatch[id] = { ...lastPatch[id], ...p };
           } else {

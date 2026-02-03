@@ -205,15 +205,18 @@ export function getNextLayout<T extends LayoutNode>(
 }
 
 /**
- * When "isStableLayoutShape" returns true, the shape only activates the closest layout shape in the branch tree.
- * => Because they don't change their bounds depending on their children. e.g. table
+ * When "isBidirectionalLayoutShape" returns true, the shape may change the size of children.
+ * e.g. Table shapes may change the size of children having "lcV" or "lcH".
+ *      => If those children are layout shapes, they have to calculate their layout due to the size change.
+ *      Align box shapes don't change the size of children even having "lcV" or "lcH".
+ *      => Even if those children are layout shapes, they don't have to calculate their layout.
  */
 export function getModifiedLayoutIdsInOrder(
   srcComposite: ShapeComposite,
   nextComposite: ShapeComposite,
   patchInfo: EntityPatchInfo<Shape>,
   isLayoutShape: (s: Shape) => boolean,
-  isConstraintLayoutShape?: (s: Shape) => boolean,
+  isBidirectionalLayoutShape?: (s: Shape) => boolean,
 ): string[][] {
   const depMap: DependencyMap = new Map();
 
@@ -231,8 +234,8 @@ export function getModifiedLayoutIdsInOrder(
     const tail = layoutBranchPath.at(-1);
     if (!tail) return;
 
-    if (isConstraintLayoutShape) {
-      collectConstraintChildLayoutIds(depMap, nextComposite, isConstraintLayoutShape, id);
+    if (isBidirectionalLayoutShape) {
+      collectChildLayoutIdsOfBidirectionalLayout(depMap, nextComposite, isBidirectionalLayoutShape, id);
     }
 
     layoutBranchPath.forEach((branchId, i) => {
@@ -262,19 +265,19 @@ export function getModifiedLayoutIdsInOrder(
   return sorted;
 }
 
-export function collectConstraintChildLayoutIds(
+function collectChildLayoutIdsOfBidirectionalLayout(
   depMap: DependencyMap,
   sc: ShapeComposite,
-  isConstraintLayoutShape: (s: Shape) => boolean,
+  isBidirectionalLayoutShape: (s: Shape) => boolean,
   targetId: string,
 ) {
   const target = sc.shapeMap[targetId];
-  if (!isConstraintLayoutShape(target)) return [];
+  if (!isBidirectionalLayoutShape(target)) return [];
 
   sc.mergedShapeTreeMap[targetId].children.forEach((ct) => {
     const child = sc.shapeMap[ct.id];
     const localParent = child.parentId ? sc.shapeMap[child.parentId] : undefined;
-    if (localParent && isConstraintLayoutShape(localParent) && (child.lcH || child.lcV)) {
+    if (localParent && isBidirectionalLayoutShape(localParent) && (child.lcH || child.lcV)) {
       let deps = depMap.get(targetId);
       if (!deps) {
         deps = new Set();
@@ -282,7 +285,7 @@ export function collectConstraintChildLayoutIds(
       }
       deps.add(child.id);
       depMap.set(child.id, new Set());
-      collectConstraintChildLayoutIds(depMap, sc, isConstraintLayoutShape, child.id);
+      collectChildLayoutIdsOfBidirectionalLayout(depMap, sc, isBidirectionalLayoutShape, child.id);
     }
   });
 }

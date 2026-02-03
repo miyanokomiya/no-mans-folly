@@ -320,28 +320,27 @@ describe("getModifiedLayoutIdsInOrder", () => {
     expect(getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape)).toEqual([[box0.id]]);
   });
 
-  test("should regard stable layout: update entity", () => {
-    const patchInfo: EntityPatchInfo<Shape> = {
-      update: {
-        [rect00.id]: { width: 50 } as Partial<RectangleShape>,
-      },
-    };
-    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
-    expect(
-      getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape, (s) => s.id === box01.id),
-    ).toEqual([[box01.id]]);
-  });
+  describe("should regard bidirectional layout", () => {
+    const box02 = { ...box0, id: "box02", parentId: box0.id, lcV: 1 as const };
+    const rect02 = { ...rect0, id: "rect02", parentId: box02.id };
+    const box020 = { ...box0, id: "box020", parentId: box02.id, lcH: 1 as const };
+    const box021 = { ...box0, id: "box021", parentId: box02.id };
+    const shapeComposite = newShapeComposite({
+      shapes: [box0, box01, rect00, box02, rect02, box020, box021],
+      getStruct: getCommonStruct,
+    });
 
-  test("should regard stable layout: update box", () => {
-    const patchInfo: EntityPatchInfo<Shape> = {
-      update: {
-        [box01.id]: { p: { x: 100, y: 0 } },
-      },
-    };
-    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
-    expect(
-      getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape, (s) => s.id === box01.id),
-    ).toEqual([[box01.id], [box0.id]]);
+    test("should pick all layout shapes that can be affected by their layout parent shapes", () => {
+      const patchInfo: EntityPatchInfo<Shape> = {
+        update: {
+          [box0.id]: { p: { x: 100, y: 0 } },
+        },
+      };
+      const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
+      expect(
+        getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape, isAlignBoxShape),
+      ).toEqual([[box020.id], [box02.id], [box0.id]]);
+    });
   });
 
   test("should return modified layout ids: make entity child", () => {

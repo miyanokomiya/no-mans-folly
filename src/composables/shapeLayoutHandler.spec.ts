@@ -8,10 +8,12 @@ import {
 import { createShape, getCommonStruct } from "../shapes";
 import { BoardCardShape } from "../shapes/board/boardCard";
 import { newShapeComposite } from "./shapeComposite";
-import { generateKeyBetween } from "../utils/findex";
+import { generateKeyBetween, generateNKeysBetween } from "../utils/findex";
 import { LineShape } from "../shapes/line";
 import { TextShape } from "../shapes/text";
 import { RectangleShape } from "../shapes/rectangle";
+import { TableShape } from "../shapes/table/table";
+import { AlignBoxShape } from "../shapes/align/alignBox";
 
 describe("getEntityPatchByDelete", () => {
   test("should return entity patch to delete child shapes", () => {
@@ -139,6 +141,129 @@ describe("getPatchByLayouts", () => {
       [label.id]: { findex: "aA" },
       [labelAttached.id]: {},
     });
+  });
+
+  test.only("practical case: Layered bidirectional layout shapes", () => {
+    const findexList = generateNKeysBetween(null, null, 10);
+    const parentTable = createShape<TableShape>(getCommonStruct, "table", {
+      id: "parentTable",
+      findex: findexList[0],
+    });
+    parentTable.c_0!.fit = true;
+    parentTable.c_0!.size = 60;
+    parentTable.r_0!.size = 60;
+    parentTable.r_1!.size = 60;
+    delete parentTable.r_2;
+    delete parentTable.c_2;
+
+    const childTable = createShape<TableShape>(getCommonStruct, "table", {
+      id: "childTable",
+      findex: findexList[1],
+      parentId: parentTable.id,
+      parentMeta: "r_1:c_0",
+      lcH: 1,
+      lcV: 1,
+    });
+    childTable.c_0!.fit = true;
+    childTable.c_0!.size = 30;
+    childTable.c_1!.size = 30;
+    childTable.r_0!.size = 20;
+    childTable.r_1!.size = 20;
+    delete childTable.r_2;
+    delete childTable.c_2;
+
+    const grandChildAlign = createShape<AlignBoxShape>(getCommonStruct, "align_box", {
+      id: "grandChildAlign",
+      findex: findexList[2],
+      parentId: childTable.id,
+      parentMeta: "r_0:c_0",
+      lcH: 1,
+      width: 30,
+      height: 10,
+    });
+    const rect0 = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "rect0",
+      findex: findexList[3],
+      parentId: grandChildAlign.id,
+      width: 10,
+      height: 10,
+    });
+    const rect1 = { ...rect0, id: "rect1", findex: findexList[4] };
+    const rect2 = { ...rect0, id: "rect2", findex: findexList[5] };
+    const shapeComposite = newShapeComposite({
+      shapes: [parentTable, childTable, grandChildAlign, rect0, rect1, rect2],
+      getStruct: getCommonStruct,
+    });
+    const result = getPatchByLayouts(shapeComposite, {
+      update: {
+        [parentTable.id]: { c_0: { ...parentTable.c_0!, size: 120 } } as Partial<TableShape>,
+      },
+    });
+    expect(result).toEqual({
+      parentTable: {
+        c_0: {
+          id: "c_0",
+          findex: "a0",
+          fit: true,
+          size: 120,
+        },
+      },
+      childTable: {
+        p: {
+          x: 0,
+          y: 60,
+        },
+        c_0: {
+          id: "c_0",
+          findex: "a0",
+          fit: true,
+          size: 60,
+        },
+        c_1: {
+          id: "c_1",
+          findex: "a1",
+          size: 60,
+        },
+        r_0: {
+          id: "r_0",
+          findex: "a3",
+          size: 30,
+        },
+        r_1: {
+          id: "r_1",
+          findex: "a4",
+          size: 30,
+        },
+      },
+      grandChildAlign: {
+        p: {
+          x: 0,
+          y: 70,
+        },
+        width: 60,
+        baseWidth: 60,
+      },
+      rect0: {
+        p: {
+          x: 0,
+          y: 70,
+        },
+      },
+      rect1: {
+        p: {
+          x: 10,
+          y: 70,
+        },
+      },
+      rect2: {
+        p: {
+          x: 20,
+          y: 70,
+        },
+      },
+    });
+
+    expect(getPatchByLayouts(shapeComposite, { update: result })).toEqual(result);
   });
 });
 
