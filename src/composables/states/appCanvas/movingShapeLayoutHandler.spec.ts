@@ -56,7 +56,7 @@ describe("getPatchByPointerUpOutsideLayout", () => {
     shapes: [boardRoot, boardCard, alignBox, alignChild, group, groupChild],
   });
 
-  test("should detach the parent when the selected shapes cna leave it", () => {
+  test("should detach the parent when the selected shapes can leave it", () => {
     const res = getPatchByPointerUpOutsideLayout(
       shapeComposite,
       {
@@ -67,14 +67,19 @@ describe("getPatchByPointerUpOutsideLayout", () => {
       [boardCard.id, alignChild.id, groupChild.id],
     );
 
-    expect(res[boardCard.id]).toEqual({ p: { x: 1, y: 2 }, parentId: undefined });
-    expect(res[boardCard.id], "board_card can leave its parent").toHaveProperty("parentId");
+    expect(res[boardCard.id], "board_card can leave its parent").toStrictEqual({
+      p: { x: 1, y: 2 },
+      parentId: undefined,
+      parentMeta: undefined,
+    });
 
-    expect(res[alignChild.id]).toEqual({ p: { x: 1, y: 2 }, parentId: undefined });
-    expect(res[alignChild.id], "a child of an align_box can leave its parent").toHaveProperty("parentId");
+    expect(res[alignChild.id], "a child of an align_box can leave its parent").toStrictEqual({
+      p: { x: 1, y: 2 },
+      parentId: undefined,
+      parentMeta: undefined,
+    });
 
-    expect(res[groupChild.id]).toEqual({ p: { x: 1, y: 2 } });
-    expect(res[groupChild.id], "a child of a group can't leave its parent").not.toHaveProperty("parentId");
+    expect(res[groupChild.id], "a child of a group can't leave its parent").toStrictEqual({ p: { x: 1, y: 2 } });
   });
 
   test("should not detach the parent when a shape isn't selected", () => {
@@ -85,7 +90,7 @@ describe("getPatchByPointerUpOutsideLayout", () => {
       },
       [boardCard.id],
     );
-    expect(res0[boardCard.id]).toHaveProperty("parentId");
+    expect(res0[boardCard.id]).toStrictEqual({ p: { x: 1, y: 2 }, parentId: undefined, parentMeta: undefined });
     expect(res0[alignChild.id]).toBe(undefined);
     expect(res0[groupChild.id]).toBe(undefined);
 
@@ -96,8 +101,35 @@ describe("getPatchByPointerUpOutsideLayout", () => {
       },
       [alignBox.id],
     );
-    expect(res1[alignBox.id]).toEqual({ p: { x: 1, y: 2 } });
-    expect(res1[alignChild.id]).toEqual({ p: { x: 1, y: 2 } });
-    expect(res1[alignChild.id]).not.toHaveProperty("parentId");
+    expect(res1[alignBox.id]).toStrictEqual({ p: { x: 1, y: 2 } });
+    expect(res1[alignChild.id]).toStrictEqual({ p: { x: 1, y: 2 } });
+  });
+
+  test("should not detach the parent when the parent is a target as well", () => {
+    expect(
+      getPatchByPointerUpOutsideLayout(
+        shapeComposite,
+        {
+          [alignBox.id]: { p: { x: 1, y: 2 } },
+          [alignChild.id]: { p: { x: 1, y: 2 } },
+        },
+        [alignBox.id, alignChild.id],
+      ),
+    ).toStrictEqual({
+      [alignBox.id]: { p: { x: 1, y: 2 } },
+      [alignChild.id]: { p: { x: 1, y: 2 } },
+    });
+
+    expect(
+      getPatchByPointerUpOutsideLayout(
+        shapeComposite,
+        {
+          [alignChild.id]: { p: { x: 1, y: 2 } },
+        },
+        [alignChild.id],
+      ),
+    ).toStrictEqual({
+      [alignChild.id]: { p: { x: 1, y: 2 }, parentId: undefined, parentMeta: undefined },
+    });
   });
 });

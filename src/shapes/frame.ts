@@ -28,9 +28,14 @@ export const struct: ShapeStruct<FrameShape> = {
     }
     return ret;
   },
+  getSelectionScope() {
+    // Frame shapes never have scope
+    return {};
+  },
   getClipPath: undefined,
   createClipSVGPath: undefined,
   canAttachSmartBranch: false,
+  transparentSelection: true,
   getTextRangeRect: undefined,
   getTextPadding: undefined,
   patchTextPadding: undefined,

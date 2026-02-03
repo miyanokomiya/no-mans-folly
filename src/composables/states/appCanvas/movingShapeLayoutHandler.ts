@@ -81,9 +81,14 @@ export function getPatchByPointerUpOutsideLayout(
   shapePatch: { [id: string]: Partial<Shape> },
   targetIds: string[],
 ): { [id: string]: Partial<Shape> } {
+  const targetIdSet = new Set(targetIds);
   const detatched = targetIds.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
     if (shouldDetachParentWhenOutside(shapeComposite.shapeMap, id)) {
-      p[id] = { parentId: undefined, parentMeta: undefined };
+      // The parent layout may be a target as well.
+      // => If so, this shape should stay in the layout.
+      if (!targetIdSet.has(shapeComposite.shapeMap[id].parentId ?? "")) {
+        p[id] = { parentId: undefined, parentMeta: undefined };
+      }
     }
     return p;
   }, {});

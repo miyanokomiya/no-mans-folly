@@ -21,10 +21,6 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
   let selectionScope: ShapeSelectionScope | undefined;
   let hasInitialSelectionScope: boolean;
 
-  const getScope = () => {
-    return selectionScope ? selectionScope : undefined;
-  };
-
   return {
     getLabel: () => "RectangleSelecting",
     onStart: (ctx) => {
@@ -52,21 +48,18 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
           const composite = ctx.getShapeComposite();
           const shapeMap = composite.mergedShapeMap;
 
-          let currentScope = getScope();
-
-          if (currentScope?.parentId) {
+          if (selectionScope?.parentId) {
             // Prioritize the parent scope when the parent of the current scope is covered by the range.
-            const scopeParent = composite.shapeMap[currentScope.parentId];
+            const scopeParent = composite.shapeMap[selectionScope.parentId];
             if (hitTest.test(composite.getOutlineWrapperRect(scopeParent))) {
               if (!hasInitialSelectionScope) {
                 selectionScope = composite.getSelectionScope(scopeParent);
-                currentScope = selectionScope;
               }
             }
           }
 
-          const candidateIds = currentScope
-            ? composite.getMergedShapesInSelectionScope(currentScope).map((s) => s.id)
+          const candidateIds = selectionScope
+            ? composite.getMergedShapesInSelectionScope(selectionScope).map((s) => s.id)
             : composite.getAllTransparentIds(composite.mergedShapeTree.map((t) => t.id));
 
           targetIdSet = new Set(
@@ -95,17 +88,16 @@ export function newRectangleSelectingState(option?: Option): AppCanvasState {
 
           if (isStrictRootScope(selectionScope)) {
             Array.from(targetIdSet).forEach((id) => {
-              const s = shapeMap[id];
-              if (composite.hasParent(s)) {
+              const scope = composite.getSelectionScope(shapeMap[id]);
+              if (scope?.parentId) {
                 targetIdSet.delete(id);
               }
             });
           }
 
-          const nextScope = getScope();
-          if (nextScope?.parentId) {
+          if (selectionScope?.parentId) {
             // When the scope exists, the parent shouldn't be selected.
-            targetIdSet.delete(nextScope.parentId);
+            targetIdSet.delete(selectionScope.parentId);
           }
 
           ctx.redraw();

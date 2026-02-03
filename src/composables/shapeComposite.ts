@@ -338,7 +338,20 @@ export function newShapeComposite(option: Option) {
       });
       candidates = Array.from(shapeSet);
     } else if (!scope.parentId) {
-      candidates = getSortedMergedShapeTree().map((t) => mergedShapeMap[t.id]);
+      const shapeSet = new Set<Shape>();
+      getSortedMergedShapeTree().forEach((t) => {
+        const s = mergedShapeMap[t.id];
+        shapeSet.add(s);
+        t.children.forEach((ct) => {
+          // Pick shapes with no parent in its scope
+          // e.g. Frame shapes don't take their parents into account to create their scope.
+          const cscope = getSelectionScope(mergedShapeMap[ct.id]);
+          if (!cscope.parentId) {
+            shapeSet.add(mergedShapeMap[ct.id]);
+          }
+        });
+      });
+      candidates = Array.from(shapeSet);
     } else {
       const checkFn = parentScopeCheckOnly ? isSameShapeParentScope : isSameShapeSelectionScope;
       candidates =
