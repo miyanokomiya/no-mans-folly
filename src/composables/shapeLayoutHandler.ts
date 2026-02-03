@@ -274,7 +274,6 @@ function getLayoutPatchList(shapeComposite: ShapeComposite, patchInfo: EntityPat
     nextShapeComposite,
     patchInfo,
     (s) => isTableShape(s) || isAlignBoxShape(s),
-    (s) => isTableShape(s),
   );
 
   let latestShapeComposite = nextShapeComposite;

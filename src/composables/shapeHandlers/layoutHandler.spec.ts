@@ -320,30 +320,6 @@ describe("getModifiedLayoutIdsInOrder", () => {
     expect(getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape)).toEqual([[box0.id]]);
   });
 
-  test("should regard stable layout: update entity", () => {
-    const patchInfo: EntityPatchInfo<Shape> = {
-      update: {
-        [rect00.id]: { width: 50 } as Partial<RectangleShape>,
-      },
-    };
-    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
-    expect(
-      getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape, (s) => s.id === box01.id),
-    ).toEqual([[box01.id]]);
-  });
-
-  test("should regard stable layout: update box", () => {
-    const patchInfo: EntityPatchInfo<Shape> = {
-      update: {
-        [box01.id]: { p: { x: 100, y: 0 } },
-      },
-    };
-    const nextComposite = getNextShapeComposite(shapeComposite, patchInfo);
-    expect(
-      getModifiedLayoutIdsInOrder(shapeComposite, nextComposite, patchInfo, isLayoutShape, (s) => s.id === box01.id),
-    ).toEqual([[box01.id], [box0.id]]);
-  });
-
   test("should return modified layout ids: make entity child", () => {
     const patchInfo: EntityPatchInfo<Shape> = {
       update: {

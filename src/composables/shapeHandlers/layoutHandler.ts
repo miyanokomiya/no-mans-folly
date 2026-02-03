@@ -201,15 +201,13 @@ export function getNextLayout<T extends LayoutNode>(
 }
 
 /**
- * When "isStableLayoutShape" returns true, the shape only activates the closest layout shape in the branch tree.
- * => Because they don't change their bounds depending on their children. e.g. table
+ * Returns layered ID list of layout shapes based on their dependency.
  */
 export function getModifiedLayoutIdsInOrder(
   srcComposite: ShapeComposite,
   nextComposite: ShapeComposite,
   patchInfo: EntityPatchInfo<Shape>,
   isLayoutShape: (s: Shape) => boolean,
-  isStableLayoutShape?: (s: Shape) => boolean,
 ): string[][] {
   const depMap: DependencyMap = new Map();
 
@@ -224,27 +222,18 @@ export function getModifiedLayoutIdsInOrder(
       return branchShape && isLayoutShape(branchShape);
     });
 
-    const tail = layoutBranchPath.at(-1);
-    if (!tail) return;
-
-    if (isStableLayoutShape?.(nextComposite.shapeMap[tail])) {
-      if (tail === id) {
-        layoutBranchPath = layoutBranchPath.slice(-2);
-      } else {
-        layoutBranchPath = layoutBranchPath.slice(-1);
-      }
-    }
-
-    layoutBranchPath.forEach((branchId, i) => {
+    // Store all dependencies of this branch path
+    for (let i = 0; i < layoutBranchPath.length; i++) {
+      const branchId = layoutBranchPath[i];
       let deps = depMap.get(branchId);
       if (!deps) {
         deps = new Set();
         depMap.set(branchId, deps);
       }
-      for (let j = i + 1; j < layoutBranchPath.length; j++) {
-        deps.add(layoutBranchPath[j]);
+      if (i < layoutBranchPath.length - 1) {
+        deps.add(layoutBranchPath[i + 1]);
       }
-    });
+    }
   };
 
   mapEach(patchInfo.update ?? {}, (_, id) => {
