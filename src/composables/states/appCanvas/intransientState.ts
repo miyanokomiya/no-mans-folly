@@ -5,11 +5,12 @@ import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { findBetterShapeAt, ShapeComposite } from "../../shapeComposite";
 import { AppCanvasState } from "./core";
 import { LinkInfo } from "../types";
-import { getShapeTextBounds, isRigidShape } from "../../../shapes";
+import { getShapeTextBounds } from "../../../shapes";
 import { getLinkAt } from "../../../utils/texts/textEditor";
 import { getRectPoints } from "../../../utils/geometry";
 import { isShapeInteratctiveWithinViewport } from "./commons";
 import { newShapeAttachmentHandler } from "../../shapeAttachmentHandler";
+import { getShapeStatusColor } from "./utils/style";
 
 /**
  * Skips the rendering for the hovered shape when "hasHitResult" returns "true".
@@ -42,12 +43,7 @@ export function defineIntransientState<A extends any[]>(
             const scale = ctx.getScale();
 
             let shape = findBetterShapeAt(shapeComposite, event.data.current, selectionScope, undefined, scale);
-            shape =
-              shape &&
-              isShapeInteratctiveWithinViewport(ctx, shape) &&
-              !isRigidShape(shapeComposite.getShapeStruct, shape)
-                ? shape
-                : undefined;
+            shape = shape && isShapeInteratctiveWithinViewport(ctx, shape) ? shape : undefined;
 
             if (hoveredShapeId !== shape?.id) {
               hoveredShapeId = shape?.id;
@@ -89,8 +85,9 @@ export function defineIntransientState<A extends any[]>(
             const scale = ctx.getScale();
             renderCtx.beginPath();
             sc.getHighlightPaths(shape).forEach((path) => applyCurvePath(renderCtx, path.path, path.curves));
+
             applyStrokeStyle(renderCtx, {
-              color: style.selectionSecondaly,
+              color: getShapeStatusColor(style, shape) ?? style.selectionSecondaly,
               width: style.selectionLineWidth * scale,
               dash: "short",
             });

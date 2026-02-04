@@ -45,19 +45,24 @@ export function newSelectedByPointerOnState(option?: Option): AppCanvasState {
               });
           }
 
+          // Shouldn't move locked shape
+          if (shape.locked) {
+            const parentPath = shapeComposite.getBranchPathTo(shape.id);
+            const unrigidParentId = findBackward(
+              parentPath,
+              (id) => !isRigidShape(shapeComposite.getShapeStruct, shapeComposite.shapeMap[id]),
+            );
+            if (unrigidParentId) {
+              // Select and move the closest unrigid parent when it exists
+              ctx.selectShape(unrigidParentId);
+              return () => ctx.states.newMovingHubState({ ...event.data });
+            }
+            return ctx.states.newSelectionHubState;
+          }
+
+          // Ridig shape can move only when it's already selected
           const isRigid = isRigidShape(shapeComposite.getShapeStruct, shape);
           if (option?.concurrent || !isRigid) return () => ctx.states.newMovingHubState({ ...event.data });
-
-          const parentPath = shapeComposite.getBranchPathTo(shape.id);
-          const unrigidParentId = findBackward(
-            parentPath,
-            (id) => !isRigidShape(shapeComposite.getShapeStruct, shapeComposite.shapeMap[id]),
-          );
-          if (unrigidParentId) {
-            // Select and move the closest unrigid parent when it exists
-            ctx.selectShape(unrigidParentId);
-            return () => ctx.states.newMovingHubState({ ...event.data });
-          }
 
           // Deselect the rigid shape and activate rect-select
           ctx.selectShape(shape.id, true);
