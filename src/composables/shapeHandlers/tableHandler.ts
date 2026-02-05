@@ -78,10 +78,14 @@ type CellAnchor = {
   coords: [number, number];
   rect: IRectangle;
   markerRect: IRectangle;
-  marker?: boolean;
+};
+type CellMarkerAnchor = {
+  type: "marker-cell";
+  coords: [number, number];
+  rect: IRectangle;
 };
 
-export type TableHitResult = BorderAnchor | AddLineAnchor | LineHeadAnchor | CellAnchor;
+export type TableHitResult = BorderAnchor | AddLineAnchor | LineHeadAnchor | CellAnchor | CellMarkerAnchor;
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
@@ -256,7 +260,7 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
     };
   }
 
-  function hitTestCellAnchorMarker(adjustedP: IVec2, scale: number): CellAnchor | undefined {
+  function hitTestCellAnchorMarker(adjustedP: IVec2, scale: number): CellMarkerAnchor | undefined {
     if (!tableInfo || adjustedP.x < 0 || adjustedP.y < 0) return;
 
     const markerSize = CELL_ANCHOR_SIZE * scale;
@@ -272,11 +276,9 @@ export const newTableHandler = defineShapeHandler<TableHitResult, Option>((optio
     if (!isPointOnRectangle(markerRect, adjustedP)) return;
 
     return {
-      type: "area-cell",
+      type: "marker-cell",
       coords: info.coords,
-      rect: info.rect,
-      marker: true,
-      markerRect: { x: info.rect.x, y: info.rect.y, width: markerSize, height: markerSize },
+      rect: { x: info.rect.x, y: info.rect.y, width: markerSize, height: markerSize },
     };
   }
 

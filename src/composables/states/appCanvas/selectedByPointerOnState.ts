@@ -60,7 +60,7 @@ export function newSelectedByPointerOnState(option?: Option): AppCanvasState {
             return ctx.states.newSelectionHubState;
           }
 
-          // Ridig shape can move only when it's already selected
+          // Ridig shape can move only when it's selected
           const isRigid = isRigidShape(shapeComposite.getShapeStruct, shape);
           if (option?.concurrent || !isRigid) return () => ctx.states.newMovingHubState({ ...event.data });
 

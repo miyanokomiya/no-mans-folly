@@ -213,9 +213,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                         }),
                     };
                   }
-                  case "area-cell": {
-                    if (!hitResult.marker) return;
-
+                  case "marker-cell": {
                     const tableInfo = getTableShapeInfo(targetShape);
                     const row = tableInfo?.rows[hitResult.coords[0]];
                     const column = tableInfo?.columns[hitResult.coords[1]];
@@ -257,9 +255,7 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                     }
                     return null;
                   }
-                  case "area-cell": {
-                    if (!hitResult.marker) return;
-
+                  case "marker-cell": {
                     const tableInfo = getTableShapeInfo(targetShape);
                     const row = tableInfo?.rows[hitResult.coords[0]];
                     const column = tableInfo?.columns[hitResult.coords[1]];
@@ -332,7 +328,8 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                   }
                   return;
                 }
-                case "area-cell": {
+                case "area-cell":
+                case "marker-cell": {
                   const tableInfo = getTableShapeInfo(targetShape);
                   const row = tableInfo?.rows[hitResult.coords[0]];
                   const column = tableInfo?.columns[hitResult.coords[1]];
@@ -390,7 +387,8 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
                 }
                 return null;
               }
-              case "area-cell": {
+              case "area-cell":
+              case "marker-cell": {
                 const items: ContextMenuItem[] = [];
                 if (tableSelectable.getSelectedCoords().length > 1) {
                   items.push(CONTEXT_MENU_ITEM_SRC.MERGE_TABLE_CELLS);
@@ -547,24 +545,26 @@ export const newTableSelectedState = defineSingleSelectedHandlerState<TableShape
         const shapeHandler = getters.getShapeHandler();
         const hitResult = shapeHandler.retrieveHitResult();
         if (hitResult?.type === "area-cell") {
-          if (hitResult.marker) {
-            const row = tableInfo.rows[hitResult.coords[0]];
-            const column = tableInfo.columns[hitResult.coords[1]];
-            if (row && column) {
-              renderFns.push(() => renderHighlightCells(renderCtx, style, tableInfo, [[row.id, column.id]]));
-            }
-          }
-
           // Show the marker
           const markerRect = hitResult.markerRect;
           renderFns.push(() => {
-            if (hitResult.marker) {
-              applyFillStyle(renderCtx, { color: style.selectionSecondaly });
-            } else {
-              applyFillStyle(renderCtx, { color: style.selectionPrimary });
-            }
+            applyFillStyle(renderCtx, { color: style.selectionPrimary });
             renderCtx.beginPath();
             renderCtx.rect(markerRect.x, markerRect.y, markerRect.width, markerRect.height);
+            renderCtx.fill();
+          });
+        }
+        if (hitResult?.type === "marker-cell") {
+          const row = tableInfo.rows[hitResult.coords[0]];
+          const column = tableInfo.columns[hitResult.coords[1]];
+          if (row && column) {
+            renderFns.push(() => renderHighlightCells(renderCtx, style, tableInfo, [[row.id, column.id]]));
+          }
+          const rect = hitResult.rect;
+          renderFns.push(() => {
+            applyFillStyle(renderCtx, { color: style.selectionSecondaly });
+            renderCtx.beginPath();
+            renderCtx.rect(rect.x, rect.y, rect.width, rect.height);
             renderCtx.fill();
           });
         }
