@@ -69,7 +69,7 @@ export function newSelectedByPointerOnState(option?: Option): AppCanvasState {
           return () => ctx.states.newRectangleSelectingState({ keepSelection: event.data.ctrl });
         }
         case "pointerup": {
-          if (!event.data.options.ctrl && option?.concurrent && Date.now() - fuzzyDrag.getTimestampOnDown() < 200) {
+          if (!event.data.options.ctrl && option?.concurrent && fuzzyDrag.onUp(Date.now())) {
             const result = startTextEditingIfPossible(ctx, ctx.getLastSelectedShapeId(), event.data.point);
             if (result) return result;
           }

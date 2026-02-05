@@ -84,7 +84,7 @@ export function newMovingTableLineState(option: Option): AppCanvasState {
           return;
         }
         case "pointerup": {
-          if (Date.now() - fuzzyDrag.getTimestampOnDown() < 200) {
+          if (fuzzyDrag.onUp(Date.now())) {
             // Handle selection
             if (isRow) {
               option.tableSelectable.selectRow(option.indexLine, event.data.options.ctrl);
