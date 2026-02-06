@@ -154,7 +154,6 @@ export function handlePointerMoveOnFrameLayout(
           newMovingFrameInAlignState({
             boundingBox: option?.boundingBox,
             alignBoxId: layoutShape.id,
-            shift: option?.shift,
           }),
       };
     }
