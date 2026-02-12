@@ -7,6 +7,7 @@ import {
   getDistance,
   getOuterRectangle,
   getRectCenter,
+  isSameSeg,
   rotate,
   sub,
 } from "okageo";
@@ -35,6 +36,7 @@ import { ANCHOR_SIZE, DIRECTION_ANCHOR_SIZE } from "./shapeHandlers/simplePolygo
 import { generateKeyBetween } from "../utils/findex";
 import { CanvasCTX } from "../utils/types";
 import { getNextLayout, LayoutNodeWithMeta } from "./shapeHandlers/layoutHandler";
+import { defineShapeHandler } from "./shapeHandlers/core";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -46,7 +48,7 @@ interface AlignHandlerOption {
   alignBoxId: string;
 }
 
-export function newAlignHandler(option: AlignHandlerOption) {
+export const newAlignHandler = defineShapeHandler<AlignHitResult, AlignHandlerOption>((option) => {
   const shapeComposite = option.getShapeComposite();
   const shapeMap = shapeComposite.shapeMap;
   const alignBox = shapeMap[option.alignBoxId] as AlignBoxShape;
@@ -162,12 +164,16 @@ export function newAlignHandler(option: AlignHandlerOption) {
     }
   }
 
-  function isAlignChanged(idSet: Set<string>): boolean {
-    return idSet.has(alignBox.id) || siblingIds.some((id) => idSet.has(id));
-  }
-
-  return { hitTest, render, isAlignChanged };
-}
+  return {
+    hitTest,
+    render,
+    isSameHitResult(a, b) {
+      if (a === b) return true;
+      if (!a || !b) return false;
+      return isSameSeg(a.seg, b.seg);
+    },
+  };
+});
 export type AlignHandler = ReturnType<typeof newAlignHandler>;
 
 const ALIGN_ITEMS_ANCHOR_SIZE = 7;

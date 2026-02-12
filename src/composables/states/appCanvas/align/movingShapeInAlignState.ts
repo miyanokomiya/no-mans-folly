@@ -6,9 +6,10 @@ import { Shape } from "../../../../models";
 import { BoundingBox } from "../../../boundingBox";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
-import { AlignHitResult, AlignHandler, newAlignHandler } from "../../../alignHandler";
+import { AlignHandler, newAlignHandler } from "../../../alignHandler";
 import { canJoinGeneralLayout, getClosestLayoutShapeAt } from "../../../shapeHandlers/layoutHandler";
 import { handleNextLayoutShape } from "../utils/layoutShapes";
+import { handleShapeAndChildrenUpdate } from "../utils/shapeUpdatedEventHandlers";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -23,10 +24,8 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
   let shapes: Shape[];
   let alignBoxId = option.alignBoxId;
   let alignHandler: AlignHandler;
-  let hitResult: AlignHitResult | undefined;
 
   function initHandler(ctx: AppCanvasStateContext) {
-    hitResult = undefined;
     alignHandler = newAlignHandler({
       getShapeComposite: ctx.getShapeComposite,
       alignBoxId: alignBoxId,
@@ -85,15 +84,17 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
           });
           if (layoutHandling) return layoutHandling;
 
-          const result = alignHandler.hitTest(event.data.current);
-          hitResult = result;
-          ctx.redraw();
+          const result = alignHandler.hitTest(event.data.current, ctx.getScale());
+          if (alignHandler.saveHitResult(result)) {
+            ctx.redraw();
+          }
           return;
         }
         case "pointerup": {
           if (event.data.options.ctrl) return ctx.states.newSelectionHubState;
 
           const shapeComposite = ctx.getShapeComposite();
+          const hitResult = alignHandler.retrieveHitResult();
           if (!hitResult) {
             const patch = shapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
               p[s.id] = { parentId: alignBoxId };
@@ -119,10 +120,7 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
           return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
-          if (alignHandler.isAlignChanged(event.data.keys)) {
-            initHandler(ctx);
-          }
-          return;
+          return handleShapeAndChildrenUpdate(ctx, event, [alignBoxId]);
         }
         default:
           return;
@@ -130,7 +128,7 @@ export function newMovingShapeInAlignState(option: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
-      alignHandler.render(renderCtx, style, ctx.getScale(), hitResult);
+      alignHandler.render(renderCtx, style, ctx.getScale());
     },
   };
 }

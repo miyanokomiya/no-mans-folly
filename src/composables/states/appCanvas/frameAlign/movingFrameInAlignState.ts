@@ -5,12 +5,13 @@ import { AffineMatrix, IVec2, sub } from "okageo";
 import { Shape } from "../../../../models";
 import { BoundingBox } from "../../../boundingBox";
 import { generateKeyBetweenAllowSame } from "../../../../utils/findex";
-import { AlignHitResult, AlignHandler, newAlignHandler } from "../../../alignHandler";
+import { AlignHandler, newAlignHandler } from "../../../alignHandler";
 import { FrameShape, isFrameShape } from "../../../../shapes/frame";
 import { FrameAlignGroupShape } from "../../../../shapes/frameGroups/frameAlignGroup";
 import { getPatchByLayouts } from "../../../shapeLayoutHandler";
 import { getDummyShapeCompositeForFrameAlign } from "../../../frameGroups/frameAlignGroupHandler";
 import { getRootShapeIdsByFrame } from "../../../frame";
+import { handleShapeAndChildrenUpdate } from "../utils/shapeUpdatedEventHandlers";
 
 interface Option {
   boundingBox?: BoundingBox;
@@ -30,12 +31,9 @@ export function newMovingFrameInAlignState(option: Option): AppCanvasState {
   let alignBoxId = option.alignBoxId;
   let alignHandler: AlignHandler;
   let dummyShapeComposite: ShapeComposite;
-  let hitResult: AlignHitResult | undefined;
   let diff: IVec2;
 
   function initHandler(ctx: AppCanvasStateContext) {
-    hitResult = undefined;
-
     const shapeComposite = ctx.getShapeComposite();
     dummyShapeComposite = getDummyShapeCompositeForFrameAlign(shapeComposite);
 
@@ -108,12 +106,14 @@ export function newMovingFrameInAlignState(option: Option): AppCanvasState {
             }, {}),
           );
 
-          const result = alignHandler.hitTest(event.data.current);
-          hitResult = result;
-          ctx.redraw();
+          const result = alignHandler.hitTest(event.data.current, ctx.getScale());
+          if (alignHandler.saveHitResult(result)) {
+            ctx.redraw();
+          }
           return;
         }
         case "pointerup": {
+          const hitResult = alignHandler.retrieveHitResult();
           if (!hitResult || event.data.options.ctrl) return ctx.states.newSelectionHubState;
 
           const shapeComposite = ctx.getShapeComposite();
@@ -132,10 +132,7 @@ export function newMovingFrameInAlignState(option: Option): AppCanvasState {
           return ctx.states.newSelectionHubState;
         }
         case "shape-updated": {
-          if (alignHandler.isAlignChanged(event.data.keys)) {
-            initHandler(ctx);
-          }
-          return;
+          return handleShapeAndChildrenUpdate(ctx, event, [alignBoxId]);
         }
         default:
           return;
@@ -143,7 +140,7 @@ export function newMovingFrameInAlignState(option: Option): AppCanvasState {
     },
     render: (ctx, renderCtx) => {
       const style = ctx.getStyleScheme();
-      alignHandler.render(renderCtx, style, ctx.getScale(), hitResult);
+      alignHandler.render(renderCtx, style, ctx.getScale());
     },
   };
 }

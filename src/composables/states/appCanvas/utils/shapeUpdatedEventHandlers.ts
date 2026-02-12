@@ -30,3 +30,23 @@ export function handleLineVertexExistence(ctx: PartialCTX, event: AppCanvasEvent
     if (!line || getLinePath(line).length <= vertexIndex) return ctx.states.newSelectionHubState;
   }
 }
+
+/**
+ * Finishes the state when the shape or its children update.
+ */
+export function handleShapeAndChildrenUpdate(ctx: PartialCTX, event: AppCanvasEvent, shapeIds: string[]) {
+  if (event.type !== "shape-updated") return;
+
+  const sc = ctx.getShapeComposite();
+  for (const id of shapeIds) {
+    if (event.data.keys.has(id)) {
+      return ctx.states.newSelectionHubState;
+    }
+
+    for (const c of sc.mergedShapeTreeMap[id].children) {
+      if (event.data.keys.has(c.id)) {
+        return ctx.states.newSelectionHubState;
+      }
+    }
+  }
+}
