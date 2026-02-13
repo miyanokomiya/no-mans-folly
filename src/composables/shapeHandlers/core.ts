@@ -10,6 +10,7 @@ export interface ShapeHandler<HitResult = any> {
    */
   saveHitResult: (val?: HitResult) => boolean;
   retrieveHitResult: () => HitResult | undefined;
+  isSameHitResult: (a?: HitResult, b?: HitResult) => boolean;
 }
 
 export function defineShapeHandler<HitResult, O>(

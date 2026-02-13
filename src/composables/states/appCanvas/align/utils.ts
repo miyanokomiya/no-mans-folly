@@ -52,6 +52,7 @@ export function handleAlignBoxHitResult(
   if (layoutPatch) {
     ctx.patchShapes(layoutPatch);
   }
+  return ctx.states.newSelectionHubState;
 }
 
 export function getPatchByAlignBoxHitResult(

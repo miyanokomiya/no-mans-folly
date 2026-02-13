@@ -36,7 +36,7 @@ import { ANCHOR_SIZE, DIRECTION_ANCHOR_SIZE } from "./shapeHandlers/simplePolygo
 import { generateKeyBetween } from "../utils/findex";
 import { CanvasCTX } from "../utils/types";
 import { getNextLayout, LayoutNodeWithMeta } from "./shapeHandlers/layoutHandler";
-import { defineShapeHandler } from "./shapeHandlers/core";
+import { defineShapeHandler, ShapeHandler } from "./shapeHandlers/core";
 
 export type AlignHitResult = {
   seg: ISegment;
@@ -227,7 +227,7 @@ export type AlignBoxResizeHitResult = {
   p: IVec2;
 };
 
-export function newAlignBoxHandler(option: AlignHandlerOption) {
+export const newAlignBoxHandler = defineShapeHandler<AlignBoxHitResult, AlignHandlerOption>((option) => {
   const shapeComposite = option.getShapeComposite();
   const shapeMap = shapeComposite.shapeMap;
   const alignBox = shapeMap[option.alignBoxId] as AlignBoxShape;
@@ -664,7 +664,7 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     }
   }
 
-  return {
+  const ret = {
     hitTest,
     render,
     getModifiedPadding,
@@ -673,8 +673,26 @@ export function newAlignBoxHandler(option: AlignHandlerOption) {
     renderModifiedGap,
     isSameHitResult,
   };
+  return ret satisfies AlignBoxHandlerExtra;
+}) as (option: AlignHandlerOption) => AlignBoxHandler;
+
+interface AlignBoxHandlerExtra {
+  getModifiedPadding(
+    type: AlignBoxPaddingHitResult["type"],
+    from: IVec2,
+    to: IVec2,
+    modiifer?: { bothSides?: boolean; allSides?: boolean },
+  ): BoxValues4 | undefined;
+  getModifiedGap(
+    type: AlignBoxGapHitResult["type"],
+    from: IVec2,
+    to: IVec2,
+    modiifer?: { both?: boolean },
+  ): IVec2 | undefined;
+  renderModifiedPadding(ctx: CanvasCTX, style: StyleScheme, scale: number, nextPadding?: BoxValues4): void;
+  renderModifiedGap(ctx: CanvasCTX, style: StyleScheme, scale: number, nextGap?: IVec2): void;
 }
-export type AlignBoxHandler = ReturnType<typeof newAlignBoxHandler>;
+export type AlignBoxHandler = ShapeHandler<AlignBoxHitResult> & AlignBoxHandlerExtra;
 
 function getAlignItemsAnchors(
   alignBox: AlignBoxShape,
