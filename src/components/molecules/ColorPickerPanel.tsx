@@ -1,15 +1,24 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Color } from "../../models";
-import { COLORS, HSVA, colorToHex, hexToColor, hsvaToRgba, rednerRGBA, rgbaToHsva } from "../../utils/color";
+import {
+  COLORS,
+  HSVA,
+  colorToHex,
+  hexToColor,
+  hsvaToRgba,
+  isSameColor,
+  rednerRGBA,
+  rgbaToHsva,
+} from "../../utils/color";
 import { useGlobalDrag } from "../../hooks/window";
 import { clamp } from "okageo";
 import { TextInput } from "../atoms/inputs/TextInput";
 import eyeDropperIcon from "../../assets/icons/eyedropper.svg";
 import { isEyedropperAvailable } from "../../utils/devices";
 import { BlockGroupField } from "../atoms/BlockGroupField";
+import { useLocalStorageAdopter } from "../../hooks/localStorage";
 
-const v = 51;
-const getV = (i: number) => Math.min(Math.max(v * i, 0), 255);
+const getV = (i: number) => clamp(0, 255, 51 * i);
 const base = [...Array(5)].map((_, i) => i - 2);
 const COLOR_TABLE: Color[][] = [
   [
@@ -20,12 +29,19 @@ const COLOR_TABLE: Color[][] = [
     { r: 255, g: 255, b: 255, a: 1 },
   ],
   base.map((i) => ({ r: getV(i + 5), g: getV(i), b: getV(i), a: 1 })),
+  base.map((i) => ({ r: getV(i + 5), g: getV(i + 2.5), b: getV(i), a: 1 })),
   base.map((i) => ({ r: getV(i + 5), g: getV(i + 5), b: getV(i), a: 1 })),
+  base.map((i) => ({ r: getV(i + 2.5), g: getV(i + 5), b: getV(i), a: 1 })),
   base.map((i) => ({ r: getV(i), g: getV(i + 5), b: getV(i), a: 1 })),
+  base.map((i) => ({ r: getV(i), g: getV(i + 5), b: getV(i + 2.5), a: 1 })),
   base.map((i) => ({ r: getV(i), g: getV(i + 5), b: getV(i + 5), a: 1 })),
+  base.map((i) => ({ r: getV(i), g: getV(i + 2.5), b: getV(i + 5), a: 1 })),
   base.map((i) => ({ r: getV(i), g: getV(i), b: getV(i + 5), a: 1 })),
+  base.map((i) => ({ r: getV(i + 2.5), g: getV(i), b: getV(i + 5), a: 1 })),
   base.map((i) => ({ r: getV(i + 5), g: getV(i), b: getV(i + 5), a: 1 })),
+  base.map((i) => ({ r: getV(i + 5), g: getV(i), b: getV(i + 2.5), a: 1 })),
 ];
+const COLOR_GROUP_SIZE = COLOR_TABLE.length;
 
 const ColorPickerItem: React.FC<{ color: Color; onClick?: (color: Color) => void }> = (props) => {
   const onClick = useCallback(() => {
@@ -35,7 +51,7 @@ const ColorPickerItem: React.FC<{ color: Color; onClick?: (color: Color) => void
   return (
     <button
       type="button"
-      className="w-6 h-6 border rounded-full"
+      className="w-4.5 h-4.5 border"
       style={{ backgroundColor: rednerRGBA(props.color) }}
       onClick={onClick}
     ></button>
@@ -48,14 +64,35 @@ interface ColorPickerPanelProps {
 }
 
 export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onChange }) => {
+  const [colorHistory, setColorHistory] = useLocalStorageAdopter<Color[]>({
+    key: "color-history",
+    version: "1",
+    initialValue: () => [],
+    duration: 0,
+  });
+
+  const handleColorChange = useCallback(
+    (color: Color, draft?: boolean) => {
+      onChange?.(color, draft);
+      if (!draft) {
+        setColorHistory((v) => {
+          const next = v.filter((a) => !isSameColor(a, color));
+          next.unshift(color);
+          return next.slice(0, COLOR_GROUP_SIZE * 2);
+        });
+      }
+    },
+    [onChange, setColorHistory],
+  );
+
   const table = useMemo(
     () =>
       COLOR_TABLE.map((line) => {
         return line.map((item) => {
-          return <ColorPickerItem key={rednerRGBA(item)} color={item} onClick={onChange} />;
+          return <ColorPickerItem key={rednerRGBA(item)} color={item} onClick={handleColorChange} />;
         });
       }),
-    [onChange],
+    [handleColorChange],
   );
 
   const actualColor = color ?? COLORS.BLACK;
@@ -76,18 +113,18 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onCha
   const handleHSVAChange = useCallback(
     (val: HSVA, draft = false) => {
       setHsvaCache(val);
-      onChange?.(hsvaToRgba(val), draft);
+      handleColorChange?.(hsvaToRgba(val), draft);
     },
-    [onChange],
+    [handleColorChange],
   );
 
   const handleHueChange = useCallback(
     (val: number, draft = false) => {
       const nextHsva = { ...hsva, h: val };
       setHsvaCache(nextHsva);
-      onChange?.(hsvaToRgba(nextHsva), draft);
+      handleColorChange?.(hsvaToRgba(nextHsva), draft);
     },
-    [hsva, onChange],
+    [hsva, handleColorChange],
   );
 
   const handleEyedropperClick = useCallback(async () => {
@@ -102,12 +139,21 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onCha
     }
     if (!hex) return;
 
-    onChange?.(hexToColor(hex));
-  }, [onChange]);
+    handleColorChange?.(hexToColor(hex));
+  }, [handleColorChange]);
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="grid grid-rows-5 grid-flow-col gap-1">{table}</div>
+      <div>
+        <div className="grid grid-rows-5 grid-flow-col">{table}</div>
+        {colorHistory.length > 0 ? (
+          <div className="mt-1 grid" style={{ gridTemplateColumns: `repeat(${COLOR_GROUP_SIZE}, minmax(0, 1fr))` }}>
+            {colorHistory.map((color) => (
+              <ColorPickerItem key={rednerRGBA(color)} color={color} onClick={handleColorChange} />
+            ))}
+          </div>
+        ) : undefined}
+      </div>
       <BlockGroupField label="Color detail" accordionKey="color-detail">
         <HSVColorRect hsva={hsvaCache} onChange={handleHSVAChange} />
         <HueBar value={hsvaCache.h} onChange={handleHueChange} />
@@ -122,7 +168,7 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onCha
             </button>
           ) : undefined}
           <div className="ml-auto">
-            <HexField {...actualColor} onChange={onChange} />
+            <HexField {...actualColor} onChange={handleColorChange} />
           </div>
         </div>
       </BlockGroupField>
