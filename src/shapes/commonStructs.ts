@@ -31,6 +31,7 @@ import { struct as one_sided_arrow } from "./oneSidedArrow";
 import { struct as two_sided_arrow } from "./twoSidedArrow";
 import { struct as cross } from "./polygons/cross";
 import { struct as diagonal_cross } from "./polygons/diagonalCross";
+import { struct as corner_block } from "./polygons/cornerBlock";
 import { struct as wave } from "./polygons/wave";
 import { struct as bracket } from "./polygons/bracket";
 import { struct as round_bracket } from "./polygons/roundBracket";
@@ -89,6 +90,7 @@ export const SHAPE_COMMON_STRUCTS: {
   moon,
   cross,
   diagonal_cross,
+  corner_block,
   wave,
   bracket,
   round_bracket,
