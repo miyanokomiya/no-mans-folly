@@ -23,6 +23,8 @@ import iconMoon from "../assets/icons/shape_moon.svg";
 import iconCross from "../assets/icons/shape_cross.svg";
 import iconDiagonalCross from "../assets/icons/shape_diagonal_cross.svg";
 import iconCornerBlock from "../assets/icons/shape_corner_block.svg";
+import iconUpstairBlock from "../assets/icons/shape_upstair_block.svg";
+import iconDownstairBlock from "../assets/icons/shape_downstair_block.svg";
 import iconNotchedBlock from "../assets/icons/shape_notched_block.svg";
 import iconTabbedBlock from "../assets/icons/shape_tabbed_block.svg";
 import iconWave from "../assets/icons/shape_wave.svg";
@@ -81,6 +83,8 @@ import { newTableSelectedState } from "./states/appCanvas/table/tableSelectedSta
 import { newCornerBlockSelectedState } from "./states/appCanvas/cornerBlock/cornerBlockSelectedState";
 import { newNotchedBlockSelectedState } from "./states/appCanvas/notchedBlock/notchedBlockSelectedState";
 import { newTabbedBlockSelectedState } from "./states/appCanvas/tabbedBlock/tabbedBlockSelectedState";
+import { newUpstairBlockSelectedState } from "./states/appCanvas/upstairBlock/upstairBlockSelectedState";
+import { newDownstairBlockSelectedState } from "./states/appCanvas/downstairBlock/downstairBlockSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -116,6 +120,8 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "curly_bracket", icon: iconCurlyBracket },
   { type: "angle_bracket", icon: iconAngleBracket },
   { type: "corner_block", icon: iconCornerBlock },
+  { type: "upstair_block", icon: iconUpstairBlock },
+  { type: "downstair_block", icon: iconDownstairBlock },
   { type: "tabbed_block", icon: iconTabbedBlock },
   { type: "notched_block", icon: iconNotchedBlock },
   { type: "moon", icon: iconMoon },
@@ -148,6 +154,10 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newArcSelectedState;
     case "corner_block":
       return newCornerBlockSelectedState;
+    case "upstair_block":
+      return newUpstairBlockSelectedState;
+    case "downstair_block":
+      return newDownstairBlockSelectedState;
     case "tabbed_block":
       return newTabbedBlockSelectedState;
     case "notched_block":

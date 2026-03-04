@@ -32,8 +32,10 @@ import { struct as two_sided_arrow } from "./twoSidedArrow";
 import { struct as cross } from "./polygons/cross";
 import { struct as diagonal_cross } from "./polygons/diagonalCross";
 import { struct as corner_block } from "./polygons/cornerBlock";
-import { struct as notched_block } from "./polygons/notchedBlock";
+import { struct as upstair_block } from "./polygons/upstairBlock";
+import { struct as downstair_block } from "./polygons/downstairBlock";
 import { struct as tabbed_block } from "./polygons/tabbedBlock";
+import { struct as notched_block } from "./polygons/notchedBlock";
 import { struct as wave } from "./polygons/wave";
 import { struct as bracket } from "./polygons/bracket";
 import { struct as round_bracket } from "./polygons/roundBracket";
@@ -93,6 +95,8 @@ export const SHAPE_COMMON_STRUCTS: {
   cross,
   diagonal_cross,
   corner_block,
+  upstair_block,
+  downstair_block,
   tabbed_block,
   notched_block,
   wave,

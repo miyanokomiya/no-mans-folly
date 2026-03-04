@@ -5,17 +5,17 @@ import { createStrokeStyle } from "../../utils/strokeStyle";
 import { clamp, IVec2 } from "okageo";
 import { getRectPoints } from "../../utils/geometry";
 
-export type NotchedBlockShape = SimplePolygonShape & {
+export type DownstairBlockShape = SimplePolygonShape & {
   c0: IVec2; // Represents the bottom-left of the notch
 };
 
-export const struct: ShapeStruct<NotchedBlockShape> = {
-  ...getStructForSimplePolygon<NotchedBlockShape>(getPath),
-  label: "NotchedBlock",
+export const struct: ShapeStruct<DownstairBlockShape> = {
+  ...getStructForSimplePolygon<DownstairBlockShape>(getPath),
+  label: "DownstairBlock",
   create(arg = {}) {
     return {
       ...createBaseShape(arg),
-      type: "notched_block",
+      type: "downstair_block",
       fill: arg.fill ?? createFillStyle(),
       stroke: arg.stroke ?? createStrokeStyle(),
       width: arg.width ?? 150,
@@ -28,22 +28,12 @@ export const struct: ShapeStruct<NotchedBlockShape> = {
   patchTextPadding: undefined,
 };
 
-function getPath(shape: NotchedBlockShape): SimplePath {
+function getPath(shape: DownstairBlockShape): SimplePath {
   const c0x = clamp(0, 0.5, shape.c0.x);
   const c0y = clamp(0, 1, shape.c0.y);
 
-  // Fallback to rectangle when either coord of "c0" is zero
-  if (c0x <= 0) {
-    return {
-      path: getRectPoints({
-        x: 0,
-        y: shape.height * c0y,
-        width: shape.width,
-        height: shape.height * (1 - c0y),
-      }),
-    };
-  }
-  if (c0y <= 0) {
+  // Fallback to rectangle when either "c0x" is zero or "c0y" is one
+  if (c0x <= 0 || 1 <= c0y) {
     return {
       path: getRectPoints({ x: 0, y: 0, width: shape.width, height: shape.height }),
     };
@@ -54,13 +44,13 @@ function getPath(shape: NotchedBlockShape): SimplePath {
   return {
     path: [
       { x: 0, y: 0 },
-      { x: cx, y: 0 },
-      { x: cx, y: cy },
-      { x: shape.width - cx, y: cy },
       { x: shape.width - cx, y: 0 },
-      { x: shape.width, y: 0 },
+      { x: shape.width - cx, y: shape.height - cy },
+      { x: shape.width, y: shape.height - cy },
       { x: shape.width, y: shape.height },
-      { x: 0, y: shape.height },
+      { x: cx, y: shape.height },
+      { x: cx, y: cy },
+      { x: 0, y: cy },
     ],
   };
 }
