@@ -6,7 +6,6 @@ import { applyAffine, clamp } from "okageo";
 import {
   SimplePolygonHandler,
   getResizeByState,
-  handleSwitchDirection4,
   newSimplePolygonHandler,
 } from "../../../shapeHandlers/simplePolygonHandler";
 import { defineSingleSelectedHandlerState } from "../singleSelectedHandlerState";
@@ -52,13 +51,14 @@ export const newCornerBlockSelectedState = defineSingleSelectedHandlerState<
                           },
                         });
                       };
+                    case "top":
+                      return () => getResizeByState(0, shapeComposite, targetShape, [["c0", { x: 1, y: 1 }]]);
                     case "bottom":
-                      return () => getResizeByState(2, shapeComposite, targetShape, [["c0", { x: 1, y: 1 }]]);
+                      return () => getResizeByState(2, shapeComposite, targetShape, [["c0", { x: 1, y: 0 }]]);
+                    case "left":
+                      return () => getResizeByState(3, shapeComposite, targetShape, [["c0", { x: 1, y: 0 }]]);
                     case "right":
-                      return () => getResizeByState(1, shapeComposite, targetShape, [["c0", { x: 1, y: 1 }]]);
-                    case "direction4": {
-                      return handleSwitchDirection4(ctx, targetShape);
-                    }
+                      return () => getResizeByState(1, shapeComposite, targetShape, [["c0", { x: 0, y: 0 }]]);
                   }
                 }
               }
@@ -73,13 +73,20 @@ export const newCornerBlockSelectedState = defineSingleSelectedHandlerState<
       targetId: target.id,
       getAnchors: () => {
         const s = getNormalizedSimplePolygonShape(target);
-        const list = getDirectionalLocalAbsolutePoints(target, s, [s.c0, { x: 0.5, y: 1 }, { x: 1, y: 0.5 }]);
+        const list = getDirectionalLocalAbsolutePoints(target, s, [
+          s.c0,
+          { x: 0.5, y: 0 },
+          { x: 0.5, y: 1 },
+          { x: 0, y: 0.5 },
+          { x: 1, y: 0.5 },
+        ]);
         return [
           ["c0", list[0]],
-          ["bottom", list[1]],
-          ["right", list[2]],
+          ["top", list[1]],
+          ["bottom", list[2]],
+          ["left", list[3]],
+          ["right", list[4]],
         ];
       },
-      direction4: true,
     }),
 );

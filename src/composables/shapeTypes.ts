@@ -23,6 +23,7 @@ import iconMoon from "../assets/icons/shape_moon.svg";
 import iconCross from "../assets/icons/shape_cross.svg";
 import iconDiagonalCross from "../assets/icons/shape_diagonal_cross.svg";
 import iconCornerBlock from "../assets/icons/shape_corner_block.svg";
+import iconNotchedBlock from "../assets/icons/shape_notched_block.svg";
 import iconWave from "../assets/icons/shape_wave.svg";
 import iconBracket from "../assets/icons/shape_bracket.svg";
 import iconRoundBracket from "../assets/icons/shape_round_bracket.svg";
@@ -76,7 +77,8 @@ import { newSheetImageSelectedState } from "./states/appCanvas/sheetImage/sheetI
 import { newGearSelectedState } from "./states/appCanvas/gear/gearSelectedState";
 import { newSymbolSelectedState } from "./states/appCanvas/images/symbolSelectedState";
 import { newTableSelectedState } from "./states/appCanvas/table/tableSelectedState";
-import { newCornerBlockSelectedState } from "./states/appCanvas/cylinder/cornerBlockSelectedState";
+import { newCornerBlockSelectedState } from "./states/appCanvas/cornerBlock/cornerBlockSelectedState";
+import { newNotchedBlockSelectedState } from "./states/appCanvas/notchedBlock/notchedBlockSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -112,6 +114,7 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "curly_bracket", icon: iconCurlyBracket },
   { type: "angle_bracket", icon: iconAngleBracket },
   { type: "corner_block", icon: iconCornerBlock },
+  { type: "notched_block", icon: iconNotchedBlock },
   { type: "moon", icon: iconMoon },
   { type: "wave", icon: iconWave },
 ];
@@ -142,6 +145,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newArcSelectedState;
     case "corner_block":
       return newCornerBlockSelectedState;
+    case "notched_block":
+      return newNotchedBlockSelectedState;
     case "moon":
       return newMoonSelectedState;
     case "donut":

@@ -132,13 +132,6 @@ export const newSimplePolygonHandler = defineShapeHandler<SimplePolygonHitResult
 });
 export type SimplePolygonHandler = ReturnType<typeof newSimplePolygonHandler>;
 
-export function renderShapeBounds(ctx: CanvasCTX, style: StyleScheme, path: IVec2[]) {
-  applyStrokeStyle(ctx, { color: style.selectionPrimary });
-  ctx.beginPath();
-  applyPath(ctx, path, true);
-  ctx.stroke();
-}
-
 type CornerRadiusMovingStateOption = {
   disableProportional?: boolean;
 };
@@ -400,7 +393,13 @@ export function getResizeByState<S extends SimplePolygonShape, K = keyof S>(
       return applyAffine(getShapeTransform(s), p);
     },
     renderFn: (ctx, renderCtx, shape) => {
-      renderShapeBounds(renderCtx, ctx.getStyleScheme(), shapeComposite.getLocalRectPolygon(shape));
+      const style = ctx.getStyleScheme();
+      const scale = ctx.getScale();
+      const path = shapeComposite.getLocalRectPolygon(shape);
+      applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: 2 * scale });
+      renderCtx.beginPath();
+      applyPath(renderCtx, path, true);
+      renderCtx.stroke();
     },
     movingOrigin: getResizeByOrigin(shapeComposite, shape, by),
   });
