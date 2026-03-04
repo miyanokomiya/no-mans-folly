@@ -24,6 +24,7 @@ import iconCross from "../assets/icons/shape_cross.svg";
 import iconDiagonalCross from "../assets/icons/shape_diagonal_cross.svg";
 import iconCornerBlock from "../assets/icons/shape_corner_block.svg";
 import iconNotchedBlock from "../assets/icons/shape_notched_block.svg";
+import iconTabbedBlock from "../assets/icons/shape_tabbed_block.svg";
 import iconWave from "../assets/icons/shape_wave.svg";
 import iconBracket from "../assets/icons/shape_bracket.svg";
 import iconRoundBracket from "../assets/icons/shape_round_bracket.svg";
@@ -79,6 +80,7 @@ import { newSymbolSelectedState } from "./states/appCanvas/images/symbolSelected
 import { newTableSelectedState } from "./states/appCanvas/table/tableSelectedState";
 import { newCornerBlockSelectedState } from "./states/appCanvas/cornerBlock/cornerBlockSelectedState";
 import { newNotchedBlockSelectedState } from "./states/appCanvas/notchedBlock/notchedBlockSelectedState";
+import { newTabbedBlockSelectedState } from "./states/appCanvas/tabbedBlock/tabbedBlockSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -114,6 +116,7 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "curly_bracket", icon: iconCurlyBracket },
   { type: "angle_bracket", icon: iconAngleBracket },
   { type: "corner_block", icon: iconCornerBlock },
+  { type: "tabbed_block", icon: iconTabbedBlock },
   { type: "notched_block", icon: iconNotchedBlock },
   { type: "moon", icon: iconMoon },
   { type: "wave", icon: iconWave },
@@ -145,6 +148,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newArcSelectedState;
     case "corner_block":
       return newCornerBlockSelectedState;
+    case "tabbed_block":
+      return newTabbedBlockSelectedState;
     case "notched_block":
       return newNotchedBlockSelectedState;
     case "moon":

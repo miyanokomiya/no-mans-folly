@@ -33,6 +33,7 @@ import { struct as cross } from "./polygons/cross";
 import { struct as diagonal_cross } from "./polygons/diagonalCross";
 import { struct as corner_block } from "./polygons/cornerBlock";
 import { struct as notched_block } from "./polygons/notchedBlock";
+import { struct as tabbed_block } from "./polygons/tabbedBlock";
 import { struct as wave } from "./polygons/wave";
 import { struct as bracket } from "./polygons/bracket";
 import { struct as round_bracket } from "./polygons/roundBracket";
@@ -92,6 +93,7 @@ export const SHAPE_COMMON_STRUCTS: {
   cross,
   diagonal_cross,
   corner_block,
+  tabbed_block,
   notched_block,
   wave,
   bracket,
