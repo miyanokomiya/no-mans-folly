@@ -187,8 +187,9 @@ describe("getLineTextWithin", () => {
     expect(getLineTextWithin(line, 0, 0)).toBe("");
     expect(getLineTextWithin(line, 0, 1)).toBe("a");
     expect(getLineTextWithin(line, 0, 3)).toBe("ab😄");
+    expect(getLineTextWithin(line, 0, 4)).toBe("ab😄c");
     expect(getLineTextWithin(line, 0, 5)).toBe("ab😄c");
-    expect(getLineTextWithin(line, 0, 6)).toBe("ab😄c");
+    expect(getLineTextWithin(line, 0, 5, true), "With withLinebreak flag").toBe("ab😄c\n");
     expect(getLineTextWithin(line, 0), "Omitting count means up to the end").toBe("ab😄c");
 
     expect(getLineTextWithin(line, 1, 0)).toBe("");
@@ -227,6 +228,28 @@ describe("copyPlainText", () => {
     expect(copyPlainText(lines, 1, 4)).toBe("bc\nd");
     expect(copyPlainText(lines, 1, 8)).toBe("bc\ndef\ng");
     expect(copyPlainText(lines, 1, 10)).toBe("bc\ndef\nghi");
+  });
+
+  test("should not treat inline wrappings as linebreaks", () => {
+    const lines: DocCompositionLine[] = [
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "a" }, { insert: "b" }, { insert: "c" }],
+      },
+      {
+        y: 0,
+        height: 10,
+        fontheight: 10,
+        outputs: [{ insert: "d" }, { insert: "e" }, { insert: "f" }, { insert: "\n" }],
+      },
+    ];
+    expect(copyPlainText(lines, 1, 2)).toBe("bc");
+    expect(copyPlainText(lines, 1, 3)).toBe("bcd");
+    expect(copyPlainText(lines, 1, 4)).toBe("bcde");
+    expect(copyPlainText(lines, 1, 5)).toBe("bcdef");
+    expect(copyPlainText(lines, 1, 6)).toBe("bcdef");
   });
 
   test("should convert list markers to plain text", () => {

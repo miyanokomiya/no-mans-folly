@@ -572,8 +572,9 @@ export function getLineTextUpToX(line: DocCompositionLine, locationX: number) {
 
 /**
  * Works similarly as "getLineTextUpToX"
+ * Returned value doesn't contain the line break unless "withLinebreak" is set true.
  */
-export function getLineTextWithin(line: DocCompositionLine, from: number, count = Infinity) {
+export function getLineTextWithin(line: DocCompositionLine, from: number, count = Infinity, withLinebreak = false) {
   let currentLineText = "";
   let charCount = 0;
   const to = from + count;
@@ -584,7 +585,7 @@ export function getLineTextWithin(line: DocCompositionLine, from: number, count 
     const segments = splitToSegments(output.insert);
     for (let i = 0; i < segments.length && charCount < to; i++) {
       const char = segments[i];
-      if (!isLinebreak(char) && from <= charCount) {
+      if ((withLinebreak || !isLinebreak(char)) && from <= charCount) {
         currentLineText += char;
       }
       charCount++;
@@ -616,7 +617,7 @@ export function copyPlainText(lines: DocCompositionLine[], cursor: number, selec
 
   // The range is across multiple lines
   // Pick the first line from the start of the range
-  content += getLineTextWithin(firstLine, locationFrom.x) + "\n";
+  content += getLineTextWithin(firstLine, locationFrom.x, Infinity, true);
 
   // Pick internal lines
   for (let i = 1; i < targets.length - 1; i++) {
