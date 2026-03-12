@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { Ref, useCallback, useEffect, useMemo, useRef } from "react";
 
 export function useEffectOnce(fn: () => (() => void) | void, deactivate = false) {
   const resetRef = useRef(!deactivate);
@@ -21,4 +21,14 @@ export function useIncrementalKeyMemo(label: string, deps: any[]) {
     return `${label}-${count.current}`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [label, ...deps]);
+}
+
+export function fulfilRef<T>(ref: Ref<T> | undefined, node: T) {
+  if (!ref) return;
+
+  if (typeof ref === "function") {
+    ref(node);
+  } else {
+    ref.current = node;
+  }
 }

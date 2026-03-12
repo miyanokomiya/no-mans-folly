@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { LinkInfo } from "../../composables/states/types";
-import { add, IRectangle, isSame, IVec2 } from "okageo";
+import { add, IRectangle, IVec2 } from "okageo";
 import { LINK_STYLE_ATTRS } from "../../utils/texts/textEditorCore";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { parseShapeLink, ShapeLink } from "../../utils/texts/textLink";
@@ -9,6 +9,7 @@ import { useDocumentMapWithoutTmpInfo, useSelectedSheet, useStaticShapeComposite
 import { AppStateContext } from "../../contexts/AppContext";
 import { rednerRGBA } from "../../utils/color";
 import { Size } from "../../models";
+import { useRefWithDOMRect, useWithinArea } from "../../hooks/domRect";
 
 interface Props {
   focusBack?: () => void;
@@ -23,19 +24,26 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, viewSize, linkInfo, de
   const [localLinkInfo, setLocalLinkInfo] = useState<LinkInfo>();
   const [hasPointer, setHasPointer] = useState(false);
   const gracefulCloseTimer = useRef<any>(undefined);
-  const rootRef = useRef(null);
   const viewTargetBounds = localLinkInfo ? canvasToViewRect(localLinkInfo.bounds, canvasToView) : undefined;
-  const [locationDiff] = useWithinViewport(rootRef, viewTargetBounds, viewSize);
+  const [rootRef, panelBounds] = useRefWithDOMRect();
+  const basePanelBounds = useMemo<IRectangle | undefined>(() => {
+    if (!panelBounds || !viewTargetBounds) return;
+    return {
+      x: viewTargetBounds.x + viewTargetBounds.width / 2 - panelBounds.width / 2,
+      y: viewTargetBounds.y + viewTargetBounds.height,
+      width: panelBounds.width,
+      height: panelBounds.height,
+    };
+  }, [panelBounds, viewTargetBounds]);
+  const locationDiff = useWithinArea(basePanelBounds, viewSize, viewTargetBounds ? [viewTargetBounds, 0] : undefined);
   const shapeLink = useMemo(() => (localLinkInfo ? parseShapeLink(localLinkInfo.link) : undefined), [localLinkInfo]);
 
   const rootStyle = useMemo<React.CSSProperties | undefined>(() => {
-    if (!viewTargetBounds || !locationDiff) return;
+    if (!basePanelBounds || !locationDiff) return;
 
-    const viewP = locationDiff ? add(viewTargetBounds, locationDiff) : viewTargetBounds;
-    const viewWidth = viewTargetBounds.width;
-    const viewHeight = viewTargetBounds.height;
-    return { transform: `translate(calc(${viewP.x + viewWidth / 2}px - 50%), ${viewP.y + viewHeight}px)` };
-  }, [locationDiff, viewTargetBounds]);
+    const viewP = locationDiff ? add(basePanelBounds, locationDiff) : basePanelBounds;
+    return { transform: `translate(${viewP.x}px, ${viewP.y}px)` };
+  }, [locationDiff, basePanelBounds]);
 
   const cancelGracefulClose = useCallback(() => {
     if (gracefulCloseTimer.current) {
@@ -174,47 +182,3 @@ function canvasToViewRect(src: IRectangle, canvasToView: (v: IVec2) => IVec2): I
   const { x: right, y: bottom } = canvasToView({ x: src.x + src.width, y: src.y + src.height });
   return { x, y, width: right - x, height: bottom - y };
 }
-
-// Returns "undefined" until calculated
-const useWithinViewport = (
-  panelRef: React.RefObject<HTMLElement | null>,
-  targetBounds?: IRectangle,
-  viewSize?: Size,
-) => {
-  const [diff, setDiff] = useState<IVec2>();
-
-  useEffect(() => {
-    if (!panelRef.current || !targetBounds || !viewSize) {
-      setDiff(undefined);
-      return;
-    }
-
-    const baseP = { x: targetBounds.x + targetBounds.width / 2, y: targetBounds.y + targetBounds.height };
-    const panelSize = panelRef.current.getBoundingClientRect() as Size;
-
-    let dx = 0;
-    const left = baseP.x - panelSize.width / 2;
-    const right = baseP.x + panelSize.width / 2;
-    if (left < 0) {
-      dx = -left;
-    } else if (viewSize.width < right) {
-      dx = viewSize.width - right;
-    }
-
-    let dy = 0;
-    const top = baseP.y;
-    const bottom = baseP.y + panelSize.height;
-    if (top < 0) {
-      dy = -top;
-    } else if (viewSize.height < bottom) {
-      dy = -targetBounds.height - panelSize.height;
-    }
-
-    setDiff((val) => {
-      const next = { x: dx, y: dy };
-      return val && isSame(val, next) ? val : next;
-    });
-  }, [panelRef, targetBounds, viewSize]);
-
-  return [diff];
-};

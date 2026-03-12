@@ -1,11 +1,15 @@
-import { add, IVec2 } from "okageo";
+import { add, IRectangle, IVec2 } from "okageo";
 import { ContextMenuItem } from "../composables/states/types";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ListButton, ListSpacer } from "./atoms/buttons/ListButton";
 import { AppText } from "./molecules/AppText";
 import iconDropdown from "../assets/icons/dropdown.svg";
-import { Size } from "../models";
+import { Direction2, Size } from "../models";
 import { createPortal } from "react-dom";
+import { useRefWithDOMRect, useWithinArea } from "../hooks/domRect";
+import { expandRect } from "../utils/geometry";
+
+const PANEL_OFFSET = 4;
 
 interface Props {
   items: ContextMenuItem[];
@@ -23,14 +27,28 @@ export const ContextMenu: React.FC<Props> = ({ items, point, onClickItem, viewSi
     [onClickItem],
   );
 
-  const ref = useRef<HTMLDivElement>(null);
-  const [diff] = usePanelWithinViewport(ref, viewSize);
-  const p = diff ? add(diff, point) : point;
+  const [ref, bounds] = useRefWithDOMRect();
+  const baseBounds = useMemo<IRectangle | undefined>(() => {
+    return bounds
+      ? {
+          x: point.x,
+          y: point.y,
+          width: bounds.width,
+          height: bounds.height,
+        }
+      : undefined;
+  }, [point, bounds]);
+  const obstacle = useMemo<[IRectangle, Direction2] | undefined>(
+    () => (baseBounds ? [{ x: baseBounds.x, y: baseBounds.y, width: 0, height: 0 }, 1] : undefined),
+    [baseBounds],
+  );
+  const diff = useWithinArea(baseBounds ? expandRect(baseBounds, PANEL_OFFSET) : undefined, viewSize, obstacle);
+  const p = diff && baseBounds ? add(diff, baseBounds) : point;
 
   return createPortal(
     <div
       ref={ref}
-      className={"fixed border left-0 top-0 bg-white z-300" + (diff ? "" : " opacity-0")}
+      className={"fixed border left-0 top-0 bg-white z-300" + (diff ? "" : " invisible")}
       style={{
         transform: `translate(${p.x}px, ${p.y}px)`,
       }}
@@ -148,27 +166,4 @@ const ChildContextList: React.FC<ChildContextList> = ({ items, viewSize, onClick
       <ContextList items={items} viewSize={viewSize} onClickItem={onClickItem} />
     </div>
   );
-};
-
-const PANEL_OFFSET = 4;
-
-const usePanelWithinViewport = (panelRef: React.RefObject<HTMLElement | null>, viewSize: Size) => {
-  const [diff, setDiff] = useState<IVec2>();
-
-  useEffect(() => {
-    if (!panelRef.current) return;
-
-    const rect = panelRef.current.getBoundingClientRect();
-    let dx = 0;
-    if (rect.right > viewSize.width + PANEL_OFFSET) {
-      dx = -rect.width;
-    }
-    let dy = 0;
-    if (rect.bottom > viewSize.height + PANEL_OFFSET) {
-      dy = viewSize.height - rect.bottom - PANEL_OFFSET;
-    }
-    setDiff({ x: dx, y: dy });
-  }, [panelRef, viewSize]);
-
-  return [diff];
 };
