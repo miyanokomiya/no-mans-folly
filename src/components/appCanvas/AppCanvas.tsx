@@ -602,6 +602,10 @@ export const AppCanvas: React.FC = () => {
     [handleContextMenu, getMousePoint],
   );
 
+  const closeContextMenu = useCallback(() => {
+    setContextMenu(undefined);
+  }, []);
+
   const onClickContextMenuItem = useCallback(
     (key: string, meta?: any) => {
       sm.handleEvent({ type: "contextmenu-item", data: { key, meta } });
@@ -687,6 +691,7 @@ export const AppCanvas: React.FC = () => {
       focusBack={focusBackTextEditor}
       textEditing={textEditing}
       onContextMenu={handleContextMenu}
+      onFixedChange={closeContextMenu}
     />
   ) : undefined;
 

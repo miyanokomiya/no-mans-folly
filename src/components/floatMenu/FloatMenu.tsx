@@ -23,6 +23,7 @@ type Option = FloatMenuOption & {
   focusBack?: () => void;
   textEditing: boolean;
   onContextMenu: (p: IVec2, toggle?: boolean) => void;
+  onFixedChange?: () => void;
 };
 
 export const FloatMenu: React.FC<Option> = ({
@@ -37,6 +38,7 @@ export const FloatMenu: React.FC<Option> = ({
   focusBack,
   textEditing,
   onContextMenu,
+  onFixedChange,
 }) => {
   const draggable = useDraggable();
 
@@ -49,6 +51,13 @@ export const FloatMenu: React.FC<Option> = ({
     initialValue: undefined,
     duration: 1000,
   });
+  const handleSetRootFixed = useCallback(
+    (val: Parameters<typeof setRootFixed>[0]) => {
+      setRootFixed(val);
+      onFixedChange?.();
+    },
+    [setRootFixed, onFixedChange],
+  );
   const [dragOrigin, setDragOrigin] = useState<IVec2 | undefined>();
 
   const shapeComposite = useShapeComposite();
@@ -69,8 +78,8 @@ export const FloatMenu: React.FC<Option> = ({
     if (!dragOrigin || !draggable.v) return;
 
     const p = add(dragOrigin, draggable.v);
-    setRootFixed(p);
-  }, [dragOrigin, draggable.v, setRootFixed]);
+    handleSetRootFixed(p);
+  }, [dragOrigin, draggable.v, handleSetRootFixed]);
 
   const [rootAttrs, setRootAttrs] = useState<{ className?: string; style?: React.CSSProperties }>({
     className: rootBaseClassName + " invisible",
@@ -114,8 +123,8 @@ export const FloatMenu: React.FC<Option> = ({
   const handleMenuAnchorClick = useCallback(() => {
     draggable.clear();
     setDragOrigin(undefined);
-    setRootFixed(undefined);
-  }, [draggable, setRootFixed]);
+    handleSetRootFixed(undefined);
+  }, [draggable, handleSetRootFixed]);
 
   if (!adjustedTargetRect) return;
   return createPortal(
