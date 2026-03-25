@@ -85,6 +85,7 @@ import { newNotchedBlockSelectedState } from "./states/appCanvas/notchedBlock/no
 import { newTabbedBlockSelectedState } from "./states/appCanvas/tabbedBlock/tabbedBlockSelectedState";
 import { newUpstairBlockSelectedState } from "./states/appCanvas/upstairBlock/upstairBlockSelectedState";
 import { newDownstairBlockSelectedState } from "./states/appCanvas/downstairBlock/downstairBlockSelectedState";
+import { newCompoundGridSelectedState } from "./states/appCanvas/compoundGrid/compoundGridSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -126,6 +127,7 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "notched_block", icon: iconNotchedBlock },
   { type: "moon", icon: iconMoon },
   { type: "wave", icon: iconWave },
+  { type: "compound_grid", icon: iconWave },
 ];
 
 export const lineTypeList: ShapeTypeItem[] = [
@@ -184,6 +186,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newDocumentSymbolSelectedState;
     case "wave":
       return newWaveSelectedState;
+    case "compound_grid":
+      return newCompoundGridSelectedState;
     case "bracket":
     case "round_bracket":
       return newBracketSelectedState;

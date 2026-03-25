@@ -13,6 +13,7 @@ import { FloatMenuLineSegment } from "./FloatMenuLineSegment";
 import { FloatMenuOption } from "../../composables/states/commons";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
 import { FloatMenuTableCell } from "./FloatMenuTableCell";
+import { FloatMenuCompoundGrid } from "./FloatMenuCompoundGrid";
 
 type Option = FloatMenuOption & {
   canvasState: any;
@@ -127,6 +128,30 @@ export const FloatMenu: React.FC<Option> = ({
   }, [draggable, handleSetRootFixed]);
 
   if (!adjustedTargetRect) return;
+
+  const getContent = () => {
+    switch (type) {
+      case "smart-branch":
+        return <FloatMenuSmartBranch />;
+      case "line-segment":
+        return <FloatMenuLineSegment {...data} />;
+      case "table-cell":
+        return <FloatMenuTableCell {...data} focusBack={focusBack} onContextMenu={onContextMenu} />;
+      case "compound_grid":
+        return <FloatMenuCompoundGrid {...data} focusBack={focusBack} onContextMenu={onContextMenu} />;
+      default:
+        return (
+          <FloatMenuInspector
+            canvasState={canvasState}
+            indexDocAttrInfo={indexDocAttrInfo}
+            focusBack={focusBack}
+            textEditing={textEditing}
+            onContextMenu={onContextMenu}
+          />
+        );
+    }
+  };
+
   return createPortal(
     <div ref={rootRef} {...rootAttrs}>
       <div className="absolute top-0 -left-[20px] bg-white px-1 h-9 rounded-l">
@@ -138,23 +163,7 @@ export const FloatMenu: React.FC<Option> = ({
           <div className={"w-3 h-7 border rounded-xs touch-none" + (rootFixed ? " bg-blue-300" : " bg-gray-300")} />
         </ClickOrDragHandler>
       </div>
-      <div>
-        {type === "smart-branch" ? (
-          <FloatMenuSmartBranch />
-        ) : type === "line-segment" ? (
-          <FloatMenuLineSegment {...data} />
-        ) : type === "table-cell" ? (
-          <FloatMenuTableCell {...data} focusBack={focusBack} onContextMenu={onContextMenu} />
-        ) : (
-          <FloatMenuInspector
-            canvasState={canvasState}
-            indexDocAttrInfo={indexDocAttrInfo}
-            focusBack={focusBack}
-            textEditing={textEditing}
-            onContextMenu={onContextMenu}
-          />
-        )}
-      </div>
+      <div>{getContent()}</div>
     </div>,
     document.body,
   );

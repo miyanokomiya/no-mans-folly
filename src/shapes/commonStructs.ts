@@ -42,6 +42,7 @@ import { struct as round_bracket } from "./polygons/roundBracket";
 import { struct as curly_bracket } from "./polygons/curlyBracket";
 import { struct as angle_bracket } from "./polygons/angleBracket";
 import { struct as line_polygon } from "./polygons/linePolygon";
+import { struct as compound_grid } from "./compoundGrid";
 
 import { struct as tree_root } from "./tree/treeRoot";
 import { struct as tree_node } from "./tree/treeNode";
@@ -105,6 +106,7 @@ export const SHAPE_COMMON_STRUCTS: {
   curly_bracket,
   angle_bracket,
   line_polygon,
+  compound_grid,
 
   tree_root,
   tree_node,
