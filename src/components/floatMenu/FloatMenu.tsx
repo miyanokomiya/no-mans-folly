@@ -51,8 +51,8 @@ export const FloatMenu: React.FC<Option> = ({
     initialValue: undefined,
     duration: 1000,
   });
-  const handleSetRootFixed = useCallback(
-    (val: Parameters<typeof setRootFixed>[0]) => {
+  const handleSetRootFixed: typeof setRootFixed = useCallback(
+    (val) => {
       setRootFixed(val);
       onFixedChange?.();
     },
