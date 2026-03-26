@@ -683,7 +683,7 @@ function getIntervalSnappingInfo(
     const l0 = s0[1].v[0];
     const r0 = s0[1].v[s0[1].v.length - 1];
     const vRange: [number, number] | undefined = withinRange
-      ? [s0[1].h[0][0].y, s0[1].h[s0[1].v.length - 1][0].y]
+      ? [s0[1].h[0][0].y, s0[1].h[s0[1].h.length - 1][0].y]
       : undefined;
 
     for (let j = 0; j < shapeSnappingList.length; j++) {
