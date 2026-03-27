@@ -218,6 +218,7 @@ export function newLineSnapping(option: Option) {
               guidLines: [guideline],
               shapeSnappingResult: {
                 diff: snapped.diff,
+                anchorPoints: snapped.anchorPoints,
                 ...filterSnappingTargetsBySecondGuideline(snapped, guideline),
               },
             };

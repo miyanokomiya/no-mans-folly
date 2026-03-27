@@ -105,6 +105,14 @@ export function normalizeRadian(value: number): number {
   return circleClamp(-Math.PI, Math.PI, value);
 }
 
+/**
+ * Normalizes an angle (in radians) to the canonical range [0, π).
+ * Lines with direction θ and θ+π are the same line family, so this collapses them.
+ */
+export function normalizeLineRotation(theta: number): number {
+  return ((theta % Math.PI) + Math.PI) % Math.PI;
+}
+
 export function isSameValue(a: number, b: number): boolean {
   return Math.abs(a - b) < MINVALUE;
 }

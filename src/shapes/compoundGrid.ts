@@ -6,7 +6,7 @@ import { ShapeSnappingLines, ShapeStruct, createBaseShape, textContainerModule }
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
 import { groupBy, mapReduce } from "../utils/commons";
 import { applyLocalSpace } from "../utils/renderer";
-import { ISegment } from "../utils/geometry";
+import { ISegment, normalizeLineRotation } from "../utils/geometry";
 
 /**
  * 1: Absolute distance: [10, 20] represents "10px, 20px" repeat
@@ -177,15 +177,6 @@ export const struct: ShapeStruct<CompoundGridShape> = {
 
 export function isCompoundGridShape(shape: Shape): shape is CompoundGridShape {
   return shape.type === "compound_grid";
-}
-
-/**
- * Normalizes a line's angle (in radians) to the canonical range [0, Math.PI).
- * Lines with direction θ and θ+π represent the same line family (opposite traversal directions).
- */
-function normalizeLineRotation(theta: number): number {
-  // Reduce to [0, π)
-  return ((theta % Math.PI) + Math.PI) % Math.PI;
 }
 
 /**

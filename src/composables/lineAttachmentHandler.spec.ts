@@ -652,6 +652,7 @@ describe("snapRectWithLineAttachment", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [],
     };
     const result0 = snapRectWithLineAttachment({
       line,

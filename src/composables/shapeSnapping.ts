@@ -377,7 +377,6 @@ export function renderSnappingResult(
     applyStrokeStyle(ctx, {
       color: option.style.selectionSecondaly,
       width: option.style.selectionLineWidth * option.scale,
-      dash: "short",
     });
     allTargetIdSet.forEach((id) => {
       const info = getTargetShape(id);

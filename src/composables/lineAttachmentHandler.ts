@@ -553,6 +553,7 @@ export function snapRectWithLineAttachment({
   return {
     snappingResult: {
       diff: snappingResult.diff,
+      anchorPoints: snappingResult.anchorPoints,
       ...filterSnappingTargetsBySecondGuideline(candidateInfo, secondGuideline),
     },
     lineAnchorRate: closestInfo[1],
