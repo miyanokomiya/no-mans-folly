@@ -99,9 +99,12 @@ export function newTextReadyState(): AppCanvasState {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
-          getTargetRect: (id) =>
+          getTargetShape: (id) =>
             shapeComposite.mergedShapeMap[id]
-              ? shapeComposite.getWrapperRect(shapeComposite.mergedShapeMap[id])
+              ? {
+                  highlightPaths: shapeComposite.getHighlightPaths(shapeComposite.mergedShapeMap[id]),
+                  wrapperRect: shapeComposite.getWrapperRect(shapeComposite.mergedShapeMap[id]),
+                }
               : undefined,
         });
       }

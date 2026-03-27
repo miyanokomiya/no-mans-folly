@@ -22,21 +22,24 @@ import {
   isRangeOverlapped,
   isSameValue,
   isWithinRange,
+  TAU,
 } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { StyleScheme, UserSetting } from "../models";
 import { ShapeSnappingLines } from "../shapes/core";
-import { renderArrow, scaleGlobalAlpha } from "../utils/renderer";
+import { applyCurvePath, renderArrow } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
 import { pickMinItem } from "../utils/commons";
 import { BoundingBoxResizing } from "./boundingBox";
 import { CanvasCTX } from "../utils/types";
+import { BezierPath } from "../utils/path";
 
 export const SNAP_THRESHOLD = 10;
 const GRID_ID = "GRID";
 
 export interface SnappingResult extends SnappingTargetInfo {
   diff: IVec2;
+  anchorPoints: IVec2[];
 }
 
 interface SnappingTargetInfo {
@@ -292,7 +295,18 @@ export function newShapeSnapping(option: Option) {
       }
     }
 
-    return { targets, intervalTargets, diff };
+    const seenKeys = new Set<string>();
+    const landingAnchors = snappedAnchors.filter((p) => {
+      const key = `${p.x},${p.y}`;
+      if (seenKeys.has(key)) return false;
+      const matches = landingEntries.some(({ rotation, line }) => {
+        const ld = getLineDir(rotation);
+        return Math.abs(getCross(ld, p) - getCross(ld, line[0])) < MINVALUE;
+      });
+      if (matches) seenKeys.add(key);
+      return matches;
+    });
+    return { targets, intervalTargets, diff, anchorPoints: landingAnchors };
   }
 
   /**
@@ -337,16 +351,21 @@ function isWithinRectThreshold(v: IVec2, threshold: number): boolean {
   return true;
 }
 
+export interface SnappingTargetShape {
+  highlightPaths: BezierPath[];
+  wrapperRect: IRectangle;
+}
+
 export function renderSnappingResult(
   ctx: CanvasCTX,
   option: {
     result: SnappingResult;
     style: StyleScheme;
     scale: number;
-    getTargetRect?: (id: string) => IRectangle | undefined;
+    getTargetShape?: (id: string) => SnappingTargetShape | undefined;
   },
 ) {
-  const getTargetRect = option.getTargetRect;
+  const getTargetShape = option.getTargetShape;
 
   const allTargetIdSet = new Set(option.result.targets.map((t) => t.id));
   option.result.intervalTargets.forEach((info) => {
@@ -354,17 +373,18 @@ export function renderSnappingResult(
     allTargetIdSet.add(info.afterId);
   });
 
-  if (getTargetRect && allTargetIdSet.size > 0) {
-    scaleGlobalAlpha(ctx, 0.2, () => {
-      applyFillStyle(ctx, { color: option.style.selectionSecondaly });
-      allTargetIdSet.forEach((id) => {
-        const rect = getTargetRect(id);
-        if (!rect) return;
-
-        ctx.beginPath();
-        ctx.rect(rect.x, rect.y, rect.width, rect.height);
-        ctx.fill();
-      });
+  if (getTargetShape && allTargetIdSet.size > 0) {
+    applyStrokeStyle(ctx, {
+      color: option.style.selectionSecondaly,
+      width: option.style.selectionLineWidth * option.scale,
+      dash: "short",
+    });
+    allTargetIdSet.forEach((id) => {
+      const info = getTargetShape(id);
+      if (!info?.highlightPaths.length) return;
+      ctx.beginPath();
+      info.highlightPaths.forEach((p) => applyCurvePath(ctx, p.path, p.curves));
+      ctx.stroke();
     });
   }
 
@@ -379,13 +399,20 @@ export function renderSnappingResult(
   });
   ctx.stroke();
 
-  if (!getTargetRect) return;
+  const dotRadius = 5 * option.scale;
+  option.result.anchorPoints.forEach((p) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, dotRadius, 0, TAU);
+    ctx.fill();
+  });
+
+  if (!getTargetShape) return;
 
   const arrowSize = 10 * option.scale;
 
   option.result.intervalTargets?.forEach((t) => {
-    const before = getTargetRect(t.beforeId);
-    const after = getTargetRect(t.afterId);
+    const before = getTargetShape(t.beforeId)?.wrapperRect;
+    const after = getTargetShape(t.afterId)?.wrapperRect;
     if (!before || !after) return;
 
     const isV = t.direction === "v";
@@ -983,6 +1010,7 @@ function snapPointOnLine({
 
   return {
     diff,
+    anchorPoints: [snappedP],
     ...optimizeSnappingTargetInfoForPoint(
       filterSnappingTargetsBySecondGuideline(candidateInfo, secondGuideline),
       snappedP,
@@ -1098,5 +1126,6 @@ export function mergetSnappingResult(a: SnappingResult, b: SnappingResult): Snap
     diff: { x: diffX, y: diffY },
     targets: [...infoX.targets, ...infoY.targets],
     intervalTargets: [...infoX.intervalTargets, ...infoY.intervalTargets],
+    anchorPoints: [...a.anchorPoints, ...b.anchorPoints],
   };
 }

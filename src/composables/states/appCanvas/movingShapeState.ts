@@ -231,7 +231,13 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           style,
           scale,
           result: snappingResult,
-          getTargetRect: (id) => (shapeMap[id] ? shapeComposite.getWrapperRect(shapeMap[id]) : undefined),
+          getTargetShape: (id) =>
+            shapeMap[id]
+              ? {
+                  highlightPaths: shapeComposite.getHighlightPaths(shapeMap[id]),
+                  wrapperRect: shapeComposite.getWrapperRect(shapeMap[id]),
+                }
+              : undefined,
         });
       }
 

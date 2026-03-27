@@ -60,6 +60,10 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 0, y: 40 },
+        { x: 0, y: 50 },
+      ],
     });
 
     expect(target.test({ x: 5, y: 40, width: 10, height: 10 })).toEqual({
@@ -74,6 +78,10 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 0, y: 40 },
+        { x: 0, y: 50 },
+      ],
     });
 
     expect(target.test({ x: 95, y: 40, width: 30, height: 30 })).toEqual({
@@ -88,6 +96,10 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 100, y: 40 },
+        { x: 100, y: 70 },
+      ],
     });
 
     expect(target.test({ x: 105, y: 40, width: 10, height: 10 })).toEqual({
@@ -102,6 +114,10 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 100, y: 40 },
+        { x: 100, y: 50 },
+      ],
     });
 
     expect(target.test({ x: -7, y: 40, width: 10, height: 10 }), "at center").toEqual({
@@ -116,6 +132,7 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [{ x: 0, y: 45 }],
     });
   });
 
@@ -139,6 +156,12 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 0, y: 40 },
+        { x: 100, y: 40 },
+        { x: 0, y: 50 },
+        { x: 100, y: 50 },
+      ],
     });
   });
 
@@ -155,6 +178,10 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 40, y: 0 },
+        { x: 50, y: 0 },
+      ],
     });
 
     expect(target.test({ x: 40, y: 5, width: 10, height: 10 })).toEqual({
@@ -169,6 +196,10 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 40, y: 0 },
+        { x: 50, y: 0 },
+      ],
     });
 
     expect(target.test({ x: 40, y: 95, width: 30, height: 30 })).toEqual({
@@ -183,6 +214,10 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 40, y: 100 },
+        { x: 70, y: 100 },
+      ],
     });
 
     expect(target.test({ x: 40, y: 105, width: 10, height: 10 })).toEqual({
@@ -197,6 +232,10 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 40, y: 100 },
+        { x: 50, y: 100 },
+      ],
     });
 
     expect(target.test({ x: 40, y: -7, width: 10, height: 10 }), "at center").toEqual({
@@ -211,6 +250,7 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [{ x: 45, y: 0 }],
     });
   });
 
@@ -234,6 +274,12 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 40, y: 0 },
+        { x: 50, y: 0 },
+        { x: 40, y: 100 },
+        { x: 50, y: 100 },
+      ],
     });
   });
 
@@ -257,6 +303,11 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 0, y: -10 },
+        { x: -10, y: 0 },
+        { x: 0, y: 0 },
+      ],
     });
 
     expect(target.test({ x: -5, y: -5, width: 30, height: 30 })).toEqual({
@@ -278,6 +329,11 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 0, y: 0 },
+        { x: 30, y: 0 },
+        { x: 0, y: 30 },
+      ],
     });
   });
 
@@ -306,6 +362,11 @@ describe("newShapeSnapping", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [
+        { x: 0, y: -10 },
+        { x: -10, y: 0 },
+        { x: 0, y: 0 },
+      ],
     });
   });
 });
@@ -713,6 +774,7 @@ describe("testPoint", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [{ x: 0, y: 10 }],
     });
 
     expect(target.testPoint({ x: 10, y: 1 })).toEqual({
@@ -727,6 +789,7 @@ describe("testPoint", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [{ x: 10, y: 0 }],
     });
 
     expect(target.testPoint({ x: -1, y: 1 })).toEqual({
@@ -748,6 +811,7 @@ describe("testPoint", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [{ x: 0, y: 0 }],
     });
   });
 
@@ -809,6 +873,7 @@ describe("testPoint", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [{ x: 90, y: 100 }],
     });
     expect(target.testPoint({ x: 110, y: 101 })).toEqual({
       diff: { x: 0, y: -1 },
@@ -830,6 +895,7 @@ describe("testPoint", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [{ x: 110, y: 100 }],
     });
     expect(target.testPoint({ x: 101, y: 90 })).toEqual({
       diff: { x: -1, y: 0 },
@@ -851,6 +917,7 @@ describe("testPoint", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [{ x: 100, y: 90 }],
     });
     expect(target.testPoint({ x: 101, y: 110 })).toEqual({
       diff: { x: -1, y: 0 },
@@ -872,6 +939,7 @@ describe("testPoint", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [{ x: 100, y: 110 }],
     });
   });
 });
@@ -932,6 +1000,7 @@ describe("testPointOnLine", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [{ x: 20, y: 0 }],
     });
   });
 
@@ -959,6 +1028,7 @@ describe("testPointOnLine", () => {
         },
       ],
       intervalTargets: [],
+      anchorPoints: [{ x: 100, y: 0 }],
     });
   });
 
@@ -1024,6 +1094,7 @@ describe("testPointOnLine", () => {
           ],
         },
       ],
+      anchorPoints: [{ x: 240, y: -20 }],
     });
   });
 });
@@ -1283,6 +1354,7 @@ describe("mergetSnappingResult", () => {
           direction: "v",
         },
       ],
+      anchorPoints: [],
     };
     const b: SnappingResult = {
       diff: { x: -20, y: -2 },
@@ -1326,6 +1398,7 @@ describe("mergetSnappingResult", () => {
           direction: "v",
         },
       ],
+      anchorPoints: [],
     };
 
     expect(mergetSnappingResult(a, b)).toEqual({
@@ -1370,6 +1443,7 @@ describe("mergetSnappingResult", () => {
           direction: "v",
         },
       ],
+      anchorPoints: [],
     });
   });
 });

@@ -160,19 +160,11 @@ export const struct: ShapeStruct<CompoundGridShape> = {
     const verticalOnly = shape.grid.direction === 2;
 
     // Local vertical lines (at x = const, from y=0 to y=h), sorted left to right
-    const xPositions = [
-      0,
-      ...(verticalOnly ? [] : resolveGridValues(shape.grid, w).map((v) => v.v)),
-      w,
-    ];
+    const xPositions = [0, ...(verticalOnly ? [] : resolveGridValues(shape.grid, w).map((v) => v.v)), w];
     const vSegments: ISegment[] = xPositions.map((x) => [localToWorld(x, 0), localToWorld(x, h)]);
 
     // Local horizontal lines (at y = const, from x=0 to x=w), sorted top to bottom
-    const yPositions = [
-      0,
-      ...(horizontalOnly ? [] : resolveGridValues(shape.grid, h).map((v) => v.v)),
-      h,
-    ];
+    const yPositions = [0, ...(horizontalOnly ? [] : resolveGridValues(shape.grid, h).map((v) => v.v)), h];
     const hSegments: ISegment[] = yPositions.map((y) => [localToWorld(0, y), localToWorld(w, y)]);
 
     const linesByRotation = new Map<number, ISegment[]>([

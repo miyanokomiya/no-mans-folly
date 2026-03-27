@@ -73,9 +73,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
             { x: event.data.current.x + extraDistance, y: event.data.current.y + extraDistance },
             event.data.startAbs,
           );
-          snappingResult = event.data.ctrl
-            ? undefined
-            : shapeSnapping.test(moveRect(movingRect, d), ctx.getScale());
+          snappingResult = event.data.ctrl ? undefined : shapeSnapping.test(moveRect(movingRect, d), ctx.getScale());
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
           const affine: AffineMatrix = [1, 0, 0, 1, translate.x, translate.y];
           const tmpShapeMap: { [id: string]: Partial<Shape> } = {};
@@ -119,9 +117,12 @@ export function newDuplicatingShapesState(): AppCanvasState {
           style: ctx.getStyleScheme(),
           scale: ctx.getScale(),
           result: snappingResult,
-          getTargetRect: (id) =>
+          getTargetShape: (id) =>
             shapeComposite.mergedShapeMap[id]
-              ? shapeComposite.getWrapperRect(shapeComposite.mergedShapeMap[id])
+              ? {
+                  highlightPaths: shapeComposite.getHighlightPaths(shapeComposite.mergedShapeMap[id]),
+                  wrapperRect: shapeComposite.getWrapperRect(shapeComposite.mergedShapeMap[id]),
+                }
               : undefined,
         });
       }

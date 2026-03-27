@@ -179,6 +179,7 @@ describe("newLineSnapping", () => {
               outOfRange: true,
             },
           ],
+          anchorPoints: [{ x: 200, y: 50 }],
         },
       });
     });
@@ -945,6 +946,7 @@ describe("newLineSnapping", () => {
               ],
             },
           ],
+          anchorPoints: [{ x: 30, y: 50 }],
         },
       });
     });
@@ -1006,6 +1008,7 @@ describe("newLineSnapping", () => {
               ],
             },
           ],
+          anchorPoints: [{ x: 150, y: -30 }],
         },
       });
     });
@@ -1175,6 +1178,7 @@ describe("newLineSnapping", () => {
               ],
             },
           ],
+          anchorPoints: [{ x: 80, y: 0 }],
         },
       });
 
@@ -1214,6 +1218,7 @@ describe("newLineSnapping", () => {
               ],
             },
           ],
+          anchorPoints: [{ x: 120, y: 0 }],
         },
       });
 
@@ -1248,6 +1253,7 @@ describe("newLineSnapping", () => {
               outOfRange: true,
             },
           ],
+          anchorPoints: [{ x: 170, y: 0 }],
         },
       });
     });

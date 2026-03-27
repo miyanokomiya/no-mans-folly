@@ -54,7 +54,12 @@ export function newGrid({ size, range, disabled }: Option) {
   }
 
   function getSnappingLines(): ShapeSnappingLines {
-    return { linesByRotation: new Map([[Math.PI / 2, segmentsV], [0, segmentsH]]) };
+    return {
+      linesByRotation: new Map([
+        [Math.PI / 2, segmentsV],
+        [0, segmentsH],
+      ]),
+    };
   }
 
   function renderAxisLabels(ctx: CanvasCTX, scale = 1) {
@@ -168,9 +173,7 @@ export function snapVectorToGrid(
   if (!best) return;
 
   // If multiple candidates are equally close (e.g. snapping to intersection of two lines), include all
-  const lines = candidates
-    .filter((c) => c.d < threshold && isSame(c.p, best.p))
-    .map((c) => c.line);
+  const lines = candidates.filter((c) => c.d < threshold && isSame(c.p, best.p)).map((c) => c.line);
 
   return { p: best.p, lines };
 }

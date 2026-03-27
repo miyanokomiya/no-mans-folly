@@ -538,13 +538,17 @@ export function renderConnectionResult(
   },
 ) {
   const shapeComposite = option.shapeComposite;
-  const getTargetRect = (id: string) =>
-    shapeComposite.shapeMap[id] ? shapeComposite.getWrapperRect(shapeComposite.shapeMap[id]) : undefined;
+  const getTargetShape = (id: string) => {
+    const shape = shapeComposite.shapeMap[id];
+    return shape
+      ? { highlightPaths: shapeComposite.getHighlightPaths(shape), wrapperRect: shapeComposite.getWrapperRect(shape) }
+      : undefined;
+  };
 
   if (option.result.shapeSnappingResult) {
     renderSnappingResult(ctx, {
       result: option.result.shapeSnappingResult,
-      getTargetRect,
+      getTargetShape,
       scale: option.scale,
       style: option.style,
     });
