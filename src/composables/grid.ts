@@ -1,4 +1,4 @@
-import { getDistance, IRectangle, isParallel, isSame, IVec2, sub } from "okageo";
+import { getDistance, getInner, IRectangle, isParallel, isSame, IVec2, sub } from "okageo";
 import { getCrossLineAndLine, ISegment, snapNumber, snapNumberCeil } from "../utils/geometry";
 import { applyFillStyle } from "../utils/fillStyle";
 import { COLORS } from "../utils/color";
@@ -54,7 +54,7 @@ export function newGrid({ size, range, disabled }: Option) {
   }
 
   function getSnappingLines(): ShapeSnappingLines {
-    return { v: segmentsV, h: segmentsH };
+    return { linesByRotation: new Map([[Math.PI / 2, segmentsV], [0, segmentsH]]) };
   }
 
   function renderAxisLabels(ctx: CanvasCTX, scale = 1) {
@@ -115,6 +115,16 @@ export function getGridSize(baseSize: number, scale: number): number {
   return adjustedSize;
 }
 
+/**
+ * Returns the unit normal vector perpendicular to a line at the given rotation.
+ * Uses exact values for the standard angles 0 and Math.PI / 2.
+ */
+function getRotationNormal(rotation: number): IVec2 {
+  if (rotation === 0) return { x: 0, y: 1 };
+  if (rotation === Math.PI / 2) return { x: -1, y: 0 };
+  return { x: -Math.sin(rotation), y: Math.cos(rotation) };
+}
+
 export function snapVectorToGrid(
   gridSnapping: ShapeSnappingLines,
   origin: IVec2,
@@ -128,38 +138,41 @@ export function snapVectorToGrid(
   | undefined {
   const seg: ISegment = [origin, moving];
   const vec = sub(moving, origin);
-  const isHorizontal = isParallel(vec, { x: 1, y: 0 });
-  const isVertical = isParallel(vec, { x: 0, y: 1 });
-  const closestHGrid = !isHorizontal
-    ? pickMinItem(gridSnapping.h, (hLine) => Math.abs(hLine[0].y - moving.y))
-    : undefined;
-  const closestVGrid = !isVertical
-    ? pickMinItem(gridSnapping.v, (vLine) => Math.abs(vLine[0].x - moving.x))
-    : undefined;
 
-  const intersectionH = closestHGrid ? getCrossLineAndLine(seg, closestHGrid) : undefined;
-  const intersectionV = closestVGrid ? getCrossLineAndLine(seg, closestVGrid) : undefined;
-  const dH = intersectionH ? getDistance(moving, intersectionH) : Infinity;
-  const dV = intersectionV ? getDistance(moving, intersectionV) : Infinity;
+  // For each rotation, find the closest grid line (skip if vec is parallel to that rotation's lines)
+  const candidates: { p: IVec2; d: number; line: ISegment }[] = [];
+  for (const [rotation, lines] of gridSnapping.linesByRotation) {
+    const lineDir = { x: Math.cos(rotation), y: Math.sin(rotation) };
+    if (isParallel(vec, lineDir)) continue;
 
-  const candidateH = dH < threshold ? intersectionH : undefined;
-  const candidateV = dV < threshold ? intersectionV : undefined;
+    const normal = getRotationNormal(rotation);
+    const closestLine = pickMinItem(lines, (l) => {
+      return Math.abs(getInner(l[0], normal) - getInner(moving, normal));
+    });
+    if (!closestLine) continue;
 
-  if (candidateH && candidateV) {
-    if (isSame(candidateH, candidateV)) {
-      return { p: candidateH, lines: [closestHGrid!, closestVGrid!] };
-    }
+    const intersection = getCrossLineAndLine(seg, closestLine);
+    if (!intersection) continue;
 
-    if (dH <= dV) {
-      return { p: candidateH, lines: [closestHGrid!] };
-    } else {
-      return { p: candidateV, lines: [closestVGrid!] };
-    }
-  } else if (candidateH) {
-    return { p: candidateH, lines: [closestHGrid!] };
-  } else if (candidateV) {
-    return { p: candidateV, lines: [closestVGrid!] };
+    const d = getDistance(moving, intersection);
+    candidates.push({ p: intersection, d, line: closestLine });
   }
+
+  if (candidates.length === 0) return;
+
+  // Pick the closest intersection within threshold
+  const best = pickMinItem(
+    candidates.filter((c) => c.d < threshold),
+    (c) => c.d,
+  );
+  if (!best) return;
+
+  // If multiple candidates are equally close (e.g. snapping to intersection of two lines), include all
+  const lines = candidates
+    .filter((c) => c.d < threshold && isSame(c.p, best.p))
+    .map((c) => c.line);
+
+  return { p: best.p, lines };
 }
 
 export function pickClosestGridLineAtPoint(
@@ -170,43 +183,26 @@ export function pickClosestGridLineAtPoint(
   | {
       p: IVec2; // the pedal on the closest grid line
       line: ISegment; // the closest grid line
-      type: "h" | "v";
+      rotation: number;
     }
   | undefined {
-  const gridH = pickMinItem(
-    gridSnapping.h.map<[ISegment, number]>((seg) => [seg, Math.abs(point.y - seg[0].y)]),
-    ([, v]) => v,
-  );
-  const gridV = pickMinItem(
-    gridSnapping.v.map<[ISegment, number]>((seg) => [seg, Math.abs(point.x - seg[0].x)]),
-    ([, v]) => v,
-  );
+  let best: { p: IVec2; line: ISegment; rotation: number; d: number } | undefined;
 
-  if (gridH && gridV) {
-    if (gridH[1] < threshold && gridH[1] < gridV[1]) {
-      return {
-        p: { x: point.x, y: gridH[0][0].y },
-        line: gridH[0],
-        type: "h",
-      };
-    } else if (gridV[1] < threshold && gridV[1] < gridH[1]) {
-      return {
-        p: { x: gridV[0][0].x, y: point.y },
-        line: gridV[0],
-        type: "v",
-      };
+  for (const [rotation, lines] of gridSnapping.linesByRotation) {
+    const normal = getRotationNormal(rotation);
+    const closest = pickMinItem(
+      lines.map<[ISegment, number]>((seg) => [seg, Math.abs(getInner(seg[0], normal) - getInner(point, normal))]),
+      ([, d]) => d,
+    );
+    if (!closest || closest[1] >= threshold) continue;
+
+    if (!best || closest[1] < best.d) {
+      const diff = getInner(closest[0][0], normal) - getInner(point, normal);
+      const pedal = { x: point.x + diff * normal.x, y: point.y + diff * normal.y };
+      best = { p: pedal, line: closest[0], rotation, d: closest[1] };
     }
-  } else if (gridH && gridH[1] < threshold) {
-    return {
-      p: { x: point.x, y: gridH[0][0].y },
-      line: gridH[0],
-      type: "h",
-    };
-  } else if (gridV && gridV[1] < threshold) {
-    return {
-      p: { x: gridV[0][0].x, y: point.y },
-      line: gridV[0],
-      type: "v",
-    };
   }
+
+  if (!best) return;
+  return { p: best.p, line: best.line, rotation: best.rotation };
 }

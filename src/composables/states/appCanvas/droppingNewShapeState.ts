@@ -68,7 +68,6 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
               x: event.data.current.x - rectSize.width,
               y: event.data.current.y - rectSize.height,
             },
-            undefined,
             ctx.getScale(),
           );
           const adjustedCurrent = snappingResult ? add(event.data.current, snappingResult.diff) : event.data.current;

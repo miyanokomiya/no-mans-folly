@@ -1,10 +1,12 @@
+import { IVec2 } from "okageo";
 import { Shape } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
-import { ShapeStruct, createBaseShape, textContainerModule } from "./core";
+import { ShapeSnappingLines, ShapeStruct, createBaseShape, textContainerModule } from "./core";
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
 import { groupBy, mapReduce } from "../utils/commons";
 import { applyLocalSpace } from "../utils/renderer";
+import { ISegment } from "../utils/geometry";
 
 /**
  * 1: Absolute distance: [10, 20] represents "10px, 20px" repeat
@@ -135,10 +137,63 @@ export const struct: ShapeStruct<CompoundGridShape> = {
   getTextRangeRect: undefined,
   ...mapReduce(textContainerModule, () => undefined),
   canAttachSmartBranch: false,
+  getSnappingLines(shape): ShapeSnappingLines {
+    const w = shape.width;
+    const h = shape.height;
+    const r = shape.rotation;
+    const cx = shape.p.x + w / 2;
+    const cy = shape.p.y + h / 2;
+    const cosR = Math.cos(r);
+    const sinR = Math.sin(r);
+
+    function localToWorld(lx: number, ly: number): IVec2 {
+      const ox = lx - w / 2;
+      const oy = ly - h / 2;
+      return { x: cx + ox * cosR - oy * sinR, y: cy + ox * sinR + oy * cosR };
+    }
+
+    // Rotation keys for local vertical and horizontal lines in world space
+    const vLocalKey = normalizeLineRotation(r + Math.PI / 2);
+    const hLocalKey = normalizeLineRotation(r);
+
+    const horizontalOnly = shape.grid.direction === 1;
+    const verticalOnly = shape.grid.direction === 2;
+
+    // Local vertical lines (at x = const, from y=0 to y=h), sorted left to right
+    const xPositions = [
+      0,
+      ...(verticalOnly ? [] : resolveGridValues(shape.grid, w).map((v) => v.v)),
+      w,
+    ];
+    const vSegments: ISegment[] = xPositions.map((x) => [localToWorld(x, 0), localToWorld(x, h)]);
+
+    // Local horizontal lines (at y = const, from x=0 to x=w), sorted top to bottom
+    const yPositions = [
+      0,
+      ...(horizontalOnly ? [] : resolveGridValues(shape.grid, h).map((v) => v.v)),
+      h,
+    ];
+    const hSegments: ISegment[] = yPositions.map((y) => [localToWorld(0, y), localToWorld(w, y)]);
+
+    const linesByRotation = new Map<number, ISegment[]>([
+      [vLocalKey, vSegments],
+      [hLocalKey, hSegments],
+    ]);
+    return { linesByRotation };
+  },
 };
 
 export function isCompoundGridShape(shape: Shape): shape is CompoundGridShape {
   return shape.type === "compound_grid";
+}
+
+/**
+ * Normalizes a line's angle (in radians) to the canonical range [0, Math.PI).
+ * Lines with direction θ and θ+π represent the same line family (opposite traversal directions).
+ */
+function normalizeLineRotation(theta: number): number {
+  // Reduce to [0, π)
+  return ((theta % Math.PI) + Math.PI) % Math.PI;
 }
 
 /**

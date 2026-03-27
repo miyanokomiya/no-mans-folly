@@ -40,9 +40,18 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
       shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableCandidates.map((s) => {
           const lines = shapeComposite.getSnappingLines(s);
-          return [s.id, isHorizontalSegment ? { v: [], h: lines.h } : { v: lines.v, h: [] }];
+          const linesH = lines.linesByRotation.get(0) ?? [];
+          const linesV = lines.linesByRotation.get(Math.PI / 2) ?? [];
+          return [
+            s.id,
+            isHorizontalSegment
+              ? { linesByRotation: new Map([[0, linesH]]) }
+              : { linesByRotation: new Map([[Math.PI / 2, linesV]]) },
+          ];
         }),
-        gridSnapping: isHorizontalSegment ? { v: [], h: gridLines.h } : { v: gridLines.v, h: [] },
+        gridSnapping: isHorizontalSegment
+          ? { linesByRotation: new Map([[0, gridLines.linesByRotation.get(0) ?? []]]) }
+          : { linesByRotation: new Map([[Math.PI / 2, gridLines.linesByRotation.get(Math.PI / 2) ?? []]]) },
         settings: ctx.getUserSetting(),
       });
 
@@ -67,7 +76,7 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
           const v = sub(event.data.current, event.data.startAbs);
           snappingResult = event.data.ctrl
             ? undefined
-            : shapeSnapping.test(moveRect(getOuterRectangle([targetSegment]), v), undefined, ctx.getScale());
+            : shapeSnapping.test(moveRect(getOuterRectangle([targetSegment]), v), ctx.getScale());
           const p = snappingResult ? add(v, add(targetSegment[0], snappingResult.diff)) : event.data.current;
 
           const elbow = srcBodyItem.elbow;

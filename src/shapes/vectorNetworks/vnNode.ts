@@ -80,18 +80,26 @@ export const struct: ShapeStruct<VnNodeShape> = {
   },
   getSnappingLines(shape) {
     return {
-      h: [
+      linesByRotation: new Map([
         [
-          { x: shape.p.x - shape.r, y: shape.p.y },
-          { x: shape.p.x + shape.r, y: shape.p.y },
+          0,
+          [
+            [
+              { x: shape.p.x - shape.r, y: shape.p.y },
+              { x: shape.p.x + shape.r, y: shape.p.y },
+            ],
+          ],
         ],
-      ],
-      v: [
         [
-          { x: shape.p.x, y: shape.p.y - shape.r },
-          { x: shape.p.x, y: shape.p.y + shape.r },
+          Math.PI / 2,
+          [
+            [
+              { x: shape.p.x, y: shape.p.y - shape.r },
+              { x: shape.p.x, y: shape.p.y + shape.r },
+            ],
+          ],
         ],
-      ],
+      ]),
     };
   },
   getHighlightPaths(shape) {

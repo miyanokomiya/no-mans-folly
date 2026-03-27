@@ -146,7 +146,6 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
                 .testWithSubRect(
                   moveRect(movingRect, d),
                   movingRectSub ? moveRect(movingRectSub, d) : undefined,
-                  undefined,
                   ctx.getScale(),
                 ));
 

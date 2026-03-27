@@ -5,6 +5,8 @@ import {
   MINVALUE,
   add,
   applyAffine,
+  getCross,
+  getInner,
   getNorm,
   isOnLine,
   isParallel,
@@ -12,14 +14,7 @@ import {
   rotate,
   sub,
 } from "okageo";
-import {
-  getCrossLineAndLine,
-  getD2,
-  getRectLines,
-  ISegment,
-  isRangeAccommodatingValue,
-  isRangeOverlapped,
-} from "../utils/geometry";
+import { getCrossLineAndLine, getD2, getRectLines, ISegment, isRangeOverlapped, isSameValue } from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { StyleScheme, UserSetting } from "../models";
 import { ShapeSnappingLines } from "../shapes/core";
@@ -44,6 +39,9 @@ interface SnappingTargetInfo {
 interface SnappingResultTarget {
   id: string;
   line: [IVec2, IVec2];
+  // When true, the snapped anchor is on the infinite extension of this line but outside its segment extent.
+  // Such lines are included for visual highlighting but excluded from guideline computations.
+  outOfRange?: true;
 }
 
 interface SnappingTmpResult {
@@ -58,15 +56,6 @@ interface Option {
   settings?: Pick<UserSetting, "snapIgnoreNonoverlapPair">;
 }
 
-interface TestOption {
-  disabledEdges: {
-    top?: boolean;
-    right?: boolean;
-    bottom?: boolean;
-    left?: boolean;
-  };
-}
-
 export function newShapeSnapping(option: Option) {
   const shapeSnappingList = option.shapeSnappingList;
   const gridSnapping = option.gridSnapping;
@@ -75,149 +64,224 @@ export function newShapeSnapping(option: Option) {
     ? [[GRID_ID, gridSnapping], ...shapeSnappingList]
     : shapeSnappingList;
 
-  function test(rect: IRectangle, testOption?: TestOption, scale = 1): SnappingResult | undefined {
+  function test(rect: IRectangle, scale = 1): SnappingResult | undefined {
     const snapThreshold = SNAP_THRESHOLD * scale;
-    const [rectTop, rectRight, rectBottom, rectLeft] = getRectLines(rect);
+    const anchorPoints = getRectAnchorPoints(rect);
 
-    let xClosest: [string, SnappingTmpResult] | undefined;
-    let yClosest: [string, SnappingTmpResult] | undefined;
-    let xClosestOthers: [string, SnappingTmpResult][] = [];
-    let yClosestOthers: [string, SnappingTmpResult][] = [];
-    shapeAndGridSnappingList.map(([id, lines]) => {
-      // x snapping
-      {
-        const vList = lines.v.map<SnappingTmpResult>((line) => {
-          return getSnappingTmpResult(line, line[0].x, [
-            (rectLeft[0].x + rectRight[0].x) / 2,
-            rectLeft[0].x,
-            rectRight[0].x,
-          ]);
-        });
-        const candidates = vList.filter((v) => v.ad < snapThreshold);
-        const closest = pickMinItem(candidates, (v) => v.ad);
-        if (closest) {
-          if (!xClosest) {
-            // Save as the initial cnadidates.
-            xClosest = [id, closest];
-            xClosestOthers = candidates
-              .filter((c) => c !== closest && Math.abs(c.ad - closest.ad) < MINVALUE)
-              .map((c) => [id, c]);
-          } else if (Math.abs(xClosest[1].ad - closest.ad) < MINVALUE) {
-            // Save as cnadidates.
-            xClosestOthers = xClosestOthers.concat(
-              candidates.filter((c) => Math.abs(c.ad - closest.ad) < MINVALUE).map((c) => [id, c]),
-            );
-          } else if (closest.ad < xClosest[1].ad) {
-            // Save as new closer cnadidates.
-            xClosest = [id, closest];
-            xClosestOthers = candidates
-              .filter((c) => c !== closest && Math.abs(c.ad - closest.ad) < MINVALUE)
-              .map((c) => [id, c]);
-          }
-        }
-      }
-
-      // y snapping
-      {
-        const hList = lines.h.map<SnappingTmpResult>((line) => {
-          const values: number[] = [];
-          if (!testOption?.disabledEdges.top && !testOption?.disabledEdges.bottom)
-            values.push((rectTop[0].y + rectBottom[0].y) / 2);
-          if (!testOption?.disabledEdges.top) values.push(rectTop[0].y);
-          if (!testOption?.disabledEdges.bottom) values.push(rectBottom[0].y);
-
-          return getSnappingTmpResult(line, line[0].y, values);
-        });
-        const candidates = hList.filter((v) => v.ad < snapThreshold);
-        const closest = pickMinItem(candidates, (v) => v.ad);
-        if (closest) {
-          if (!yClosest) {
-            // Save as the initial cnadidates.
-            yClosest = [id, closest];
-            yClosestOthers = candidates
-              .filter((c) => c !== closest && Math.abs(c.ad - closest.ad) < MINVALUE)
-              .map((c) => [id, c]);
-          } else if (Math.abs(yClosest[1].ad - closest.ad) < MINVALUE) {
-            // Save as cnadidates.
-            yClosestOthers = yClosestOthers.concat(
-              candidates.filter((c) => Math.abs(c.ad - closest.ad) < MINVALUE).map((c) => [id, c]),
-            );
-          } else if (closest.ad < yClosest[1].ad) {
-            // Save as new closer cnadidates.
-            yClosest = [id, closest];
-            yClosestOthers = candidates
-              .filter((c) => c !== closest && Math.abs(c.ad - closest.ad) < MINVALUE)
-              .map((c) => [id, c]);
-          }
-        }
-      }
-    });
-
-    const intervalResult = shapeIntervalSnapping.test(rect, scale);
-    if (!xClosest && !yClosest && !intervalResult) return;
-
-    const isVInterval =
-      (xClosest && intervalResult?.v && intervalResult.v.ad < xClosest[1].ad) || (!xClosest && intervalResult?.v);
-    const isHInterval =
-      (yClosest && intervalResult?.h && intervalResult.h.ad < yClosest[1].ad) || (!yClosest && intervalResult?.h);
-    const dx = isVInterval ? intervalResult.v!.d : (xClosest?.[1].d ?? 0);
-    const dy = isHInterval ? intervalResult.h!.d : (yClosest?.[1].d ?? 0);
-
-    const diff = { x: dx, y: dy };
-    if (!isWithinRectThreshold(diff, snapThreshold)) return;
-
-    const [adjustedTop, , , adjustedLeft] = getRectLines(moveRect(rect, diff));
-    const targets: SnappingResultTarget[] = [];
-    const intervalTargets: IntervalSnappingResultTarget[] = [];
-
-    if (isVInterval) {
-      const y = (adjustedLeft[0].y + adjustedLeft[1].y) / 2;
-      intervalTargets.push({
-        ...intervalResult.v!.target,
-        lines: intervalResult.v!.target.lines.map<[IVec2, IVec2]>((l) => [
-          { x: l[0].x, y },
-          { x: l[1].x, y },
-        ]),
+    // Build the interval line map: each virtual ISegment maps to its raw interval data.
+    type IntervalLineData = {
+      rawTarget: IntervalSnappingTarget;
+      direction: "v" | "h";
+      referenceAnchor: IVec2;
+    };
+    const intervalLineMap = new Map<ISegment, IntervalLineData>();
+    const intervalSnappingLines: ShapeSnappingLines = { linesByRotation: new Map() };
+    for (const candidate of shapeIntervalSnapping.getCandidates(rect)) {
+      intervalLineMap.set(candidate.seg, {
+        rawTarget: candidate.rawTarget,
+        direction: candidate.direction,
+        referenceAnchor: candidate.referenceAnchor,
       });
-    } else if (xClosest) {
-      [xClosest, ...xClosestOthers].forEach((c) => {
-        const [id, result] = c;
-        const [y0, , , y1] = [adjustedLeft[0].y, adjustedLeft[1].y, result.line[0].y, result.line[1].y].sort(
-          (a, b) => a - b,
-        );
-        targets.push({
-          id,
-          line: [
-            { x: result.line[0].x, y: y0 },
-            { x: result.line[0].x, y: y1 },
-          ],
-        });
-      });
+      const rotation = candidate.direction === "v" ? Math.PI / 2 : 0;
+      const existing = intervalSnappingLines.linesByRotation.get(rotation) ?? [];
+      intervalSnappingLines.linesByRotation.set(rotation, [...existing, candidate.seg]);
     }
 
-    if (isHInterval) {
-      const x = (adjustedTop[0].x + adjustedTop[1].x) / 2;
-      intervalTargets.push({
-        ...intervalResult.h!.target,
-        lines: intervalResult.h!.target.lines.map<[IVec2, IVec2]>((l) => [
-          { x, y: l[0].y },
-          { x, y: l[1].y },
-        ]),
-      });
-    } else if (yClosest) {
-      [yClosest, ...yClosestOthers].forEach((c) => {
-        const [id, result] = c;
-        const [x0, , , x1] = [adjustedTop[0].x, adjustedTop[1].x, result.line[0].x, result.line[1].x].sort(
-          (a, b) => a - b,
-        );
-        targets.push({
-          id,
-          line: [
-            { x: x0, y: result.line[0].y },
-            { x: x1, y: result.line[0].y },
-          ],
-        });
-      });
+    // Unified pool: interval lines participate alongside shape/grid lines.
+    const allSnappingList: [string, ShapeSnappingLines][] =
+      intervalLineMap.size > 0
+        ? [["INTERVAL", intervalSnappingLines], ...shapeAndGridSnappingList]
+        : [...shapeAndGridSnappingList];
+
+    // Interval lines use a single specific anchor; regular lines use all anchors.
+    function getLineAnchors(line: ISegment): IVec2[] {
+      const data = intervalLineMap.get(line);
+      return data ? [data.referenceAnchor] : anchorPoints;
+    }
+
+    // --- Phase 1: find the globally closest snap line across all rotations ---
+    // On ties, prefer the line whose anchor falls within the segment's range (avoids including wrong
+    // line among adjacent overlapping segments such as two touching shape boundaries).
+    type PrimarySnap = { rotation: number; id: string; line: ISegment; d: number; ad: number; anchorInRange: boolean };
+    let primary: PrimarySnap | undefined;
+
+    for (const [id, lines] of allSnappingList) {
+      for (const [rotation, rotLines] of lines.linesByRotation) {
+        const lineDir = getLineDir(rotation);
+        for (const line of rotLines) {
+          const lineProj = getCross(lineDir, line[0]);
+          const l0p = getInner(line[0], lineDir);
+          const l1p = getInner(line[1], lineDir);
+          const minLP = Math.min(l0p, l1p);
+          const maxLP = Math.max(l0p, l1p);
+          const isInterval = intervalLineMap.has(line);
+          for (const anchor of getLineAnchors(line)) {
+            const d = lineProj - getCross(lineDir, anchor);
+            const ad = Math.abs(d);
+            if (ad >= snapThreshold) continue;
+            const pp = getInner(anchor, lineDir);
+            const anchorInRange = isInterval || (pp >= minLP - MINVALUE && pp <= maxLP + MINVALUE);
+            if (!primary || ad < primary.ad || (ad === primary.ad && anchorInRange && !primary.anchorInRange)) {
+              primary = { rotation, id, line, d, ad, anchorInRange };
+            }
+          }
+        }
+      }
+    }
+
+    if (!primary) return;
+
+    const r1 = primary.rotation;
+    const d1 = getLineDir(r1);
+    // Normal of r1 is the 90° CCW rotation of d1: (-d1.y, d1.x)
+    const v1 = { x: primary.d * -d1.y, y: primary.d * d1.x };
+    // --- Phase 2: find the best secondary snap via guide-line intersection ---
+    // For each non-parallel secondary line, draw a guide through each anchor (after v1)
+    // in direction d1, and find the closest intersection.
+    // On ties, prefer the line whose anchor (after v1) falls within the segment's range.
+    type SecondarySnap = { rotation: number; id: string; line: ISegment; t: number; anchorInRange: boolean };
+    let secondary: SecondarySnap | undefined;
+
+    for (const [id, lines] of allSnappingList) {
+      for (const [rotation, rotLines] of lines.linesByRotation) {
+        if (rotation === r1) continue;
+        const lineDir2 = getLineDir(rotation);
+        // denom = cross(lineDir2, d1) = dir(r1) · normal(r2); zero means lines are parallel
+        const denom = getCross(lineDir2, d1);
+        if (isSameValue(denom, 0)) continue;
+
+        for (const line of rotLines) {
+          const lineProj = getCross(lineDir2, line[0]);
+          const l0p2 = getInner(line[0], lineDir2);
+          const l1p2 = getInner(line[1], lineDir2);
+          const minLP2 = Math.min(l0p2, l1p2);
+          const maxLP2 = Math.max(l0p2, l1p2);
+          const isInterval = intervalLineMap.has(line);
+          for (const anchor of getLineAnchors(line)) {
+            const pPrime = add(anchor, v1);
+            const t = (lineProj - getCross(lineDir2, pPrime)) / denom;
+            const at = Math.abs(t);
+            if (at >= snapThreshold) continue;
+            const pp2 = getInner(pPrime, lineDir2);
+            const anchorInRange = isInterval || (pp2 >= minLP2 - MINVALUE && pp2 <= maxLP2 + MINVALUE);
+            if (
+              !secondary ||
+              at < Math.abs(secondary.t) ||
+              (at === Math.abs(secondary.t) && anchorInRange && !secondary.anchorInRange)
+            ) {
+              secondary = { rotation, id, line, t, anchorInRange };
+            }
+          }
+        }
+      }
+    }
+
+    const v2 = secondary ? { x: secondary.t * d1.x, y: secondary.t * d1.y } : { x: 0, y: 0 };
+    const diff = add(v1, v2);
+    if (getD2(diff) >= 2 * snapThreshold * snapThreshold) return;
+
+    // --- Phase 3: collect all lines that any snapped anchor point lands on ---
+    const snappedAnchors = anchorPoints.map((p) => add(p, diff));
+    type LandingEntry = {
+      rotation: number;
+      id: string;
+      line: ISegment;
+      intervalData: IntervalLineData | undefined;
+      outOfRange: true | undefined;
+    };
+    const landingEntries: LandingEntry[] = [];
+    const snappedRect = moveRect(rect, diff);
+    const [snappedTop, , , snappedLeft] = getRectLines(snappedRect);
+    // Primary and secondary snap lines always land on the anchor by construction (even if outside extent).
+    const snapLines = new Set<ISegment>([primary.line, ...(secondary ? [secondary.line] : [])]);
+
+    // Iterate in reverse so higher-findex shapes (added later to the list) appear first in landingEntries,
+    // which ensures seekConnecionAt picks the "top" shape when multiple shapes share a boundary.
+    for (const [id, lines] of allSnappingList.toReversed()) {
+      for (const [rotation, rotLines] of lines.linesByRotation) {
+        const lineDir = getLineDir(rotation);
+        for (const line of rotLines) {
+          const lineProj = getCross(lineDir, line[0]);
+          const isSnapLine = snapLines.has(line);
+          const isInterval = intervalLineMap.has(line);
+          const l0p = getInner(line[0], lineDir);
+          const l1p = getInner(line[1], lineDir);
+          const minLP = Math.min(l0p, l1p);
+          const maxLP = Math.max(l0p, l1p);
+          let projectionMatch = false;
+          let inRange = false;
+          for (const p of snappedAnchors) {
+            if (Math.abs(getCross(lineDir, p) - lineProj) >= MINVALUE) continue;
+            projectionMatch = true;
+            if (isSnapLine || isInterval) {
+              inRange = true;
+              break;
+            }
+            const pp = getInner(p, lineDir);
+            if (pp >= minLP - MINVALUE && pp <= maxLP + MINVALUE) {
+              inRange = true;
+              break;
+            }
+          }
+          if (!projectionMatch) continue;
+          landingEntries.push({
+            rotation,
+            id,
+            line,
+            intervalData: intervalLineMap.get(line),
+            outOfRange: inRange ? undefined : true,
+          });
+        }
+      }
+    }
+
+    // Sort landing entries by rotation descending so that vertical lines (π/2) come before horizontal (0).
+    landingEntries.sort((a, b) => b.rotation - a.rotation);
+
+    const targets: SnappingResultTarget[] = [];
+    const intervalTargets: IntervalSnappingResultTarget[] = [];
+    for (const { rotation, id, line, intervalData, outOfRange } of landingEntries) {
+      if (intervalData) {
+        if (intervalData.direction === "v") {
+          const y = (snappedLeft[0].y + snappedLeft[1].y) / 2;
+          intervalTargets.push({
+            beforeId: intervalData.rawTarget.before.id,
+            afterId: intervalData.rawTarget.after.id,
+            lines: [
+              [
+                { x: intervalData.rawTarget.before.vv[0], y },
+                { x: intervalData.rawTarget.before.vv[1], y },
+              ],
+              [
+                { x: intervalData.rawTarget.after.vv[0], y },
+                { x: intervalData.rawTarget.after.vv[1], y },
+              ],
+            ],
+            direction: "v",
+          });
+        } else {
+          const x = (snappedTop[0].x + snappedTop[1].x) / 2;
+          intervalTargets.push({
+            beforeId: intervalData.rawTarget.before.id,
+            afterId: intervalData.rawTarget.after.id,
+            lines: [
+              [
+                { x, y: intervalData.rawTarget.before.vv[0] },
+                { x, y: intervalData.rawTarget.before.vv[1] },
+              ],
+              [
+                { x, y: intervalData.rawTarget.after.vv[0] },
+                { x, y: intervalData.rawTarget.after.vv[1] },
+              ],
+            ],
+            direction: "h",
+          });
+        }
+      } else {
+        const target: SnappingResultTarget = { id, line: getSnappingTargetLine(line, snappedAnchors, rotation) };
+        if (outOfRange) target.outOfRange = true;
+        targets.push(target);
+      }
     }
 
     return { targets, intervalTargets, diff };
@@ -226,136 +290,18 @@ export function newShapeSnapping(option: Option) {
   /**
    * Proc "test" with two rectangles and merge their results.
    */
-  function testWithSubRect(
-    rectMain: IRectangle,
-    rectSub?: IRectangle,
-    option?: TestOption,
-    scale = 1,
-  ): SnappingResult | undefined {
-    const resultMain = test(rectMain, option, scale);
+  function testWithSubRect(rectMain: IRectangle, rectSub?: IRectangle, scale = 1): SnappingResult | undefined {
+    const resultMain = test(rectMain, scale);
     if (!rectSub) return resultMain;
 
-    const resultSub = test(rectSub, option, scale);
+    const resultSub = test(rectSub, scale);
     if (resultMain && resultSub) return mergetSnappingResult(resultMain, resultSub);
 
     return resultMain ?? resultSub;
   }
 
   function testPoint(p: IVec2, scale = 1): SnappingResult | undefined {
-    const snapThreshold = SNAP_THRESHOLD * scale;
-    let xClosest: [string, SnappingTmpResult] | undefined;
-    let yClosest: [string, SnappingTmpResult] | undefined;
-    shapeAndGridSnappingList.map(([id, lines]) => {
-      // x snapping
-      {
-        const vList = lines.v.map<SnappingTmpResult>((line) => {
-          return getSnappingTmpResult(line, line[0].x, [p.x]);
-        });
-        const closest = pickMinItem(
-          vList.filter((v) => v.ad < snapThreshold),
-          (v) => v.ad,
-        );
-        if (closest) {
-          if (xClosest && xClosest[1].ad === closest.ad) {
-            const ad = closest.ad;
-            const closestOverlapped = vList.find(
-              (v) => v.ad <= ad && isRangeAccommodatingValue([v.line[0].y, v.line[1].y], p.y),
-            );
-            if (closestOverlapped) {
-              xClosest = [id, closestOverlapped];
-            }
-          } else {
-            xClosest = xClosest && xClosest[1].ad <= closest.ad ? xClosest : [id, closest];
-          }
-        }
-      }
-
-      // y snapping
-      {
-        const hList = lines.h.map<SnappingTmpResult>((line) => {
-          return getSnappingTmpResult(line, line[0].y, [p.y]);
-        });
-        const closest = pickMinItem(
-          hList.filter((v) => v.ad < snapThreshold),
-          (v) => v.ad,
-        );
-        if (closest) {
-          if (yClosest && yClosest[1].ad === closest.ad) {
-            const ad = closest.ad;
-            const closestOverlapped = hList.find(
-              (h) => h.ad <= ad && isRangeAccommodatingValue([h.line[0].x, h.line[1].x], p.x),
-            );
-            if (closestOverlapped) {
-              yClosest = [id, closestOverlapped];
-            }
-          } else {
-            yClosest = yClosest && yClosest[1].ad <= closest.ad ? yClosest : [id, closest];
-          }
-        }
-      }
-    });
-
-    const intervalResult = shapeIntervalSnapping.test({ x: p.x, y: p.y, width: 0, height: 0 }, scale);
-
-    if (!xClosest && !yClosest && !intervalResult) return;
-
-    const isVInterval =
-      (xClosest && intervalResult?.v && intervalResult.v.ad < xClosest[1].ad) || (!xClosest && intervalResult?.v);
-    const isHInterval =
-      (yClosest && intervalResult?.h && intervalResult.h.ad < yClosest[1].ad) || (!yClosest && intervalResult?.h);
-    const dx = isVInterval ? intervalResult.v!.d : (xClosest?.[1].d ?? 0);
-    const dy = isHInterval ? intervalResult.h!.d : (yClosest?.[1].d ?? 0);
-
-    const diff = { x: dx, y: dy };
-    if (!isWithinRectThreshold(diff, snapThreshold)) return;
-
-    const adjustedP = add(p, diff);
-    const targets: SnappingResultTarget[] = [];
-    const intervalTargets: IntervalSnappingResultTarget[] = [];
-
-    if (isVInterval) {
-      const y = (adjustedP.y + adjustedP.y) / 2;
-      intervalTargets.push({
-        ...intervalResult.v!.target,
-        lines: intervalResult.v!.target.lines.map<[IVec2, IVec2]>((l) => [
-          { x: l[0].x, y },
-          { x: l[1].x, y },
-        ]),
-      });
-    } else if (xClosest) {
-      const [id, result] = xClosest;
-      const [y0, , y1] = [adjustedP.y, result.line[0].y, result.line[1].y].sort((a, b) => a - b);
-      targets.push({
-        id,
-        line: [
-          { x: result.line[0].x, y: y0 },
-          { x: result.line[0].x, y: y1 },
-        ],
-      });
-    }
-
-    if (isHInterval) {
-      const x = (adjustedP.x + adjustedP.x) / 2;
-      intervalTargets.push({
-        ...intervalResult.h!.target,
-        lines: intervalResult.h!.target.lines.map<[IVec2, IVec2]>((l) => [
-          { x, y: l[0].y },
-          { x, y: l[1].y },
-        ]),
-      });
-    } else if (yClosest) {
-      const [id, result] = yClosest;
-      const [x0, , x1] = [adjustedP.x, result.line[0].x, result.line[1].x].sort((a, b) => a - b);
-      targets.push({
-        id,
-        line: [
-          { x: x0, y: result.line[0].y },
-          { x: x1, y: result.line[0].y },
-        ],
-      });
-    }
-
-    return { targets, intervalTargets, diff };
+    return test({ x: p.x, y: p.y, width: 0, height: 0 }, scale);
   }
 
   function testPointOnLine(p: IVec2, guideline: ISegment, scale = 1): SnappingResult | undefined {
@@ -502,15 +448,46 @@ export function renderSnappingResult(
   });
 }
 
-function getSnappingTmpResult(line: [IVec2, IVec2], target: number, clients: number[]): SnappingTmpResult {
-  return pickMinItem(
-    clients.map((v) => {
-      const d = target - v;
-      const ad = Math.abs(d);
-      return { d, ad, line };
-    }),
-    (v) => v.ad,
-  )!;
+/**
+ * Returns the unit direction vector along a line at the given rotation.
+ * Uses exact values for the standard angles 0 and Math.PI / 2 to avoid floating-point drift.
+ */
+function getLineDir(rotation: number): IVec2 {
+  if (rotation === 0) return { x: 1, y: 0 };
+  if (rotation === Math.PI / 2) return { x: 0, y: 1 };
+  return { x: Math.cos(rotation), y: Math.sin(rotation) };
+}
+
+function getRectAnchorPoints(rect: IRectangle): IVec2[] {
+  const cx = rect.x + rect.width / 2;
+  const cy = rect.y + rect.height / 2;
+  const right = rect.x + rect.width;
+  const bottom = rect.y + rect.height;
+  return [
+    { x: rect.x, y: rect.y },
+    { x: right, y: rect.y },
+    { x: rect.x, y: bottom },
+    { x: right, y: bottom },
+    { x: cx, y: cy },
+  ];
+}
+
+/**
+ * Build a guide line segment along the given rotation direction,
+ * spanning both the snap line and the anchor points.
+ */
+function getSnappingTargetLine(snapLine: ISegment, anchorPoints: IVec2[], rotation: number): ISegment {
+  const lineDir = getLineDir(rotation);
+  const origin = snapLine[0];
+  const projections = [...anchorPoints, snapLine[0], snapLine[1]].map((p) =>
+    getInner({ x: p.x - origin.x, y: p.y - origin.y }, lineDir),
+  );
+  const minP = Math.min(...projections);
+  const maxP = Math.max(...projections);
+  return [
+    { x: origin.x + minP * lineDir.x, y: origin.y + minP * lineDir.y },
+    { x: origin.x + maxP * lineDir.x, y: origin.y + maxP * lineDir.y },
+  ];
 }
 
 interface IntervalSnappingInfo {
@@ -661,7 +638,82 @@ export function newShapeIntervalSnapping(option: ShapeIntervalSnappingOption) {
     return ret.v || ret.h ? ret : undefined;
   }
 
-  return { test };
+  function getCandidates(rect: IRectangle): {
+    seg: ISegment;
+    rawTarget: IntervalSnappingTarget;
+    direction: "v" | "h";
+    referenceAnchor: IVec2;
+  }[] {
+    const [rectTop, , rectBottom, rectLeft] = getRectLines(rect);
+    const rectW = rect.width;
+    const rectH = rect.height;
+    const results: {
+      seg: ISegment;
+      rawTarget: IntervalSnappingTarget;
+      direction: "v" | "h";
+      referenceAnchor: IVec2;
+    }[] = [];
+
+    info.v.targets.forEach((target) => {
+      const refX = target.for === 0 ? rectLeft[0].x : rectLeft[0].x + rectW;
+      results.push({
+        seg: [
+          { x: target.v, y: 0 },
+          { x: target.v, y: 1 },
+        ],
+        rawTarget: target,
+        direction: "v",
+        referenceAnchor: { x: refX, y: rectLeft[0].y },
+      });
+    });
+
+    info.v.targetFns
+      .map((fn) => fn(rectW))
+      .forEach((target) => {
+        if (!target) return;
+        results.push({
+          seg: [
+            { x: target.v, y: 0 },
+            { x: target.v, y: 1 },
+          ],
+          rawTarget: target,
+          direction: "v",
+          referenceAnchor: { x: rectLeft[0].x, y: rectLeft[0].y },
+        });
+      });
+
+    info.h.targets.forEach((target) => {
+      const refY = target.for === 0 ? rectTop[0].y : rectBottom[0].y;
+      results.push({
+        seg: [
+          { x: 0, y: target.v },
+          { x: 1, y: target.v },
+        ],
+        rawTarget: target,
+        direction: "h",
+        referenceAnchor: { x: rectTop[0].x, y: refY },
+      });
+    });
+
+    info.h.targetFns
+      .map((fn) => fn(rectH))
+      .forEach((target) => {
+        if (!target) return;
+        results.push({
+          seg: [
+            { x: 0, y: target.v },
+            { x: 1, y: target.v },
+          ],
+          rawTarget: target,
+          direction: "h",
+          referenceAnchor: { x: rectTop[0].x, y: rectTop[0].y },
+        });
+      });
+
+    return results;
+  }
+
+  return { test, getCandidates };
 }
 export type ShapeIntervalSnapping = ReturnType<typeof newShapeIntervalSnapping>;
 
@@ -677,27 +729,29 @@ function getIntervalSnappingInfo(
 
   for (let i = 0; i < shapeSnappingList.length; i++) {
     const s0 = shapeSnappingList[i];
-    if (s0[1].v.length === 0) continue;
-    if (withinRange && s0[1].h.length === 0) continue;
+    const s0v = s0[1].linesByRotation.get(Math.PI / 2) ?? [];
+    const s0h = s0[1].linesByRotation.get(0) ?? [];
+    if (s0v.length === 0) continue;
+    if (withinRange && s0h.length === 0) continue;
 
-    const l0 = s0[1].v[0];
-    const r0 = s0[1].v[s0[1].v.length - 1];
-    const vRange: [number, number] | undefined = withinRange
-      ? [s0[1].h[0][0].y, s0[1].h[s0[1].h.length - 1][0].y]
-      : undefined;
+    const l0 = s0v[0];
+    const r0 = s0v[s0v.length - 1];
+    const vRange: [number, number] | undefined = withinRange ? [s0h[0][0].y, s0h[s0h.length - 1][0].y] : undefined;
 
     for (let j = 0; j < shapeSnappingList.length; j++) {
       if (i === j) continue;
 
       const s1 = shapeSnappingList[j];
-      if (s1[1].v.length === 0) continue;
+      const s1v = s1[1].linesByRotation.get(Math.PI / 2) ?? [];
+      const s1h = s1[1].linesByRotation.get(0) ?? [];
+      if (s1v.length === 0) continue;
       if (vRange) {
-        if (s1[1].h.length === 0) continue;
-        if (!isRangeOverlapped(vRange, [s1[1].h[0][0].y, s1[1].h[s1[1].h.length - 1][0].y])) continue;
+        if (s1h.length === 0) continue;
+        if (!isRangeOverlapped(vRange, [s1h[0][0].y, s1h[s1h.length - 1][0].y])) continue;
       }
 
-      const l1 = s1[1].v[0];
-      const r1 = s1[1].v[s1[1].v.length - 1];
+      const l1 = s1v[0];
+      const r1 = s1v[s1v.length - 1];
 
       if (r0[0].x < l1[0].x) {
         const d = l1[0].x - r0[0].x;
@@ -744,27 +798,29 @@ function getIntervalSnappingInfo(
 
   for (let i = 0; i < shapeSnappingList.length; i++) {
     const s0 = shapeSnappingList[i];
-    if (s0[1].h.length === 0) continue;
-    if (withinRange && s0[1].v.length === 0) continue;
+    const s0v = s0[1].linesByRotation.get(Math.PI / 2) ?? [];
+    const s0h = s0[1].linesByRotation.get(0) ?? [];
+    if (s0h.length === 0) continue;
+    if (withinRange && s0v.length === 0) continue;
 
-    const t0 = s0[1].h[0];
-    const b0 = s0[1].h[s0[1].h.length - 1];
-    const hRange: [number, number] | undefined = withinRange
-      ? [s0[1].v[0][0].x, s0[1].v[s0[1].v.length - 1][0].x]
-      : undefined;
+    const t0 = s0h[0];
+    const b0 = s0h[s0h.length - 1];
+    const hRange: [number, number] | undefined = withinRange ? [s0v[0][0].x, s0v[s0v.length - 1][0].x] : undefined;
 
     for (let j = 0; j < shapeSnappingList.length; j++) {
       if (i === j) continue;
 
       const s1 = shapeSnappingList[j];
-      if (s1[1].h.length === 0) continue;
+      const s1v = s1[1].linesByRotation.get(Math.PI / 2) ?? [];
+      const s1h = s1[1].linesByRotation.get(0) ?? [];
+      if (s1h.length === 0) continue;
       if (hRange) {
-        if (s1[1].v.length === 0) continue;
-        if (!isRangeOverlapped(hRange, [s1[1].v[0][0].x, s1[1].v[s1[1].v.length - 1][0].x])) continue;
+        if (s1v.length === 0) continue;
+        if (!isRangeOverlapped(hRange, [s1v[0][0].x, s1v[s1v.length - 1][0].x])) continue;
       }
 
-      const t1 = s1[1].h[0];
-      const b1 = s1[1].h[s1[1].h.length - 1];
+      const t1 = s1h[0];
+      const b1 = s1h[s1h.length - 1];
 
       if (b0[0].y < t1[0].y) {
         const d = t1[0].y - b0[0].y;
@@ -968,7 +1024,9 @@ export function getSecondGuidelineCandidateInfo(
 }
 
 export function getGuidelinesFromSnappingResult(snappingResult: SnappingTargetInfo, filterAt?: IVec2): ISegment[] {
-  const allCandidates: ISegment[] = snappingResult.targets.map((t) => t.line);
+  // Exclude out-of-range targets: they are snapped onto the infinite extension of a line but outside its
+  // segment extent. They are shown for visual reference only, not used for guideline intersection logic.
+  const allCandidates: ISegment[] = snappingResult.targets.filter((t) => !t.outOfRange).map((t) => t.line);
   snappingResult.intervalTargets.forEach((t) =>
     t.lines.forEach((l) => {
       const v = rotate(sub(l[1], l[0]), Math.PI / 2);

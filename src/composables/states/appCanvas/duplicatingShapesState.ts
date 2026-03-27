@@ -75,7 +75,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
           );
           snappingResult = event.data.ctrl
             ? undefined
-            : shapeSnapping.test(moveRect(movingRect, d), undefined, ctx.getScale());
+            : shapeSnapping.test(moveRect(movingRect, d), ctx.getScale());
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
           const affine: AffineMatrix = [1, 0, 0, 1, translate.x, translate.y];
           const tmpShapeMap: { [id: string]: Partial<Shape> } = {};

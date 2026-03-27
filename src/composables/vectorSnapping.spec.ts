@@ -15,18 +15,26 @@ describe("newVectorSnapping", () => {
   const shapeB = { ...shapeA, p: { x: 200, y: 0 } };
   const shapeComposite = newShapeComposite({ shapes: [shapeA, shapeB], getStruct: getCommonStruct });
   const gridSnapping: ShapeSnappingLines = {
-    h: [
+    linesByRotation: new Map([
       [
-        { x: -200, y: 0 },
-        { x: 200, y: 0 },
+        0,
+        [
+          [
+            { x: -200, y: 0 },
+            { x: 200, y: 0 },
+          ],
+        ],
       ],
-    ],
-    v: [
       [
-        { x: 20, y: -200 },
-        { x: 20, y: 200 },
+        Math.PI / 2,
+        [
+          [
+            { x: 20, y: -200 },
+            { x: 20, y: 200 },
+          ],
+        ],
       ],
-    ],
+    ]),
   };
 
   describe("hitTest", () => {
@@ -64,7 +72,7 @@ describe("newVectorSnapping", () => {
         v: { x: -1, y: -1 },
         snapped: "grid",
         guidLines: [
-          gridSnapping.h[0],
+          gridSnapping.linesByRotation.get(0)![0],
           [
             { x: 20, y: -50 },
             { x: 20, y: 0 },
@@ -122,18 +130,26 @@ describe("newVectorsSnapping", () => {
   const shapeB = { ...shapeA, p: { x: 200, y: 0 } };
   const shapeComposite = newShapeComposite({ shapes: [shapeA, shapeB], getStruct: getCommonStruct });
   const gridSnapping: ShapeSnappingLines = {
-    h: [
+    linesByRotation: new Map([
       [
-        { x: -200, y: 0 },
-        { x: 200, y: 0 },
+        0,
+        [
+          [
+            { x: -200, y: 0 },
+            { x: 200, y: 0 },
+          ],
+        ],
       ],
-    ],
-    v: [
       [
-        { x: 20, y: -200 },
-        { x: 20, y: 200 },
+        Math.PI / 2,
+        [
+          [
+            { x: 20, y: -200 },
+            { x: 20, y: 200 },
+          ],
+        ],
       ],
-    ],
+    ]),
   };
 
   describe("hitTest", () => {

@@ -384,18 +384,26 @@ export const struct: ShapeStruct<LineShape> = {
     const path = getLinePath(shape);
     const v = 0.5;
     return {
-      h: path
-        .toSorted((a, b) => a.y - b.y)
-        .map((p) => [
-          { x: p.x - v, y: p.y },
-          { x: p.x + v, y: p.y },
-        ]),
-      v: path
-        .toSorted((a, b) => a.x - b.x)
-        .map((p) => [
-          { x: p.x, y: p.y - v },
-          { x: p.x, y: p.y + v },
-        ]),
+      linesByRotation: new Map([
+        [
+          0,
+          path
+            .toSorted((a, b) => a.y - b.y)
+            .map((p) => [
+              { x: p.x - v, y: p.y },
+              { x: p.x + v, y: p.y },
+            ]),
+        ],
+        [
+          Math.PI / 2,
+          path
+            .toSorted((a, b) => a.x - b.x)
+            .map((p) => [
+              { x: p.x, y: p.y - v },
+              { x: p.x, y: p.y + v },
+            ]),
+        ],
+      ]),
     };
   },
   getClosestOutline(shape, p, threshold) {

@@ -391,34 +391,42 @@ describe("struct", () => {
         body: [{ p: { x: 2, y: 3 } }],
       });
       expect(struct.getSnappingLines?.(shape)).toEqual({
-        h: [
+        linesByRotation: new Map([
           [
-            { x: shape.p.x - 0.5, y: shape.p.y },
-            { x: shape.p.x + 0.5, y: shape.p.y },
+            0,
+            [
+              [
+                { x: shape.p.x - 0.5, y: shape.p.y },
+                { x: shape.p.x + 0.5, y: shape.p.y },
+              ],
+              [
+                { x: shape.body![0].p.x - 0.5, y: shape.body![0].p.y },
+                { x: shape.body![0].p.x + 0.5, y: shape.body![0].p.y },
+              ],
+              [
+                { x: shape.q.x - 0.5, y: shape.q.y },
+                { x: shape.q.x + 0.5, y: shape.q.y },
+              ],
+            ],
           ],
           [
-            { x: shape.body![0].p.x - 0.5, y: shape.body![0].p.y },
-            { x: shape.body![0].p.x + 0.5, y: shape.body![0].p.y },
+            Math.PI / 2,
+            [
+              [
+                { x: shape.p.x, y: shape.p.y - 0.5 },
+                { x: shape.p.x, y: shape.p.y + 0.5 },
+              ],
+              [
+                { x: shape.body![0].p.x, y: shape.body![0].p.y - 0.5 },
+                { x: shape.body![0].p.x, y: shape.body![0].p.y + 0.5 },
+              ],
+              [
+                { x: shape.q.x, y: shape.q.y - 0.5 },
+                { x: shape.q.x, y: shape.q.y + 0.5 },
+              ],
+            ],
           ],
-          [
-            { x: shape.q.x - 0.5, y: shape.q.y },
-            { x: shape.q.x + 0.5, y: shape.q.y },
-          ],
-        ],
-        v: [
-          [
-            { x: shape.p.x, y: shape.p.y - 0.5 },
-            { x: shape.p.x, y: shape.p.y + 0.5 },
-          ],
-          [
-            { x: shape.body![0].p.x, y: shape.body![0].p.y - 0.5 },
-            { x: shape.body![0].p.x, y: shape.body![0].p.y + 0.5 },
-          ],
-          [
-            { x: shape.q.x, y: shape.q.y - 0.5 },
-            { x: shape.q.x, y: shape.q.y + 0.5 },
-          ],
-        ],
+        ]),
       });
     });
     test("should return sort lines", () => {
@@ -428,34 +436,42 @@ describe("struct", () => {
         body: [{ p: { x: 2, y: 3 } }],
       });
       expect(struct.getSnappingLines?.(shape)).toEqual({
-        h: [
+        linesByRotation: new Map([
           [
-            { x: shape.q.x - 0.5, y: shape.q.y },
-            { x: shape.q.x + 0.5, y: shape.q.y },
+            0,
+            [
+              [
+                { x: shape.q.x - 0.5, y: shape.q.y },
+                { x: shape.q.x + 0.5, y: shape.q.y },
+              ],
+              [
+                { x: shape.body![0].p.x - 0.5, y: shape.body![0].p.y },
+                { x: shape.body![0].p.x + 0.5, y: shape.body![0].p.y },
+              ],
+              [
+                { x: shape.p.x - 0.5, y: shape.p.y },
+                { x: shape.p.x + 0.5, y: shape.p.y },
+              ],
+            ],
           ],
           [
-            { x: shape.body![0].p.x - 0.5, y: shape.body![0].p.y },
-            { x: shape.body![0].p.x + 0.5, y: shape.body![0].p.y },
+            Math.PI / 2,
+            [
+              [
+                { x: shape.q.x, y: shape.q.y - 0.5 },
+                { x: shape.q.x, y: shape.q.y + 0.5 },
+              ],
+              [
+                { x: shape.body![0].p.x, y: shape.body![0].p.y - 0.5 },
+                { x: shape.body![0].p.x, y: shape.body![0].p.y + 0.5 },
+              ],
+              [
+                { x: shape.p.x, y: shape.p.y - 0.5 },
+                { x: shape.p.x, y: shape.p.y + 0.5 },
+              ],
+            ],
           ],
-          [
-            { x: shape.p.x - 0.5, y: shape.p.y },
-            { x: shape.p.x + 0.5, y: shape.p.y },
-          ],
-        ],
-        v: [
-          [
-            { x: shape.q.x, y: shape.q.y - 0.5 },
-            { x: shape.q.x, y: shape.q.y + 0.5 },
-          ],
-          [
-            { x: shape.body![0].p.x, y: shape.body![0].p.y - 0.5 },
-            { x: shape.body![0].p.x, y: shape.body![0].p.y + 0.5 },
-          ],
-          [
-            { x: shape.p.x, y: shape.p.y - 0.5 },
-            { x: shape.p.x, y: shape.p.y + 0.5 },
-          ],
-        ],
+        ]),
       });
     });
   });

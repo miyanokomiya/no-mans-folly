@@ -208,8 +208,10 @@ export function getSnappingLines(
   const [t, r, b, l] = geometry.getRectLines(rect);
   const [cv, ch] = geometry.getRectCenterLines(rect);
   return {
-    v: [l, cv, r],
-    h: [t, ch, b],
+    linesByRotation: new Map([
+      [Math.PI / 2, [l, cv, r]],
+      [0, [t, ch, b]],
+    ]),
   };
 }
 

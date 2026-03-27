@@ -107,7 +107,7 @@ export const struct: ShapeStruct<GroupShape> = {
     return ret;
   },
   getSnappingLines() {
-    return { v: [], h: [] };
+    return { linesByRotation: new Map() };
   },
   getActualPosition(shape, shapeContext) {
     const rectPath = struct.getLocalRectPolygon(shape, shapeContext);

@@ -157,7 +157,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
 
             const scale = ctx.getScale();
             const movingRect = moveRect(movingRectAtStart, sub(lineAnchor, anchorPointAtStart));
-            const shapeSnappingResult = snappingCache.getValue(ctx).test(movingRect, undefined, scale);
+            const shapeSnappingResult = snappingCache.getValue(ctx).test(movingRect, scale);
             snappingResult = undefined;
             if (!event.data.ctrl && shapeSnappingResult) {
               const result = snapRectWithLineAttachment({

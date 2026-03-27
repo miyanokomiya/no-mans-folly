@@ -159,12 +159,12 @@ export interface ShapeStruct<T extends Shape> {
 }
 
 /**
- * Each direction list must be aligned top-bottom or left-right order.
+ * Each list must be ordered along the rotation's axis direction.
  * => Interval snapping depends on this order.
+ * key: rotation of the line normalized within [0, Math.PI / 2]
  */
 export interface ShapeSnappingLines {
-  v: [IVec2, IVec2][];
-  h: [IVec2, IVec2][];
+  linesByRotation: Map<number, ISegment[]>;
 }
 
 export function createBaseShape(arg: Partial<Shape> = {}): Shape {

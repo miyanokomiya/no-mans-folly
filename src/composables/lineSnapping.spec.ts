@@ -170,6 +170,14 @@ describe("newLineSnapping", () => {
                 { x: 250, y: 50 },
               ],
             },
+            {
+              id: "a",
+              line: [
+                { x: 0, y: 50 },
+                { x: 200, y: 50 },
+              ],
+              outOfRange: true,
+            },
           ],
         },
       });
@@ -327,18 +335,26 @@ describe("newLineSnapping", () => {
           [
             "z",
             {
-              h: [
+              linesByRotation: new Map([
                 [
-                  { x: -500, y: 30 },
-                  { x: 500, y: 30 },
+                  0,
+                  [
+                    [
+                      { x: -500, y: 30 },
+                      { x: 500, y: 30 },
+                    ],
+                  ],
                 ],
-              ],
-              v: [
                 [
-                  { x: 230, y: -500 },
-                  { x: 230, y: 500 },
+                  Math.PI / 2,
+                  [
+                    [
+                      { x: 230, y: -500 },
+                      { x: 230, y: 500 },
+                    ],
+                  ],
                 ],
-              ],
+              ]),
             },
           ],
         ],
@@ -435,13 +451,18 @@ describe("newLineSnapping", () => {
           [
             "line",
             {
-              h: [],
-              v: [
+              linesByRotation: new Map([
+                [0, []],
                 [
-                  { x: 20, y: -50 },
-                  { x: 20, y: 50 },
+                  Math.PI / 2,
+                  [
+                    [
+                      { x: 20, y: -50 },
+                      { x: 20, y: 50 },
+                    ],
+                  ],
                 ],
-              ],
+              ]),
             },
           ],
         ],
@@ -492,13 +513,18 @@ describe("newLineSnapping", () => {
           [
             "a",
             {
-              h: [
+              linesByRotation: new Map([
                 [
-                  { x: 0, y: 0 },
-                  { x: 100, y: 0 },
+                  0,
+                  [
+                    [
+                      { x: 0, y: 0 },
+                      { x: 100, y: 0 },
+                    ],
+                  ],
                 ],
-              ],
-              v: [],
+                [Math.PI / 2, []],
+              ]),
             },
           ],
         ],
@@ -549,25 +575,35 @@ describe("newLineSnapping", () => {
           [
             "a",
             {
-              h: [
+              linesByRotation: new Map([
                 [
-                  { x: 0, y: 0 },
-                  { x: 100, y: 0 },
+                  0,
+                  [
+                    [
+                      { x: 0, y: 0 },
+                      { x: 100, y: 0 },
+                    ],
+                  ],
                 ],
-              ],
-              v: [],
+                [Math.PI / 2, []],
+              ]),
             },
           ],
           [
             "line",
             {
-              h: [],
-              v: [
+              linesByRotation: new Map([
+                [0, []],
                 [
-                  { x: 20, y: -50 },
-                  { x: 20, y: 50 },
+                  Math.PI / 2,
+                  [
+                    [
+                      { x: 20, y: -50 },
+                      { x: 20, y: 50 },
+                    ],
+                  ],
                 ],
-              ],
+              ]),
             },
           ],
         ],
@@ -643,18 +679,26 @@ describe("newLineSnapping", () => {
           [
             rect.id,
             {
-              h: [
+              linesByRotation: new Map([
                 [
-                  { x: -50, y: 0 },
-                  { x: 50, y: 0 },
+                  0,
+                  [
+                    [
+                      { x: -50, y: 0 },
+                      { x: 50, y: 0 },
+                    ],
+                  ],
                 ],
-              ],
-              v: [
                 [
-                  { x: 0, y: -50 },
-                  { x: 0, y: 50 },
+                  Math.PI / 2,
+                  [
+                    [
+                      { x: 0, y: -50 },
+                      { x: 0, y: 50 },
+                    ],
+                  ],
                 ],
-              ],
+              ]),
             },
           ],
         ],
@@ -732,18 +776,26 @@ describe("newLineSnapping", () => {
       const shapeSnapping = newShapeSnapping({
         shapeSnappingList: [],
         gridSnapping: {
-          h: [
+          linesByRotation: new Map([
             [
-              { x: -500, y: 30 },
-              { x: 500, y: 30 },
+              0,
+              [
+                [
+                  { x: -500, y: 30 },
+                  { x: 500, y: 30 },
+                ],
+              ],
             ],
-          ],
-          v: [
             [
-              { x: 230, y: -500 },
-              { x: 230, y: 500 },
+              Math.PI / 2,
+              [
+                [
+                  { x: 230, y: -500 },
+                  { x: 230, y: 500 },
+                ],
+              ],
             ],
-          ],
+          ]),
         },
       });
       const target = newLineSnapping({
@@ -827,18 +879,26 @@ describe("newLineSnapping", () => {
       const shapeSnapping = newShapeSnapping({
         shapeSnappingList: [],
         gridSnapping: {
-          h: [
+          linesByRotation: new Map([
             [
-              { x: -100, y: 50 },
-              { x: 100, y: 50 },
+              0,
+              [
+                [
+                  { x: -100, y: 50 },
+                  { x: 100, y: 50 },
+                ],
+              ],
             ],
-          ],
-          v: [
             [
-              { x: 30, y: -100 },
-              { x: 30, y: 100 },
+              Math.PI / 2,
+              [
+                [
+                  { x: 30, y: -100 },
+                  { x: 30, y: 100 },
+                ],
+              ],
             ],
-          ],
+          ]),
         },
       });
       const target = newLineSnapping({
@@ -1054,21 +1114,26 @@ describe("newLineSnapping", () => {
       const shapeSnapping = newShapeSnapping({
         shapeSnappingList: snappableShapes.map((s) => [s.id, sc.getSnappingLines(s)]),
         gridSnapping: {
-          h: [],
-          v: [
+          linesByRotation: new Map([
+            [0, []],
             [
-              { x: 80, y: -100 },
-              { x: 80, y: 100 },
+              Math.PI / 2,
+              [
+                [
+                  { x: 80, y: -100 },
+                  { x: 80, y: 100 },
+                ],
+                [
+                  { x: 120, y: -100 },
+                  { x: 120, y: 100 },
+                ],
+                [
+                  { x: 170, y: -100 },
+                  { x: 170, y: 100 },
+                ],
+              ],
             ],
-            [
-              { x: 120, y: -100 },
-              { x: 120, y: 100 },
-            ],
-            [
-              { x: 170, y: -100 },
-              { x: 170, y: 100 },
-            ],
-          ],
+          ]),
         },
       });
 
@@ -1093,6 +1158,14 @@ describe("newLineSnapping", () => {
                 { x: 80, y: -100 },
                 { x: 80, y: 100 },
               ],
+            },
+            {
+              id: "b",
+              line: [
+                { x: 80, y: 0 },
+                { x: 250, y: 0 },
+              ],
+              outOfRange: true,
             },
             {
               id: "a",
@@ -1126,6 +1199,14 @@ describe("newLineSnapping", () => {
               ],
             },
             {
+              id: "b",
+              line: [
+                { x: 120, y: 0 },
+                { x: 250, y: 0 },
+              ],
+              outOfRange: true,
+            },
+            {
               id: "a",
               line: [
                 { x: 0, y: 0 },
@@ -1157,6 +1238,14 @@ describe("newLineSnapping", () => {
                 { x: 150, y: 0 },
                 { x: 250, y: 0 },
               ],
+            },
+            {
+              id: "a",
+              line: [
+                { x: 0, y: 0 },
+                { x: 170, y: 0 },
+              ],
+              outOfRange: true,
             },
           ],
         },
