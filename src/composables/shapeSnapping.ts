@@ -14,7 +14,15 @@ import {
   rotate,
   sub,
 } from "okageo";
-import { getCrossLineAndLine, getD2, getRectLines, ISegment, isRangeOverlapped, isSameValue } from "../utils/geometry";
+import {
+  getCrossLineAndLine,
+  getD2,
+  getRectLines,
+  ISegment,
+  isRangeOverlapped,
+  isSameValue,
+  isWithinRange,
+} from "../utils/geometry";
 import { applyStrokeStyle } from "../utils/strokeStyle";
 import { StyleScheme, UserSetting } from "../models";
 import { ShapeSnappingLines } from "../shapes/core";
@@ -120,7 +128,7 @@ export function newShapeSnapping(option: Option) {
             const ad = Math.abs(d);
             if (ad >= snapThreshold) continue;
             const pp = getInner(anchor, lineDir);
-            const anchorInRange = isInterval || (pp >= minLP - MINVALUE && pp <= maxLP + MINVALUE);
+            const anchorInRange = isInterval || isWithinRange(minLP, maxLP, pp, MINVALUE);
             if (!primary || ad < primary.ad || (ad === primary.ad && anchorInRange && !primary.anchorInRange)) {
               primary = { rotation, id, line, d, ad, anchorInRange };
             }
@@ -163,7 +171,7 @@ export function newShapeSnapping(option: Option) {
             const at = Math.abs(t);
             if (at >= snapThreshold) continue;
             const pp2 = getInner(pPrime, lineDir2);
-            const anchorInRange = isInterval || (pp2 >= minLP2 - MINVALUE && pp2 <= maxLP2 + MINVALUE);
+            const anchorInRange = isInterval || isWithinRange(minLP2, maxLP2, pp2, MINVALUE);
             if (
               !secondary ||
               at < Math.abs(secondary.t) ||
@@ -218,7 +226,7 @@ export function newShapeSnapping(option: Option) {
               break;
             }
             const pp = getInner(p, lineDir);
-            if (pp >= minLP - MINVALUE && pp <= maxLP + MINVALUE) {
+            if (isWithinRange(minLP, maxLP, pp, MINVALUE)) {
               inRange = true;
               break;
             }

@@ -102,6 +102,7 @@ import {
   isMergeAreaOverlapping,
   groupCellsIntoRectangles,
   splitIntoRangeGroups,
+  isWithinRange,
 } from "./geometry";
 import { IRectangle, IVec2, applyAffine, getDistance, getPedal, rotate } from "okageo";
 
@@ -2527,5 +2528,28 @@ describe("splitIntoRangeGroups", () => {
         ["4", 4],
       ],
     ]);
+  });
+});
+
+describe("isWithinRange", () => {
+  test("should return true when value is within [from, to]", () => {
+    expect(isWithinRange(0, 10, 5)).toBe(true);
+    expect(isWithinRange(0, 10, 0)).toBe(true);
+    expect(isWithinRange(0, 10, 10)).toBe(true);
+  });
+
+  test("should return false when value is outside [from, to]", () => {
+    expect(isWithinRange(0, 10, -1)).toBe(false);
+    expect(isWithinRange(0, 10, 11)).toBe(false);
+  });
+
+  test("should allow error within threshold", () => {
+    expect(isWithinRange(0, 10, -0.5, 1)).toBe(true);
+    expect(isWithinRange(0, 10, 10.5, 1)).toBe(true);
+  });
+
+  test("should reject error beyond threshold", () => {
+    expect(isWithinRange(0, 10, -1.5, 1)).toBe(false);
+    expect(isWithinRange(0, 10, 11.5, 1)).toBe(false);
   });
 });

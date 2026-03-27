@@ -59,6 +59,10 @@ export function getD2(v: IVec2): number {
   return v.x * v.x + v.y * v.y;
 }
 
+export function isWithinRange(from: number, to: number, value: number, threshold = 0): boolean {
+  return from - threshold <= value && value <= to + threshold;
+}
+
 export function isSameSize(a: Size, b: Size): boolean {
   return Math.abs(a.width - b.width) < MINVALUE && Math.abs(a.height - b.height) < MINVALUE;
 }
