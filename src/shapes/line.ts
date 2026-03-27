@@ -25,6 +25,8 @@ import {
   isPointCloseToCurveSpline,
   getRotatedAtAffine,
   getPointLerpSlope,
+  isSameValue,
+  normalizeLineRotation,
   sortPointFrom,
 } from "../utils/geometry";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
@@ -383,28 +385,42 @@ export const struct: ShapeStruct<LineShape> = {
   getSnappingLines(shape) {
     const path = getLinePath(shape);
     const v = 0.5;
-    return {
-      linesByRotation: new Map([
-        [
-          0,
-          path
-            .toSorted((a, b) => a.y - b.y)
-            .map((p) => [
-              { x: p.x - v, y: p.y },
-              { x: p.x + v, y: p.y },
-            ]),
-        ],
-        [
-          Math.PI / 2,
-          path
-            .toSorted((a, b) => a.x - b.x)
-            .map((p) => [
-              { x: p.x, y: p.y - v },
-              { x: p.x, y: p.y + v },
-            ]),
-        ],
-      ]),
-    };
+    const linesByRotation = new Map<number, ISegment[]>([
+      [
+        0,
+        path
+          .toSorted((a, b) => a.y - b.y)
+          .map((p) => [
+            { x: p.x - v, y: p.y },
+            { x: p.x + v, y: p.y },
+          ]),
+      ],
+      [
+        Math.PI / 2,
+        path
+          .toSorted((a, b) => a.x - b.x)
+          .map((p) => [
+            { x: p.x, y: p.y - v },
+            { x: p.x, y: p.y + v },
+          ]),
+      ],
+    ]);
+
+    getEdges(shape).forEach((edge, i) => {
+      if (shape.curves?.[i]) return;
+
+      const angle = normalizeLineRotation(getRadian(edge[1], edge[0]));
+      if (isSameValue(angle, 0) || isSameValue(angle, Math.PI / 2)) return;
+
+      const existing = linesByRotation.get(angle);
+      if (existing) {
+        existing.push(edge);
+      } else {
+        linesByRotation.set(angle, [edge]);
+      }
+    });
+
+    return { linesByRotation };
   },
   getClosestOutline(shape, p, threshold) {
     const edges = getEdges(shape);

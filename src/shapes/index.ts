@@ -207,12 +207,30 @@ export function getSnappingLines(
   const rect = struct.getWrapperRect(shape, shapeContext);
   const [t, r, b, l] = geometry.getRectLines(rect);
   const [cv, ch] = geometry.getRectCenterLines(rect);
-  return {
-    linesByRotation: new Map([
-      [Math.PI / 2, [l, cv, r]],
-      [0, [t, ch, b]],
-    ]),
-  };
+  const linesByRotation = new Map<number, geometry.ISegment[]>([
+    [Math.PI / 2, [l, cv, r]],
+    [0, [t, ch, b]],
+  ]);
+
+  if (!geometry.isSameValue(Math.sin(2 * shape.rotation), 0)) {
+    const [tl, tr, br, bl] = struct.getLocalRectPolygon(shape, shapeContext);
+    const midTop = { x: (tl.x + tr.x) / 2, y: (tl.y + tr.y) / 2 };
+    const midBottom = { x: (bl.x + br.x) / 2, y: (bl.y + br.y) / 2 };
+    const midLeft = { x: (tl.x + bl.x) / 2, y: (tl.y + bl.y) / 2 };
+    const midRight = { x: (tr.x + br.x) / 2, y: (tr.y + br.y) / 2 };
+    linesByRotation.set(geometry.normalizeLineRotation(shape.rotation + Math.PI / 2), [
+      [tl, bl],
+      [midTop, midBottom],
+      [tr, br],
+    ]);
+    linesByRotation.set(geometry.normalizeLineRotation(shape.rotation), [
+      [tl, tr],
+      [midLeft, midRight],
+      [bl, br],
+    ]);
+  }
+
+  return { linesByRotation };
 }
 
 export function getClosestOutline(
