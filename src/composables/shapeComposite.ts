@@ -297,6 +297,10 @@ export function newShapeComposite(option: Option) {
     return shapeModule.getSnappingLines(getStruct, shape, mergedShapeContext);
   }
 
+  function getSnappingFeaturePoints(shape: Shape): IVec2[] {
+    return shapeModule.getSnappingFeaturePoints(getStruct, shape);
+  }
+
   function shouldDelete(shape: Shape): boolean {
     return !!getStruct(shape.type).shouldDelete?.(shape, mergedShapeContext);
   }
@@ -523,6 +527,7 @@ export function newShapeComposite(option: Option) {
     rotateShapeTree,
     getShapesOverlappingRect,
     getSnappingLines,
+    getSnappingFeaturePoints,
     shouldDelete,
     getSelectionScope,
     getMergedShapesInSelectionScope,

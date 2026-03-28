@@ -48,7 +48,7 @@ describe("newShapeSnapping", () => {
   const target = newShapeSnapping({ shapeSnappingList });
 
   test("x snapping: should return snapping result", () => {
-    expect(target.test({ x: -15, y: 40, width: 10, height: 10 })).toEqual({
+    expect(target.test({ rect: { x: -15, y: 40, width: 10, height: 10 } })).toEqual({
       diff: { x: 5, y: 0 },
       targets: [
         {
@@ -66,7 +66,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: 5, y: 40, width: 10, height: 10 })).toEqual({
+    expect(target.test({ rect: { x: 5, y: 40, width: 10, height: 10 } })).toEqual({
       diff: { x: -5, y: 0 },
       targets: [
         {
@@ -84,7 +84,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: 95, y: 40, width: 30, height: 30 })).toEqual({
+    expect(target.test({ rect: { x: 95, y: 40, width: 30, height: 30 } })).toEqual({
       diff: { x: 5, y: 0 },
       targets: [
         {
@@ -102,7 +102,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: 105, y: 40, width: 10, height: 10 })).toEqual({
+    expect(target.test({ rect: { x: 105, y: 40, width: 10, height: 10 } })).toEqual({
       diff: { x: -5, y: 0 },
       targets: [
         {
@@ -120,7 +120,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: -7, y: 40, width: 10, height: 10 }), "at center").toEqual({
+    expect(target.test({ rect: { x: -7, y: 40, width: 10, height: 10 } }), "at center").toEqual({
       diff: { x: 2, y: 0 },
       targets: [
         {
@@ -137,7 +137,7 @@ describe("newShapeSnapping", () => {
   });
 
   test("x snapping: should return all snapping targets having the save level", () => {
-    expect(target.test({ x: 1, y: 40, width: 100, height: 10 })).toEqual({
+    expect(target.test({ rect: { x: 1, y: 40, width: 100, height: 10 } })).toEqual({
       diff: { x: -1, y: 0 },
       targets: [
         {
@@ -166,7 +166,7 @@ describe("newShapeSnapping", () => {
   });
 
   test("y snapping: should return snapping result", () => {
-    expect(target.test({ x: 40, y: -15, width: 10, height: 10 })).toEqual({
+    expect(target.test({ rect: { x: 40, y: -15, width: 10, height: 10 } })).toEqual({
       diff: { x: 0, y: 5 },
       targets: [
         {
@@ -184,7 +184,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: 40, y: 5, width: 10, height: 10 })).toEqual({
+    expect(target.test({ rect: { x: 40, y: 5, width: 10, height: 10 } })).toEqual({
       diff: { x: 0, y: -5 },
       targets: [
         {
@@ -202,7 +202,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: 40, y: 95, width: 30, height: 30 })).toEqual({
+    expect(target.test({ rect: { x: 40, y: 95, width: 30, height: 30 } })).toEqual({
       diff: { x: 0, y: 5 },
       targets: [
         {
@@ -220,7 +220,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: 40, y: 105, width: 10, height: 10 })).toEqual({
+    expect(target.test({ rect: { x: 40, y: 105, width: 10, height: 10 } })).toEqual({
       diff: { x: 0, y: -5 },
       targets: [
         {
@@ -238,7 +238,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: 40, y: -7, width: 10, height: 10 }), "at center").toEqual({
+    expect(target.test({ rect: { x: 40, y: -7, width: 10, height: 10 } }), "at center").toEqual({
       diff: { x: 0, y: 2 },
       targets: [
         {
@@ -255,7 +255,7 @@ describe("newShapeSnapping", () => {
   });
 
   test("y snapping: should return all snapping targets having the save level", () => {
-    expect(target.test({ x: 40, y: 1, width: 10, height: 100 })).toEqual({
+    expect(target.test({ rect: { x: 40, y: 1, width: 10, height: 100 } })).toEqual({
       diff: { x: 0, y: -1 },
       targets: [
         {
@@ -284,7 +284,7 @@ describe("newShapeSnapping", () => {
   });
 
   test("x y snapping: should return snapping result", () => {
-    expect(target.test({ x: -15, y: -15, width: 10, height: 10 })).toEqual({
+    expect(target.test({ rect: { x: -15, y: -15, width: 10, height: 10 } })).toEqual({
       diff: { x: 5, y: 5 },
       targets: [
         {
@@ -310,7 +310,7 @@ describe("newShapeSnapping", () => {
       ],
     });
 
-    expect(target.test({ x: -5, y: -5, width: 30, height: 30 })).toEqual({
+    expect(target.test({ rect: { x: -5, y: -5, width: 30, height: 30 } })).toEqual({
       diff: { x: 5, y: 5 },
       targets: [
         {
@@ -343,7 +343,7 @@ describe("newShapeSnapping", () => {
       gridSnapping: shapeSnappingList[0][1],
     });
 
-    expect(targetGrid.test({ x: -15, y: -15, width: 10, height: 10 })).toEqual({
+    expect(targetGrid.test({ rect: { x: -15, y: -15, width: 10, height: 10 } })).toEqual({
       diff: { x: 5, y: 5 },
       targets: [
         {

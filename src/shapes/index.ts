@@ -267,6 +267,12 @@ export function getOutlinePaths(getStruct: GetShapeStruct, shape: Shape): Bezier
   return struct.getOutlinePaths?.(shape);
 }
 
+export function getSnappingFeaturePoints(getStruct: GetShapeStruct, shape: Shape): IVec2[] {
+  const struct = getStruct(shape.type);
+  const paths = struct.getOutlinePaths?.(shape);
+  return paths?.flatMap((b) => b.path) ?? getLocalRectPolygon(getStruct, shape);
+}
+
 export function getHighlightPaths(
   getStruct: GetShapeStruct,
   shape: Shape,

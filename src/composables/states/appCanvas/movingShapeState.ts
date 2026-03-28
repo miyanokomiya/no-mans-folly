@@ -1,5 +1,5 @@
 import type { AppCanvasState, AppCanvasStateContext } from "./core";
-import { IDENTITY_AFFINE, IRectangle, add, moveRect, sub } from "okageo";
+import { IDENTITY_AFFINE, IRectangle, IVec2, add, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
 import { SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import * as geometry from "../../../utils/geometry";
@@ -20,7 +20,6 @@ import {
 import { getPatchAfterLayouts } from "../../shapeLayoutHandler";
 import { isLineLabelShape } from "../../../shapes/utils/lineLabel";
 import { mergeMap } from "../../../utils/commons";
-import { applyStrokeStyle } from "../../../utils/strokeStyle";
 import { handlePointerMoveOnLine } from "./movingShapeOnLineHandler";
 import { getSnappableCandidates } from "./commons";
 import { FrameShape } from "../../../shapes/frame";
@@ -29,6 +28,7 @@ import { ModifierOptions } from "../../../utils/devices";
 import { newCacheWithArg } from "../../../utils/stateful/cache";
 import { handleCommonWheel } from "../commons";
 import { isLineShape } from "../../../shapes/line";
+import { renderMovingHighlight } from "./utils/highlight";
 
 interface Option extends ModifierOptions {
   boundingBox?: BoundingBox;
@@ -37,6 +37,7 @@ interface Option extends ModifierOptions {
 export function newMovingShapeState(option?: Option): AppCanvasState {
   let movingRect: IRectangle;
   let movingRectSub: IRectangle | undefined;
+  let movingOutlinePoints: IVec2[] | undefined;
   let boundingBox: BoundingBox;
   let snappingResult: SnappingResult | undefined;
   let affine = IDENTITY_AFFINE;
@@ -95,6 +96,8 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       // When multiple shapes are selected, use the bounds of the index shape as snapping source.
       if (targetRootIds.length > 1 && indexShapeId) {
         movingRectSub = shapeComposite.getWrapperRect(shapeMap[indexShapeId]);
+      } else if (targetRootIds.length === 1) {
+        movingOutlinePoints = shapeComposite.getSnappingFeaturePoints(shapeMap[targetRootIds[0]]);
       }
 
       if (option?.boundingBox) {
@@ -139,15 +142,16 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
           const d = sub(event.data.current, event.data.startAbs);
 
+          const outlinePoints = movingOutlinePoints?.map((p) => add(p, d));
           snappingResult = event.data.ctrl
             ? undefined
-            : (snappingResult = snappingCache
+            : snappingCache
                 .getValue(ctx)
                 .testWithSubRect(
-                  moveRect(movingRect, d),
-                  movingRectSub ? moveRect(movingRectSub, d) : undefined,
+                  { rect: moveRect(movingRect, d), outlinePoints },
+                  movingRectSub ? { rect: moveRect(movingRectSub, d) } : undefined,
                   ctx.getScale(),
-                ));
+                );
 
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
           affine = [1, 0, 0, 1, translate.x, translate.y];
@@ -221,9 +225,14 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
-      applyStrokeStyle(renderCtx, { color: style.selectionPrimary, width: style.selectionLineWidth * scale });
-      renderCtx.beginPath();
-      renderCtx.strokeRect(movingRect.x + affine[4], movingRect.y + affine[5], movingRect.width, movingRect.height);
+
+      renderMovingHighlight(renderCtx, {
+        style,
+        scale,
+        movingRect: moveRect(movingRect, { x: affine[4], y: affine[5] }),
+        shapeComposite,
+        targetIds,
+      });
 
       if (snappingResult) {
         const shapeMap = shapeComposite.mergedShapeMap;

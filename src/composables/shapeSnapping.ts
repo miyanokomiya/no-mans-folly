@@ -37,6 +37,11 @@ import { BezierPath } from "../utils/path";
 export const SNAP_THRESHOLD = 10;
 const GRID_ID = "GRID";
 
+export interface SnappingTestTarget {
+  rect: IRectangle;
+  outlinePoints?: IVec2[];
+}
+
 export interface SnappingResult extends SnappingTargetInfo {
   diff: IVec2;
   anchorPoints: IVec2[];
@@ -75,9 +80,12 @@ export function newShapeSnapping(option: Option) {
     ? [[GRID_ID, gridSnapping], ...shapeSnappingList]
     : shapeSnappingList;
 
-  function test(rect: IRectangle, scale = 1): SnappingResult | undefined {
+  function test(target: SnappingTestTarget, scale = 1): SnappingResult | undefined {
+    const rect = target.rect;
     const snapThreshold = SNAP_THRESHOLD * scale;
-    const anchorPoints = getRectAnchorPoints(rect);
+    const anchorPoints = target.outlinePoints
+      ? [...getRectAnchorPoints(rect), ...target.outlinePoints]
+      : getRectAnchorPoints(rect);
 
     // Build the interval line map: each virtual ISegment maps to its raw interval data.
     type IntervalLineData = {
@@ -310,20 +318,20 @@ export function newShapeSnapping(option: Option) {
   }
 
   /**
-   * Proc "test" with two rectangles and merge their results.
+   * Proc "test" with two targets and merge their results.
    */
-  function testWithSubRect(rectMain: IRectangle, rectSub?: IRectangle, scale = 1): SnappingResult | undefined {
-    const resultMain = test(rectMain, scale);
-    if (!rectSub) return resultMain;
+  function testWithSubRect(main: SnappingTestTarget, sub?: SnappingTestTarget, scale = 1): SnappingResult | undefined {
+    const resultMain = test(main, scale);
+    if (!sub) return resultMain;
 
-    const resultSub = test(rectSub, scale);
+    const resultSub = test(sub, scale);
     if (resultMain && resultSub) return mergetSnappingResult(resultMain, resultSub);
 
     return resultMain ?? resultSub;
   }
 
   function testPoint(p: IVec2, scale = 1): SnappingResult | undefined {
-    return test({ x: p.x, y: p.y, width: 0, height: 0 }, scale);
+    return test({ rect: { x: p.x, y: p.y, width: 0, height: 0 } }, scale);
   }
 
   function testPointOnLine(p: IVec2, guideline: ISegment, scale = 1): SnappingResult | undefined {

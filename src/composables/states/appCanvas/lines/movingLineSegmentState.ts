@@ -116,7 +116,7 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
           snappingResult = undefined;
           vectorSnappingResult = undefined;
           if (!event.data.ctrl) {
-            const result1 = snappingCache.getValue(ctx).shapeSnapping.test(moveRect(movingRect, d), ctx.getScale());
+            const result1 = snappingCache.getValue(ctx).shapeSnapping.test({ rect: moveRect(movingRect, d) }, ctx.getScale());
             let movingSegment = targetSegment.map((t) => add(t, d));
             if (snappingOrigins.length === 4) {
               movingSegment = movingSegment.concat(movingSegment);

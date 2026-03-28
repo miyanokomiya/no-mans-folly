@@ -1,6 +1,6 @@
 import type { AppCanvasState } from "./core";
 import { Shape } from "../../../models";
-import { AffineMatrix, IRectangle, add, moveRect, sub } from "okageo";
+import { IDENTITY_AFFINE, IRectangle, IVec2, add, moveRect, sub } from "okageo";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import { DocOutput } from "../../../models/document";
 import { newShapeRenderer } from "../../shapeRenderer";
@@ -10,6 +10,7 @@ import { handleCommonWheel } from "../commons";
 import { scaleGlobalAlpha } from "../../../utils/renderer";
 import { duplicateShapes } from "../../../shapes/utils/duplicator";
 import { getSnappableCandidates } from "./commons";
+import { renderMovingHighlight } from "./utils/highlight";
 
 // Add extra distance to make duplicated shapes' existence clear.
 const EXTRA_DISTANCE = -10;
@@ -19,7 +20,9 @@ export function newDuplicatingShapesState(): AppCanvasState {
   let duplicatedShapeComposite: ShapeComposite;
   let shapeSnapping: ShapeSnapping;
   let movingRect: IRectangle;
+  let movingOutlinePoints: IVec2[] | undefined;
   let snappingResult: SnappingResult | undefined;
+  let affine = IDENTITY_AFFINE;
 
   return {
     getLabel: () => "DuplicatingShapes",
@@ -59,6 +62,13 @@ export function newDuplicatingShapesState(): AppCanvasState {
       });
       movingRect = duplicatedShapeComposite.getWrapperRectForShapes(duplicated.shapes);
 
+      if (duplicatedShapeComposite.mergedShapeTree.length === 1) {
+        const singleShape = duplicated.shapes.find((s) => s.id === duplicatedShapeComposite.mergedShapeTree[0].id);
+        if (singleShape) {
+          movingOutlinePoints = duplicatedShapeComposite.getSnappingFeaturePoints(singleShape);
+        }
+      }
+
       ctx.clearAllSelected();
     },
     onEnd: (ctx) => {
@@ -73,9 +83,12 @@ export function newDuplicatingShapesState(): AppCanvasState {
             { x: event.data.current.x + extraDistance, y: event.data.current.y + extraDistance },
             event.data.startAbs,
           );
-          snappingResult = event.data.ctrl ? undefined : shapeSnapping.test(moveRect(movingRect, d), ctx.getScale());
+          const outlinePoints = movingOutlinePoints?.map((p) => add(p, d));
+          snappingResult = event.data.ctrl
+            ? undefined
+            : shapeSnapping.test({ rect: moveRect(movingRect, d), outlinePoints }, ctx.getScale());
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
-          const affine: AffineMatrix = [1, 0, 0, 1, translate.x, translate.y];
+          affine = [1, 0, 0, 1, translate.x, translate.y];
           const tmpShapeMap: { [id: string]: Partial<Shape> } = {};
           duplicated.shapes.forEach((s) => {
             tmpShapeMap[s.id] = duplicatedShapeComposite.transformShape(s, affine);
@@ -102,6 +115,9 @@ export function newDuplicatingShapesState(): AppCanvasState {
       }
     },
     render(ctx, renderCtx) {
+      const scale = ctx.getScale();
+      const style = ctx.getStyleScheme();
+
       const renderer = newShapeRenderer({
         shapeComposite: duplicatedShapeComposite,
         getDocumentMap: () => duplicated.docMap,
@@ -111,11 +127,19 @@ export function newDuplicatingShapesState(): AppCanvasState {
         renderer.render(renderCtx);
       });
 
+      renderMovingHighlight(renderCtx, {
+        style,
+        scale,
+        movingRect: moveRect(movingRect, { x: affine[4], y: affine[5] }),
+        shapeComposite: duplicatedShapeComposite,
+        targetIds: duplicatedShapeComposite.shapes.map((s) => s.id),
+      });
+
       if (snappingResult) {
         const shapeComposite = ctx.getShapeComposite();
         renderSnappingResult(renderCtx, {
-          style: ctx.getStyleScheme(),
-          scale: ctx.getScale(),
+          style,
+          scale,
           result: snappingResult,
           getTargetShape: (id) =>
             shapeComposite.mergedShapeMap[id]
