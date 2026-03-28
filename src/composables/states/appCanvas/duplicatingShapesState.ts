@@ -127,12 +127,14 @@ export function newDuplicatingShapesState(): AppCanvasState {
         renderer.render(renderCtx);
       });
 
+      const v = { x: affine[4], y: affine[5] };
       renderMovingHighlight(renderCtx, {
         style,
         scale,
-        movingRect: moveRect(movingRect, { x: affine[4], y: affine[5] }),
-        shapeComposite: duplicatedShapeComposite,
-        targetIds: duplicatedShapeComposite.shapes.map((s) => s.id),
+        movingRect: moveRect(movingRect, v),
+        movingOutline: movingOutlinePoints
+          ? [{ path: movingOutlinePoints.map((p) => add(p, v)), curves: [] }]
+          : undefined,
       });
 
       if (snappingResult) {

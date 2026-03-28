@@ -117,6 +117,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
         renderer.render(renderCtx);
       });
 
+      const v = sub(latestMovingRectP, movingRect);
       renderMovingHighlight(renderCtx, {
         style,
         scale,
@@ -126,8 +127,9 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
           width: movingRect.width,
           height: movingRect.height,
         },
-        shapeComposite: minShapeComposite,
-        targetIds: minShapeComposite.shapes.map((s) => s.id),
+        movingOutline: movingOutlinePoints
+          ? [{ path: movingOutlinePoints.map((p) => add(p, v)), curves: [] }]
+          : undefined,
       });
 
       if (snappingResult) {

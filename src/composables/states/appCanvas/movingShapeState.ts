@@ -38,6 +38,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let movingRect: IRectangle;
   let movingRectSub: IRectangle | undefined;
   let movingOutlinePoints: IVec2[] | undefined;
+  let movingOutlinePointsSub: IVec2[] | undefined;
   let boundingBox: BoundingBox;
   let snappingResult: SnappingResult | undefined;
   let affine = IDENTITY_AFFINE;
@@ -45,7 +46,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let targetIds: string[];
   let connectionRenderer: ConnectionRenderer;
   let beforeMove = true;
-  let indexShapeId: string | undefined;
+  let indexShapeId: string;
 
   const snappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
     const shapeComposite = ctx.getShapeComposite();
@@ -75,7 +76,8 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
       const subShapeComposite = shapeComposite.getSubShapeComposite(movingIds, shapeComposite.tmpShapeMap);
       const movingShapeSub = subShapeComposite.findShapeAt(ctx.getCursorPoint(), undefined, [], false, ctx.getScale());
-      indexShapeId = movingShapeSub?.id ?? ctx.getLastSelectedShapeId();
+      indexShapeId = movingShapeSub?.id ?? ctx.getLastSelectedShapeId() ?? selectedIds[0];
+      const indexShape = shapeMap[indexShapeId];
 
       targetIds = subShapeComposite.shapes.map((s) => s.id);
       if (targetIds.length === 0) return ctx.states.newSelectionHubState;
@@ -93,19 +95,21 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       const targetRootIds = subShapeComposite.mergedShapeTree.map((t) => t.id);
       movingRect = geometry.getWrapperRect(targetRootIds.map((id) => shapeComposite.getWrapperRect(shapeMap[id])));
 
-      // When multiple shapes are selected, use the bounds of the index shape as snapping source.
-      if (targetRootIds.length > 1 && indexShapeId) {
-        movingRectSub = shapeComposite.getWrapperRect(shapeMap[indexShapeId]);
-      } else if (targetRootIds.length === 1) {
-        movingOutlinePoints = shapeComposite.getSnappingFeaturePoints(shapeMap[targetRootIds[0]]);
-      }
-
       if (option?.boundingBox) {
         boundingBox = option.boundingBox;
       } else {
         boundingBox = newBoundingBox({
           path: geometry.getRectPoints(movingRect),
         });
+      }
+
+      // When multiple shapes are selected, use the index shape as snapping sub-source.
+      if (targetRootIds.length > 1) {
+        movingOutlinePoints = boundingBox.path;
+        movingRectSub = shapeComposite.getWrapperRect(indexShape);
+        movingOutlinePointsSub = shapeComposite.getSnappingFeaturePoints(indexShape);
+      } else if (targetRootIds.length === 1) {
+        movingOutlinePoints = shapeComposite.getSnappingFeaturePoints(shapeMap[targetRootIds[0]]);
       }
 
       const connectedLinesMap = getConnectedLineInfoMap(ctx, targetIds);
@@ -143,13 +147,14 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           const d = sub(event.data.current, event.data.startAbs);
 
           const outlinePoints = movingOutlinePoints?.map((p) => add(p, d));
+          const outlinePointsSub = movingOutlinePointsSub?.map((p) => add(p, d));
           snappingResult = event.data.ctrl
             ? undefined
             : snappingCache
                 .getValue(ctx)
                 .testWithSubRect(
                   { rect: moveRect(movingRect, d), outlinePoints },
-                  movingRectSub ? { rect: moveRect(movingRectSub, d) } : undefined,
+                  movingRectSub ? { rect: moveRect(movingRectSub, d), outlinePoints: outlinePointsSub } : undefined,
                   ctx.getScale(),
                 );
 
@@ -226,13 +231,23 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
 
+      const v = { x: affine[4], y: affine[5] };
       renderMovingHighlight(renderCtx, {
         style,
         scale,
-        movingRect: moveRect(movingRect, { x: affine[4], y: affine[5] }),
-        shapeComposite,
-        targetIds,
+        movingRect: moveRect(movingRect, v),
+        movingOutline: movingOutlinePoints ? [{ path: movingOutlinePoints.map((p) => add(p, v)), curves: [] }] : [],
       });
+      if (movingRectSub) {
+        renderMovingHighlight(renderCtx, {
+          style,
+          scale,
+          movingRect: moveRect(movingRectSub, { x: affine[4], y: affine[5] }),
+          movingOutline: movingOutlinePointsSub
+            ? [{ path: movingOutlinePointsSub.map((p) => add(p, v)), curves: [] }]
+            : undefined,
+        });
+      }
 
       if (snappingResult) {
         const shapeMap = shapeComposite.mergedShapeMap;
