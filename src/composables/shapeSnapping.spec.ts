@@ -1,11 +1,9 @@
 import { describe, expect, test } from "vitest";
 import {
   getGuidelinesFromSnappingResult,
-  mergetSnappingResult,
   newShapeIntervalSnapping,
   newShapeSnapping,
   optimizeSnappingTargetInfoForPoint,
-  SnappingResult,
 } from "./shapeSnapping";
 import { ShapeSnappingLines } from "../shapes/core";
 
@@ -1310,140 +1308,60 @@ describe("getGuidelinesFromSnappingResult", () => {
   });
 });
 
-describe("mergetSnappingResult", () => {
-  test("should merge two snapping results in each axis", () => {
-    const a: SnappingResult = {
-      diff: { x: 1, y: 20 },
-      targets: [
+describe("newShapeSnapping > testWithSubRect", () => {
+  // Shape "a" provides a vertical line at x=0 and a horizontal line at y=0.
+  // Shape "b" provides a vertical line at x=100 and a horizontal line at y=100.
+  const snapping = newShapeSnapping({
+    shapeSnappingList: [
+      [
+        "a",
         {
-          id: "a1",
-          line: [
-            { x: 1, y: 0 },
-            { x: 1, y: 10 },
-          ],
-        },
-        {
-          id: "a2",
-          line: [
-            { x: 0, y: 20 },
-            { x: 10, y: 20 },
-          ],
+          linesByRotation: new Map([
+            [Math.PI / 2, [[ { x: 0, y: -500 }, { x: 0, y: 500 } ]]],
+            [0,           [[ { x: -500, y: 0 }, { x: 500, y: 0 } ]]],
+          ]),
         },
       ],
-      intervalTargets: [
+      [
+        "b",
         {
-          beforeId: "ab1",
-          afterId: "aa1",
-          lines: [
-            [
-              { x: 1, y: 0 },
-              { x: 5, y: 0 },
-            ],
-          ],
-          direction: "h",
-        },
-        {
-          beforeId: "ab2",
-          afterId: "aa2",
-          lines: [
-            [
-              { x: 0, y: 20 },
-              { x: 0, y: 25 },
-            ],
-          ],
-          direction: "v",
+          linesByRotation: new Map([
+            [Math.PI / 2, [[ { x: 100, y: -500 }, { x: 100, y: 500 } ]]],
+            [0,           [[ { x: -500, y: 100 }, { x: 500, y: 100 } ]]],
+          ]),
         },
       ],
-      anchorPoints: [],
-    };
-    const b: SnappingResult = {
-      diff: { x: -20, y: -2 },
-      targets: [
-        {
-          id: "b1",
-          line: [
-            { x: -20, y: 0 },
-            { x: -20, y: 10 },
-          ],
-        },
-        {
-          id: "b2",
-          line: [
-            { x: 0, y: -2 },
-            { x: 10, y: -2 },
-          ],
-        },
-      ],
-      intervalTargets: [
-        {
-          beforeId: "bb1",
-          afterId: "ba1",
-          lines: [
-            [
-              { x: -20, y: 0 },
-              { x: -5, y: 0 },
-            ],
-          ],
-          direction: "h",
-        },
-        {
-          beforeId: "bb2",
-          afterId: "ba2",
-          lines: [
-            [
-              { x: 0, y: -2 },
-              { x: 0, y: 5 },
-            ],
-          ],
-          direction: "v",
-        },
-      ],
-      anchorPoints: [],
-    };
+    ] as [string, ShapeSnappingLines][],
+  });
 
-    expect(mergetSnappingResult(a, b)).toEqual({
-      diff: { x: 1, y: -2 },
-      targets: [
-        {
-          id: "a1",
-          line: [
-            { x: 1, y: 0 },
-            { x: 1, y: 10 },
-          ],
-        },
-        {
-          id: "b2",
-          line: [
-            { x: 0, y: -2 },
-            { x: 10, y: -2 },
-          ],
-        },
-      ],
-      intervalTargets: [
-        {
-          beforeId: "ab1",
-          afterId: "aa1",
-          lines: [
-            [
-              { x: 1, y: 0 },
-              { x: 5, y: 0 },
-            ],
-          ],
-          direction: "h",
-        },
-        {
-          beforeId: "bb2",
-          afterId: "ba2",
-          lines: [
-            [
-              { x: 0, y: -2 },
-              { x: 0, y: 5 },
-            ],
-          ],
-          direction: "v",
-        },
-      ],
-      anchorPoints: [],
-    });
+  test("should return main result when sub is not provided", () => {
+    const main = { rect: { x: -3, y: 40, width: 10, height: 10 } };
+    expect(snapping.testWithSubRect(main)).toEqual(snapping.test(main));
+  });
+
+  test("should pick the result with the smaller diff magnitude", () => {
+    // main snaps to x=0 with diff.x=3, sub snaps to x=100 with diff.x=1 — sub wins
+    const main = { rect: { x: -3, y: 40, width: 10, height: 10 } };
+    const sub  = { rect: { x: 99, y: 40, width: 10, height: 10 } };
+    const result = snapping.testWithSubRect(main, sub);
+    expect(result?.diff.x).toBeCloseTo(1);
+    expect(result?.targets.some((t) => t.id === "b")).toBe(true);
+  });
+
+  test("should pick main result when it has the smaller diff", () => {
+    // main snaps to x=0 with diff.x=1, sub snaps to x=100 with diff.x=3 — main wins
+    const main = { rect: { x: -1, y: 40, width: 10, height: 10 } };
+    const sub  = { rect: { x: 97, y: 40, width: 10, height: 10 } };
+    const result = snapping.testWithSubRect(main, sub);
+    expect(result?.diff.x).toBeCloseTo(1);
+    expect(result?.targets.some((t) => t.id === "a")).toBe(true);
+  });
+
+  test("should return whichever result snaps when only one does", () => {
+    // sub is far from any snap line, main snaps
+    const main = { rect: { x: -3, y: 40, width: 10, height: 10 } };
+    const sub  = { rect: { x: 500, y: 500, width: 10, height: 10 } };
+    const result = snapping.testWithSubRect(main, sub);
+    expect(result?.targets.some((t) => t.id === "a")).toBe(true);
   });
 });
