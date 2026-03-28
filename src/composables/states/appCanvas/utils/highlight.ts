@@ -2,8 +2,10 @@ import { IRectangle } from "okageo";
 import { StyleScheme } from "../../../../models";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { CanvasCTX } from "../../../../utils/types";
-import { applyCurvePath, scaleGlobalAlpha } from "../../../../utils/renderer";
+import { scaleGlobalAlpha } from "../../../../utils/renderer";
 import { BezierPath } from "../../../../utils/path";
+import { TAU } from "../../../../utils/geometry";
+import { applyFillStyle } from "../../../../utils/fillStyle";
 
 export function renderMovingHighlight(
   ctx: CanvasCTX,
@@ -26,9 +28,16 @@ export function renderMovingHighlight(
     ctx.strokeRect(movingRect.x, movingRect.y, movingRect.width, movingRect.height);
 
     if (movingOutline) {
+      const radius = 4 * scale;
+      applyFillStyle(ctx, { color: style.selectionPrimary });
       ctx.beginPath();
-      movingOutline.forEach((path) => applyCurvePath(ctx, path.path, path.curves, true));
-      ctx.stroke();
+      movingOutline.forEach(({ path }) =>
+        path.forEach((p) => {
+          ctx.moveTo(p.x, p.y);
+          ctx.arc(p.x, p.y, radius, 0, TAU);
+        }),
+      );
+      ctx.fill();
     }
   });
 }
