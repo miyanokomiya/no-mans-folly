@@ -565,33 +565,7 @@ describe("canShapeGrouped", () => {
 });
 
 describe("getSnappingLines", () => {
-  test("should return only orthogonal lines when rotation is 0", () => {
-    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      p: { x: 0, y: 0 },
-      width: 100,
-      height: 100,
-      rotation: 0,
-    });
-    const result = getSnappingLines(getCommonStruct, shape);
-    expect(result.linesByRotation.size).toBe(2);
-    expect(result.linesByRotation.has(0)).toBe(true);
-    expect(result.linesByRotation.has(Math.PI / 2)).toBe(true);
-  });
-
-  test("should return only orthogonal lines when rotation is a multiple of PI/2", () => {
-    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", {
-      p: { x: 0, y: 0 },
-      width: 100,
-      height: 100,
-      rotation: Math.PI / 2,
-    });
-    const result = getSnappingLines(getCommonStruct, shape);
-    expect(result.linesByRotation.size).toBe(2);
-    expect(result.linesByRotation.has(0)).toBe(true);
-    expect(result.linesByRotation.has(Math.PI / 2)).toBe(true);
-  });
-
-  test("should return orthogonal and rotated lines when rotation is non-orthogonal", () => {
+  test("should return standard snapping lines when the struct doesn't have getSnappingLines", () => {
     const r = Math.PI / 4;
     const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", {
       p: { x: 0, y: 0 },
@@ -600,15 +574,20 @@ describe("getSnappingLines", () => {
       rotation: r,
     });
     const result = getSnappingLines(getCommonStruct, shape);
-    expect(result.linesByRotation.size).toBe(4);
-    expect(result.linesByRotation.has(0)).toBe(true);
-    expect(result.linesByRotation.has(Math.PI / 2)).toBe(true);
-    // Rotated keys: normalizeLineRotation(r) and normalizeLineRotation(r + PI/2)
-    // For r = PI/4: hKey = PI/4, vKey = PI/4 + PI/2 = 3*PI/4 -> normalized = 3*PI/4
-    expect(result.linesByRotation.has(Math.PI / 4)).toBe(true);
-    expect(result.linesByRotation.has((3 * Math.PI) / 4)).toBe(true);
-    // Each rotated direction should have 3 lines
-    expect(result.linesByRotation.get(Math.PI / 4)).toHaveLength(3);
-    expect(result.linesByRotation.get((3 * Math.PI) / 4)).toHaveLength(3);
+    expect(getCommonStruct(shape.type)?.getSnappingLines).toBeUndefined();
+    expect(Array.from(result.linesByRotation.keys()).toSorted((a, b) => a - b)).toEqual([
+      0,
+      Math.PI * 0.25,
+      Math.PI * 0.5,
+      Math.PI * 0.75,
+    ]);
+  });
+  test("should not return standard snapping lines when the struct has getSnappingLines", () => {
+    const shape = createShape<LineShape>(getCommonStruct, "line", {
+      p: { x: 0, y: 0 },
+      q: { x: 100, y: 100 },
+    });
+    const result = getSnappingLines(getCommonStruct, shape);
+    expect(result).toEqual(getCommonStruct(shape.type)?.getSnappingLines?.(shape));
   });
 });

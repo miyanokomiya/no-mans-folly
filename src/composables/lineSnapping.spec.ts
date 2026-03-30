@@ -399,6 +399,12 @@ describe("newLineSnapping", () => {
               ],
             },
           ],
+          anchorPoints: [
+            {
+              x: 230,
+              y: 101,
+            },
+          ],
         },
       });
       expect(target.testConnection({ x: 149, y: 29 }, 1)).toEqual({
@@ -430,6 +436,12 @@ describe("newLineSnapping", () => {
                   y: 30,
                 },
               ],
+            },
+          ],
+          anchorPoints: [
+            {
+              x: 149,
+              y: 30,
             },
           ],
         },
@@ -735,6 +747,12 @@ describe("newLineSnapping", () => {
               ],
             },
           ],
+          anchorPoints: [
+            {
+              x: 20,
+              y: 0,
+            },
+          ],
         },
       });
     });
@@ -838,6 +856,12 @@ describe("newLineSnapping", () => {
               ],
             },
           ],
+          anchorPoints: [
+            {
+              x: 230,
+              y: 101,
+            },
+          ],
         },
       });
       expect(target.testConnection({ x: 149, y: 29 }, 1)).toEqual({
@@ -869,6 +893,12 @@ describe("newLineSnapping", () => {
                   y: 30,
                 },
               ],
+            },
+          ],
+          anchorPoints: [
+            {
+              x: 149,
+              y: 30,
             },
           ],
         },
@@ -1072,6 +1102,12 @@ describe("newLineSnapping", () => {
               ],
             },
           ],
+          anchorPoints: [
+            {
+              x: -50,
+              y: -102,
+            },
+          ],
         },
       });
       expect(target0.testConnection({ x: 298, y: -102 }, 1), "connected to the shape").toEqual({
@@ -1101,6 +1137,12 @@ describe("newLineSnapping", () => {
                   { x: 300, y: -100 },
                 ],
               ],
+            },
+          ],
+          anchorPoints: [
+            {
+              x: 300,
+              y: -102,
             },
           ],
         },

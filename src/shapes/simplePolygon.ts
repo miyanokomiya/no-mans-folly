@@ -44,9 +44,11 @@ import {
   getRotatedWrapperRect,
   getRotationAffine,
   getSegments,
+  ISegment,
   isPointCloseToCurveSpline,
   isPointOnRectangle,
   isSameValue,
+  normalizeLineRotation,
   rotateRectByAngle,
   sortPointFrom,
 } from "../utils/geometry";
@@ -59,6 +61,7 @@ import { applyRotatedRectTransformToRawPath, renderTransform } from "../utils/sv
 import { getPaddingRect } from "../utils/boxPadding";
 import { RectPolygonShape, getRectShapeRect, getShapeDetransform, getShapeTransform } from "./rectPolygon";
 import { getClosestPointOnPolyline, getPolylineEdgeInfo, transformBezierPath } from "../utils/path";
+import { getStandardSnappingLines } from "./utils/snapping";
 import { createLineStrokeSVGElementInfo, renderLineStroke } from "./line";
 
 export type SimplePath = {
@@ -101,6 +104,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   | "getIntersectedOutlines"
   | "getCommonStyle"
   | "updateCommonStyle"
+  | "getSnappingLines"
 > {
   return {
     render(ctx, shape) {
@@ -316,6 +320,32 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
               curves: transformed.curves,
             },
       ];
+    },
+    getSnappingLines(shape) {
+      const { path, curves } = getPath(shape);
+      const transform = getShapeTransform(shape);
+      const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
+      const c = getRectCenter(rect);
+      const rotateFn = getRotateFn(shape.rotation, c);
+      const wrapperRect = getRotatedWrapperRect(rect, shape.rotation);
+      const localRectPolygon = getRectPoints(rect).map((p) => rotateFn(p));
+      const { linesByRotation } = getStandardSnappingLines(wrapperRect, localRectPolygon, shape.rotation);
+
+      const edges = getSegments(path, !isPolyline(shape));
+      edges.forEach((edge, i) => {
+        if (curves?.[i]) return;
+
+        const worldEdge: ISegment = [applyAffine(transform, edge[0]), applyAffine(transform, edge[1])];
+        const angle = normalizeLineRotation(getRadian(worldEdge[1], worldEdge[0]));
+        const existing = linesByRotation.get(angle);
+        if (existing) {
+          existing.push(worldEdge);
+        } else {
+          linesByRotation.set(angle, [worldEdge]);
+        }
+      });
+
+      return { linesByRotation };
     },
     getCommonStyle,
     updateCommonStyle,

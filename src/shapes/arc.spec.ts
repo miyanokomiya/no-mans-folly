@@ -123,3 +123,16 @@ describe("getOutlinePaths", () => {
     expect(result[0].curves[9]).toBe(undefined);
   });
 });
+
+describe("getSnappingLines", () => {
+  test("should return snapping lines along the straight segments", () => {
+    const shape = struct.create({ rx: 50, ry: 50, holeRate: 0.5, from: Math.PI / 4, to: (Math.PI / 4) * 3 });
+    const result = struct.getSnappingLines!(shape);
+    expect(Array.from(result.linesByRotation.keys()).toSorted((a, b) => a - b)).toEqual([
+      0,
+      Math.PI / 4,
+      Math.PI / 2,
+      (Math.PI / 4) * 3,
+    ]);
+  });
+});

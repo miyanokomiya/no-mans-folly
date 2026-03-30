@@ -1317,8 +1317,24 @@ describe("newShapeSnapping > testWithSubRect", () => {
         "a",
         {
           linesByRotation: new Map([
-            [Math.PI / 2, [[ { x: 0, y: -500 }, { x: 0, y: 500 } ]]],
-            [0,           [[ { x: -500, y: 0 }, { x: 500, y: 0 } ]]],
+            [
+              Math.PI / 2,
+              [
+                [
+                  { x: 0, y: -500 },
+                  { x: 0, y: 500 },
+                ],
+              ],
+            ],
+            [
+              0,
+              [
+                [
+                  { x: -500, y: 0 },
+                  { x: 500, y: 0 },
+                ],
+              ],
+            ],
           ]),
         },
       ],
@@ -1326,8 +1342,24 @@ describe("newShapeSnapping > testWithSubRect", () => {
         "b",
         {
           linesByRotation: new Map([
-            [Math.PI / 2, [[ { x: 100, y: -500 }, { x: 100, y: 500 } ]]],
-            [0,           [[ { x: -500, y: 100 }, { x: 500, y: 100 } ]]],
+            [
+              Math.PI / 2,
+              [
+                [
+                  { x: 100, y: -500 },
+                  { x: 100, y: 500 },
+                ],
+              ],
+            ],
+            [
+              0,
+              [
+                [
+                  { x: -500, y: 100 },
+                  { x: 500, y: 100 },
+                ],
+              ],
+            ],
           ]),
         },
       ],
@@ -1342,7 +1374,7 @@ describe("newShapeSnapping > testWithSubRect", () => {
   test("should pick the result with the smaller diff magnitude", () => {
     // main snaps to x=0 with diff.x=3, sub snaps to x=100 with diff.x=1 — sub wins
     const main = { rect: { x: -3, y: 40, width: 10, height: 10 } };
-    const sub  = { rect: { x: 99, y: 40, width: 10, height: 10 } };
+    const sub = { rect: { x: 99, y: 40, width: 10, height: 10 } };
     const result = snapping.testWithSubRect(main, sub);
     expect(result?.diff.x).toBeCloseTo(1);
     expect(result?.targets.some((t) => t.id === "b")).toBe(true);
@@ -1351,7 +1383,7 @@ describe("newShapeSnapping > testWithSubRect", () => {
   test("should pick main result when it has the smaller diff", () => {
     // main snaps to x=0 with diff.x=1, sub snaps to x=100 with diff.x=3 — main wins
     const main = { rect: { x: -1, y: 40, width: 10, height: 10 } };
-    const sub  = { rect: { x: 97, y: 40, width: 10, height: 10 } };
+    const sub = { rect: { x: 97, y: 40, width: 10, height: 10 } };
     const result = snapping.testWithSubRect(main, sub);
     expect(result?.diff.x).toBeCloseTo(1);
     expect(result?.targets.some((t) => t.id === "a")).toBe(true);
@@ -1360,7 +1392,7 @@ describe("newShapeSnapping > testWithSubRect", () => {
   test("should return whichever result snaps when only one does", () => {
     // sub is far from any snap line, main snaps
     const main = { rect: { x: -3, y: 40, width: 10, height: 10 } };
-    const sub  = { rect: { x: 500, y: 500, width: 10, height: 10 } };
+    const sub = { rect: { x: 500, y: 500, width: 10, height: 10 } };
     const result = snapping.testWithSubRect(main, sub);
     expect(result?.targets.some((t) => t.id === "a")).toBe(true);
   });

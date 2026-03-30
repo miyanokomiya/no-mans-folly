@@ -27,6 +27,7 @@ import {
   getGeneralArcBounds,
   getRotateFn,
   getRotatedRectAffine,
+  normalizeLineRotation,
   getRotatedWrapperRectAt,
   getWrapperRect,
   isOnDonutArc,
@@ -39,6 +40,7 @@ import { EllipseShape, struct as ellipseStruct } from "./ellipse";
 import { pickMinItem } from "../utils/commons";
 import { CanvasCTX } from "../utils/types";
 import { covertEllipseToBezier } from "../utils/path";
+import { getStandardSnappingLines } from "./utils/snapping";
 
 export type ArcShape = EllipseShape & {
   // The arc is always drawn clockwisely "from" -> "to".
@@ -298,6 +300,43 @@ export const struct: ShapeStruct<ArcShape> = {
     }
 
     return (rotatedClosest?.[2] ?? 0) + shape.rotation;
+  },
+  getSnappingLines(shape) {
+    const r = { x: shape.rx, y: shape.ry };
+    const center = add(shape.p, r);
+    const holeRate = getHoleRate(shape);
+    const rotateFn = getRotateFn(shape.rotation, center);
+    const wrapperRect = ellipseStruct.getWrapperRect(shape);
+    const localRectPolygon = ellipseStruct.getLocalRectPolygon(shape);
+    const { linesByRotation } = getStandardSnappingLines(wrapperRect, localRectPolygon, shape.rotation);
+
+    const fromV = { x: r.x * Math.cos(shape.from), y: r.y * Math.sin(shape.from) };
+    const toV = { x: r.x * Math.cos(shape.to), y: r.y * Math.sin(shape.to) };
+    const fromP = add(center, fromV);
+    const toP = add(center, toV);
+
+    const localSegments: ISegment[] = holeRate
+      ? [
+          [add(center, multi(fromV, holeRate)), fromP],
+          [add(center, multi(toV, holeRate)), toP],
+        ]
+      : [
+          [center, fromP],
+          [center, toP],
+        ];
+
+    localSegments.forEach((seg) => {
+      const worldSeg: ISegment = [rotateFn(seg[0]), rotateFn(seg[1])];
+      const angle = normalizeLineRotation(getRadian(worldSeg[1], worldSeg[0]));
+      const existing = linesByRotation.get(angle);
+      if (existing) {
+        existing.push(worldSeg);
+      } else {
+        linesByRotation.set(angle, [worldSeg]);
+      }
+    });
+
+    return { linesByRotation };
   },
   canAttachSmartBranch: false,
   // Prevent having text because text bounds is quite unstable depending on the form of the arc.
