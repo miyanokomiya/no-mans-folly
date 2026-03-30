@@ -19,6 +19,8 @@ import {
 import { RadioSelectInput } from "../atoms/inputs/RadioSelectInput";
 import iconDustbinRed from "../../assets/icons/dustbin_red.svg";
 import iconAdd from "../../assets/icons/add_filled.svg";
+import iconCompoundGrid from "../../assets/icons/shape_compound_grid.svg";
+import iconCompoundGridBi from "../../assets/icons/shape_compound_grid_bi.svg";
 import { NumberInput } from "../atoms/inputs/NumberInput";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { IconButton } from "../atoms/buttons/IconButton";
@@ -197,11 +199,14 @@ export const FloatMenuCompoundGridContent: React.FC<Props & { target: CompoundGr
         onClick={onClickPopupButton}
         defaultDirection={popupDefaultDirection}
       >
-        <div className="w-8 h-8 flex justify-center items-center">
-          <div
-            className="w-1.5 h-9 border rounded-xs rotate-45"
-            style={{ backgroundColor: rednerRGBA(target.stroke.color) }}
-          ></div>
+        <div className="w-8 h-8 p-1">
+          {target.grid.direction === 3 ? (
+            <img src={iconCompoundGridBi} className="" alt="Combound grid" />
+          ) : target.grid.direction === 2 ? (
+            <img src={iconCompoundGrid} className="-rotate-90" alt="Combound grid" />
+          ) : (
+            <img src={iconCompoundGrid} className="" alt="Combound grid" />
+          )}
         </div>
       </PopupButton>
       <div className="h-8 mx-0.5 border"></div>
@@ -246,10 +251,22 @@ export const GridPanel: React.FC<GridPanelProps> = ({
 
   const gridDirectionTypeOptions = useMemo(() => {
     return [
-      { value: "1", element: <img src={iconAdd} className="w-6" alt="Horizontal" /> },
-      { value: "2", element: <img src={iconAdd} className="w-6" alt="Vertical" /> },
-      { value: "3", element: <img src={iconAdd} className="w-6" alt="Horizontal and Vertical" /> },
-    ];
+      {
+        value: "1",
+        element: <img src={iconCompoundGrid} className="w-6" alt="Horizontal" />,
+      },
+      {
+        value: "2",
+        element: <img src={iconCompoundGrid} className="w-6 -rotate-90" alt="Vertical" />,
+      },
+      {
+        value: "3",
+        element: <img src={iconCompoundGridBi} className="w-6" alt="Horizontal and Vertical" />,
+      },
+    ].map(({ value, element }) => ({
+      value,
+      element: <div className="w-8 flex justify-center">{element}</div>,
+    }));
   }, []);
 
   const handleGridDirectionChange = useCallback(
