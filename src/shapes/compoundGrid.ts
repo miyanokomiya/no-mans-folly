@@ -6,7 +6,7 @@ import { ShapeSnappingLines, ShapeStruct, createBaseShape, textContainerModule }
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
 import { groupBy, mapReduce, splitList } from "../utils/commons";
 import { applyDefaultTextStyle, applyLocalSpace } from "../utils/renderer";
-import { ISegment, getRotatedRectAffine, isWithinRange, normalizeLineRotation } from "../utils/geometry";
+import { ISegment, divideSafely, getRotatedRectAffine, isWithinRange, normalizeLineRotation } from "../utils/geometry";
 import { CanvasCTX } from "../utils/types";
 import { SVGElementInfo, renderTransform } from "../utils/svgElements";
 import { colorToHex } from "../utils/color";
@@ -56,9 +56,15 @@ export const struct: ShapeStruct<CompoundGridShape> = {
       fill: arg.fill ?? createFillStyle({ disabled: true }),
       stroke: arg.stroke ?? createStrokeStyle({ width: 2 }),
       width: arg.width ?? 100,
-      height: arg.height ?? 100,
+      height: arg.height ?? 25,
       grid: arg.grid ?? {
-        items: [{ value: 10, scale: 0.5 }, { value: 20, scale: 0.5 }, { value: 10 }],
+        items: [
+          { value: 10, scale: 0.5 },
+          { value: 10, scale: 0.5 },
+          { value: 10, scale: 0.5 },
+          { value: 10, scale: 0.5 },
+          { value: 10, labeled: true },
+        ],
         type: 1,
         direction: 1,
       },
@@ -101,7 +107,8 @@ export const struct: ShapeStruct<CompoundGridShape> = {
 
       const xList = verticalOnly ? [] : resolveGridValues(shape.grid, shape.width);
       const yList = horizontalOnly ? [] : resolveGridValues(shape.grid, shape.height);
-      renderGridLabels(ctx, rect, outlineWidth, shape.stroke, xList, yList);
+      const labelSize = getGridLabelSize(shape);
+      renderGridLabels(ctx, rect, outlineWidth, labelSize, shape.stroke, xList, yList);
     });
   },
   createSVGElementInfo(shape): SVGElementInfo | undefined {
@@ -116,8 +123,9 @@ export const struct: ShapeStruct<CompoundGridShape> = {
     const xList = verticalOnly ? [] : resolveGridValues(shape.grid, shape.width);
     const yList = horizontalOnly ? [] : resolveGridValues(shape.grid, shape.height);
 
-    const layout = computeGridLabelLayout(shape.width, shape.height, outlineWidth, xList, yList);
-    const { labelSize, clipRects, xLabels, yLabels } = layout;
+    const labelSize = getGridLabelSize(shape);
+    const layout = computeGridLabelLayout(shape.width, shape.height, outlineWidth, labelSize, xList, yList);
+    const { clipRects, xLabels, yLabels } = layout;
 
     const children: SVGElementInfo[] = [];
     const rectToPathStr = ({ x, y, width, height }: IRectangle) => `M ${x} ${y} h ${width} v ${height} h ${-width} Z`;
@@ -367,7 +375,6 @@ function getOutlineWidth(shape: CompoundGridShape): number {
 }
 
 type GridLabelLayout = {
-  labelSize: number;
   clipRects: { area: IRectangle; h?: IRectangle; v?: IRectangle };
   xLabels: { v: number; fontSize: number }[];
   yLabels: { v: number; fontSize: number }[];
@@ -377,18 +384,10 @@ function computeGridLabelLayout(
   width: number,
   height: number,
   outlineWidth: number,
+  labelSize: number,
   xList: ResolvedGridValue[],
   yList: ResolvedGridValue[],
 ): GridLabelLayout {
-  let maxValue = 0;
-  xList.forEach(({ v }, i) => {
-    maxValue = Math.max(v - (0 < i ? xList[i - 1].v : 0), maxValue);
-  });
-  yList.forEach(({ v }, i) => {
-    maxValue = Math.max(v - (0 < i ? yList[i - 1].v : 0), maxValue);
-  });
-
-  const labelSize = Math.min(width * 0.3, height * 0.3, maxValue * 0.4);
   const clipRects: GridLabelLayout["clipRects"] = {
     area: {
       x: -outlineWidth,
@@ -428,19 +427,20 @@ function computeGridLabelLayout(
       yLabels.push({ v, fontSize: Math.min(labelSize, d * 0.5) });
     });
 
-  return { labelSize, clipRects, xLabels, yLabels };
+  return { clipRects, xLabels, yLabels };
 }
 
 function renderGridLabels(
   ctx: CanvasCTX,
   rectSize: Size,
   outlineWidth: number,
+  labelSize: number,
   stroke: StrokeStyle,
   xList: ResolvedGridValue[],
   yList: ResolvedGridValue[],
 ) {
-  const layout = computeGridLabelLayout(rectSize.width, rectSize.height, outlineWidth, xList, yList);
-  const { labelSize, clipRects } = layout;
+  const layout = computeGridLabelLayout(rectSize.width, rectSize.height, outlineWidth, labelSize, xList, yList);
+  const { clipRects } = layout;
 
   ctx.save();
   const clipout = newClipoutRenderer({
@@ -531,4 +531,10 @@ function renderYGroups(ctx: CanvasCTX, rectSize: Size, stroke: StrokeStyle, yLis
     });
     ctx.stroke();
   });
+}
+
+function getGridLabelSize(shape: CompoundGridShape): number {
+  const sum = shape.grid.items.reduce((sum, item) => sum + item.value, 0);
+  const ave = divideSafely(sum, shape.grid.items.length, shape.width);
+  return Math.min(shape.width * 0.3, shape.height * 0.3, ave * 0.5);
 }
