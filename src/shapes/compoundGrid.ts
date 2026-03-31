@@ -1,15 +1,16 @@
-import { IVec2, MINVALUE } from "okageo";
-import { Color, Shape, Size } from "../models";
+import { IRectangle, IVec2, MINVALUE } from "okageo";
+import { Shape, Size, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeSnappingLines, ShapeStruct, createBaseShape, textContainerModule } from "./core";
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
-import { groupBy, mapReduce } from "../utils/commons";
+import { groupBy, mapReduce, splitList } from "../utils/commons";
 import { applyDefaultTextStyle, applyLocalSpace } from "../utils/renderer";
-import { ISegment, getRotatedRectAffine, normalizeLineRotation } from "../utils/geometry";
+import { ISegment, getRotatedRectAffine, isWithinRange, normalizeLineRotation } from "../utils/geometry";
 import { CanvasCTX } from "../utils/types";
 import { SVGElementInfo, renderTransform } from "../utils/svgElements";
 import { colorToHex } from "../utils/color";
+import { newClipoutRenderer, newSVGClipoutRenderer } from "../composables/clipRenderer";
 
 /**
  * 1: Absolute distance: [10, 20] represents "10px, 20px" repeat
@@ -27,6 +28,7 @@ export type GridDirection = 1 | 2 | 3;
 export type GridItem = {
   value: number;
   scale?: number;
+  labeled?: boolean;
 };
 
 export type CompoundGrid = {
@@ -79,7 +81,6 @@ export const struct: ShapeStruct<CompoundGridShape> = {
       const horizontalOnly = shape.grid.direction === 1;
       const verticalOnly = shape.grid.direction === 2;
       const outlineWidth = getOutlineWidth(shape);
-      const baseStrokeWidth = getStrokeWidth(shape.stroke);
 
       if (outlineWidth > 0) {
         applyStrokeStyle(ctx, {
@@ -100,42 +101,7 @@ export const struct: ShapeStruct<CompoundGridShape> = {
 
       const xList = verticalOnly ? [] : resolveGridValues(shape.grid, shape.width);
       const yList = horizontalOnly ? [] : resolveGridValues(shape.grid, shape.height);
-
-      renderGridLabels(ctx, rect, outlineWidth, shape.stroke.color, xList, yList, () => {
-        const xGroups = groupBy(xList, (v) => v.scale);
-        const yGroups = groupBy(yList, (v) => v.scale);
-
-        Object.values(xGroups).forEach((group) => {
-          const lineScale = group[0].scale;
-          if (lineScale <= 0) return;
-
-          applyStrokeStyle(ctx, {
-            ...shape.stroke,
-            width: baseStrokeWidth * lineScale,
-          });
-          ctx.beginPath();
-          group.forEach(({ v }) => {
-            ctx.moveTo(v, 0);
-            ctx.lineTo(v, shape.height);
-          });
-          ctx.stroke();
-        });
-        Object.values(yGroups).forEach((group) => {
-          const lineScale = group[0].scale;
-          if (lineScale <= 0) return;
-
-          applyStrokeStyle(ctx, {
-            ...shape.stroke,
-            width: baseStrokeWidth * lineScale,
-          });
-          ctx.beginPath();
-          group.forEach(({ v }) => {
-            ctx.moveTo(0, v);
-            ctx.lineTo(shape.width, v);
-          });
-          ctx.stroke();
-        });
-      });
+      renderGridLabels(ctx, rect, outlineWidth, shape.stroke, xList, yList);
     });
   },
   createSVGElementInfo(shape): SVGElementInfo | undefined {
@@ -154,16 +120,16 @@ export const struct: ShapeStruct<CompoundGridShape> = {
     const { labelSize, clipRects, xLabels, yLabels } = layout;
 
     const children: SVGElementInfo[] = [];
+    const rectToPathStr = ({ x, y, width, height }: IRectangle) => `M ${x} ${y} h ${width} v ${height} h ${-width} Z`;
 
-    const clipId = `grid-clip-${shape.id}`;
-    const clipD = clipRects
-      .map(({ x, y, width, height }) => `M ${x} ${y} h ${width} v ${height} h ${-width} Z`)
-      .join(" ");
-    children.push({
-      tag: "clipPath",
-      attributes: { id: clipId },
-      children: [{ tag: "path", attributes: { d: clipD, "clip-rule": "evenodd" } }],
+    const svgClipout = newSVGClipoutRenderer({
+      clipId: `grid-clip-${shape.id}`,
+      rangeStr: rectToPathStr(clipRects.area),
     });
+    if (clipRects.h) svgClipout.applyClip([rectToPathStr(clipRects.h)]);
+    if (clipRects.v) svgClipout.applyClip([rectToPathStr(clipRects.v)]);
+
+    children.push(...svgClipout.getClipElementList());
 
     if (!shape.fill.disabled) {
       children.push({
@@ -193,38 +159,66 @@ export const struct: ShapeStruct<CompoundGridShape> = {
       }
     }
 
-    const gridLineChildren: SVGElementInfo[] = [];
-    const xGroups = groupBy(xList, (v) => v.scale);
-    const yGroups = groupBy(yList, (v) => v.scale);
+    const xListByLabeled = splitList(
+      xList,
+      (v) => !!v.labeled || (yList.length > 0 && isWithinRange(labelSize, labelSize * 2, v.v)),
+    );
+    const yListByLabeled = splitList(
+      yList,
+      (v) => !!v.labeled || (xList.length > 0 && isWithinRange(labelSize, labelSize * 2, v.v)),
+    );
 
-    Object.values(xGroups).forEach((group) => {
-      const lineScale = group[0].scale;
-      if (lineScale <= 0) return;
-      const d = group.map(({ v }) => `M ${v} 0 L ${v} ${shape.height}`).join(" ");
-      gridLineChildren.push({
-        tag: "path",
-        attributes: {
-          d,
-          fill: "none",
-          ...renderStrokeSVGAttributes({ ...shape.stroke, width: baseStrokeWidth * lineScale }),
-        },
+    const buildXPathElements = (list: ResolvedGridValue[]): SVGElementInfo[] =>
+      Object.values(groupBy(list, (v) => v.scale)).flatMap((group) => {
+        const lineScale = group[0].scale;
+        if (lineScale <= 0) return [];
+        const d = group.map(({ v }) => `M ${v} 0 L ${v} ${shape.height}`).join(" ");
+        return [
+          {
+            tag: "path" as const,
+            attributes: {
+              d,
+              fill: "none",
+              ...renderStrokeSVGAttributes({ ...shape.stroke, width: baseStrokeWidth * lineScale }),
+            },
+          },
+        ];
       });
-    });
-    Object.values(yGroups).forEach((group) => {
-      const lineScale = group[0].scale;
-      if (lineScale <= 0) return;
-      const d = group.map(({ v }) => `M 0 ${v} L ${shape.width} ${v}`).join(" ");
-      gridLineChildren.push({
-        tag: "path",
-        attributes: {
-          d,
-          fill: "none",
-          ...renderStrokeSVGAttributes({ ...shape.stroke, width: baseStrokeWidth * lineScale }),
-        },
+    const buildYPathElements = (list: ResolvedGridValue[]): SVGElementInfo[] =>
+      Object.values(groupBy(list, (v) => v.scale)).flatMap((group) => {
+        const lineScale = group[0].scale;
+        if (lineScale <= 0) return [];
+        const d = group.map(({ v }) => `M 0 ${v} L ${shape.width} ${v}`).join(" ");
+        return [
+          {
+            tag: "path" as const,
+            attributes: {
+              d,
+              fill: "none",
+              ...renderStrokeSVGAttributes({ ...shape.stroke, width: baseStrokeWidth * lineScale }),
+            },
+          },
+        ];
       });
+
+    const currentClipId = svgClipout.getCurrentClipId();
+    const clippedLineChildren: SVGElementInfo[] = [
+      ...buildXPathElements(xListByLabeled[0]),
+      ...buildYPathElements(yListByLabeled[0]),
+    ];
+    children.push({
+      tag: "g",
+      attributes: currentClipId ? { "clip-path": `url(#${currentClipId})` } : undefined,
+      children: clippedLineChildren,
     });
 
-    children.push({ tag: "g", attributes: { "clip-path": `url(#${clipId})` }, children: gridLineChildren });
+    const labeledLineChildren: SVGElementInfo[] = [
+      ...buildXPathElements(xListByLabeled[1]),
+      ...buildYPathElements(yListByLabeled[1]),
+    ];
+    if (labeledLineChildren.length > 0) {
+      children.push({ tag: "g", children: labeledLineChildren });
+    }
 
     const strokeColorHex = colorToHex(shape.stroke.color);
     const strokeColorAlpha = shape.stroke.color.a !== 1 ? shape.stroke.color.a : undefined;
@@ -232,18 +226,18 @@ export const struct: ShapeStruct<CompoundGridShape> = {
     const xLabelGroup: SVGElementInfo = {
       tag: "g",
       attributes: {
+        "text-anchor": "end",
         "dominant-baseline": "middle",
         fill: strokeColorHex,
         "fill-opacity": strokeColorAlpha,
         stroke: "none",
       },
-      children: xLabels.map(({ v, fontSize, textAnchor }) => ({
+      children: xLabels.map(({ v, fontSize }) => ({
         tag: "text",
         attributes: {
           x: v,
           y: labelSize * 1.5,
           "font-size": fontSize,
-          "text-anchor": textAnchor,
         },
         children: [`${v}`],
       })),
@@ -325,7 +319,7 @@ export function isCompoundGridShape(shape: Shape): shape is CompoundGridShape {
 /**
  * v: Represents absolute distance
  */
-type ResolvedGridValue = { v: number; scale: number };
+type ResolvedGridValue = { v: number; scale: number; labeled?: boolean };
 
 /**
  * Returned list contains neither "0" nor "bound".
@@ -343,7 +337,7 @@ function resolveGridValues(grid: CompoundGrid, bound: number): ResolvedGridValue
       const totalValue = items.reduce((sum, v) => sum + v.value, 0);
       items.forEach((v) => {
         total += (bound * v.value) / totalValue;
-        list.push({ v: total, scale: v.scale ?? 1 });
+        list.push({ v: total, scale: v.scale ?? 1, labeled: v.labeled });
       });
       break;
     }
@@ -356,7 +350,7 @@ function resolveGridValues(grid: CompoundGrid, bound: number): ResolvedGridValue
         // Accept small error to include the last value
         if (bound + MINVALUE < total) break;
 
-        list.push({ v: total, scale: item.scale ?? 1 });
+        list.push({ v: total, scale: item.scale ?? 1, labeled: item.labeled });
         gridIndex = (gridIndex + 1) % items.length;
       }
       break;
@@ -374,8 +368,8 @@ function getOutlineWidth(shape: CompoundGridShape): number {
 
 type GridLabelLayout = {
   labelSize: number;
-  clipRects: { x: number; y: number; width: number; height: number }[];
-  xLabels: { v: number; fontSize: number; textAnchor: "middle" | "end" }[];
+  clipRects: { area: IRectangle; h?: IRectangle; v?: IRectangle };
+  xLabels: { v: number; fontSize: number }[];
   yLabels: { v: number; fontSize: number }[];
 };
 
@@ -395,36 +389,44 @@ function computeGridLabelLayout(
   });
 
   const labelSize = Math.min(width * 0.3, height * 0.3, maxValue * 0.4);
-  const clipRects: GridLabelLayout["clipRects"] = [
-    { x: -outlineWidth, y: -outlineWidth, width: width + outlineWidth * 2, height: height + outlineWidth * 2 },
-  ];
+  const clipRects: GridLabelLayout["clipRects"] = {
+    area: {
+      x: -outlineWidth,
+      y: -outlineWidth,
+      width: width + outlineWidth * 2,
+      height: height + outlineWidth * 2,
+    },
+  };
 
   if (xList.length > 0) {
     if (yList.length > 0) {
-      clipRects.push({ x: labelSize / 2, y: labelSize, width, height: labelSize });
+      clipRects.h = { x: labelSize / 2, y: labelSize, width, height: labelSize };
     } else {
-      clipRects.push({ x: outlineWidth, y: labelSize, width, height: labelSize });
+      clipRects.h = { x: outlineWidth, y: labelSize, width, height: labelSize };
     }
   }
   if (yList.length > 0) {
     if (xList.length > 0) {
-      clipRects.push({ x: labelSize, y: labelSize * 2, width: labelSize, height });
+      clipRects.v = { x: labelSize, y: labelSize / 2, width: labelSize, height };
     } else {
-      clipRects.push({ x: labelSize, y: outlineWidth, width: labelSize, height });
+      clipRects.v = { x: labelSize, y: outlineWidth, width: labelSize, height };
     }
   }
 
-  const xLabels: GridLabelLayout["xLabels"] = xList.map(({ v }, i) => {
-    const d = v - (0 < i ? xList[i - 1].v : 0);
-    return { v, fontSize: Math.min(labelSize, d * 0.5), textAnchor: i === 0 && yList.length > 0 ? "middle" : "end" };
-  });
+  const xLabels: GridLabelLayout["xLabels"] = xList
+    .filter(({ labeled }) => labeled)
+    .map(({ v }, i) => {
+      const d = v - (0 < i ? xList[i - 1].v : 0);
+      return { v, fontSize: Math.min(labelSize, d * 0.5) };
+    });
 
   const yLabels: GridLabelLayout["yLabels"] = [];
-  yList.forEach(({ v }, i) => {
-    if (i === 0 && xList.length > 0) return;
-    const d = v - (0 < i ? yList[i - 1].v : 0);
-    yLabels.push({ v, fontSize: Math.min(labelSize, d * 0.5) });
-  });
+  yList
+    .filter(({ labeled }) => labeled)
+    .forEach(({ v }, i) => {
+      const d = v - (0 < i ? yList[i - 1].v : 0);
+      yLabels.push({ v, fontSize: Math.min(labelSize, d * 0.5) });
+    });
 
   return { labelSize, clipRects, xLabels, yLabels };
 }
@@ -433,33 +435,100 @@ function renderGridLabels(
   ctx: CanvasCTX,
   rectSize: Size,
   outlineWidth: number,
-  color: Color,
+  stroke: StrokeStyle,
   xList: ResolvedGridValue[],
   yList: ResolvedGridValue[],
-  renderGrid: () => void,
 ) {
   const layout = computeGridLabelLayout(rectSize.width, rectSize.height, outlineWidth, xList, yList);
   const { labelSize, clipRects } = layout;
 
-  const clipRegionForGrid = new Path2D();
-  clipRects.forEach(({ x, y, width, height }) => clipRegionForGrid.rect(x, y, width, height));
-
   ctx.save();
-  ctx.clip(clipRegionForGrid, "evenodd");
-  renderGrid();
+  const clipout = newClipoutRenderer({
+    ctx,
+    fillRange: (region) => {
+      region.rect(clipRects.area.x, clipRects.area.y, clipRects.area.width, clipRects.area.height);
+    },
+  });
+  if (clipRects.h) {
+    clipout.applyClip((region) => {
+      region.rect(clipRects.h!.x, clipRects.h!.y, clipRects.h!.width, clipRects.h!.height);
+    });
+  }
+  if (clipRects.v) {
+    clipout.applyClip((region) => {
+      region.rect(clipRects.v!.x, clipRects.v!.y, clipRects.v!.width, clipRects.v!.height);
+    });
+  }
+
+  const xListByLabeled = splitList(
+    xList,
+    (v) => !!v.labeled || (yList.length > 0 && isWithinRange(labelSize, labelSize * 2, v.v)),
+  );
+  const yListByLabeled = splitList(
+    yList,
+    (v) => !!v.labeled || (xList.length > 0 && isWithinRange(labelSize, labelSize * 2, v.v)),
+  );
+
+  renderXGroups(ctx, rectSize, stroke, xListByLabeled[0]);
+  renderYGroups(ctx, rectSize, stroke, yListByLabeled[0]);
   ctx.restore();
 
-  layout.xLabels.forEach(({ v, fontSize, textAnchor }) => {
-    applyDefaultTextStyle(ctx, fontSize, textAnchor === "middle" ? "center" : "right", true);
-    applyFillStyle(ctx, { color });
+  renderXGroups(ctx, rectSize, stroke, xListByLabeled[1]);
+  renderYGroups(ctx, rectSize, stroke, yListByLabeled[1]);
+
+  layout.xLabels.forEach(({ v, fontSize }) => {
+    applyDefaultTextStyle(ctx, fontSize, "right", true);
+    applyFillStyle(ctx, { color: stroke.color });
     ctx.beginPath();
     ctx.fillText(`${v}`, v, labelSize * 1.5);
   });
 
   layout.yLabels.forEach(({ v, fontSize }) => {
     applyDefaultTextStyle(ctx, fontSize, "center");
-    applyFillStyle(ctx, { color });
+    applyFillStyle(ctx, { color: stroke.color });
     ctx.beginPath();
     ctx.fillText(`${v}`, labelSize * 1.5, v);
+  });
+}
+
+function renderXGroups(ctx: CanvasCTX, rectSize: Size, stroke: StrokeStyle, xList: ResolvedGridValue[]) {
+  const xGroups = groupBy(xList, (v) => v.scale);
+  const baseStrokeWidth = getStrokeWidth(stroke);
+
+  Object.values(xGroups).forEach((group) => {
+    const lineScale = group[0].scale;
+    if (lineScale <= 0) return;
+
+    applyStrokeStyle(ctx, {
+      ...stroke,
+      width: baseStrokeWidth * lineScale,
+    });
+    ctx.beginPath();
+    group.forEach(({ v }) => {
+      ctx.moveTo(v, 0);
+      ctx.lineTo(v, rectSize.height);
+    });
+    ctx.stroke();
+  });
+}
+
+function renderYGroups(ctx: CanvasCTX, rectSize: Size, stroke: StrokeStyle, yList: ResolvedGridValue[]) {
+  const yGroups = groupBy(yList, (v) => v.scale);
+  const baseStrokeWidth = getStrokeWidth(stroke);
+
+  Object.values(yGroups).forEach((group) => {
+    const lineScale = group[0].scale;
+    if (lineScale <= 0) return;
+
+    applyStrokeStyle(ctx, {
+      ...stroke,
+      width: baseStrokeWidth * lineScale,
+    });
+    ctx.beginPath();
+    group.forEach(({ v }) => {
+      ctx.moveTo(0, v);
+      ctx.lineTo(rectSize.width, v);
+    });
+    ctx.stroke();
   });
 }

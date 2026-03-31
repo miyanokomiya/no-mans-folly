@@ -25,6 +25,7 @@ import { NumberInput } from "../atoms/inputs/NumberInput";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { IconButton } from "../atoms/buttons/IconButton";
 import { InlineField } from "../atoms/InlineField";
+import { ToggleInput } from "../atoms/inputs/ToggleInput";
 
 const popupDefaultDirection: PopupDirection = "top";
 
@@ -324,6 +325,7 @@ export const GridPanel: React.FC<GridPanelProps> = ({
             />
           </div>
           <span className="w-20">Thickness</span>
+          <span className="w-16">Labeled</span>
         </li>
         {grid.items.map((item, i) => (
           <li key={i}>
@@ -368,6 +370,13 @@ const GridListItem: React.FC<GridItemProps> = ({ index, item, onChange, onAdd, o
     [index, item, onChange],
   );
 
+  const handleLabeledChange = useCallback(
+    (labeled: boolean) => {
+      onChange?.(index, { ...item, labeled });
+    },
+    [index, item, onChange],
+  );
+
   const handleAdd = useCallback(() => {
     onAdd?.(index, item);
   }, [index, item, onAdd]);
@@ -383,6 +392,9 @@ const GridListItem: React.FC<GridItemProps> = ({ index, item, onChange, onAdd, o
       </div>
       <div className="w-20">
         <SliderInput min={0} max={1} step={0.1} value={item.scale ?? 1} onChanged={handleScaleChange} showValue />
+      </div>
+      <div className="w-16">
+        <ToggleInput value={item.labeled} onChange={handleLabeledChange} />
       </div>
       <IconButton icon={iconAdd} size={8} alt="Add" onClick={handleAdd} />
       <IconButton icon={iconDustbinRed} size={8} alt="Delete" onClick={handleDelete} />
