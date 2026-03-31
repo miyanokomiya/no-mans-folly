@@ -16,6 +16,7 @@ import { newVectorsSnapping, renderVectorSnappingResult, VectorSnappingsResult }
 import { handleCommonWheel } from "../../commons";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
+import { renderMovingBoundsHighlight } from "../utils/highlight";
 
 interface Option {
   lineShape: LineShape;
@@ -198,6 +199,12 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
         renderCtx.beginPath();
         renderCtx.arc(targetSegment[1].x, targetSegment[1].y, vertexSize, 0, TAU);
         renderCtx.fill();
+      });
+
+      renderMovingBoundsHighlight(renderCtx, {
+        style,
+        scale,
+        movingRect: getOuterRectangle([segment]),
       });
 
       const line = ctx.getShapeComposite().mergedShapeMap[option.lineShape.id] as LineShape;

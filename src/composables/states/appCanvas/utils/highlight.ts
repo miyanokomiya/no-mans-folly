@@ -41,3 +41,23 @@ export function renderMovingHighlight(
     }
   });
 }
+
+export function renderMovingBoundsHighlight(
+  ctx: CanvasCTX,
+  {
+    style,
+    scale,
+    movingRect,
+  }: {
+    style: StyleScheme;
+    scale: number;
+    movingRect: IRectangle;
+  },
+) {
+  scaleGlobalAlpha(ctx, 0.7, () => {
+    const strokeWidth = (style.selectionLineWidth * scale) / 2;
+    applyStrokeStyle(ctx, { color: style.selectionPrimary, width: strokeWidth });
+    ctx.beginPath();
+    ctx.strokeRect(movingRect.x, movingRect.y, movingRect.width, movingRect.height);
+  });
+}
