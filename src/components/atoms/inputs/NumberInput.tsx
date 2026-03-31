@@ -6,6 +6,8 @@ import { isPointerLockAvailable } from "../../../utils/devices";
 
 interface Props {
   value: number;
+  // Editing by the text field always sets "draft = true".
+  // Set "onBlur" to handle the field edited.
   onChange?: (val: number, draft?: boolean) => void;
   onBlur?: () => void;
   autofocus?: boolean;

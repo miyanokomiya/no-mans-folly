@@ -357,6 +357,10 @@ const GridListItem: React.FC<GridItemProps> = ({ index, item, onChange, onAdd, o
     [index, item, onChange],
   );
 
+  const handleValueCommit = useCallback(() => {
+    onChange?.(index, item);
+  }, [index, item, onChange]);
+
   const handleScaleChange = useCallback(
     (scale: number, draft = false) => {
       onChange?.(index, { ...item, scale: scale }, draft);
@@ -375,7 +379,7 @@ const GridListItem: React.FC<GridItemProps> = ({ index, item, onChange, onAdd, o
   return (
     <div className="flex items-center gap-2">
       <div className="w-26">
-        <NumberInput min={0} value={item.value} onChange={handleValueChange} slider />
+        <NumberInput min={0} value={item.value} onChange={handleValueChange} onBlur={handleValueCommit} slider />
       </div>
       <div className="w-20">
         <SliderInput min={0} max={1} step={0.1} value={item.scale ?? 1} onChanged={handleScaleChange} showValue />
