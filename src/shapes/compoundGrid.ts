@@ -1,12 +1,13 @@
-import { IVec2 } from "okageo";
-import { Shape } from "../models";
+import { IVec2, MINVALUE } from "okageo";
+import { Color, Shape, Size } from "../models";
 import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
 import { ShapeSnappingLines, ShapeStruct, createBaseShape, textContainerModule } from "./core";
 import { RectangleShape, struct as recntagleStruct } from "./rectangle";
 import { groupBy, mapReduce } from "../utils/commons";
-import { applyLocalSpace } from "../utils/renderer";
+import { applyDefaultTextStyle, applyLocalSpace } from "../utils/renderer";
 import { ISegment, normalizeLineRotation } from "../utils/geometry";
+import { CanvasCTX } from "../utils/types";
 
 /**
  * 1: Absolute distance: [10, 20] represents "10px, 20px" repeat
@@ -75,8 +76,9 @@ export const struct: ShapeStruct<CompoundGridShape> = {
 
       const horizontalOnly = shape.grid.direction === 1;
       const verticalOnly = shape.grid.direction === 2;
-
       const outlineWidth = getOutlineWidth(shape);
+      const baseStrokeWidth = getStrokeWidth(shape.stroke);
+
       if (outlineWidth > 0) {
         applyStrokeStyle(ctx, {
           ...shape.stroke,
@@ -96,38 +98,41 @@ export const struct: ShapeStruct<CompoundGridShape> = {
 
       const xList = verticalOnly ? [] : resolveGridValues(shape.grid, shape.width);
       const yList = horizontalOnly ? [] : resolveGridValues(shape.grid, shape.height);
-      const xGroups = groupBy(xList, (v) => v.scale);
-      const yGroups = groupBy(yList, (v) => v.scale);
 
-      Object.values(xGroups).forEach((group) => {
-        const lineScale = group[0].scale;
-        if (lineScale <= 0) return;
+      renderGridLabels(ctx, rect, outlineWidth, shape.stroke.color, xList, yList, () => {
+        const xGroups = groupBy(xList, (v) => v.scale);
+        const yGroups = groupBy(yList, (v) => v.scale);
 
-        applyStrokeStyle(ctx, {
-          ...shape.stroke,
-          width: getStrokeWidth(shape.stroke) * lineScale,
-        });
-        ctx.beginPath();
-        group.forEach(({ v }) => {
-          ctx.moveTo(v, 0);
-          ctx.lineTo(v, shape.height);
-        });
-        ctx.stroke();
-      });
-      Object.values(yGroups).forEach((group) => {
-        const lineScale = group[0].scale;
-        if (lineScale <= 0) return;
+        Object.values(xGroups).forEach((group) => {
+          const lineScale = group[0].scale;
+          if (lineScale <= 0) return;
 
-        applyStrokeStyle(ctx, {
-          ...shape.stroke,
-          width: getStrokeWidth(shape.stroke) * lineScale,
+          applyStrokeStyle(ctx, {
+            ...shape.stroke,
+            width: baseStrokeWidth * lineScale,
+          });
+          ctx.beginPath();
+          group.forEach(({ v }) => {
+            ctx.moveTo(v, 0);
+            ctx.lineTo(v, shape.height);
+          });
+          ctx.stroke();
         });
-        ctx.beginPath();
-        group.forEach(({ v }) => {
-          ctx.moveTo(0, v);
-          ctx.lineTo(shape.width, v);
+        Object.values(yGroups).forEach((group) => {
+          const lineScale = group[0].scale;
+          if (lineScale <= 0) return;
+
+          applyStrokeStyle(ctx, {
+            ...shape.stroke,
+            width: baseStrokeWidth * lineScale,
+          });
+          ctx.beginPath();
+          group.forEach(({ v }) => {
+            ctx.moveTo(0, v);
+            ctx.lineTo(shape.width, v);
+          });
+          ctx.stroke();
         });
-        ctx.stroke();
       });
     });
   },
@@ -180,10 +185,15 @@ export function isCompoundGridShape(shape: Shape): shape is CompoundGridShape {
 }
 
 /**
+ * v: Represents absolute distance
+ */
+type ResolvedGridValue = { v: number; scale: number };
+
+/**
  * Returned list contains neither "0" nor "bound".
  * Each value in the returned list represents absolute distance.
  */
-function resolveGridValues(grid: CompoundGrid, bound: number): { v: number; scale: number }[] {
+function resolveGridValues(grid: CompoundGrid, bound: number): ResolvedGridValue[] {
   const items = grid.items.filter((v) => v.value >= 0);
   if (items.length === 0) return [];
 
@@ -201,10 +211,12 @@ function resolveGridValues(grid: CompoundGrid, bound: number): { v: number; scal
     }
     default: {
       let gridIndex = 0;
-      while (total < bound) {
+      // Avoid too many lines: a line for each pixel should be more than enough
+      while (list.length < bound) {
         const item = items[gridIndex];
         total += item.value;
-        if (bound < total) break;
+        // Accept small error to include the last value
+        if (bound + MINVALUE < total) break;
 
         list.push({ v: total, scale: item.scale ?? 1 });
         gridIndex = (gridIndex + 1) % items.length;
@@ -220,4 +232,72 @@ function getOutlineWidth(shape: CompoundGridShape): number {
   const strokeWidth = getStrokeWidth(shape.stroke);
   const lastItem = shape.grid.items.at(-1);
   return lastItem ? strokeWidth * (lastItem.scale ?? 1) : strokeWidth;
+}
+
+function renderGridLabels(
+  ctx: CanvasCTX,
+  rectSize: Size,
+  outlineWidth: number,
+  color: Color,
+  xList: ResolvedGridValue[],
+  yList: ResolvedGridValue[],
+  renderGrid: () => void,
+) {
+  let maxValue = 0;
+  xList.forEach(({ v }, i) => {
+    maxValue = Math.max(v - (0 < i ? xList[i - 1].v : 0), maxValue);
+  });
+  yList.forEach(({ v }, i) => {
+    maxValue = Math.max(v - (0 < i ? yList[i - 1].v : 0), maxValue);
+  });
+
+  const labelSize = Math.min(rectSize.width * 0.3, rectSize.height * 0.3, maxValue * 0.4);
+  const clipRegionForGrid = new Path2D();
+  clipRegionForGrid.rect(
+    -outlineWidth,
+    -outlineWidth,
+    rectSize.width + outlineWidth * 2,
+    rectSize.height + outlineWidth * 2,
+  );
+
+  if (xList.length > 0) {
+    if (yList.length > 0) {
+      clipRegionForGrid.rect(labelSize / 2, labelSize, rectSize.width, labelSize);
+    } else {
+      clipRegionForGrid.rect(outlineWidth, labelSize, rectSize.width, labelSize);
+    }
+  }
+  if (yList.length > 0) {
+    if (xList.length > 0) {
+      clipRegionForGrid.rect(labelSize, labelSize * 2, labelSize, rectSize.height);
+    } else {
+      clipRegionForGrid.rect(labelSize, outlineWidth, labelSize, rectSize.height);
+    }
+  }
+
+  ctx.save();
+  ctx.clip(clipRegionForGrid, "evenodd");
+  renderGrid();
+  ctx.restore();
+
+  if (xList.length > 0) {
+    xList.forEach(({ v }, i) => {
+      const d = v - (0 < i ? xList[i - 1].v : 0);
+      applyDefaultTextStyle(ctx, Math.min(labelSize, d * 0.5), i === 0 && yList.length > 0 ? "center" : "right", true);
+      applyFillStyle(ctx, { color });
+      ctx.beginPath();
+      ctx.fillText(`${v}`, v, labelSize * 1.5);
+    });
+  }
+  if (yList.length > 0) {
+    yList.forEach(({ v }, i) => {
+      if (i === 0 && xList.length > 0) return;
+
+      const d = v - (0 < i ? yList[i - 1].v : 0);
+      applyDefaultTextStyle(ctx, Math.min(labelSize, d * 0.5), "center");
+      applyFillStyle(ctx, { color });
+      ctx.beginPath();
+      ctx.fillText(`${v}`, labelSize * 1.5, v);
+    });
+  }
 }
