@@ -7,7 +7,6 @@ import {
   applyAffine,
   getCross,
   getInner,
-  getNorm,
   isOnLine,
   isParallel,
   moveRect,
@@ -943,11 +942,10 @@ export function getSnappingResultForBoundingBoxResizing(
   // Let resized bounding box snap to shapes.
   const snappingResults = boundingBoxPath
     .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p), scale))
-    .filter((r): r is SnappingResult => !!r)
-    .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
-  if (snappingResults.length === 0) return { resizingAffine, snappingResult: undefined };
+    .filter((r): r is SnappingResult => !!r);
+  let snappingResult = pickMinItem(snappingResults, (a) => getD2(a.diff));
+  if (!snappingResult) return { resizingAffine, snappingResult: undefined };
 
-  let snappingResult = snappingResults[0];
   const adjustedD = snappingResult ? add(diff, snappingResult.diff) : diff;
   const movingPointInfoList: [IVec2, IVec2][] = boundingBoxPath.map((p) => [p, applyAffine(resizingAffine, p)]);
   const guidelines = getGuidelinesFromSnappingResult(snappingResult);
@@ -966,21 +964,20 @@ export function getSnappingResultForBoundingBoxResizing(
 
   resizingAffine = result[0];
 
+  const snappedPath = boundingBoxPath.map((p) => applyAffine(resizingAffine, p));
   if (result[2]) {
     // Pick exact target when it's determined.
+    // Pick snapped bounding box points that land on the snapping guideline as anchor points.
+    const anchorPoints = snappedPath.filter((p) => isOnLine(p, result[2]!));
     snappingResult = {
       ...snappingResult,
       ...filterSnappingTargetsBySecondGuideline(snappingResult, result[2]),
+      anchorPoints,
     };
   } else if (resizingAffine) {
     // Need recalculation to get final control lines.
-    const results = boundingBoxPath
-      .map((p) => shapeSnapping.testPoint(applyAffine(resizingAffine, p), scale))
-      .filter((r): r is SnappingResult => !!r)
-      .sort((a, b) => getNorm(a.diff) - getNorm(b.diff));
-    if (results.length > 0) {
-      snappingResult = results[0];
-    }
+    const results = snappedPath.map((p) => shapeSnapping.testPoint(p, scale)).filter((r): r is SnappingResult => !!r);
+    snappingResult = pickMinItem(results, (a) => getD2(a.diff)) ?? snappingResult;
   }
 
   return { resizingAffine, snappingResult };
