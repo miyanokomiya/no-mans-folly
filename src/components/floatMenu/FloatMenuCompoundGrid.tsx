@@ -334,7 +334,7 @@ export const GridPanel: React.FC<GridPanelProps> = ({
               item={item}
               onChange={handleGridItemsChange}
               onAdd={handleAdd}
-              onDelete={handleDelete}
+              onDelete={grid.items.length > 1 ? handleDelete : undefined}
             />
           </li>
         ))}
@@ -397,7 +397,7 @@ const GridListItem: React.FC<GridItemProps> = ({ index, item, onChange, onAdd, o
         <ToggleInput value={item.labeled} onChange={handleLabeledChange} />
       </div>
       <IconButton icon={iconAdd} size={8} alt="Add" onClick={handleAdd} />
-      <IconButton icon={iconDustbinRed} size={8} alt="Delete" onClick={handleDelete} />
+      <IconButton icon={iconDustbinRed} size={8} alt="Delete" onClick={handleDelete} disabled={!onDelete} />
     </div>
   );
 };
