@@ -1,13 +1,13 @@
 import { IVec2 } from "okageo";
 import { useCallback, useContext, useMemo, useState } from "react";
-import { GetAppStateContext } from "../../contexts/AppContext";
-import { FillStyle } from "../../models";
-import { PopupButton, PopupDirection } from "../atoms/PopupButton";
-import { rednerRGBA } from "../../utils/color";
-import { FillPanel } from "./FillPanel";
-import menuIcon from "../../assets/icons/three_dots_v.svg";
-import { useSelectedTmpShape } from "../../hooks/storeHooks";
-import { StrokePanel } from "./StrokePanel";
+import { GetAppStateContext } from "../../../contexts/AppContext";
+import { FillStyle } from "../../../models";
+import { PopupButton, PopupDirection } from "../../atoms/PopupButton";
+import { rednerRGBA } from "../../../utils/color";
+import { FillPanel } from "./../FillPanel";
+import menuIcon from "../../../assets/icons/three_dots_v.svg";
+import { useSelectedTmpShape } from "../../../hooks/storeHooks";
+import { StrokePanel } from "./../StrokePanel";
 import {
   CompoundGrid,
   CompoundGridShape,
@@ -15,17 +15,12 @@ import {
   GridItem,
   GridValueType,
   isCompoundGridShape,
-} from "../../shapes/compoundGrid";
-import { RadioSelectInput } from "../atoms/inputs/RadioSelectInput";
-import iconDustbinRed from "../../assets/icons/dustbin_red.svg";
-import iconAdd from "../../assets/icons/add_filled.svg";
-import iconCompoundGrid from "../../assets/icons/shape_compound_grid.svg";
-import iconCompoundGridBi from "../../assets/icons/shape_compound_grid_bi.svg";
-import { NumberInput } from "../atoms/inputs/NumberInput";
-import { SliderInput } from "../atoms/inputs/SliderInput";
-import { IconButton } from "../atoms/buttons/IconButton";
-import { InlineField } from "../atoms/InlineField";
-import { ToggleInput } from "../atoms/inputs/ToggleInput";
+} from "../../../shapes/compoundGrid";
+import { RadioSelectInput } from "../../atoms/inputs/RadioSelectInput";
+import iconCompoundGrid from "../../../assets/icons/shape_compound_grid.svg";
+import iconCompoundGridBi from "../../../assets/icons/shape_compound_grid_bi.svg";
+import { InlineField } from "../../atoms/InlineField";
+import { GridListItem } from "./GridListItem";
 
 const popupDefaultDirection: PopupDirection = "top";
 
@@ -229,7 +224,7 @@ interface GridPanelProps {
   onGridItemsChange?: (val: GridItem[], draft?: boolean) => void;
 }
 
-export const GridPanel: React.FC<GridPanelProps> = ({
+const GridPanel: React.FC<GridPanelProps> = ({
   grid,
   onGridValueTypeChange,
   onGridDirectionChange,
@@ -339,65 +334,6 @@ export const GridPanel: React.FC<GridPanelProps> = ({
           </li>
         ))}
       </ul>
-    </div>
-  );
-};
-
-interface GridItemProps {
-  index: number;
-  item: GridItem;
-  onChange?: (index: number, val: GridItem, draft?: boolean) => void;
-  onAdd?: (index: number, val: GridItem) => void;
-  onDelete?: (index: number) => void;
-}
-
-const GridListItem: React.FC<GridItemProps> = ({ index, item, onChange, onAdd, onDelete }) => {
-  const handleValueChange = useCallback(
-    (value: number, draft = false) => {
-      onChange?.(index, { ...item, value }, draft);
-    },
-    [index, item, onChange],
-  );
-
-  const handleValueCommit = useCallback(() => {
-    onChange?.(index, item);
-  }, [index, item, onChange]);
-
-  const handleScaleChange = useCallback(
-    (scale: number, draft = false) => {
-      onChange?.(index, { ...item, scale: scale }, draft);
-    },
-    [index, item, onChange],
-  );
-
-  const handleLabeledChange = useCallback(
-    (labeled: boolean) => {
-      onChange?.(index, { ...item, labeled });
-    },
-    [index, item, onChange],
-  );
-
-  const handleAdd = useCallback(() => {
-    onAdd?.(index, item);
-  }, [index, item, onAdd]);
-
-  const handleDelete = useCallback(() => {
-    onDelete?.(index);
-  }, [index, onDelete]);
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-26">
-        <NumberInput min={0} value={item.value} onChange={handleValueChange} onBlur={handleValueCommit} slider />
-      </div>
-      <div className="w-20">
-        <SliderInput min={0} max={1} step={0.1} value={item.scale ?? 1} onChanged={handleScaleChange} showValue />
-      </div>
-      <div className="w-16">
-        <ToggleInput value={item.labeled} onChange={handleLabeledChange} />
-      </div>
-      <IconButton icon={iconAdd} size={8} alt="Add" onClick={handleAdd} />
-      <IconButton icon={iconDustbinRed} size={8} alt="Delete" onClick={handleDelete} disabled={!onDelete} />
     </div>
   );
 };

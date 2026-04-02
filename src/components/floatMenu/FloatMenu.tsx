@@ -13,7 +13,8 @@ import { FloatMenuLineSegment } from "./FloatMenuLineSegment";
 import { FloatMenuOption } from "../../composables/states/commons";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
 import { FloatMenuTableCell } from "./FloatMenuTableCell";
-import { FloatMenuCompoundGrid } from "./FloatMenuCompoundGrid";
+import { FloatMenuCompoundGrid } from "./compounds/FloatMenuCompoundGrid";
+import { FloatMenuCompoundRadial } from "./compounds/FloatMenuCompoundRadial";
 
 type Option = FloatMenuOption & {
   canvasState: any;
@@ -139,6 +140,8 @@ export const FloatMenu: React.FC<Option> = ({
         return <FloatMenuTableCell {...data} focusBack={focusBack} onContextMenu={onContextMenu} />;
       case "compound_grid":
         return <FloatMenuCompoundGrid {...data} focusBack={focusBack} onContextMenu={onContextMenu} />;
+      case "compound_radial":
+        return <FloatMenuCompoundRadial {...data} focusBack={focusBack} onContextMenu={onContextMenu} />;
       default:
         return (
           <FloatMenuInspector

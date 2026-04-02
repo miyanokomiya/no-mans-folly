@@ -333,7 +333,7 @@ type ResolvedGridValue = { v: number; scale: number; labeled?: boolean };
  * Returned list contains neither "0" nor "bound".
  * Each value in the returned list represents absolute distance.
  */
-function resolveGridValues(grid: CompoundGrid, bound: number): ResolvedGridValue[] {
+export function resolveGridValues(grid: Omit<CompoundGrid, "direction">, bound: number): ResolvedGridValue[] {
   const items = grid.items.filter((v) => v.value >= 0);
   if (items.length === 0) return [];
 

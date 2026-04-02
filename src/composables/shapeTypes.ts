@@ -87,6 +87,7 @@ import { newTabbedBlockSelectedState } from "./states/appCanvas/tabbedBlock/tabb
 import { newUpstairBlockSelectedState } from "./states/appCanvas/upstairBlock/upstairBlockSelectedState";
 import { newDownstairBlockSelectedState } from "./states/appCanvas/downstairBlock/downstairBlockSelectedState";
 import { newCompoundGridSelectedState } from "./states/appCanvas/compoundGrid/compoundGridSelectedState";
+import { newCompoundRadialSelectedState } from "./states/appCanvas/compoundRadial/compoundRadialSelectedState";
 
 export type ShapeTypeItem = { type: string; icon: string };
 
@@ -129,6 +130,7 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "moon", icon: iconMoon },
   { type: "wave", icon: iconWave },
   { type: "compound_grid", icon: iconCompoundGrid },
+  { type: "compound_radial", icon: iconCompoundGrid },
 ];
 
 export const lineTypeList: ShapeTypeItem[] = [
@@ -189,6 +191,8 @@ export function getSingleShapeSelectedStateFn(type: string) {
       return newWaveSelectedState;
     case "compound_grid":
       return newCompoundGridSelectedState;
+    case "compound_radial":
+      return newCompoundRadialSelectedState;
     case "bracket":
     case "round_bracket":
       return newBracketSelectedState;
