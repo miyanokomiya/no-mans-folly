@@ -6,9 +6,23 @@ import { EllipseShape, struct as ellipseStruct } from "./ellipse";
 import { groupBy, mapReduce } from "../utils/commons";
 import { SVGElementInfo } from "../utils/svgElements";
 import { GridItem, GridValueType, resolveGridValues } from "./compoundGrid";
-import { divideSafely, ISegment, isSameValue, logRound, getRotateFn, normalizeLineRotation, TAU } from "../utils/geometry";
+import {
+  divideSafely,
+  getClosestOutlineOnEllipse,
+  getClosestPointOnSegment,
+  getCrossLineAndEllipseRotated,
+  getCrossSegAndSeg,
+  getD2,
+  ISegment,
+  isSameValue,
+  logRound,
+  getRotateFn,
+  normalizeLineRotation,
+  sortPointFrom,
+  TAU,
+} from "../utils/geometry";
 import { applyDefaultTextStyle, applyLocalSpace } from "../utils/renderer";
-import { add, getRadian, getRectCenter, getUnit, IRectangle, IVec2, MINVALUE, sub } from "okageo";
+import { add, getDistance, getRadian, getRectCenter, getUnit, IRectangle, IVec2, isOnSeg, MINVALUE, sub } from "okageo";
 import { newClipoutRenderer } from "../composables/clipRenderer";
 import { getStandardSnappingLines } from "./utils/snapping";
 
@@ -142,12 +156,87 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
       });
     });
   },
-  createSVGElementInfo(shape): SVGElementInfo | undefined {
+  createSVGElementInfo(_shape): SVGElementInfo | undefined {
     return;
   },
   getTextRangeRect: undefined,
   ...mapReduce(textContainerModule, () => undefined),
   canAttachSmartBranch: false,
+  getClosestOutline(shape, p, threshold, thresholdForMarker = threshold) {
+    const center = add(shape.p, { x: shape.rx, y: shape.ry });
+    const rotateFn = getRotateFn(shape.rotation, center);
+    const rotatedP = rotateFn(p, true);
+    const ryRate = divideSafely(shape.ry, shape.rx, 0);
+    const allRadii = [shape.rx, ...resolveGridValues(shape.radial, shape.rx).map((item) => item.v)];
+
+    // Check cardinal markers of all ellipses
+    for (const rx of allRadii) {
+      const ry = rx * ryRate;
+      const markers = [
+        { x: center.x, y: center.y - ry },
+        { x: center.x + rx, y: center.y },
+        { x: center.x, y: center.y + ry },
+        { x: center.x - rx, y: center.y },
+      ];
+      const closest = markers.find((m) => getDistance(m, rotatedP) <= thresholdForMarker);
+      if (closest) return rotateFn(closest);
+    }
+
+    // Collect candidates from ellipse outlines and polar segments, pick closest
+    let bestCandidate: IVec2 | undefined;
+    let bestD2 = threshold * threshold;
+
+    for (const rx of allRadii) {
+      const ry = rx * ryRate;
+      const candidate = getClosestOutlineOnEllipse(center, rx, ry, rotatedP, threshold);
+      if (candidate) {
+        const d2 = getD2(sub(candidate, rotatedP));
+        if (d2 <= bestD2) {
+          bestD2 = d2;
+          bestCandidate = candidate;
+        }
+      }
+    }
+
+    for (const item of resolvePolarValues(shape.polar)) {
+      const v = getPolarPerimeterVector(shape, item.v);
+      const seg: ISegment = [center, add(center, v)];
+      const candidate = getClosestPointOnSegment(seg, rotatedP);
+      const d2 = getD2(sub(candidate, rotatedP));
+      if (d2 <= bestD2) {
+        bestD2 = d2;
+        bestCandidate = candidate;
+      }
+    }
+
+    return bestCandidate ? rotateFn(bestCandidate) : undefined;
+  },
+  getIntersectedOutlines(shape, from, to) {
+    const center = add(shape.p, { x: shape.rx, y: shape.ry });
+    const rotateFn = getRotateFn(shape.rotation, center);
+    const ryRate = divideSafely(shape.ry, shape.rx, 0);
+    const allRadii = [shape.rx, ...resolveGridValues(shape.radial, shape.rx).map((item) => item.v)];
+    const points: IVec2[] = [];
+
+    for (const rx of allRadii) {
+      const ry = rx * ryRate;
+      const candidates = getCrossLineAndEllipseRotated([from, to], center, rx, ry, shape.rotation);
+      if (!candidates) continue;
+      const onSeg = candidates.filter((p) => isOnSeg(p, [from, to]) ?? p);
+      points.push(...onSeg);
+    }
+
+    const localFrom = rotateFn(from, true);
+    const localTo = rotateFn(to, true);
+    for (const item of resolvePolarValues(shape.polar)) {
+      const v = getPolarPerimeterVector(shape, item.v);
+      const seg: ISegment = [center, add(center, v)];
+      const inter = getCrossSegAndSeg([localFrom, localTo], seg);
+      if (inter) points.push(rotateFn(inter));
+    }
+
+    return points.length === 0 ? undefined : sortPointFrom(from, points);
+  },
   getSnappingLines(shape): ShapeSnappingLines {
     const r = { x: shape.rx, y: shape.ry };
     const center = add(shape.p, r);
