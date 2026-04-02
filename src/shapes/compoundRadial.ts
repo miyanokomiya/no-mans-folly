@@ -55,7 +55,7 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
       ...createBaseShape(arg),
       type: "compound_radial",
       fill: arg.fill ?? createFillStyle({ disabled: true }),
-      stroke: arg.stroke ?? createStrokeStyle({ width: 2 }),
+      stroke: arg.stroke ?? createStrokeStyle({ lineCap: "round" }),
       rx: arg.rx ?? 50,
       ry: arg.ry ?? 50,
       radial: arg.radial ?? {
@@ -320,9 +320,9 @@ function getPolarPerimeterVector(shape: CompoundRadialShape, angleRad: number): 
 }
 
 function getRadialLabelSize(shape: CompoundRadialShape): number {
-  const sum = shape.radial.items.reduce((sum, item) => sum + item.value, 0);
-  const ave = divideSafely(sum, shape.radial.items.length, shape.rx * 2);
-  return Math.min(shape.rx * 2 * 0.3, shape.ry * 2 * 0.3, ave * 0.5);
+  const sum = shape.radial.type === 2 ? shape.rx : shape.radial.items.reduce((sum, item) => sum + item.value, 0);
+  const ave = divideSafely(sum, shape.radial.items.length, shape.rx);
+  return Math.min(shape.rx * 0.2, shape.ry * 0.2, ave * 0.3);
 }
 
 function computeGridLabelLayout(

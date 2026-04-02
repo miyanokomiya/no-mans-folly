@@ -29,6 +29,7 @@ import iconNotchedBlock from "../assets/icons/shape_notched_block.svg";
 import iconTabbedBlock from "../assets/icons/shape_tabbed_block.svg";
 import iconWave from "../assets/icons/shape_wave.svg";
 import iconCompoundGrid from "../assets/icons/shape_compound_grid.svg";
+import iconCompoundRadial from "../assets/icons/shape_compound_radial.svg";
 import iconBracket from "../assets/icons/shape_bracket.svg";
 import iconRoundBracket from "../assets/icons/shape_round_bracket.svg";
 import iconCurlyBracket from "../assets/icons/shape_curly_bracket.svg";
@@ -130,7 +131,7 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "moon", icon: iconMoon },
   { type: "wave", icon: iconWave },
   { type: "compound_grid", icon: iconCompoundGrid },
-  { type: "compound_radial", icon: iconCompoundGrid },
+  { type: "compound_radial", icon: iconCompoundRadial },
 ];
 
 export const lineTypeList: ShapeTypeItem[] = [
