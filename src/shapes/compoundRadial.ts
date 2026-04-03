@@ -1,10 +1,10 @@
 import { Shape } from "../models";
-import { applyFillStyle, createFillStyle } from "../utils/fillStyle";
-import { applyStrokeStyle, createStrokeStyle, getStrokeWidth } from "../utils/strokeStyle";
+import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
+import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeSnappingLines, ShapeStruct, createBaseShape, textContainerModule } from "./core";
 import { EllipseShape, struct as ellipseStruct } from "./ellipse";
 import { groupBy, mapReduce } from "../utils/commons";
-import { SVGElementInfo } from "../utils/svgElements";
+import { SVGElementInfo, renderTransform } from "../utils/svgElements";
 import { GridItem, GridValueType, resolveGridValues } from "./compoundGrid";
 import {
   divideSafely,
@@ -17,13 +17,15 @@ import {
   isSameValue,
   logRound,
   getRotateFn,
+  getRotatedRectAffine,
   normalizeLineRotation,
   sortPointFrom,
   TAU,
 } from "../utils/geometry";
 import { applyDefaultTextStyle, applyLocalSpace } from "../utils/renderer";
 import { add, getDistance, getRadian, getRectCenter, getUnit, IRectangle, IVec2, isOnSeg, MINVALUE, sub } from "okageo";
-import { newClipoutRenderer } from "../composables/clipRenderer";
+import { newClipoutRenderer, newSVGClipoutRenderer } from "../composables/clipRenderer";
+import { colorToHex } from "../utils/color";
 import { getStandardSnappingLines } from "./utils/snapping";
 
 export type CompoundRadial = {
@@ -156,12 +158,130 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
       });
     });
   },
-  createSVGElementInfo(_shape): SVGElementInfo | undefined {
-    return;
+  createSVGElementInfo(shape): SVGElementInfo | undefined {
+    const rect = { x: shape.p.x, y: shape.p.y, width: shape.rx * 2, height: shape.ry * 2 };
+    const affine = getRotatedRectAffine(rect, shape.rotation);
+
+    const baseStrokeWidth = getStrokeWidth(shape.stroke);
+    const ryRate = divideSafely(shape.ry, shape.rx, 0);
+    const gridValues = resolveGridValues(shape.radial, shape.rx);
+    const polarValues = resolvePolarValues(shape.polar);
+    const gridLabels = computeGridLabelLayout(shape, gridValues);
+    const polarLabels = computePolarLabelLayout(shape, polarValues);
+
+    const children: SVGElementInfo[] = [];
+    const rectToPathStr = ({ x, y, width, height }: IRectangle) => `M ${x} ${y} h ${width} v ${height} h ${-width} Z`;
+    const m = baseStrokeWidth;
+    const wrapperRangeStr = rectToPathStr({ x: -m, y: -m, width: shape.rx * 2 + m * 2, height: shape.ry * 2 + m * 2 });
+
+    const svgClipout = newSVGClipoutRenderer({
+      clipId: `radial-clip-${shape.id}`,
+      rangeStr: wrapperRangeStr,
+    });
+    [...gridLabels, ...polarLabels].forEach(({ rect: labelRect }) => {
+      svgClipout.applyClip([rectToPathStr(labelRect)]);
+    });
+    children.push(...svgClipout.getClipElementList());
+
+    if (!shape.fill.disabled) {
+      children.push({
+        tag: "ellipse",
+        attributes: {
+          cx: shape.rx,
+          cy: shape.ry,
+          rx: shape.rx,
+          ry: shape.ry,
+          stroke: "none",
+          ...renderFillSVGAttributes(shape.fill),
+        },
+      });
+    }
+
+    const clippedChildren: SVGElementInfo[] = [];
+
+    Object.values(groupBy(gridValues, (item) => item.scale)).forEach((group) => {
+      const lineScale = group[0].scale;
+      if (lineScale <= 0) return;
+      group.forEach(({ v }) => {
+        clippedChildren.push({
+          tag: "ellipse" as const,
+          attributes: {
+            cx: shape.rx,
+            cy: shape.ry,
+            rx: v,
+            ry: v * ryRate,
+            fill: "none",
+            ...renderStrokeSVGAttributes({ ...shape.stroke, width: baseStrokeWidth * lineScale }),
+          },
+        });
+      });
+    });
+
+    Object.values(groupBy(polarValues, (item) => item.scale)).forEach((group) => {
+      const lineScale = group[0].scale;
+      if (lineScale <= 0) return;
+      const d = group
+        .map((item) => {
+          const v = getPolarPerimeterVector(shape, item.v);
+          return `M ${shape.rx} ${shape.ry} L ${shape.rx + v.x} ${shape.ry + v.y}`;
+        })
+        .join(" ");
+      clippedChildren.push({
+        tag: "path" as const,
+        attributes: {
+          d,
+          fill: "none",
+          ...renderStrokeSVGAttributes({ ...shape.stroke, width: baseStrokeWidth * lineScale }),
+        },
+      });
+    });
+
+    const currentClipId = svgClipout.getCurrentClipId();
+    children.push({
+      tag: "g",
+      attributes: currentClipId ? { "clip-path": `url(#${currentClipId})` } : undefined,
+      children: clippedChildren,
+    });
+
+    const allLabels = [...gridLabels, ...polarLabels];
+    if (allLabels.length > 0) {
+      children.push({
+        tag: "g",
+        attributes: {
+          "text-anchor": "middle",
+          "dominant-baseline": "middle",
+          fill: colorToHex(shape.stroke.color),
+          "fill-opacity": shape.stroke.color.a !== 1 ? shape.stroke.color.a : undefined,
+          stroke: "none",
+        },
+        children: allLabels.map(({ label, fontSize, rect: labelRect }) => {
+          const c = getRectCenter(labelRect);
+          return {
+            tag: "text" as const,
+            attributes: {
+              x: c.x,
+              y: c.y,
+              "font-size": fontSize,
+            },
+            children: [label],
+          };
+        }),
+      });
+    }
+
+    return {
+      tag: "g",
+      attributes: { transform: renderTransform(affine) },
+      children,
+    };
   },
   getTextRangeRect: undefined,
   ...mapReduce(textContainerModule, () => undefined),
   canAttachSmartBranch: false,
+  /**
+   * Although letting "getClosestOutline" and "getIntersectedOutlines" regard the inner curves may allow lines to connect to them,
+   * "getSnappingLines" can't provide the guides of inner ellipses on its own.
+   */
   getClosestOutline(shape, p, threshold, thresholdForMarker = threshold) {
     const center = add(shape.p, { x: shape.rx, y: shape.ry });
     const rotateFn = getRotateFn(shape.rotation, center);
@@ -320,8 +440,9 @@ function getPolarPerimeterVector(shape: CompoundRadialShape, angleRad: number): 
 }
 
 function getRadialLabelSize(shape: CompoundRadialShape): number {
-  const sum = shape.radial.type === 2 ? shape.rx : shape.radial.items.reduce((sum, item) => sum + item.value, 0);
-  const ave = divideSafely(sum, shape.radial.items.length, shape.rx);
+  const nonzeroItems = shape.radial.items.filter((item) => item.value > 0);
+  const sum = shape.radial.type === 2 ? shape.rx : nonzeroItems.reduce((sum, item) => sum + item.value, 0);
+  const ave = divideSafely(sum, nonzeroItems.length, shape.rx);
   return Math.min(shape.rx * 0.2, shape.ry * 0.2, ave * 0.3);
 }
 
@@ -334,14 +455,14 @@ function computeGridLabelLayout(
   return items
     .filter((item) => item.labeled)
     .map((item) => {
-      const label = `${item.v}`;
+      const label = `${logRound(-1, item.v)}`;
       const fontSize = baseFontSize * (0.5 + item.scale / 2);
       const width = (fontSize / 2) * label.length * 1.2 + baseStrokeWidth / 2;
       const height = fontSize * 1.2;
       return {
         label,
         fontSize,
-        rect: { x: shape.rx + item.v - width + baseStrokeWidth, y: shape.ry - height / 2, width, height },
+        rect: { x: shape.rx + item.v - width + baseStrokeWidth / 2, y: shape.ry - height / 2, width, height },
       };
     });
 }
@@ -357,15 +478,15 @@ function computePolarLabelLayout(
       // Omit labels for 0 and TAU that are obvious and overlap ones for radial.
       .filter((item) => item.labeled && !isSameValue(Math.cos(item.v), 1))
       .map((item) => {
-        const label = `${logRound(1, (item.v * 180) / Math.PI)}°`;
-        const fontSize = baseFontSize * item.scale;
+        const label = `${logRound(-1, (item.v * 180) / Math.PI)}°`;
+        const fontSize = baseFontSize * (0.5 + item.scale / 2);
         const width = (fontSize / 2) * label.length * 1.2 + baseStrokeWidth / 2;
         const height = fontSize * 1.2;
         const v = getPolarPerimeterVector(shape, item.v);
         const unitV = getUnit(v);
         const d = {
-          x: (1.5 * baseStrokeWidth + width / 2) * unitV.x,
-          y: (1.5 * baseStrokeWidth + height / 2) * unitV.y,
+          x: (0.5 * baseStrokeWidth + width / 2) * unitV.x,
+          y: (0.5 * baseStrokeWidth + height / 2) * unitV.y,
         };
         const p = sub(v, d);
         return {

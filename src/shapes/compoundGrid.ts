@@ -246,6 +246,7 @@ export const struct: ShapeStruct<CompoundGridShape> = {
   getTextRangeRect: undefined,
   ...mapReduce(textContainerModule, () => undefined),
   canAttachSmartBranch: false,
+  // Note: It may be nice to have "getClosestOutline" and "getIntersectedOutlines" like "compound_radial" but not for sure.
   getSnappingLines(shape): ShapeSnappingLines {
     const w = shape.width;
     const h = shape.height;
@@ -364,7 +365,7 @@ function computeGridLabelLayout(
     if (!labeled) return;
 
     const d = v - (0 < i ? xList[i - 1].v : 0);
-    const label = `${logRound(1, v)}`;
+    const label = `${logRound(-1, v)}`;
     const fontSize = Math.min(labelSize, d * 0.5);
     const width = getLabelWidth(fontSize, label) * 1.2 + baseStrokeWidth / 2;
     const height = fontSize * 1.2;
@@ -375,7 +376,7 @@ function computeGridLabelLayout(
     if (!labeled || (i === 0 && xList.length > 0)) return;
 
     const d = v - (0 < i ? yList[i - 1].v : 0);
-    const label = `${logRound(1, v)}`;
+    const label = `${logRound(-1, v)}`;
     const fontSize = Math.min(labelSize, d * 0.5);
     const width = getLabelWidth(fontSize, label) * 1.2 + baseStrokeWidth / 2;
     const height = fontSize * 1.2;
