@@ -2,27 +2,15 @@ import { IVec2 } from "okageo";
 import { useCallback, useContext, useMemo, useState } from "react";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { AppStateContext, AppStateMachineContext } from "../../contexts/AppContext";
-import {
-  canHaveTextPadding,
-  getCommonStyle,
-  getTextPadding,
-  patchShapesOrderToFirst,
-  patchShapesOrderToLast,
-  patchTextPadding,
-  stackOrderDisabled,
-  switchShapeType,
-  updateCommonStyle,
-} from "../../shapes";
-import { BoxAlign, BoxPadding, CommonStyle, FillStyle, LineHead, Shape, StrokeStyle } from "../../models";
+import { canHaveTextPadding, getTextPadding, patchTextPadding, switchShapeType } from "../../shapes";
+import { BoxAlign, BoxPadding, LineHead, Shape, StrokeStyle } from "../../models";
 import { PopupButton, PopupDirection } from "../atoms/PopupButton";
 import { rednerRGBA } from "../../utils/color";
-import { FillPanel } from "./FillPanel";
 import { StrokePanel } from "./StrokePanel";
 import { TextItems } from "./TextItems";
 import { DocAttrInfo, DocAttributes } from "../../models/document";
 import { LineHeadItems } from "./LineHeadItems";
 import { CurveType, LineShape, LineType, isLineShape } from "../../shapes/line";
-import { StackButton } from "./StackButton";
 import { AlignAnchorButton } from "./AlignAnchorButton";
 import { TextShape, isTextShape } from "../../shapes/text";
 import { LineTypeButton } from "./LineTypeButton";
@@ -31,8 +19,7 @@ import { newElbowLineHandler } from "../../composables/elbowLineHandler";
 import { newShapeComposite } from "../../composables/shapeComposite";
 import { BoxPaddingButton } from "./BoxPaddingButton";
 import { getPatchByChangingCurveType } from "../../shapes/utils/curveLine";
-import { getPatchAfterLayouts, getPatchByLayouts } from "../../composables/shapeLayoutHandler";
-import menuIcon from "../../assets/icons/three_dots_v.svg";
+import { getPatchAfterLayouts } from "../../composables/shapeLayoutHandler";
 import { getShapeTypeList } from "../../composables/shapeTypes";
 import { ShapeTypeButton } from "./ShapeTypeButton";
 import { patchLinesConnectedToShapeOutline } from "../../composables/lineSnapping";
@@ -41,117 +28,31 @@ import { canMakePolygon, patchLineFromLinePolygon, patchLinePolygonFromLine } fr
 import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
 import { FloatMenuVnNodeItems } from "./FloatMenuVnNodeItems";
 import { isTableShape, TableShape } from "../../shapes/table/table";
+import { InspectorLayout } from "./InspectorLayout";
+import { useSelectedTmpShape } from "../../hooks/storeHooks";
+
+const popupDefaultDirection: PopupDirection = "top";
 
 interface Props {
-  canvasState: any;
   indexDocAttrInfo?: DocAttrInfo;
   focusBack?: () => void;
   textEditing: boolean;
   onContextMenu: (p: IVec2, toggle?: boolean) => void;
 }
 
-export const FloatMenuInspector: React.FC<Props> = ({
-  canvasState,
-  indexDocAttrInfo,
-  focusBack,
-  textEditing,
-  onContextMenu,
-}) => {
+export const FloatMenuInspector: React.FC<Props> = ({ indexDocAttrInfo, focusBack, textEditing, onContextMenu }) => {
   const { shapeStore } = useContext(AppCanvasContext);
   const { handleEvent } = useContext(AppStateMachineContext);
-  const {
-    getShapeStruct,
-    setTmpShapeMap,
-    patchShapes,
-    createLastIndex,
-    createFirstIndex,
-    updateShapes,
-    getSelectedSheet,
-  } = useContext(AppStateContext);
-  const indexShape = useMemo<Shape | undefined>(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    canvasState; // For exhaustive-deps
+  const { getShapeStruct, setTmpShapeMap, patchShapes, updateShapes, getSelectedSheet } = useContext(AppStateContext);
+  const indexShape = useSelectedTmpShape();
 
-    const id = shapeStore.getLastSelected();
-    if (!id) return;
-
-    const shape = shapeStore.shapeComposite.shapeMap[id];
-    if (!shape) return;
-
-    const tmp = shapeStore.getTmpShapeMap()[id] ?? {};
-    return tmp ? { ...shape, ...tmp } : shape;
-  }, [canvasState, shapeStore]);
-
-  const selectedShapes = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    canvasState; // For exhaustive-deps
-
-    const shapeComposite = shapeStore.shapeComposite;
-    const shapeMap = shapeComposite.shapeMap;
-    const selected = shapeStore.getSelected();
-    return Object.keys(selected).map((id) => shapeMap[id]);
-  }, [canvasState, shapeStore]);
-
-  const popupDefaultDirection: PopupDirection = "top";
-  const [popupedKey, setPopupedKey] = useState("");
-
-  const onClickPopupButton = useCallback(
-    (name: string, option?: { keepFocus?: boolean }) => {
-      if (popupedKey === name) {
-        setPopupedKey("");
-      } else {
-        setPopupedKey(name);
-      }
-
-      if (option?.keepFocus) return;
+  const [popupKey, setPopupKey] = useState("");
+  const handlePopupKeyChange = useCallback(
+    (name: string) => {
+      setPopupKey(popupKey === name ? "" : name);
       focusBack?.();
     },
-    [popupedKey, focusBack],
-  );
-
-  const indexCommonStyle = useMemo<CommonStyle | undefined>(() => {
-    if (!indexShape) return;
-    return getCommonStyle(getShapeStruct, indexShape);
-  }, [indexShape, getShapeStruct]);
-
-  const onFillChanged = useCallback(
-    (val: Partial<FillStyle>, draft = false) => {
-      const ids = Object.keys(shapeStore.getSelected());
-      const shapeMap = shapeStore.shapeComposite.shapeMap;
-      const patch = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
-        p[id] = updateCommonStyle(getShapeStruct, shapeMap[id], { fill: val });
-        return p;
-      }, {});
-
-      if (draft) {
-        setTmpShapeMap(patch);
-      } else {
-        setTmpShapeMap({});
-        patchShapes(patch);
-        focusBack?.();
-      }
-    },
-    [shapeStore, focusBack, getShapeStruct, setTmpShapeMap, patchShapes],
-  );
-
-  const onStrokeChanged = useCallback(
-    (val: Partial<StrokeStyle>, draft = false) => {
-      const ids = Object.keys(shapeStore.getSelected());
-      const shapeMap = shapeStore.shapeComposite.shapeMap;
-      const patch = ids.reduce<{ [id: string]: Partial<Shape> }>((p, id) => {
-        p[id] = updateCommonStyle(getShapeStruct, shapeMap[id], { stroke: val });
-        return p;
-      }, {});
-
-      if (draft) {
-        setTmpShapeMap(patch);
-      } else {
-        setTmpShapeMap({});
-        patchShapes(patch);
-        focusBack?.();
-      }
-    },
-    [shapeStore, focusBack, getShapeStruct, setTmpShapeMap, patchShapes],
+    [popupKey, focusBack],
   );
 
   const highlighShape = useCallback(
@@ -383,29 +284,6 @@ export const FloatMenuInspector: React.FC<Props> = ({
     [focusBack, shapeStore, patchShapes],
   );
 
-  const canChangeStack = useMemo<boolean>(() => {
-    const shapeComposite = shapeStore.shapeComposite;
-    return !!indexShape && !stackOrderDisabled(shapeComposite.getShapeStruct, indexShape);
-  }, [indexShape, shapeStore]);
-
-  const onClickStackLast = useCallback(() => {
-    const ids = selectedShapes.filter((s) => !stackOrderDisabled(getShapeStruct, s)).map((s) => s.id);
-    const layoutPatch = getPatchByLayouts(shapeStore.shapeComposite, {
-      update: patchShapesOrderToLast(ids, createLastIndex()),
-    });
-    patchShapes(layoutPatch);
-    focusBack?.();
-  }, [focusBack, selectedShapes, getShapeStruct, patchShapes, createLastIndex, shapeStore]);
-
-  const onClickStackFirst = useCallback(() => {
-    const ids = selectedShapes.filter((s) => !stackOrderDisabled(getShapeStruct, s)).map((s) => s.id);
-    const layoutPatch = getPatchByLayouts(shapeStore.shapeComposite, {
-      update: patchShapesOrderToFirst(ids, createFirstIndex()),
-    });
-    patchShapes(layoutPatch);
-    focusBack?.();
-  }, [focusBack, selectedShapes, getShapeStruct, patchShapes, createFirstIndex, shapeStore]);
-
   const canIndexShapeHaveTextPadding = useMemo<boolean>(() => {
     if (!indexShape) return false;
     return canHaveTextPadding(getShapeStruct, indexShape);
@@ -467,152 +345,114 @@ export const FloatMenuInspector: React.FC<Props> = ({
     [focusBack, shapeStore, patchShapes, setTmpShapeMap, indexTableShape, tableBodyStroke],
   );
 
-  const handleContextMenuClick = useCallback(
-    (e: React.MouseEvent) => {
-      const bounds = (e.target as HTMLElement).getBoundingClientRect();
-      onContextMenu({ x: (bounds.left + bounds.right) / 2, y: bounds.bottom }, true);
-    },
-    [onContextMenu],
-  );
-
   const popupButtonCommonProps = {
-    popupedKey: popupedKey,
-    setPopupedKey: onClickPopupButton,
+    popupedKey: popupKey,
+    setPopupedKey: handlePopupKeyChange,
     defaultDirection: popupDefaultDirection,
   };
 
+  if (!indexShape) return;
+
   return (
     <div className="flex gap-1 items-center">
-      {indexCommonStyle?.fill ? (
-        <PopupButton
-          name="fill"
-          opened={popupedKey === "fill"}
-          popup={<FillPanel fill={indexCommonStyle.fill} onChanged={onFillChanged} />}
-          onClick={onClickPopupButton}
-          defaultDirection={popupDefaultDirection}
-        >
-          <div
-            className="w-8 h-8 border-2 rounded-full"
-            style={{ backgroundColor: rednerRGBA(indexCommonStyle.fill.color) }}
-          ></div>
-        </PopupButton>
-      ) : undefined}
-      {indexCommonStyle?.stroke ? (
-        <PopupButton
-          name="stroke"
-          opened={popupedKey === "stroke"}
-          popup={<StrokePanel stroke={indexCommonStyle.stroke} onChanged={onStrokeChanged} />}
-          onClick={onClickPopupButton}
-          defaultDirection={popupDefaultDirection}
-        >
-          <div className="w-8 h-8 flex justify-center items-center">
-            <div
-              className="w-1.5 h-9 border rounded-xs rotate-45"
-              style={{ backgroundColor: rednerRGBA(indexCommonStyle.stroke.color) }}
-            ></div>
-          </div>
-        </PopupButton>
-      ) : undefined}
-      {indexTableShape && tableBodyStroke ? (
-        <PopupButton
-          name="body-stroke"
-          opened={popupedKey === "body-stroke"}
-          popup={<StrokePanel stroke={tableBodyStroke} onChanged={onBodyStrokeChanged} />}
-          onClick={onClickPopupButton}
-          defaultDirection={popupDefaultDirection}
-        >
-          <div className="w-8 h-8 relative">
-            <div
-              className="w-8 h-1.5 border rounded-xs absolute top-1/2 left-0 -translate-y-1/2"
-              style={{ backgroundColor: rednerRGBA(tableBodyStroke.color) }}
-            ></div>
-            <div
-              className="w-1.5 h-8 border rounded-xs absolute top-0 left-1/2 -translate-x-1/2"
-              style={{ backgroundColor: rednerRGBA(tableBodyStroke.color) }}
-            ></div>
-          </div>
-        </PopupButton>
-      ) : undefined}
-      {indexDocAttrInfo ? (
-        <>
-          <div className="h-8 mx-0.5 border"></div>
-          <TextItems
-            {...popupButtonCommonProps}
-            onInlineChanged={onDocInlineAttributesChanged}
-            onBlockChanged={onDocBlockAttributesChanged}
-            onDocChanged={onDocAttributesChanged}
-            docAttrInfo={indexDocAttrInfo}
-            textEditing={textEditing}
-            sheetId={getSelectedSheet()?.id ?? ""}
-          />
-        </>
-      ) : undefined}
-      {canIndexShapeHaveTextPadding ? (
-        <BoxPaddingButton {...popupButtonCommonProps} value={indexTextPadding} onChange={onChangeTextPadding} />
-      ) : undefined}
-      {indexShape && availableShapeTypeList ? (
-        <ShapeTypeButton
-          {...popupButtonCommonProps}
-          shapeTypeList={availableShapeTypeList}
-          selectedType={indexShape.type}
-          onChange={onShapeTypeChanged}
-        />
-      ) : undefined}
-      {indexLineShape ? (
-        <>
-          <div className="h-8 mx-0.5 border"></div>
-          <LineTypeButton
-            {...popupButtonCommonProps}
-            currentType={indexLineShape.lineType}
-            currentCurve={indexLineShape.curveType}
-            onChange={onLineTypeChanged}
-            jump={indexLineShape.jump}
-            onJumpChange={onLineJumpChanged}
-            optimalHook={indexLineShape.optimalHook}
-            onOptimalHookChange={onLineOptimalHookChanged}
-            polygonType={"line"}
-            onPolygonChange={onLinePolygonChanged}
-            canMakePolygon={canMakePolygon(indexLineShape)}
-          />
-          <LineHeadItems
-            {...popupButtonCommonProps}
-            popupDefaultDirection={popupDefaultDirection}
-            lineShape={indexLineShape}
-            onChange={onLineHeadChanged}
-            highlighShape={highlighShape}
-          />
-          <button type="button" className="w-8 h-8 flex justify-center items-center" onClick={onClickLineLabel}>
-            T
-          </button>
-        </>
-      ) : undefined}
-      {indexLinePolygonShape ? (
-        <>
-          <div className="h-8 mx-0.5 border"></div>
-          <LineTypeButton
-            {...popupButtonCommonProps}
-            onChange={onLineTypeChanged}
-            polygonType={indexLinePolygonShape.polygonType === 1 ? "polyline" : "polygon"}
-            onPolygonChange={onLinePolygonChanged}
-          />
-        </>
-      ) : undefined}
-      {indexTextShape ? (
-        <AlignAnchorButton {...popupButtonCommonProps} boxAlign={indexTextShape} onChange={onAlignAnchorChangeed} />
-      ) : undefined}
-      {indexShape ? (
-        <FloatMenuVnNodeItems {...popupButtonCommonProps} indexShape={indexShape} focusBack={focusBack} />
-      ) : undefined}
-      {canChangeStack ? (
-        <StackButton {...popupButtonCommonProps} onClickLast={onClickStackLast} onClickFirst={onClickStackFirst} />
-      ) : undefined}
-      <button
-        type="button"
-        className="w-10.5 h-10.5 border rounded-xs bg-white flex justify-center items-center"
-        onClick={handleContextMenuClick}
+      <InspectorLayout
+        indexShape={indexShape}
+        popupKey={popupKey}
+        onPopupKeyChange={handlePopupKeyChange}
+        onContextMenu={onContextMenu}
+        focusBack={focusBack}
       >
-        <img src={menuIcon} alt="Context menu" className="w-6 h-6" />
-      </button>
+        {indexTableShape && tableBodyStroke ? (
+          <PopupButton
+            name="body-stroke"
+            opened={popupKey === "body-stroke"}
+            popup={<StrokePanel stroke={tableBodyStroke} onChanged={onBodyStrokeChanged} />}
+            onClick={handlePopupKeyChange}
+            defaultDirection={popupDefaultDirection}
+          >
+            <div className="w-8 h-8 relative">
+              <div
+                className="w-8 h-1.5 border rounded-xs absolute top-1/2 left-0 -translate-y-1/2"
+                style={{ backgroundColor: rednerRGBA(tableBodyStroke.color) }}
+              ></div>
+              <div
+                className="w-1.5 h-8 border rounded-xs absolute top-0 left-1/2 -translate-x-1/2"
+                style={{ backgroundColor: rednerRGBA(tableBodyStroke.color) }}
+              ></div>
+            </div>
+          </PopupButton>
+        ) : undefined}
+        {indexDocAttrInfo ? (
+          <>
+            <div className="h-8 mx-0.5 border"></div>
+            <TextItems
+              {...popupButtonCommonProps}
+              onInlineChanged={onDocInlineAttributesChanged}
+              onBlockChanged={onDocBlockAttributesChanged}
+              onDocChanged={onDocAttributesChanged}
+              docAttrInfo={indexDocAttrInfo}
+              textEditing={textEditing}
+              sheetId={getSelectedSheet()?.id ?? ""}
+            />
+          </>
+        ) : undefined}
+        {canIndexShapeHaveTextPadding ? (
+          <BoxPaddingButton {...popupButtonCommonProps} value={indexTextPadding} onChange={onChangeTextPadding} />
+        ) : undefined}
+        {indexShape && availableShapeTypeList ? (
+          <ShapeTypeButton
+            {...popupButtonCommonProps}
+            shapeTypeList={availableShapeTypeList}
+            selectedType={indexShape.type}
+            onChange={onShapeTypeChanged}
+          />
+        ) : undefined}
+        {indexLineShape ? (
+          <>
+            <div className="h-8 mx-0.5 border"></div>
+            <LineTypeButton
+              {...popupButtonCommonProps}
+              currentType={indexLineShape.lineType}
+              currentCurve={indexLineShape.curveType}
+              onChange={onLineTypeChanged}
+              jump={indexLineShape.jump}
+              onJumpChange={onLineJumpChanged}
+              optimalHook={indexLineShape.optimalHook}
+              onOptimalHookChange={onLineOptimalHookChanged}
+              polygonType={"line"}
+              onPolygonChange={onLinePolygonChanged}
+              canMakePolygon={canMakePolygon(indexLineShape)}
+            />
+            <LineHeadItems
+              {...popupButtonCommonProps}
+              popupDefaultDirection={popupDefaultDirection}
+              lineShape={indexLineShape}
+              onChange={onLineHeadChanged}
+              highlighShape={highlighShape}
+            />
+            <button type="button" className="w-8 h-8 flex justify-center items-center" onClick={onClickLineLabel}>
+              T
+            </button>
+          </>
+        ) : undefined}
+        {indexLinePolygonShape ? (
+          <>
+            <div className="h-8 mx-0.5 border"></div>
+            <LineTypeButton
+              {...popupButtonCommonProps}
+              onChange={onLineTypeChanged}
+              polygonType={indexLinePolygonShape.polygonType === 1 ? "polyline" : "polygon"}
+              onPolygonChange={onLinePolygonChanged}
+            />
+          </>
+        ) : undefined}
+        {indexTextShape ? (
+          <AlignAnchorButton {...popupButtonCommonProps} boxAlign={indexTextShape} onChange={onAlignAnchorChangeed} />
+        ) : undefined}
+        {indexShape ? (
+          <FloatMenuVnNodeItems {...popupButtonCommonProps} indexShape={indexShape} focusBack={focusBack} />
+        ) : undefined}
+      </InspectorLayout>
     </div>
   );
 };

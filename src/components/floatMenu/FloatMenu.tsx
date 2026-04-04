@@ -17,7 +17,6 @@ import { FloatMenuCompoundGrid } from "./compounds/FloatMenuCompoundGrid";
 import { FloatMenuCompoundRadial } from "./compounds/FloatMenuCompoundRadial";
 
 type Option = FloatMenuOption & {
-  canvasState: any;
   scale: number;
   viewOrigin: IVec2;
   viewSize: Size;
@@ -29,7 +28,6 @@ type Option = FloatMenuOption & {
 };
 
 export const FloatMenu: React.FC<Option> = ({
-  canvasState,
   scale,
   viewOrigin,
   viewSize,
@@ -145,7 +143,6 @@ export const FloatMenu: React.FC<Option> = ({
       default:
         return (
           <FloatMenuInspector
-            canvasState={canvasState}
             indexDocAttrInfo={indexDocAttrInfo}
             focusBack={focusBack}
             textEditing={textEditing}

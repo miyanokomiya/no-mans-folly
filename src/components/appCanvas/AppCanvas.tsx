@@ -17,7 +17,7 @@ import { IVec2 } from "okageo";
 import { FloatMenu } from "../floatMenu/FloatMenu";
 import { CommandExam, ContextMenuItem, LinkInfo } from "../../composables/states/types";
 import { rednerRGBA } from "../../utils/color";
-import { useDocumentMap, useSelectedTmpSheet } from "../../hooks/storeHooks";
+import { useDocumentMap, useSelectedTmpSheet, useShapeLastSelectedId } from "../../hooks/storeHooks";
 import { newShapeRenderer } from "../../composables/shapeRenderer";
 import { ContextMenu } from "../ContextMenu";
 import { getGridSize, newGrid } from "../../composables/grid";
@@ -626,20 +626,17 @@ export const AppCanvas: React.FC = () => {
     [sm],
   );
 
+  const lastSelectedId = useShapeLastSelectedId();
   const indexDocAttrInfo = useMemo<DocAttrInfo | undefined>(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    canvasState; // For exhaustive-deps
+    if (!lastSelectedId) return;
 
-    const lastSelected = shapeStore.getLastSelected();
-    if (!lastSelected) return;
-    if (textEditing) return currentDocAttrInfo;
-
-    const doc = mergedDocMap[lastSelected];
+    const doc = mergedDocMap[lastSelectedId];
     if (!doc) return;
+    if (textEditing) return currentDocAttrInfo;
 
     const attrs = getDocAttributes(doc);
     return { cursor: attrs, block: attrs, doc: attrs };
-  }, [canvasState, currentDocAttrInfo, textEditing, shapeStore, mergedDocMap]);
+  }, [lastSelectedId, currentDocAttrInfo, textEditing, mergedDocMap]);
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
@@ -683,7 +680,6 @@ export const AppCanvas: React.FC = () => {
   const floatMenu = floatMenuOption ? (
     <FloatMenu
       {...floatMenuOption}
-      canvasState={canvasState}
       scale={scale}
       viewOrigin={viewOrigin}
       viewSize={viewSize}
