@@ -28,7 +28,7 @@ import { StyleScheme, UserSetting } from "../models";
 import { ShapeSnappingLines } from "../shapes/core";
 import { applyCurvePath, renderArrow } from "../utils/renderer";
 import { applyFillStyle } from "../utils/fillStyle";
-import { pickMinItem } from "../utils/commons";
+import { forEachBackward, pickMinItem } from "../utils/commons";
 import { BoundingBoxResizing } from "./boundingBox";
 import { CanvasCTX } from "../utils/types";
 import { BezierPath } from "../utils/path";
@@ -94,22 +94,27 @@ export function newShapeSnapping(option: Option) {
     };
     const intervalLineMap = new Map<ISegment, IntervalLineData>();
     const intervalSnappingLines: ShapeSnappingLines = { linesByRotation: new Map() };
-    for (const candidate of shapeIntervalSnapping.getCandidates(rect)) {
+    const intervalRotations = [0, Math.PI / 2] as const;
+    shapeIntervalSnapping.getCandidates(rect).forEach((candidate) => {
       intervalLineMap.set(candidate.seg, {
         rawTarget: candidate.rawTarget,
         direction: candidate.direction,
         referenceAnchor: candidate.referenceAnchor,
       });
-      const rotation = candidate.direction === "v" ? Math.PI / 2 : 0;
-      const existing = intervalSnappingLines.linesByRotation.get(rotation) ?? [];
-      intervalSnappingLines.linesByRotation.set(rotation, [...existing, candidate.seg]);
-    }
+      const rotation = intervalRotations[candidate.direction === "v" ? 1 : 0];
+      const existing = intervalSnappingLines.linesByRotation.get(rotation);
+      if (existing) {
+        existing.push(candidate.seg);
+      } else {
+        intervalSnappingLines.linesByRotation.set(rotation, [candidate.seg]);
+      }
+    });
 
     // Unified pool: interval lines participate alongside shape/grid lines.
-    const allSnappingList: [string, ShapeSnappingLines][] =
-      intervalLineMap.size > 0
-        ? [["INTERVAL", intervalSnappingLines], ...shapeAndGridSnappingList]
-        : [...shapeAndGridSnappingList];
+    const allSnappingList: [string, ShapeSnappingLines][] = shapeAndGridSnappingList.slice();
+    if (intervalLineMap.size > 0) {
+      allSnappingList.unshift(["INTERVAL", intervalSnappingLines]);
+    }
 
     // Interval lines use a single specific anchor; regular lines use all anchors.
     function getLineAnchors(line: ISegment): IVec2[] {
@@ -215,7 +220,7 @@ export function newShapeSnapping(option: Option) {
 
     // Iterate in reverse so higher-findex shapes (added later to the list) appear first in landingEntries,
     // which ensures seekConnecionAt picks the "top" shape when multiple shapes share a boundary.
-    for (const [id, lines] of allSnappingList.toReversed()) {
+    forEachBackward(allSnappingList, ([id, lines]) => {
       for (const [rotation, rotLines] of lines.linesByRotation) {
         const lineDir = getLineDir(rotation);
         for (const line of rotLines) {
@@ -251,7 +256,7 @@ export function newShapeSnapping(option: Option) {
           });
         }
       }
-    }
+    });
 
     // Sort landing entries by rotation descending so that vertical lines (π/2) come before horizontal (0).
     landingEntries.sort((a, b) => b.rotation - a.rotation);
