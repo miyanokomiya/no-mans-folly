@@ -130,6 +130,9 @@ export const shapeWithoutTextTypeList: ShapeTypeItem[] = [
   { type: "notched_block", icon: iconNotchedBlock },
   { type: "moon", icon: iconMoon },
   { type: "wave", icon: iconWave },
+];
+
+export const instrumentTypeList: ShapeTypeItem[] = [
   { type: "compound_grid", icon: iconCompoundGrid },
   { type: "compound_radial", icon: iconCompoundRadial },
 ];
