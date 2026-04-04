@@ -229,8 +229,7 @@ export function newShapeSnapping(option: Option) {
           const isInterval = intervalLineMap.has(line);
           const l0p = getInner(line[0], lineDir);
           const l1p = getInner(line[1], lineDir);
-          const minLP = Math.min(l0p, l1p);
-          const maxLP = Math.max(l0p, l1p);
+          const [minLP, maxLP] = l0p <= l1p ? [l0p, l1p] : [l1p, l0p];
           let projectionMatch = false;
           let inRange = false;
           for (const p of snappedAnchors) {
@@ -259,6 +258,7 @@ export function newShapeSnapping(option: Option) {
     });
 
     // Sort landing entries by rotation descending so that vertical lines (π/2) come before horizontal (0).
+    // TODO: Not for sure if this sort is essential for the logic
     landingEntries.sort((a, b) => b.rotation - a.rotation);
 
     const targets: SnappingResultTarget[] = [];
@@ -313,7 +313,7 @@ export function newShapeSnapping(option: Option) {
       if (seenKeys.has(key)) return false;
       const matches = landingEntries.some(({ rotation, line }) => {
         const ld = getLineDir(rotation);
-        return Math.abs(getCross(ld, p) - getCross(ld, line[0])) < MINVALUE;
+        return isSameValue(getCross(ld, p), getCross(ld, line[0]));
       });
       if (matches) seenKeys.add(key);
       return matches;
