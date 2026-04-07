@@ -258,10 +258,6 @@ export function newShapeSnapping(option: Option) {
       }
     });
 
-    // Sort landing entries by rotation descending so that vertical lines (π/2) come before horizontal (0).
-    // TODO: Not for sure if this sort is essential for the logic
-    landingEntries.sort((a, b) => b.rotation - a.rotation);
-
     const targets: SnappingResultTarget[] = [];
     const intervalTargets: IntervalSnappingResultTarget[] = [];
     for (const { rotation, id, line, intervalData, outOfRange } of landingEntries) {

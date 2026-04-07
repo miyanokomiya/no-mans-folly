@@ -953,12 +953,12 @@ describe("newLineSnapping", () => {
               id: "GRID",
               line: [
                 {
-                  x: 30,
-                  y: -100,
+                  x: -100,
+                  y: 50,
                 },
                 {
-                  x: 30,
-                  y: 100,
+                  x: 100,
+                  y: 50,
                 },
               ],
             },
@@ -966,12 +966,12 @@ describe("newLineSnapping", () => {
               id: "GRID",
               line: [
                 {
-                  x: -100,
-                  y: 50,
+                  x: 30,
+                  y: -100,
                 },
                 {
-                  x: 100,
-                  y: 50,
+                  x: 30,
+                  y: 100,
                 },
               ],
             },
@@ -1196,13 +1196,6 @@ describe("newLineSnapping", () => {
           intervalTargets: [],
           targets: [
             {
-              id: "GRID",
-              line: [
-                { x: 80, y: -100 },
-                { x: 80, y: 100 },
-              ],
-            },
-            {
               id: "b",
               line: [
                 { x: 80, y: 0 },
@@ -1215,6 +1208,13 @@ describe("newLineSnapping", () => {
               line: [
                 { x: 0, y: 0 },
                 { x: 100, y: 0 },
+              ],
+            },
+            {
+              id: "GRID",
+              line: [
+                { x: 80, y: -100 },
+                { x: 80, y: 100 },
               ],
             },
           ],
@@ -1236,13 +1236,6 @@ describe("newLineSnapping", () => {
           intervalTargets: [],
           targets: [
             {
-              id: "GRID",
-              line: [
-                { x: 120, y: -100 },
-                { x: 120, y: 100 },
-              ],
-            },
-            {
               id: "b",
               line: [
                 { x: 120, y: 0 },
@@ -1255,6 +1248,13 @@ describe("newLineSnapping", () => {
               line: [
                 { x: 0, y: 0 },
                 { x: 120, y: 0 },
+              ],
+            },
+            {
+              id: "GRID",
+              line: [
+                { x: 120, y: -100 },
+                { x: 120, y: 100 },
               ],
             },
           ],
@@ -1271,13 +1271,6 @@ describe("newLineSnapping", () => {
           intervalTargets: [],
           targets: [
             {
-              id: "GRID",
-              line: [
-                { x: 170, y: -100 },
-                { x: 170, y: 100 },
-              ],
-            },
-            {
               id: "b",
               line: [
                 { x: 150, y: 0 },
@@ -1291,6 +1284,13 @@ describe("newLineSnapping", () => {
                 { x: 170, y: 0 },
               ],
               outOfRange: true,
+            },
+            {
+              id: "GRID",
+              line: [
+                { x: 170, y: -100 },
+                { x: 170, y: 100 },
+              ],
             },
           ],
           anchorPoints: [{ x: 170, y: 0 }],
