@@ -1,5 +1,5 @@
 import { IVec2 } from "okageo";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { GetAppStateContext } from "../../../contexts/AppContext";
 import { PopupButton, PopupDirection } from "../../atoms/PopupButton";
 import { useSelectedTmpShape } from "../../../hooks/storeHooks";
@@ -26,12 +26,20 @@ const polarValueTypeOptions = [
 interface Props {
   focusBack?: () => void;
   onContextMenu: (p: IVec2, toggle?: boolean) => void;
+  popupKey: string;
+  onPopupKeyChange: (name: string, option?: { keepFocus?: boolean }) => void;
 }
 
-export const FloatMenuCompoundRadial: React.FC<Props> = ({ focusBack, onContextMenu }) => {
+export const FloatMenuCompoundRadial: React.FC<Props> = ({ focusBack, onContextMenu, popupKey, onPopupKeyChange }) => {
   const target = useSelectedTmpShape();
   return target && isCompoundRadialShape(target) ? (
-    <FloatMenuCompoundRadialContent focusBack={focusBack} onContextMenu={onContextMenu} target={target} />
+    <FloatMenuCompoundRadialContent
+      focusBack={focusBack}
+      onContextMenu={onContextMenu}
+      target={target}
+      popupKey={popupKey}
+      onPopupKeyChange={onPopupKeyChange}
+    />
   ) : undefined;
 };
 
@@ -39,17 +47,10 @@ export const FloatMenuCompoundRadialContent: React.FC<Props & { target: Compound
   target,
   focusBack,
   onContextMenu,
+  popupKey,
+  onPopupKeyChange,
 }) => {
   const getCtx = useContext(GetAppStateContext);
-  const [popupKey, setPopupKey] = useState("");
-
-  const handlePopupKeyChange = useCallback(
-    (name: string) => {
-      setPopupKey(popupKey === name ? "" : name);
-      focusBack?.();
-    },
-    [popupKey, focusBack],
-  );
 
   const handleRadialValueTypeChange = useCallback(
     (val: GridValueType) => {
@@ -136,7 +137,7 @@ export const FloatMenuCompoundRadialContent: React.FC<Props & { target: Compound
       <InspectorLayout
         indexShape={target}
         popupKey={popupKey}
-        onPopupKeyChange={handlePopupKeyChange}
+        onPopupKeyChange={onPopupKeyChange}
         onContextMenu={onContextMenu}
         focusBack={focusBack}
       >
@@ -151,7 +152,7 @@ export const FloatMenuCompoundRadialContent: React.FC<Props & { target: Compound
               onRadialItemsChange={handleRadialItemsChange}
             />
           }
-          onClick={handlePopupKeyChange}
+          onClick={onPopupKeyChange}
           defaultDirection={popupDefaultDirection}
         >
           <div className="w-8 h-8 p-1">
@@ -169,7 +170,7 @@ export const FloatMenuCompoundRadialContent: React.FC<Props & { target: Compound
               onRadialItemsChange={handlePolarInAngleItemsChange}
             />
           }
-          onClick={handlePopupKeyChange}
+          onClick={onPopupKeyChange}
           defaultDirection={popupDefaultDirection}
         >
           <div className="w-8 h-8 p-1">

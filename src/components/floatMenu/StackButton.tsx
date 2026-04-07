@@ -5,8 +5,8 @@ import iconStackFirst from "../../assets/icons/stack_first.svg";
 import iconStackLast from "../../assets/icons/stack_last.svg";
 
 interface Props {
-  popupedKey: string;
-  setPopupedKey: (key: string) => void;
+  popupKey: string;
+  setPopupKey: (key: string) => void;
   defaultDirection?: PopupDirection; // bottom by default
   onClickFirst?: () => void;
   onClickBack?: () => void;
@@ -15,21 +15,21 @@ interface Props {
 }
 
 export const StackButton: React.FC<Props> = ({
-  popupedKey,
-  setPopupedKey,
+  popupKey,
+  setPopupKey,
   defaultDirection,
   onClickFirst,
   onClickLast,
 }) => {
   const onStackClick = useCallback(() => {
-    setPopupedKey("stack");
-  }, [setPopupedKey]);
+    setPopupKey("stack");
+  }, [setPopupKey]);
 
   return (
     <div className="flex gap-1 items-center">
       <PopupButton
         name="stack"
-        opened={popupedKey === "stack"}
+        opened={popupKey === "stack"}
         popup={<StackPanel onClickFirst={onClickFirst} onClickLast={onClickLast} />}
         onClick={onStackClick}
         defaultDirection={defaultDirection}

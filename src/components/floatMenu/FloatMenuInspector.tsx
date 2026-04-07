@@ -1,5 +1,5 @@
 import { IVec2 } from "okageo";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { AppStateContext, AppStateMachineContext } from "../../contexts/AppContext";
 import { canHaveTextPadding, getTextPadding, patchTextPadding, switchShapeType } from "../../shapes";
@@ -38,22 +38,22 @@ interface Props {
   focusBack?: () => void;
   textEditing: boolean;
   onContextMenu: (p: IVec2, toggle?: boolean) => void;
+  popupKey: string;
+  onPopupKeyChange: (name: string, option?: { keepFocus?: boolean }) => void;
 }
 
-export const FloatMenuInspector: React.FC<Props> = ({ indexDocAttrInfo, focusBack, textEditing, onContextMenu }) => {
+export const FloatMenuInspector: React.FC<Props> = ({
+  indexDocAttrInfo,
+  focusBack,
+  textEditing,
+  onContextMenu,
+  popupKey,
+  onPopupKeyChange,
+}) => {
   const { shapeStore } = useContext(AppCanvasContext);
   const { handleEvent } = useContext(AppStateMachineContext);
   const { getShapeStruct, setTmpShapeMap, patchShapes, updateShapes, getSelectedSheet } = useContext(AppStateContext);
   const indexShape = useSelectedTmpShape();
-
-  const [popupKey, setPopupKey] = useState("");
-  const handlePopupKeyChange = useCallback(
-    (name: string) => {
-      setPopupKey(popupKey === name ? "" : name);
-      focusBack?.();
-    },
-    [popupKey, focusBack],
-  );
 
   const highlighShape = useCallback(
     (meta: HighlightShapeMeta) => {
@@ -347,7 +347,7 @@ export const FloatMenuInspector: React.FC<Props> = ({ indexDocAttrInfo, focusBac
 
   const popupButtonCommonProps = {
     popupedKey: popupKey,
-    setPopupedKey: handlePopupKeyChange,
+    setPopupedKey: onPopupKeyChange,
     defaultDirection: popupDefaultDirection,
   };
 
@@ -358,7 +358,7 @@ export const FloatMenuInspector: React.FC<Props> = ({ indexDocAttrInfo, focusBac
       <InspectorLayout
         indexShape={indexShape}
         popupKey={popupKey}
-        onPopupKeyChange={handlePopupKeyChange}
+        onPopupKeyChange={onPopupKeyChange}
         onContextMenu={onContextMenu}
         focusBack={focusBack}
       >
@@ -367,7 +367,7 @@ export const FloatMenuInspector: React.FC<Props> = ({ indexDocAttrInfo, focusBac
             name="body-stroke"
             opened={popupKey === "body-stroke"}
             popup={<StrokePanel stroke={tableBodyStroke} onChanged={onBodyStrokeChanged} />}
-            onClick={handlePopupKeyChange}
+            onClick={onPopupKeyChange}
             defaultDirection={popupDefaultDirection}
           >
             <div className="w-8 h-8 relative">

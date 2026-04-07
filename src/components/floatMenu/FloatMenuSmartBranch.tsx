@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { LineHeadItems } from "./LineHeadItems";
 import { LineTypeButton } from "./LineTypeButton";
 import { useStaticShapeComposite, useUserSetting } from "../../hooks/storeHooks";
@@ -12,17 +12,18 @@ import { rednerRGBA } from "../../utils/color";
 import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
 import { AppStateMachineContext } from "../../contexts/AppContext";
 
-export const FloatMenuSmartBranch: React.FC = () => {
+interface Props {
+  popupKey: string;
+  onPopupKeyChange: (name: string, option?: { keepFocus?: boolean }) => void;
+}
+
+export const FloatMenuSmartBranch: React.FC<Props> = ({ popupKey, onPopupKeyChange }) => {
   const { handleEvent } = useContext(AppStateMachineContext);
   const staticShapeComposite = useStaticShapeComposite();
   const [userSetting, patchUserSetting] = useUserSetting();
-  const [popupKey, setPopupKey] = useState("");
-  const onClickPopupButton = useCallback((name: string) => {
-    setPopupKey((v) => (v === name ? "" : name));
-  }, []);
   const popupButtonCommonProps = {
     popupedKey: popupKey,
-    setPopupedKey: onClickPopupButton,
+    setPopupedKey: onPopupKeyChange,
     defaultDirection: "top" as const,
   };
 
@@ -109,7 +110,7 @@ export const FloatMenuSmartBranch: React.FC = () => {
           name="fill"
           opened={popupKey === "fill"}
           popup={<FillPanel fill={indexLineShape.fill} onChanged={onFillChanged} />}
-          onClick={onClickPopupButton}
+          onClick={onPopupKeyChange}
           defaultDirection={popupButtonCommonProps.defaultDirection}
         >
           <div
@@ -121,7 +122,7 @@ export const FloatMenuSmartBranch: React.FC = () => {
           name="stroke"
           opened={popupKey === "stroke"}
           popup={<StrokePanel stroke={indexLineShape.stroke} onChanged={onStrokeChanged} />}
-          onClick={onClickPopupButton}
+          onClick={onPopupKeyChange}
           defaultDirection={popupButtonCommonProps.defaultDirection}
         >
           <div className="w-8 h-8 flex justify-center items-center">

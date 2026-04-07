@@ -161,8 +161,8 @@ export const InspectorLayout: React.FC<Props> = ({
       {children}
       {canChangeStack ? (
         <StackButton
-          popupedKey={popupKey}
-          setPopupedKey={onPopupKeyChange}
+          popupKey={popupKey}
+          setPopupKey={onPopupKeyChange}
           defaultDirection={popupDefaultDirection}
           onClickLast={onClickStackLast}
           onClickFirst={onClickStackFirst}

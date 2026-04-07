@@ -16,6 +16,8 @@ import { FloatMenuTableCell } from "./FloatMenuTableCell";
 import { FloatMenuCompoundGrid } from "./compounds/FloatMenuCompoundGrid";
 import { FloatMenuCompoundRadial } from "./compounds/FloatMenuCompoundRadial";
 
+let popupKeyCache = "";
+
 type Option = FloatMenuOption & {
   scale: number;
   viewOrigin: IVec2;
@@ -126,20 +128,58 @@ export const FloatMenu: React.FC<Option> = ({
     handleSetRootFixed(undefined);
   }, [draggable, handleSetRootFixed]);
 
+  const [popupKey, setPopupKey] = useState(popupKeyCache);
+
+  const handlePopupKeyChange = useCallback(
+    (name: string, option?: { keepFocus?: boolean }) => {
+      setPopupKey((prev) => {
+        const next = prev === name ? "" : name;
+        popupKeyCache = next;
+        return next;
+      });
+      if (!option?.keepFocus) focusBack?.();
+    },
+    [focusBack],
+  );
+
   if (!adjustedTargetRect) return;
 
   const getContent = () => {
     switch (type) {
       case "smart-branch":
-        return <FloatMenuSmartBranch />;
+        return <FloatMenuSmartBranch popupKey={popupKey} onPopupKeyChange={handlePopupKeyChange} />;
       case "line-segment":
         return <FloatMenuLineSegment {...data} />;
       case "table-cell":
-        return <FloatMenuTableCell {...data} focusBack={focusBack} onContextMenu={onContextMenu} />;
+        return (
+          <FloatMenuTableCell
+            {...data}
+            focusBack={focusBack}
+            onContextMenu={onContextMenu}
+            popupKey={popupKey}
+            onPopupKeyChange={handlePopupKeyChange}
+          />
+        );
       case "compound_grid":
-        return <FloatMenuCompoundGrid {...data} focusBack={focusBack} onContextMenu={onContextMenu} />;
+        return (
+          <FloatMenuCompoundGrid
+            {...data}
+            focusBack={focusBack}
+            onContextMenu={onContextMenu}
+            popupKey={popupKey}
+            onPopupKeyChange={handlePopupKeyChange}
+          />
+        );
       case "compound_radial":
-        return <FloatMenuCompoundRadial {...data} focusBack={focusBack} onContextMenu={onContextMenu} />;
+        return (
+          <FloatMenuCompoundRadial
+            {...data}
+            focusBack={focusBack}
+            onContextMenu={onContextMenu}
+            popupKey={popupKey}
+            onPopupKeyChange={handlePopupKeyChange}
+          />
+        );
       default:
         return (
           <FloatMenuInspector
@@ -147,6 +187,8 @@ export const FloatMenu: React.FC<Option> = ({
             focusBack={focusBack}
             textEditing={textEditing}
             onContextMenu={onContextMenu}
+            popupKey={popupKey}
+            onPopupKeyChange={handlePopupKeyChange}
           />
         );
     }

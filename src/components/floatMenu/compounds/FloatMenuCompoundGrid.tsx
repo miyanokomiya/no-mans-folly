@@ -1,5 +1,5 @@
 import { IVec2 } from "okageo";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { GetAppStateContext } from "../../../contexts/AppContext";
 import { PopupButton, PopupDirection } from "../../atoms/PopupButton";
 import { useSelectedTmpShape } from "../../../hooks/storeHooks";
@@ -27,12 +27,20 @@ function getGridValueTypeLabel(val: GridValueType) {
 interface Props {
   focusBack?: () => void;
   onContextMenu: (p: IVec2, toggle?: boolean) => void;
+  popupKey: string;
+  onPopupKeyChange: (name: string, option?: { keepFocus?: boolean }) => void;
 }
 
-export const FloatMenuCompoundGrid: React.FC<Props> = ({ focusBack, onContextMenu }) => {
+export const FloatMenuCompoundGrid: React.FC<Props> = ({ focusBack, onContextMenu, popupKey, onPopupKeyChange }) => {
   const target = useSelectedTmpShape();
   return target && isCompoundGridShape(target) ? (
-    <FloatMenuCompoundGridContent focusBack={focusBack} onContextMenu={onContextMenu} target={target} />
+    <FloatMenuCompoundGridContent
+      focusBack={focusBack}
+      onContextMenu={onContextMenu}
+      target={target}
+      popupKey={popupKey}
+      onPopupKeyChange={onPopupKeyChange}
+    />
   ) : undefined;
 };
 
@@ -40,23 +48,10 @@ export const FloatMenuCompoundGridContent: React.FC<Props & { target: CompoundGr
   target,
   focusBack,
   onContextMenu,
+  popupKey,
+  onPopupKeyChange,
 }) => {
   const getCtx = useContext(GetAppStateContext);
-  const [popupKey, setPopupKey] = useState("");
-
-  const handlePopupKeyChange = useCallback(
-    (name: string, option?: { keepFocus?: boolean }) => {
-      if (popupKey === name) {
-        setPopupKey("");
-      } else {
-        setPopupKey(name);
-      }
-
-      if (option?.keepFocus) return;
-      focusBack?.();
-    },
-    [popupKey, focusBack],
-  );
 
   const handleGridValueTypeChange = useCallback(
     (val: GridValueType) => {
@@ -112,7 +107,7 @@ export const FloatMenuCompoundGridContent: React.FC<Props & { target: CompoundGr
       <InspectorLayout
         indexShape={target}
         popupKey={popupKey}
-        onPopupKeyChange={handlePopupKeyChange}
+        onPopupKeyChange={onPopupKeyChange}
         onContextMenu={onContextMenu}
         focusBack={focusBack}
       >
@@ -127,7 +122,7 @@ export const FloatMenuCompoundGridContent: React.FC<Props & { target: CompoundGr
               onGridItemsChange={handleGridItemsChange}
             />
           }
-          onClick={handlePopupKeyChange}
+          onClick={onPopupKeyChange}
           defaultDirection={popupDefaultDirection}
         >
           <div className="w-8 h-8 p-1">

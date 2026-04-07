@@ -18,20 +18,14 @@ const iconList: [string, style: string, alt: string][] = [
 ];
 
 interface Props {
-  popupedKey: string;
-  setPopupedKey: (key: string) => void;
+  popupKey: string;
+  setPopupKey: (key: string) => void;
   defaultDirection?: PopupDirection; // bottom by default
   cellAlign: CellAlign;
   onChange?: (val: CellAlign) => void;
 }
 
-export const CellAlignButton: React.FC<Props> = ({
-  popupedKey,
-  setPopupedKey,
-  defaultDirection,
-  cellAlign,
-  onChange,
-}) => {
+export const CellAlignButton: React.FC<Props> = ({ popupKey, setPopupKey, defaultDirection, cellAlign, onChange }) => {
   const index = useMemo(() => {
     let ret = 0;
 
@@ -76,9 +70,9 @@ export const CellAlignButton: React.FC<Props> = ({
     <div className="flex gap-1 items-center">
       <PopupButton
         name="cell-align"
-        opened={popupedKey === "cell-align"}
+        opened={popupKey === "cell-align"}
         popup={<AlignPanel index={index} onClick={onIndexChange} />}
-        onClick={setPopupedKey}
+        onClick={setPopupKey}
         defaultDirection={defaultDirection}
       >
         <img className={"w-8 h-8 " + iconInfo[1]} src={iconInfo[0]} alt="Anchor" />

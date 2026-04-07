@@ -1,5 +1,5 @@
 import { IVec2 } from "okageo";
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { GetAppStateContext } from "../../contexts/AppContext";
 import { FillStyle } from "../../models";
 import { PopupButton, PopupDirection } from "../atoms/PopupButton";
@@ -24,9 +24,18 @@ interface Props {
   selectedCoords: TableCoords[];
   focusBack?: () => void;
   onContextMenu: (p: IVec2, toggle?: boolean) => void;
+  popupKey: string;
+  onPopupKeyChange: (name: string, option?: { keepFocus?: boolean }) => void;
 }
 
-export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, focusBack, onContextMenu }) => {
+export const FloatMenuTableCell: React.FC<Props> = ({
+  tableId,
+  selectedCoords,
+  focusBack,
+  onContextMenu,
+  popupKey,
+  onPopupKeyChange,
+}) => {
   const getCtx = useContext(GetAppStateContext);
   const shapeComposite = useShapeComposite();
   const table = shapeComposite.mergedShapeMap[tableId] as TableShape;
@@ -39,21 +48,6 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
   const indexCellFill = useMemo(() => indexCellStyle.fill ?? createFillStyle({ disabled: true }), [indexCellStyle]);
 
   const popupDefaultDirection: PopupDirection = "top";
-  const [popupedKey, setPopupedKey] = useState("");
-
-  const onClickPopupButton = useCallback(
-    (name: string, option?: { keepFocus?: boolean }) => {
-      if (popupedKey === name) {
-        setPopupedKey("");
-      } else {
-        setPopupedKey(name);
-      }
-
-      if (option?.keepFocus) return;
-      focusBack?.();
-    },
-    [popupedKey, focusBack],
-  );
 
   const onCellFillChanged = useCallback(
     (val: Partial<FillStyle>, draft = false) => {
@@ -163,18 +157,18 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
     <div className="flex gap-1 items-center">
       <PopupButton
         name="fill"
-        opened={popupedKey === "fill"}
+        opened={popupKey === "fill"}
         popup={<FillPanel fill={table.fill} onChanged={onFillChanged} />}
-        onClick={onClickPopupButton}
+        onClick={onPopupKeyChange}
         defaultDirection={popupDefaultDirection}
       >
         <div className="w-8 h-8 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(table.fill.color) }}></div>
       </PopupButton>
       <PopupButton
         name="stroke"
-        opened={popupedKey === "stroke"}
+        opened={popupKey === "stroke"}
         popup={<StrokePanel stroke={table.stroke} onChanged={onStrokeChanged} />}
-        onClick={onClickPopupButton}
+        onClick={onPopupKeyChange}
         defaultDirection={popupDefaultDirection}
       >
         <div className="w-8 h-8 flex justify-center items-center">
@@ -186,9 +180,9 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       </PopupButton>
       <PopupButton
         name="body-stroke"
-        opened={popupedKey === "body-stroke"}
+        opened={popupKey === "body-stroke"}
         popup={<StrokePanel stroke={bodyStroke} onChanged={onBodyStrokeChanged} />}
-        onClick={onClickPopupButton}
+        onClick={onPopupKeyChange}
         defaultDirection={popupDefaultDirection}
       >
         <div className="w-8 h-8 relative">
@@ -205,9 +199,9 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
       <div className="h-8 mx-0.5 border"></div>
       <PopupButton
         name="cell-fill"
-        opened={popupedKey === "cell-fill"}
+        opened={popupKey === "cell-fill"}
         popup={<FillPanel fill={indexCellFill} onChanged={onCellFillChanged} />}
-        onClick={onClickPopupButton}
+        onClick={onPopupKeyChange}
         defaultDirection={popupDefaultDirection}
       >
         <div className="w-8 h-8 flex items-center justify-center">
@@ -215,8 +209,8 @@ export const FloatMenuTableCell: React.FC<Props> = ({ tableId, selectedCoords, f
         </div>
       </PopupButton>
       <CellAlignButton
-        popupedKey={popupedKey}
-        setPopupedKey={setPopupedKey}
+        popupKey={popupKey}
+        setPopupKey={onPopupKeyChange}
         defaultDirection={popupDefaultDirection}
         cellAlign={indexCellStyle}
         onChange={onCellFieldChanged}
