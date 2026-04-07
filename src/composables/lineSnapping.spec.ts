@@ -1087,8 +1087,7 @@ describe("newLineSnapping", () => {
           targets: [],
           intervalTargets: [
             {
-              afterId: "b",
-              beforeId: "a",
+              pairs: [["a", "b"]],
               direction: "v",
               lines: [
                 [
@@ -1124,8 +1123,7 @@ describe("newLineSnapping", () => {
           targets: [],
           intervalTargets: [
             {
-              afterId: "b",
-              beforeId: "a",
+              pairs: [["a", "b"]],
               direction: "v",
               lines: [
                 [

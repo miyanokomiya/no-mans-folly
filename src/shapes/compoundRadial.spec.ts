@@ -29,10 +29,7 @@ describe("resolvePolarValues", () => {
 
     test("should propagate scale and labeled fields", () => {
       const result = resolvePolarValues({
-        items: [
-          { value: 1, scale: 2, labeled: true },
-          { value: 1 },
-        ],
+        items: [{ value: 1, scale: 2, labeled: true }, { value: 1 }],
         type: 2,
       });
       expect(result[0]).toMatchObject({ scale: 2, labeled: true });
@@ -66,10 +63,7 @@ describe("resolvePolarValues", () => {
 
     test("should propagate scale and labeled fields", () => {
       const result = resolvePolarValues({
-        items: [
-          { value: TAU / 2, scale: 3, labeled: true },
-          { value: TAU / 2 },
-        ],
+        items: [{ value: TAU / 2, scale: 3, labeled: true }, { value: TAU / 2 }],
         type: 1,
       });
       expect(result[0]).toMatchObject({ scale: 3, labeled: true });

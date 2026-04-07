@@ -116,12 +116,6 @@ export function newShapeSnapping(option: Option) {
       allSnappingList.unshift(["INTERVAL", intervalSnappingLines]);
     }
 
-    // Interval lines use a single specific anchor; regular lines use all anchors.
-    function getLineAnchors(line: ISegment): IVec2[] {
-      const data = intervalLineMap.get(line);
-      return data ? [data.referenceAnchor] : anchorPoints;
-    }
-
     // --- Phase 1: find the globally closest snap line across all rotations ---
     // On ties, prefer the line whose anchor falls within the segment's range (avoids including wrong
     // line among adjacent overlapping segments such as two touching shape boundaries).
@@ -137,13 +131,14 @@ export function newShapeSnapping(option: Option) {
           const l1p = getInner(line[1], lineDir);
           const minLP = Math.min(l0p, l1p);
           const maxLP = Math.max(l0p, l1p);
-          const isInterval = intervalLineMap.has(line);
-          for (const anchor of getLineAnchors(line)) {
+          const intervalLineData = intervalLineMap.get(line);
+          const lineAnchors = intervalLineData ? [intervalLineData.referenceAnchor] : anchorPoints;
+          for (const anchor of lineAnchors) {
             const d = lineProj - getCross(lineDir, anchor);
             const ad = Math.abs(d);
             if (ad >= snapThreshold) continue;
             const pp = getInner(anchor, lineDir);
-            const anchorInRange = isInterval || isWithinRange(minLP, maxLP, pp, MINVALUE);
+            const anchorInRange = !!intervalLineData || isWithinRange(minLP, maxLP, pp, MINVALUE);
             if (!primary || ad < primary.ad || (ad === primary.ad && anchorInRange && !primary.anchorInRange)) {
               primary = { rotation, id, line, d, ad, anchorInRange };
             }
@@ -162,7 +157,14 @@ export function newShapeSnapping(option: Option) {
     // For each non-parallel secondary line, draw a guide through each anchor (after v1)
     // in direction d1, and find the closest intersection.
     // On ties, prefer the line whose anchor (after v1) falls within the segment's range.
-    type SecondarySnap = { rotation: number; id: string; line: ISegment; t: number; anchorInRange: boolean };
+    type SecondarySnap = {
+      rotation: number;
+      id: string;
+      line: ISegment;
+      t: number;
+      at: number;
+      anchorInRange: boolean;
+    };
     let secondary: SecondarySnap | undefined;
 
     for (const [id, lines] of allSnappingList) {
@@ -179,20 +181,17 @@ export function newShapeSnapping(option: Option) {
           const l1p2 = getInner(line[1], lineDir2);
           const minLP2 = Math.min(l0p2, l1p2);
           const maxLP2 = Math.max(l0p2, l1p2);
-          const isInterval = intervalLineMap.has(line);
-          for (const anchor of getLineAnchors(line)) {
+          const intervalLineData = intervalLineMap.get(line);
+          const lineAnchors = intervalLineData ? [intervalLineData.referenceAnchor] : anchorPoints;
+          for (const anchor of lineAnchors) {
             const pPrime = add(anchor, v1);
             const t = (lineProj - getCross(lineDir2, pPrime)) / denom;
             const at = Math.abs(t);
             if (at >= snapThreshold) continue;
             const pp2 = getInner(pPrime, lineDir2);
-            const anchorInRange = isInterval || isWithinRange(minLP2, maxLP2, pp2, MINVALUE);
-            if (
-              !secondary ||
-              at < Math.abs(secondary.t) ||
-              (at === Math.abs(secondary.t) && anchorInRange && !secondary.anchorInRange)
-            ) {
-              secondary = { rotation, id, line, t, anchorInRange };
+            const anchorInRange = !!intervalLineData || isWithinRange(minLP2, maxLP2, pp2, MINVALUE);
+            if (!secondary || at < secondary.at || (at === secondary.at && anchorInRange && !secondary.anchorInRange)) {
+              secondary = { rotation, id, line, t, at, anchorInRange };
             }
           }
         }
@@ -223,24 +222,26 @@ export function newShapeSnapping(option: Option) {
     forEachBackward(allSnappingList, ([id, lines]) => {
       for (const [rotation, rotLines] of lines.linesByRotation) {
         const lineDir = getLineDir(rotation);
+        const snappedCross = snappedAnchors.map((p) => getCross(lineDir, p));
+        const snappedInner = snappedAnchors.map((p) => getInner(p, lineDir));
         for (const line of rotLines) {
           const lineProj = getCross(lineDir, line[0]);
           const isSnapLine = snapLines.has(line);
-          const isInterval = intervalLineMap.has(line);
+          const intervalData = intervalLineMap.get(line);
+          const isInterval = !!intervalData;
           const l0p = getInner(line[0], lineDir);
           const l1p = getInner(line[1], lineDir);
           const [minLP, maxLP] = l0p <= l1p ? [l0p, l1p] : [l1p, l0p];
           let projectionMatch = false;
           let inRange = false;
-          for (const p of snappedAnchors) {
-            if (Math.abs(getCross(lineDir, p) - lineProj) >= MINVALUE) continue;
+          for (let i = 0; i < snappedAnchors.length; i++) {
+            if (Math.abs(snappedCross[i] - lineProj) >= MINVALUE) continue;
             projectionMatch = true;
             if (isSnapLine || isInterval) {
               inRange = true;
               break;
             }
-            const pp = getInner(p, lineDir);
-            if (isWithinRange(minLP, maxLP, pp, MINVALUE)) {
+            if (isWithinRange(minLP, maxLP, snappedInner[i], MINVALUE)) {
               inRange = true;
               break;
             }
@@ -250,7 +251,7 @@ export function newShapeSnapping(option: Option) {
             rotation,
             id,
             line,
-            intervalData: intervalLineMap.get(line),
+            intervalData,
             outOfRange: inRange ? undefined : true,
           });
         }
@@ -267,34 +268,34 @@ export function newShapeSnapping(option: Option) {
       if (intervalData) {
         if (intervalData.direction === "v") {
           const y = (snappedLeft[0].y + snappedLeft[1].y) / 2;
+          const { beforeVV, afterVV } = intervalData.rawTarget;
           intervalTargets.push({
-            beforeId: intervalData.rawTarget.before.id,
-            afterId: intervalData.rawTarget.after.id,
+            pairs: intervalData.rawTarget.pairs,
             lines: [
               [
-                { x: intervalData.rawTarget.before.vv[0], y },
-                { x: intervalData.rawTarget.before.vv[1], y },
+                { x: beforeVV[0], y },
+                { x: beforeVV[1], y },
               ],
               [
-                { x: intervalData.rawTarget.after.vv[0], y },
-                { x: intervalData.rawTarget.after.vv[1], y },
+                { x: afterVV[0], y },
+                { x: afterVV[1], y },
               ],
             ],
             direction: "v",
           });
         } else {
           const x = (snappedTop[0].x + snappedTop[1].x) / 2;
+          const { beforeVV, afterVV } = intervalData.rawTarget;
           intervalTargets.push({
-            beforeId: intervalData.rawTarget.before.id,
-            afterId: intervalData.rawTarget.after.id,
+            pairs: intervalData.rawTarget.pairs,
             lines: [
               [
-                { x, y: intervalData.rawTarget.before.vv[0] },
-                { x, y: intervalData.rawTarget.before.vv[1] },
+                { x, y: beforeVV[0] },
+                { x, y: beforeVV[1] },
               ],
               [
-                { x, y: intervalData.rawTarget.after.vv[0] },
-                { x, y: intervalData.rawTarget.after.vv[1] },
+                { x, y: afterVV[0] },
+                { x, y: afterVV[1] },
               ],
             ],
             direction: "h",
@@ -382,8 +383,10 @@ export function renderSnappingResult(
 
   const allTargetIdSet = new Set(option.result.targets.map((t) => t.id));
   option.result.intervalTargets.forEach((info) => {
-    allTargetIdSet.add(info.beforeId);
-    allTargetIdSet.add(info.afterId);
+    info.pairs.forEach(([beforeId, afterId]) => {
+      allTargetIdSet.add(beforeId);
+      allTargetIdSet.add(afterId);
+    });
   });
 
   if (getTargetShape && allTargetIdSet.size > 0) {
@@ -423,15 +426,22 @@ export function renderSnappingResult(
   const arrowSize = 10 * option.scale;
 
   option.result.intervalTargets?.forEach((t) => {
-    const before = getTargetShape(t.beforeId)?.wrapperRect;
-    const after = getTargetShape(t.afterId)?.wrapperRect;
-    if (!before || !after) return;
-
     const isV = t.direction === "v";
-    const min = !isV ? Math.min(before.x, after.x) : Math.min(before.y, after.y);
-    const max = !isV
-      ? Math.max(before.x + before.width, after.x + after.width)
-      : Math.max(before.y + before.height, after.y + after.height);
+    let min = Infinity;
+    let max = -Infinity;
+    t.pairs.forEach(([beforeId, afterId]) => {
+      const before = getTargetShape(beforeId)?.wrapperRect;
+      const after = getTargetShape(afterId)?.wrapperRect;
+      if (!before || !after) return;
+      min = Math.min(min, !isV ? Math.min(before.x, after.x) : Math.min(before.y, after.y));
+      max = Math.max(
+        max,
+        !isV
+          ? Math.max(before.x + before.width, after.x + after.width)
+          : Math.max(before.y + before.height, after.y + after.height),
+      );
+    });
+    if (min === Infinity) return;
 
     t.lines.forEach(([a, b]) => {
       if (isV) {
@@ -551,15 +561,11 @@ interface IntervalSnappingInfo {
 type IntervalSnappingTargetFn = (size: number) => IntervalSnappingTarget | undefined;
 
 interface IntervalSnappingTarget {
-  before: IntervalSnappingItem;
-  after: IntervalSnappingItem;
+  pairs: [beforeId: string, afterId: string][];
+  beforeVV: [from: number, to: number];
+  afterVV: [from: number, to: number];
   v: number;
-  for: 0 | 1 | 2; // top/left | middle | button/right
-}
-
-interface IntervalSnappingItem {
-  id: string;
-  vv: [number, number];
+  for: 0 | 1 | 2; // top/left | middle | bottom/right
 }
 
 export interface InvervalSnappingResult {
@@ -576,8 +582,7 @@ export interface InvervalSnappingResult {
 }
 
 interface IntervalSnappingResultTarget {
-  beforeId: string;
-  afterId: string;
+  pairs: [beforeId: string, afterId: string][];
   lines: [IVec2, IVec2][];
   direction: "v" | "h";
 }
@@ -641,16 +646,15 @@ export function newShapeIntervalSnapping(option: ShapeIntervalSnappingOption) {
         d: diff.x,
         ad: Math.abs(diff.x),
         target: {
-          beforeId: info.before.id,
-          afterId: info.after.id,
+          pairs: info.pairs,
           lines: [
             [
-              { x: info.before.vv[0], y },
-              { x: info.before.vv[1], y },
+              { x: info.beforeVV[0], y },
+              { x: info.beforeVV[1], y },
             ],
             [
-              { x: info.after.vv[0], y },
-              { x: info.after.vv[1], y },
+              { x: info.afterVV[0], y },
+              { x: info.afterVV[1], y },
             ],
           ],
           direction: "v",
@@ -665,16 +669,15 @@ export function newShapeIntervalSnapping(option: ShapeIntervalSnappingOption) {
         d: diff.y,
         ad: Math.abs(diff.y),
         target: {
-          beforeId: info.before.id,
-          afterId: info.after.id,
+          pairs: info.pairs,
           lines: [
             [
-              { x, y: info.before.vv[0] },
-              { x, y: info.before.vv[1] },
+              { x, y: info.beforeVV[0] },
+              { x, y: info.beforeVV[1] },
             ],
             [
-              { x, y: info.after.vv[0] },
-              { x, y: info.after.vv[1] },
+              { x, y: info.afterVV[0] },
+              { x, y: info.afterVV[1] },
             ],
           ],
           direction: "h",
@@ -769,10 +772,10 @@ function getIntervalSnappingInfo(
   // When true, pairs of shapes that don't overlap each other are excluded from snapping targets.
   withinRange = false,
 ): IntervalSnappingInfo {
-  const vList: IntervalSnappingTarget[] = [];
-  const vFnList: IntervalSnappingTargetFn[] = [];
-  const hList: IntervalSnappingTarget[] = [];
-  const hFnList: IntervalSnappingTargetFn[] = [];
+  const vMap = new Map<string, IntervalSnappingTarget>();
+  const vFnMap = new Map<string, { s0id: string; s1id: string }[]>();
+  const hMap = new Map<string, IntervalSnappingTarget>();
+  const hFnMap = new Map<string, { s0id: string; s1id: string }[]>();
 
   for (let i = 0; i < shapeSnappingList.length; i++) {
     const s0 = shapeSnappingList[i];
@@ -805,39 +808,40 @@ function getIntervalSnappingInfo(
 
         {
           const v = l0[0].x - d;
-          const a: IntervalSnappingTarget = {
-            v,
-            before: { id: s0[0], vv: [v, l0[0].x] },
-            after: { id: s1[0], vv: [r0[0].x, l1[0].x] },
-            for: 2,
-          };
-          vList.push(a);
+          const beforeVV: [number, number] = [v, l0[0].x];
+          const afterVV: [number, number] = [r0[0].x, l1[0].x];
+          const key = toIntervalKey(2, beforeVV, afterVV);
+          const existing = vMap.get(key);
+          if (existing) {
+            existing.pairs.push([s0[0], s1[0]]);
+          } else {
+            vMap.set(key, { v, beforeVV, afterVV, pairs: [[s0[0], s1[0]]], for: 2 });
+          }
         }
 
         {
           const v = r1[0].x + d;
-          const a: IntervalSnappingTarget = {
-            v,
-            before: { id: s0[0], vv: [r0[0].x, l1[0].x] },
-            after: { id: s1[0], vv: [r1[0].x, v] },
-            for: 0,
-          };
-          vList.push(a);
+          const beforeVV: [number, number] = [r0[0].x, l1[0].x];
+          const afterVV: [number, number] = [r1[0].x, v];
+          const key = toIntervalKey(0, beforeVV, afterVV);
+          const existing = vMap.get(key);
+          if (existing) {
+            existing.pairs.push([s0[0], s1[0]]);
+          } else {
+            vMap.set(key, { v, beforeVV, afterVV, pairs: [[s0[0], s1[0]]], for: 0 });
+          }
         }
 
         {
-          vFnList.push((size) => {
-            const margin = d - size;
-            if (margin <= 0) return;
-
-            const v = r0[0].x + margin / 2;
-            return {
-              v,
-              before: { id: s0[0], vv: [r0[0].x, v] },
-              after: { id: s1[0], vv: [v + size, l1[0].x] },
-              for: 1,
-            };
-          });
+          const r0x = r0[0].x;
+          const l1x = l1[0].x;
+          const fnKey = `${r0x.toFixed(10)}:${l1x.toFixed(10)}`;
+          const existing = vFnMap.get(fnKey);
+          if (existing) {
+            existing.push({ s0id: s0[0], s1id: s1[0] });
+          } else {
+            vFnMap.set(fnKey, [{ s0id: s0[0], s1id: s1[0] }]);
+          }
         }
       }
     }
@@ -874,54 +878,95 @@ function getIntervalSnappingInfo(
 
         {
           const v = t0[0].y - d;
-          const a: IntervalSnappingTarget = {
-            v,
-            before: { id: s0[0], vv: [v, t0[0].y] },
-            after: { id: s1[0], vv: [b0[0].y, t1[0].y] },
-            for: 2,
-          };
-          hList.push(a);
+          const beforeVV: [number, number] = [v, t0[0].y];
+          const afterVV: [number, number] = [b0[0].y, t1[0].y];
+          const key = toIntervalKey(2, beforeVV, afterVV);
+          const existing = hMap.get(key);
+          if (existing) {
+            existing.pairs.push([s0[0], s1[0]]);
+          } else {
+            hMap.set(key, { v, beforeVV, afterVV, pairs: [[s0[0], s1[0]]], for: 2 });
+          }
         }
 
         {
           const v = b1[0].y + d;
-          const a: IntervalSnappingTarget = {
-            v,
-            before: { id: s0[0], vv: [b0[0].y, t1[0].y] },
-            after: { id: s1[0], vv: [b1[0].y, v] },
-            for: 0,
-          };
-          hList.push(a);
+          const beforeVV: [number, number] = [b0[0].y, t1[0].y];
+          const afterVV: [number, number] = [b1[0].y, v];
+          const key = toIntervalKey(0, beforeVV, afterVV);
+          const existing = hMap.get(key);
+          if (existing) {
+            existing.pairs.push([s0[0], s1[0]]);
+          } else {
+            hMap.set(key, { v, beforeVV, afterVV, pairs: [[s0[0], s1[0]]], for: 0 });
+          }
         }
 
         {
-          hFnList.push((size) => {
-            const margin = d - size;
-            if (margin <= 0) return;
-
-            const v = b0[0].y + margin / 2;
-            return {
-              v,
-              before: { id: s0[0], vv: [b0[0].y, v] },
-              after: { id: s1[0], vv: [v + size, t1[0].y] },
-              for: 1,
-            };
-          });
+          const b0y = b0[0].y;
+          const t1y = t1[0].y;
+          const fnKey = `${b0y.toFixed(10)}:${t1y.toFixed(10)}`;
+          const existing = hFnMap.get(fnKey);
+          if (existing) {
+            existing.push({ s0id: s0[0], s1id: s1[0] });
+          } else {
+            hFnMap.set(fnKey, [{ s0id: s0[0], s1id: s1[0] }]);
+          }
         }
       }
     }
   }
 
+  const vFnList: IntervalSnappingTargetFn[] = [];
+  vFnMap.forEach((entries, fnKey) => {
+    const [r0x, l1x] = fnKey.split(":").map(Number);
+    const d = l1x - r0x;
+    vFnList.push((size) => {
+      const margin = d - size;
+      if (margin <= 0) return;
+      const v = r0x + margin / 2;
+      return {
+        v,
+        beforeVV: [r0x, v],
+        afterVV: [v + size, l1x],
+        pairs: entries.map((e) => [e.s0id, e.s1id] as [string, string]),
+        for: 1,
+      };
+    });
+  });
+
+  const hFnList: IntervalSnappingTargetFn[] = [];
+  hFnMap.forEach((entries, fnKey) => {
+    const [b0y, t1y] = fnKey.split(":").map(Number);
+    const d = t1y - b0y;
+    hFnList.push((size) => {
+      const margin = d - size;
+      if (margin <= 0) return;
+      const v = b0y + margin / 2;
+      return {
+        v,
+        beforeVV: [b0y, v],
+        afterVV: [v + size, t1y],
+        pairs: entries.map((e) => [e.s0id, e.s1id] as [string, string]),
+        for: 1,
+      };
+    });
+  });
+
   return {
     v: {
-      targets: vList,
+      targets: Array.from(vMap.values()),
       targetFns: vFnList,
     },
     h: {
-      targets: hList,
+      targets: Array.from(hMap.values()),
       targetFns: hFnList,
     },
   };
+}
+
+function toIntervalKey(forVal: number, bvv: [number, number], avv: [number, number]): string {
+  return [forVal, bvv[0], bvv[1], avv[0], avv[1]].map((n) => n.toFixed(10)).join(":");
 }
 
 type IntervalSnappingTmpResult = Omit<SnappingTmpResult, "line">;

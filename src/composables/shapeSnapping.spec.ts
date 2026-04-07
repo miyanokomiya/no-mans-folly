@@ -514,8 +514,7 @@ describe("newShapeIntervalSnapping", () => {
         ad: 8,
         target: {
           direction: "v",
-          beforeId: "a",
-          afterId: "b",
+          pairs: [["a", "b"]],
           lines: [
             [
               { x: -50, y: 5 },
@@ -536,8 +535,7 @@ describe("newShapeIntervalSnapping", () => {
         ad: 8,
         target: {
           direction: "v",
-          beforeId: "a",
-          afterId: "b",
+          pairs: [["a", "b"]],
           lines: [
             [
               { x: 100, y: 5 },
@@ -558,8 +556,7 @@ describe("newShapeIntervalSnapping", () => {
         ad: 8,
         target: {
           direction: "v",
-          beforeId: "a",
-          afterId: "b",
+          pairs: [["a", "b"]],
           lines: [
             [
               { x: 100, y: 5 },
@@ -580,8 +577,7 @@ describe("newShapeIntervalSnapping", () => {
         ad: 7,
         target: {
           direction: "v",
-          beforeId: "a",
-          afterId: "b",
+          pairs: [["a", "b"]],
           lines: [
             [
               { x: 100, y: 5 },
@@ -606,8 +602,7 @@ describe("newShapeIntervalSnapping", () => {
         ad: 8,
         target: {
           direction: "h",
-          beforeId: "a",
-          afterId: "c",
+          pairs: [["a", "c"]],
           lines: [
             [
               { x: 5, y: -50 },
@@ -628,8 +623,7 @@ describe("newShapeIntervalSnapping", () => {
         ad: 8,
         target: {
           direction: "h",
-          beforeId: "a",
-          afterId: "c",
+          pairs: [["a", "c"]],
           lines: [
             [
               { y: 100, x: 5 },
@@ -650,8 +644,7 @@ describe("newShapeIntervalSnapping", () => {
         ad: 8,
         target: {
           direction: "h",
-          beforeId: "a",
-          afterId: "c",
+          pairs: [["a", "c"]],
           lines: [
             [
               { y: 100, x: 5 },
@@ -672,8 +665,7 @@ describe("newShapeIntervalSnapping", () => {
         ad: 6,
         target: {
           direction: "h",
-          beforeId: "a",
-          afterId: "c",
+          pairs: [["a", "c"]],
           lines: [
             [
               { y: 100, x: 5 },
@@ -697,8 +689,7 @@ describe("newShapeIntervalSnapping", () => {
         ad: 2,
         target: {
           direction: "v",
-          beforeId: "a",
-          afterId: "d",
+          pairs: [["a", "d"]],
           lines: [
             [
               { x: 100, y: 0 },
@@ -1077,8 +1068,7 @@ describe("testPointOnLine", () => {
       targets: [],
       intervalTargets: [
         {
-          beforeId: "a",
-          afterId: "b",
+          pairs: [["a", "b"]],
           direction: "v",
           lines: [
             [
@@ -1104,8 +1094,7 @@ describe("optimizeSnappingTargetInfoForPoint", () => {
         targets: [],
         intervalTargets: [
           {
-            beforeId: "a",
-            afterId: "b",
+            pairs: [["a", "b"]],
             direction: "v",
             lines: [
               [
@@ -1126,8 +1115,7 @@ describe("optimizeSnappingTargetInfoForPoint", () => {
       targets: [],
       intervalTargets: [
         {
-          beforeId: "a",
-          afterId: "b",
+          pairs: [["a", "b"]],
           direction: "v",
           lines: [
             [
@@ -1148,8 +1136,7 @@ describe("optimizeSnappingTargetInfoForPoint", () => {
         targets: [],
         intervalTargets: [
           {
-            beforeId: "a",
-            afterId: "b",
+            pairs: [["a", "b"]],
             direction: "h",
             lines: [
               [
@@ -1170,8 +1157,7 @@ describe("optimizeSnappingTargetInfoForPoint", () => {
       targets: [],
       intervalTargets: [
         {
-          beforeId: "a",
-          afterId: "b",
+          pairs: [["a", "b"]],
           direction: "h",
           lines: [
             [
@@ -1246,8 +1232,7 @@ describe("getGuidelinesFromSnappingResult", () => {
           ],
           intervalTargets: [
             {
-              beforeId: "",
-              afterId: "",
+              pairs: [["", ""]],
               lines: [
                 [
                   { x: 0, y: 0 },
@@ -1281,8 +1266,7 @@ describe("getGuidelinesFromSnappingResult", () => {
           targets: [],
           intervalTargets: [
             {
-              beforeId: "",
-              afterId: "",
+              pairs: [["", ""]],
               lines: [
                 [
                   { x: 0, y: 0 },

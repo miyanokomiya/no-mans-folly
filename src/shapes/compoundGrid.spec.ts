@@ -28,10 +28,7 @@ describe("resolveGridValues", () => {
     test("should propagate scale and labeled fields", () => {
       const result = resolveGridValues(
         {
-          items: [
-            { value: 1, scale: 2, labeled: true },
-            { value: 1 },
-          ],
+          items: [{ value: 1, scale: 2, labeled: true }, { value: 1 }],
           type: 2,
         },
         100,
@@ -68,10 +65,7 @@ describe("resolveGridValues", () => {
     test("should propagate scale and labeled fields", () => {
       const result = resolveGridValues(
         {
-          items: [
-            { value: 50, scale: 3, labeled: true },
-            { value: 50 },
-          ],
+          items: [{ value: 50, scale: 3, labeled: true }, { value: 50 }],
           type: 1,
         },
         100,
