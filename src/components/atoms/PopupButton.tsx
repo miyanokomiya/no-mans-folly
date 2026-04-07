@@ -53,12 +53,7 @@ export const PopupButton: React.FC<Option> = ({
 
   return (
     <div className="relative">
-      <button
-        ref={buttonRef}
-        type="button"
-        className="border rounded-xs bg-white p-1 flex justify-center items-center"
-        onClick={onButtonClick}
-      >
+      <button ref={buttonRef} type="button" className={getButtonClassName(opened)} onClick={onButtonClick}>
         {children}
       </button>
       {opened ? (
@@ -136,11 +131,7 @@ export const FixedPopupButton: React.FC<FixedPopupButtonOption> = ({
 
   return (
     <div ref={ref}>
-      <button
-        type="button"
-        className="border rounded-xs bg-white p-1 flex justify-center items-center"
-        onClick={onButtonClick}
-      >
+      <button type="button" className={getButtonClassName(opened)} onClick={onButtonClick}>
         {children}
       </button>
       {opened
@@ -213,4 +204,8 @@ function getPopupAttrs(
             style: { ...heightStyle, transform: "translate(-50%, -100%)" },
           };
   }
+}
+
+function getButtonClassName(opened = false): string {
+  return "border rounded-xs bg-white p-1 flex justify-center items-center" + (opened ? " border-cyan-400" : "");
 }
