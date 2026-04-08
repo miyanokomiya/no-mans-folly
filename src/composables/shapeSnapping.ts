@@ -82,9 +82,8 @@ export function newShapeSnapping(option: Option) {
   function test(target: SnappingTestTarget, scale = 1): SnappingResult | undefined {
     const rect = target.rect;
     const snapThreshold = SNAP_THRESHOLD * scale;
-    const anchorPoints = target.outlinePoints
-      ? [...getRectAnchorPoints(rect), ...target.outlinePoints]
-      : getRectAnchorPoints(rect);
+    const rectAnchorPoints = getRectAnchorPoints(rect);
+    const anchorPoints = target.outlinePoints ? rectAnchorPoints.concat(target.outlinePoints) : rectAnchorPoints;
 
     // Build the interval line map: each virtual ISegment maps to its raw interval data.
     type IntervalLineData = {
@@ -212,8 +211,6 @@ export function newShapeSnapping(option: Option) {
       outOfRange: true | undefined;
     };
     const landingEntries: LandingEntry[] = [];
-    const snappedRect = moveRect(rect, diff);
-    const [snappedTop, , , snappedLeft] = getRectLines(snappedRect);
     // Primary and secondary snap lines always land on the anchor by construction (even if outside extent).
     const snapLines = new Set<ISegment>([primary.line, ...(secondary ? [secondary.line] : [])]);
 
@@ -229,6 +226,12 @@ export function newShapeSnapping(option: Option) {
           const isSnapLine = snapLines.has(line);
           const intervalData = intervalLineMap.get(line);
           const isInterval = !!intervalData;
+          if (isInterval) {
+            // As for the interval lines, the landing check should be done based on its reference point.
+            const snappedReferenceAnchor = add(intervalData.referenceAnchor, diff);
+            if (Math.abs(getCross(lineDir, snappedReferenceAnchor) - lineProj) >= MINVALUE) continue;
+          }
+
           const l0p = getInner(line[0], lineDir);
           const l1p = getInner(line[1], lineDir);
           const [minLP, maxLP] = l0p <= l1p ? [l0p, l1p] : [l1p, l0p];
@@ -258,6 +261,8 @@ export function newShapeSnapping(option: Option) {
       }
     });
 
+    const snappedRect = moveRect(rect, diff);
+    const [snappedTop, , , snappedLeft] = getRectLines(snappedRect);
     const targets: SnappingResultTarget[] = [];
     const intervalTargets: IntervalSnappingResultTarget[] = [];
     for (const { rotation, id, line, intervalData, outOfRange } of landingEntries) {

@@ -367,6 +367,86 @@ describe("newShapeSnapping", () => {
       ],
     });
   });
+
+  test("practical case: second snapping with the interval line should be done based on its reference point", () => {
+    const shapeSnappingList = [
+      [
+        "a",
+        {
+          linesByRotation: new Map([
+            [
+              0,
+              [
+                [
+                  { x: 0, y: 0 },
+                  { x: 100, y: 0 },
+                ],
+                [
+                  { x: 0, y: 100 },
+                  { x: 100, y: 100 },
+                ],
+              ],
+            ],
+          ]),
+        },
+      ],
+      [
+        "b",
+        {
+          linesByRotation: new Map([
+            [
+              0,
+              [
+                [
+                  { x: 0, y: 250 },
+                  { x: 100, y: 250 },
+                ],
+              ],
+            ],
+          ]),
+        },
+      ],
+      [
+        "c",
+        {
+          linesByRotation: new Map([
+            [
+              0,
+              [
+                [
+                  { x: 0, y: 400 },
+                  { x: 100, y: 400 },
+                ],
+                [
+                  { x: 0, y: 500 },
+                  { x: 100, y: 500 },
+                ],
+              ],
+            ],
+          ]),
+        },
+      ],
+    ] as [string, ShapeSnappingLines][];
+    const target = newShapeSnapping({ shapeSnappingList });
+    expect(target.test({ rect: { x: 200, y: 132, width: 100, height: 120 } })).toEqual({
+      diff: { x: 0, y: -2 },
+      targets: [
+        {
+          id: "b",
+          line: [
+            { x: 0, y: 250 },
+            { x: 300, y: 250 },
+          ],
+        },
+      ],
+      intervalTargets: [],
+      anchorPoints: [
+        { x: 200, y: 250 },
+        { x: 300, y: 250 },
+      ],
+    });
+    expect(target.test({ rect: { x: 200, y: 192, width: 100, height: 120 } })?.intervalTargets).toHaveLength(1);
+  });
 });
 
 describe("newShapeIntervalSnapping", () => {
