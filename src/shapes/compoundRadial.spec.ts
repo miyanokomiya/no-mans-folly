@@ -1,5 +1,5 @@
 import { expect, describe, test } from "vitest";
-import { resolvePolarValues } from "./compoundRadial";
+import { resolvePolarValues, struct } from "./compoundRadial";
 
 const TAU = Math.PI * 2;
 
@@ -69,5 +69,17 @@ describe("resolvePolarValues", () => {
       expect(result[0]).toMatchObject({ scale: 3, labeled: true });
       expect(result[1]).toMatchObject({ scale: 1, labeled: undefined });
     });
+  });
+});
+
+describe("getSnappingLines", () => {
+  test("should returns snapping lines based on the polar value", () => {
+    const shape = struct.create({
+      polar: { items: [{ value: Math.PI * 0.9 }], type: 1 },
+    });
+    const result = struct.getSnappingLines?.(shape);
+    expect(result?.linesByRotation.get(0)).toBeUndefined();
+    expect(result?.linesByRotation.get(Math.PI / 2)).toBeUndefined();
+    expect(result?.linesByRotation.get(Math.PI * 0.9)).not.toBeUndefined();
   });
 });

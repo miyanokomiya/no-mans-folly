@@ -26,7 +26,6 @@ import { applyDefaultTextStyle, applyLocalSpace } from "../utils/renderer";
 import { add, getDistance, getRadian, getRectCenter, getUnit, IRectangle, IVec2, isOnSeg, MINVALUE, sub } from "okageo";
 import { newClipoutRenderer, newSVGClipoutRenderer } from "../composables/clipRenderer";
 import { colorToHex } from "../utils/color";
-import { getStandardSnappingLines } from "./utils/snapping";
 
 export type CompoundRadial = {
   items: GridItem[];
@@ -361,20 +360,18 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
     const r = { x: shape.rx, y: shape.ry };
     const center = add(shape.p, r);
     const rotateFn = getRotateFn(shape.rotation, center);
-    const wrapperRect = ellipseStruct.getWrapperRect(shape);
-    const localRectPolygon = ellipseStruct.getLocalRectPolygon(shape);
-    const { linesByRotation } = getStandardSnappingLines(wrapperRect, localRectPolygon, shape.rotation);
+    const linesByRotation: ShapeSnappingLines["linesByRotation"] = new Map();
 
     resolvePolarValues(shape.polar).forEach((item) => {
       const v = getPolarPerimeterVector(shape, item.v);
       const localSeg: ISegment = [center, add(center, v)];
       const worldSeg: ISegment = [rotateFn(localSeg[0]), rotateFn(localSeg[1])];
-      const angle = normalizeLineRotation(getRadian(worldSeg[1], worldSeg[0]));
-      const existing = linesByRotation.get(angle);
+      const r = normalizeLineRotation(getRadian(worldSeg[1], worldSeg[0]));
+      const existing = linesByRotation.get(r);
       if (existing) {
         existing.push(worldSeg);
       } else {
-        linesByRotation.set(angle, [worldSeg]);
+        linesByRotation.set(r, [worldSeg]);
       }
     });
 
