@@ -1,10 +1,12 @@
 import { EntityPatchInfo, Shape } from "../models";
 import { refreshShapeRelations } from "../shapes";
 import { isAlignBoxShape } from "../shapes/align/alignBox";
+import { isLineShape, LineShape } from "../shapes/line";
 import { isTableShape } from "../shapes/table/table";
 import { isObjectEmpty, mapEach, mapFilter, mergeMap, patchPipe, toList } from "../utils/commons";
 import { mergeEntityPatchInfo, normalizeEntityPatchInfo } from "../utils/entities";
 import { topSortHierarchy } from "../utils/graph";
+import { isBezieirControl } from "../utils/path";
 import { getAllBranchIds, getTree } from "../utils/tree";
 import { getNextAlignLayout } from "./alignHandler";
 import { getBoardLayoutPatchFunctions } from "./boardHandler";
@@ -202,7 +204,69 @@ function getLineRelatedLayoutPatch(
       currentPatch,
     );
 
-    latestPatch = mergeMap(latestPatch, result.patch);
+    // Merge the update for "body" and "curves" of line shapes.
+    // "getConnectedLinePatch" may overwrite these properties since these are array values that have to update as a whole.
+    // e.g. Move a shape and a line whose vertices are connected to the shape except for some of the body ones.
+    //      => "getConnectedLinePatch" returns patched "body" with original unconnected vertices.
+    //      => This patch data makes unconnected vertices stay in place by overwriting the original patch data for moving the shapes.
+    //
+    // FIXME: Dealing with this issue here isn't ideal but there seems no simpler way for now.
+    const mergedLatestPatch = mergeMap(latestPatch, result.patch);
+    mapEach(result.patch, (patch, id) => {
+      const s = sc.shapeMap[id];
+      if (!isLineShape(s)) return;
+
+      const resultPatch = patch as Partial<LineShape> | undefined;
+      if (!resultPatch?.body && !resultPatch?.curves) return;
+
+      const latest = latestPatch[id] as Partial<LineShape> | undefined;
+      const merged = mergedLatestPatch[id] as Partial<LineShape> | undefined;
+      const dist = { ...merged } as Partial<LineShape>;
+
+      if (latest?.body && dist?.body) {
+        dist.body = dist.body.slice();
+        latest.body.forEach((b, i) => {
+          if (b.c) return;
+          dist.body![i] = b;
+        });
+      }
+
+      if (latest?.curves && dist?.curves) {
+        const lineSize = 2 + (dist.body?.length ?? 0);
+        dist.curves = dist.curves.slice();
+        const isConnectedVertex = (i: number) => {
+          if (i === 0) return merged?.pConnection ?? s.pConnection;
+          if (i === lineSize - 1) return merged?.qConnection ?? s.qConnection;
+          return merged?.body?.[i - 1]?.c ?? s.body?.[i - 1]?.c;
+        };
+
+        for (let i = 0; i < lineSize; i++) {
+          if (isConnectedVertex(i)) continue;
+
+          if (0 < i) {
+            const distCurve0 = dist.curves![i - 1];
+            const latestCurve0 = latest.curves![i - 1];
+            if (isBezieirControl(latestCurve0) && isBezieirControl(distCurve0)) {
+              dist.curves![i - 1] = {
+                c1: distCurve0.c1,
+                c2: latestCurve0.c2,
+              };
+            }
+          }
+
+          const distCurve1 = dist.curves![i];
+          const latestCurve1 = latest.curves![i];
+          if (isBezieirControl(latestCurve1) && isBezieirControl(distCurve1)) {
+            dist.curves![i] = {
+              c1: latestCurve1.c1,
+              c2: distCurve1.c2,
+            };
+          }
+        }
+      }
+      mergedLatestPatch[id] = dist;
+    });
+    latestPatch = mergedLatestPatch;
 
     const rawNextPatch = result.patchList.reduce((p, c) => mergeMap(p, c), {});
     const finishedNextPatch: typeof nextPatch = {};

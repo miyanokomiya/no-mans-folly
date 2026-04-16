@@ -246,6 +246,91 @@ describe("getPatchInfoByLayouts", () => {
       [rect2.id]: { p: { x: 110, y: 220 } },
     });
   });
+
+  test("bug fix: unconnected body vertices should move together when both the line and the shape move", () => {
+    const rect1 = createShape(getCommonStruct, "rectangle", {
+      id: "rect1",
+    });
+    const line1 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line1",
+      p: { x: 0, y: 0 },
+      q: { x: 100, y: 100 },
+      pConnection: { id: rect1.id, rate: { x: 0, y: 0 } },
+      qConnection: { id: rect1.id, rate: { x: 1, y: 1 } },
+      body: [{ p: { x: 100, y: 0 }, c: { id: rect1.id, rate: { x: 1, y: 0 } } }, { p: { x: 50, y: 150 } }],
+      curves: [undefined, { c1: { x: 20, y: 0 }, c2: { x: 0, y: 20 } }, { c1: { x: 50, y: 0 }, c2: { x: 0, y: 50 } }],
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [rect1, line1],
+      getStruct: getCommonStruct,
+    });
+    const moveAffine: [number, number, number, number, number, number] = [1, 0, 0, 1, 10, 20];
+
+    // Move both shapes
+    const result0 = getPatchInfoByLayouts(shapeComposite, {
+      update: {
+        [rect1.id]: shapeComposite.transformShape(rect1, moveAffine),
+        [line1.id]: shapeComposite.transformShape(line1, moveAffine),
+      },
+    });
+    expect(result0.update?.[rect1.id]).toMatchObject({ p: { x: 10, y: 20 } });
+    expect(result0.update?.[line1.id], "unconnected body vertex should move together").toMatchObject({
+      p: { x: 10, y: 20 },
+      q: { x: 110, y: 120 },
+      body: [{ p: { x: 110, y: 20 }, c: { id: rect1.id, rate: { x: 1, y: 0 } } }, { p: { x: 60, y: 170 } }],
+      curves: [
+        undefined,
+        { c1: { x: 30, y: 20 }, c2: { x: 10, y: 40 } },
+        { c1: { x: 60, y: 20 }, c2: { x: 10, y: 70 } },
+      ],
+    });
+
+    // Move the rectangle only
+    const result1 = getPatchInfoByLayouts(shapeComposite, {
+      update: {
+        [rect1.id]: shapeComposite.transformShape(rect1, moveAffine),
+      },
+    });
+    expect(result1.update?.[rect1.id]).toMatchObject({ p: { x: 10, y: 20 } });
+    expect(result1.update?.[line1.id], "unconnected body vertex should stay in place").toMatchObject({
+      p: { x: 10, y: 20 },
+      q: { x: 110, y: 120 },
+      body: [{ p: { x: 110, y: 20 }, c: { id: rect1.id, rate: { x: 1, y: 0 } } }, { p: { x: 50, y: 150 } }],
+      curves: [undefined, { c1: { x: 30, y: 20 }, c2: { x: 0, y: 20 } }, { c1: { x: 50, y: 0 }, c2: { x: 10, y: 70 } }],
+    });
+  });
+
+  test("bug fix: bezier control near connected tail should reflect the recalculated q position", () => {
+    const rect1 = createShape(getCommonStruct, "rectangle", {
+      id: "rect1",
+    });
+    const line1 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line1",
+      p: { x: 0, y: 0 },
+      q: { x: 100, y: 50 },
+      qConnection: { id: rect1.id, rate: { x: 1, y: 0.5 } },
+      curves: [{ c1: { x: 10, y: 0 }, c2: { x: 90, y: 50 } }],
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [rect1, line1],
+      getStruct: getCommonStruct,
+    });
+
+    // Move rect1 by (10, 20) and line1 by (5, 10).
+    // q is recalculated to (110, 70) due to qConnection on the moved rect1.
+    // curves[0].c2 is near q and must follow the recalculated q, not the user-translated position.
+    const result = getPatchInfoByLayouts(shapeComposite, {
+      update: {
+        [rect1.id]: shapeComposite.transformShape(rect1, [1, 0, 0, 1, 10, 20]),
+        [line1.id]: shapeComposite.transformShape(line1, [1, 0, 0, 1, 5, 10]),
+      },
+    });
+    expect(result.update?.[line1.id]).toMatchObject({
+      p: { x: 5, y: 10 },
+      q: { x: 110, y: 70 },
+      curves: [{ c1: { x: 15, y: 10 }, c2: { x: 100, y: 70 } }],
+    });
+  });
 });
 
 describe("getPatchAfterLayouts", () => {
