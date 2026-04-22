@@ -1,7 +1,8 @@
 import { Color } from "../../models";
 import { PopupButton } from "../atoms/PopupButton";
 import { ColorPickerPanel } from "./ColorPickerPanel";
-import { rednerRGBA } from "../../utils/color";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 
 interface Props {
   name: string;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export const ColorPickerButton: React.FC<Props> = ({ name, popupedKey, setPopupedKey, color, onChange }) => {
+  const palette = useColorPalette();
   return (
     <PopupButton
       name={name}
@@ -24,7 +26,10 @@ export const ColorPickerButton: React.FC<Props> = ({ name, popupedKey, setPopupe
       onClick={setPopupedKey}
       popupPosition="left"
     >
-      <div className="w-6 h-6 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(color) }} />
+      <div
+        className="w-6 h-6 border-2 rounded-full"
+        style={{ backgroundColor: rednerRGBA(resolveColor(color, palette)) }}
+      />
     </PopupButton>
   );
 };

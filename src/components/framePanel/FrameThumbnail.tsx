@@ -7,7 +7,7 @@ import { DocOutput } from "../../models/document";
 import { ImageStore } from "../../composables/imageStore";
 import { newCanvasBank } from "../../composables/canvasBank";
 import { getViewportForRectWithinSize } from "../../utils/geometry";
-import { Size } from "../../models";
+import { RGBA, Size } from "../../models";
 import { useResizeObserver } from "../../hooks/window";
 import { getLineJoin } from "../../utils/strokeStyle";
 
@@ -18,6 +18,7 @@ interface Props {
   backgroundColor: string;
   frame: FrameShape;
   noCrop?: boolean;
+  colorPalette?: RGBA[];
 }
 
 export const FrameThumbnail: React.FC<Props> = ({
@@ -27,6 +28,7 @@ export const FrameThumbnail: React.FC<Props> = ({
   backgroundColor,
   frame,
   noCrop,
+  colorPalette,
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -72,6 +74,7 @@ export const FrameThumbnail: React.FC<Props> = ({
       targetRect: frameRectWithBorder,
       scale: viewport.scale,
       noTextLod: true,
+      colorPalette,
     });
     renderer.render(ctx);
 
@@ -84,7 +87,7 @@ export const FrameThumbnail: React.FC<Props> = ({
     ctx.lineJoin = getLineJoin(frame.stroke.lineJoin);
     ctx.fillStyle = "#000";
     ctx.fill();
-  }, [shapeComposite, canvasBank, documentMap, frame, imageStore, viewport, frameRectWithBorder, noCrop]);
+  }, [shapeComposite, canvasBank, documentMap, frame, imageStore, viewport, frameRectWithBorder, noCrop, colorPalette]);
 
   return (
     <div ref={wrapperRef} className="h-full">

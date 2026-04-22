@@ -1,5 +1,5 @@
-import { LineDash, LineDashStruct, StrokeStyle } from "../models";
-import { colorToHex, isSameColor, rednerRGBA } from "./color";
+import { LineDash, LineDashStruct, RGBA, StrokeStyle } from "../models";
+import { colorToHex, isSameColor, rednerRGBA, resolveColor } from "./color";
 import { SVGAttributes } from "./svgElements";
 import { CanvasCTX } from "./types";
 
@@ -48,8 +48,8 @@ export function isSameStrokeStyle(a?: StrokeStyle, b?: StrokeStyle): boolean {
   );
 }
 
-export function applyStrokeStyle(ctx: CanvasCTX, stroke: StrokeStyle) {
-  ctx.strokeStyle = rednerRGBA(stroke.color);
+export function applyStrokeStyle(ctx: CanvasCTX, stroke: StrokeStyle, palette: RGBA[] = []) {
+  ctx.strokeStyle = rednerRGBA(resolveColor(stroke.color, palette));
   const width = getStrokeWidth(stroke);
   ctx.lineWidth = width;
   ctx.setLineDash(getLineDashArrayWithCap(stroke));
@@ -126,16 +126,16 @@ export function getLineDashArrayWithCap(stroke: Pick<StrokeStyle, "width" | "lin
   }
 }
 
-export function renderStrokeSVGAttributes(stroke: StrokeStyle): SVGAttributes {
-  return stroke.disabled
-    ? { stroke: "none" }
-    : {
-        stroke: colorToHex(stroke.color),
-        "stroke-opacity": stroke.color.a === 1 ? undefined : stroke.color.a,
-        "stroke-width": stroke.width,
-        "stroke-linecap": getLineCap(stroke.lineCap),
-        "stroke-linejoin": getLineJoin(stroke.lineJoin),
-        "stroke-dasharray": stroke.dash ? getLineDashArrayWithCap(stroke).join(" ") : undefined,
-        "stroke-dashoffset": getLineDashOffset(stroke) || undefined,
-      };
+export function renderStrokeSVGAttributes(stroke: StrokeStyle, palette: RGBA[] = []): SVGAttributes {
+  if (stroke.disabled) return { stroke: "none" };
+  const c = resolveColor(stroke.color, palette);
+  return {
+    stroke: colorToHex(c),
+    "stroke-opacity": c.a === 1 ? undefined : c.a,
+    "stroke-width": stroke.width,
+    "stroke-linecap": getLineCap(stroke.lineCap),
+    "stroke-linejoin": getLineJoin(stroke.lineJoin),
+    "stroke-dasharray": stroke.dash ? getLineDashArrayWithCap(stroke).join(" ") : undefined,
+    "stroke-dashoffset": getLineDashOffset(stroke) || undefined,
+  };
 }

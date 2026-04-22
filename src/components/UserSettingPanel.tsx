@@ -9,7 +9,8 @@ import { useUserSetting } from "../hooks/storeHooks";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { PopupButton } from "./atoms/PopupButton";
 import { ColorPickerPanel } from "./molecules/ColorPickerPanel";
-import { parseRGBA, rednerRGBA } from "../utils/color";
+import { parseRGBA, rednerRGBA, resolveColor } from "../utils/color";
+import { useColorPalette } from "../hooks/storeHooks";
 import { GRID_DEFAULT_COLOR } from "../composables/grid";
 
 const modifierSupportOptions: { value: Exclude<UserSetting["virtualKeyboard"], undefined>; label: string }[] = [
@@ -36,6 +37,7 @@ const displayModeOptions: { value: Exclude<UserSetting["displayMode"], undefined
 export const UserSettingPanel: React.FC = () => {
   const [userSetting, patchUserSetting] = useUserSetting();
   const [popupedKey, setPopupedKey] = useState<string>();
+  const palette = useColorPalette();
   const closePopup = useCallback(() => setPopupedKey(undefined), []);
 
   const handleDebugChange = useCallback(
@@ -103,9 +105,9 @@ export const UserSettingPanel: React.FC = () => {
 
   const handleGridColorChange = useCallback(
     (val: Color) => {
-      patchUserSetting({ gridColor: rednerRGBA(val) });
+      patchUserSetting({ gridColor: rednerRGBA(resolveColor(val, palette)) });
     },
-    [patchUserSetting],
+    [patchUserSetting, palette],
   );
 
   const handleGridOrderChange = useCallback(

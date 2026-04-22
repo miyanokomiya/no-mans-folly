@@ -7,7 +7,8 @@ import { TextInput } from "../atoms/inputs/TextInput";
 import { getSheetURL } from "../../utils/route";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { ListButton, ListIconButton, ListSpacer } from "../atoms/buttons/ListButton";
-import { rednerRGBA } from "../../utils/color";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 import { renderImageAtCenter } from "../../utils/renderer";
 import { AppText } from "../molecules/AppText";
 
@@ -36,6 +37,7 @@ export const SheetPanel: React.FC<Props> = ({
   onAddSheetImage,
   canDeleteSheet,
 }) => {
+  const palette = useColorPalette();
   const [popupOpen, setPopupOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
@@ -120,10 +122,10 @@ export const SheetPanel: React.FC<Props> = ({
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvasElm.width, canvasElm.height);
-    ctx.fillStyle = sheet.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
+    ctx.fillStyle = sheet.bgcolor ? rednerRGBA(resolveColor(sheet.bgcolor, palette)) : "#fff";
     ctx.fillRect(0, 0, canvasElm.width, canvasElm.height);
     renderImageAtCenter(ctx, thumbnail, { width: canvasElm.width, height: canvasElm.height });
-  }, [thumbnail, sheet]);
+  }, [thumbnail, sheet, palette]);
 
   const nameContent = renaming ? (
     <form className="flex items-center" onSubmit={handleNameSubmit}>

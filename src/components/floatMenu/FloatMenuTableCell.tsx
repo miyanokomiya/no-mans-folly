@@ -3,7 +3,8 @@ import { useCallback, useContext, useMemo } from "react";
 import { GetAppStateContext } from "../../contexts/AppContext";
 import { FillStyle } from "../../models";
 import { PopupButton, PopupDirection } from "../atoms/PopupButton";
-import { rednerRGBA } from "../../utils/color";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 import { FillPanel } from "./FillPanel";
 import menuIcon from "../../assets/icons/three_dots_v.svg";
 import {
@@ -37,6 +38,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({
   onPopupKeyChange,
 }) => {
   const getCtx = useContext(GetAppStateContext);
+  const palette = useColorPalette();
   const shapeComposite = useShapeComposite();
   const table = shapeComposite.mergedShapeMap[tableId] as TableShape;
   const tableInfo = useMemo(() => getTableShapeInfo(table), [table]);
@@ -162,7 +164,10 @@ export const FloatMenuTableCell: React.FC<Props> = ({
         onClick={onPopupKeyChange}
         defaultDirection={popupDefaultDirection}
       >
-        <div className="w-8 h-8 border-2 rounded-full" style={{ backgroundColor: rednerRGBA(table.fill.color) }}></div>
+        <div
+          className="w-8 h-8 border-2 rounded-full"
+          style={{ backgroundColor: rednerRGBA(resolveColor(table.fill.color, palette)) }}
+        ></div>
       </PopupButton>
       <PopupButton
         name="stroke"
@@ -174,7 +179,7 @@ export const FloatMenuTableCell: React.FC<Props> = ({
         <div className="w-8 h-8 flex justify-center items-center">
           <div
             className="w-1.5 h-9 border rounded-xs rotate-45"
-            style={{ backgroundColor: rednerRGBA(table.stroke.color) }}
+            style={{ backgroundColor: rednerRGBA(resolveColor(table.stroke.color, palette)) }}
           ></div>
         </div>
       </PopupButton>
@@ -188,11 +193,11 @@ export const FloatMenuTableCell: React.FC<Props> = ({
         <div className="w-8 h-8 relative">
           <div
             className="w-8 h-1.5 border rounded-xs absolute top-1/2 left-0 -translate-y-1/2"
-            style={{ backgroundColor: rednerRGBA(bodyStroke.color) }}
+            style={{ backgroundColor: rednerRGBA(resolveColor(bodyStroke.color, palette)) }}
           ></div>
           <div
             className="w-1.5 h-8 border rounded-xs absolute top-0 left-1/2 -translate-x-1/2"
-            style={{ backgroundColor: rednerRGBA(bodyStroke.color) }}
+            style={{ backgroundColor: rednerRGBA(resolveColor(bodyStroke.color, palette)) }}
           ></div>
         </div>
       </PopupButton>
@@ -205,7 +210,10 @@ export const FloatMenuTableCell: React.FC<Props> = ({
         defaultDirection={popupDefaultDirection}
       >
         <div className="w-8 h-8 flex items-center justify-center">
-          <div className="w-8 h-6 border-2 rounded" style={{ backgroundColor: rednerRGBA(indexCellFill.color) }}></div>
+          <div
+            className="w-8 h-6 border-2 rounded"
+            style={{ backgroundColor: rednerRGBA(resolveColor(indexCellFill.color, palette)) }}
+          ></div>
         </div>
       </PopupButton>
       <CellAlignButton

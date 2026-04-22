@@ -16,8 +16,8 @@ import { getDocAttributes } from "../../utils/texts/textEditor";
 import { IVec2 } from "okageo";
 import { FloatMenu } from "../floatMenu/FloatMenu";
 import { CommandExam, ContextMenuItem, LinkInfo } from "../../composables/states/types";
-import { rednerRGBA } from "../../utils/color";
-import { useDocumentMap, useSelectedTmpSheet, useShapeLastSelectedId } from "../../hooks/storeHooks";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette, useDocumentMap, useSelectedTmpSheet, useShapeLastSelectedId } from "../../hooks/storeHooks";
 import { newShapeRenderer } from "../../composables/shapeRenderer";
 import { ContextMenu } from "../ContextMenu";
 import { getGridSize, newGrid } from "../../composables/grid";
@@ -46,10 +46,12 @@ import { ShapeLink } from "../../utils/texts/textLink";
 const DroppableFileRegs = [/image\/.+/, /^$/];
 
 export const AppCanvas: React.FC = () => {
-  const { sheetStore, shapeStore, documentStore, undoManager, userSettingStore } = useContext(AppCanvasContext);
+  const { diagramStore, sheetStore, shapeStore, documentStore, undoManager, userSettingStore } =
+    useContext(AppCanvasContext);
   const sm = useContext(AppStateMachineContext);
   const smctx = useContext(AppStateContext);
   const getSmctx = useContext(GetAppStateContext);
+  const palette = useColorPalette();
 
   const [canvasState, setCanvasState] = useState<any>({});
   const [cursor, setCursor] = useState<string | undefined>();
@@ -277,6 +279,7 @@ export const AppCanvas: React.FC = () => {
     userSettingStore,
     imageStore,
     sheetStore,
+    diagramStore,
     shapeStore,
     documentStore,
     showEmojiPicker,
@@ -360,6 +363,7 @@ export const AppCanvas: React.FC = () => {
       scale,
       canvasBank,
       targetRect: viewCanvasRect,
+      colorPalette: palette,
     });
     renderer.render(ctx);
     if (userSetting.showAttachment === "on") {
@@ -393,6 +397,7 @@ export const AppCanvas: React.FC = () => {
     canvasBank,
     viewCanvasRect,
     userSetting,
+    palette,
   ]);
 
   const getMouseOptionsCustom = useCallback(
@@ -754,8 +759,8 @@ export const AppCanvas: React.FC = () => {
 
   const sheet = useSelectedTmpSheet();
   const wrapperStyle = useMemo<React.CSSProperties>(() => {
-    return { cursor, backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" };
-  }, [cursor, sheet]);
+    return { cursor, backgroundColor: sheet?.bgcolor ? rednerRGBA(resolveColor(sheet.bgcolor, palette)) : "#fff" };
+  }, [cursor, sheet, palette]);
 
   const handlePreviewClose = useCallback(() => userSettingStore.patchState({ preview: "off" }), [userSettingStore]);
 

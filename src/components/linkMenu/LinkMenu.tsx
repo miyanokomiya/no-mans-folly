@@ -7,7 +7,8 @@ import { parseShapeLink, ShapeLink } from "../../utils/texts/textLink";
 import { FrameThumbnail } from "../framePanel/FrameThumbnail";
 import { useDocumentMapWithoutTmpInfo, useSelectedSheet, useStaticShapeComposite } from "../../hooks/storeHooks";
 import { AppStateContext } from "../../contexts/AppContext";
-import { rednerRGBA } from "../../utils/color";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 import { Size } from "../../models";
 import { useRefWithDOMRect, useWithinArea } from "../../hooks/domRect";
 
@@ -113,6 +114,7 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, viewSize, linkInfo, de
   const documentMap = useDocumentMapWithoutTmpInfo();
   const imageStore = getImageStore();
   const sheet = useSelectedSheet();
+  const palette = useColorPalette();
   const shapeLinkThumbnail = useMemo(() => {
     if (!shapeLink) return;
 
@@ -123,7 +125,7 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, viewSize, linkInfo, de
     const mockFrame = shapeComposite
       .getShapeStruct("frame")
       .create({ p: bounds, width: bounds.width, height: bounds.height });
-    const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
+    const sheetColor = sheet?.bgcolor ? rednerRGBA(resolveColor(sheet.bgcolor, palette)) : "#fff";
     return (
       <div className="w-60 h-40">
         <FrameThumbnail
@@ -133,10 +135,11 @@ export const LinkMenu: React.FC<Props> = ({ canvasToView, viewSize, linkInfo, de
           imageStore={imageStore}
           backgroundColor={sheetColor}
           noCrop
+          colorPalette={palette}
         />
       </div>
     );
-  }, [shapeComposite, documentMap, imageStore, sheet, shapeLink]);
+  }, [shapeComposite, documentMap, imageStore, sheet, shapeLink, palette]);
 
   return (
     <OutsideObserver onClick={handleGlobalClick}>

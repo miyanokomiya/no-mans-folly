@@ -17,7 +17,8 @@ import { isAlignBoxShape } from "../../shapes/align/alignBox";
 import { isCtrlOrMeta } from "../../utils/devices";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { selectShapesInRange } from "../../composables/states/appCanvas/commons";
-import { rednerRGBA } from "../../utils/color";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 import { getLabel, hasSpecialOrderPriority } from "../../shapes";
 import { newShapeRenderer, ShapeRenderer } from "../../composables/shapeRenderer";
 import { ClickOrDragHandler } from "../atoms/ClickOrDragHandler";
@@ -39,7 +40,8 @@ type FoldedMap = Record<string, FoldedValue>;
 export const ShapeTreePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);
   const sheet = useSelectedSheet();
-  const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
+  const palette = useColorPalette();
+  const sheetColor = sheet?.bgcolor ? rednerRGBA(resolveColor(sheet.bgcolor, palette)) : "#fff";
   const rootRef = useRef<HTMLDivElement>(null);
 
   const shapeComposite = useStaticShapeComposite();
@@ -102,9 +104,10 @@ export const ShapeTreePanel: React.FC = () => {
       getDocumentMap: () => documentMap,
       imageStore,
       scale: 1,
+      colorPalette: palette,
     });
     return getRenderShapeFn(shapeComposite, renderer);
-  }, [imageStore, shapeComposite, documentMap]);
+  }, [imageStore, shapeComposite, documentMap, palette]);
 
   const rootNodeProps = useMemo(() => {
     return shapeComposite.mergedShapeTree

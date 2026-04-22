@@ -90,6 +90,7 @@ export function newBoardLaneMovingState(): AppCanvasState {
             getStruct: shapeComposite.getShapeStruct,
           }),
           getDocumentMap: ctx.getDocumentMap,
+          colorPalette: ctx.getColorPalette(),
         });
         scaleGlobalAlpha(renderCtx, 0.5, () => {
           shapeRenderer.render(renderCtx);

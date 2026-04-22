@@ -7,6 +7,7 @@ export interface Entity {
 
 export interface Diagram extends Entity {
   name: string;
+  colorPalette?: RGBA[];
 }
 
 export interface Sheet extends Entity {
@@ -64,12 +65,18 @@ export interface StyleScheme {
   noExport: Color;
 }
 
-export interface Color {
+export interface RGBA {
   r: number;
   g: number;
   b: number;
   a: number;
 }
+
+export interface ColorIndex {
+  index: number;
+}
+
+export type Color = RGBA | ColorIndex;
 
 export interface FillStyle {
   disabled?: boolean;

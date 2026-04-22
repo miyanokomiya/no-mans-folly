@@ -1,5 +1,6 @@
 import { getRectCenter, IRectangle, IVec2, MINVALUE } from "okageo";
 import { Shape, Size, StrokeStyle } from "../models";
+import { resolveColor } from "../utils/color";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeSnappingLines, ShapeStruct, createBaseShape, textContainerModule } from "./core";
@@ -112,7 +113,7 @@ export const struct: ShapeStruct<CompoundGridShape> = {
       renderGridLabels(ctx, rect, outlineWidth, baseStrokeWidth, labelSize, shape.stroke, xList, yList);
     });
   },
-  createSVGElementInfo(shape): SVGElementInfo | undefined {
+  createSVGElementInfo(shape, shapeContext): SVGElementInfo | undefined {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
@@ -213,13 +214,14 @@ export const struct: ShapeStruct<CompoundGridShape> = {
     });
 
     if (labelLayout.labels) {
+      const strokeColor = resolveColor(shape.stroke.color, shapeContext?.colorPalette ?? []);
       children.push({
         tag: "g",
         attributes: {
           "text-anchor": "middle",
           "dominant-baseline": "middle",
-          fill: colorToHex(shape.stroke.color),
-          "fill-opacity": shape.stroke.color.a !== 1 ? shape.stroke.color.a : undefined,
+          fill: colorToHex(strokeColor),
+          "fill-opacity": strokeColor.a !== 1 ? strokeColor.a : undefined,
           stroke: "none",
         },
         children: labelLayout.labels.map(({ label, fontSize, rect }) => {

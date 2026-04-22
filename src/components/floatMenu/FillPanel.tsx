@@ -3,6 +3,8 @@ import { ColorPickerPanel } from "../molecules/ColorPickerPanel";
 import { Color, FillStyle } from "../../models";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
+import { resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 
 interface Props {
   fill: FillStyle;
@@ -10,18 +12,21 @@ interface Props {
 }
 
 export const FillPanel: React.FC<Props> = ({ fill, onChanged }) => {
+  const palette = useColorPalette();
+  const resolvedColor = resolveColor(fill.color, palette);
+
   const onColorChange = useCallback(
     (color: Color, draft = false) => {
-      onChanged?.({ color: { ...color, a: fill.color.a }, disabled: false }, draft);
+      onChanged?.({ color: { ...resolveColor(color, palette), a: resolvedColor.a }, disabled: false }, draft);
     },
-    [fill, onChanged],
+    [onChanged, palette, resolvedColor],
   );
 
   const onAlphaChanged = useCallback(
     (val: number, draft = false) => {
-      onChanged?.({ color: { ...fill.color, a: val }, disabled: false }, draft);
+      onChanged?.({ color: { ...resolvedColor, a: val }, disabled: false }, draft);
     },
-    [onChanged, fill],
+    [onChanged, resolvedColor],
   );
 
   const onDisabledChanged = useCallback(
@@ -42,7 +47,7 @@ export const FillPanel: React.FC<Props> = ({ fill, onChanged }) => {
         <div className="mt-2 flex items-center">
           <span>Alpha:</span>
           <div className="ml-2 flex-1">
-            <SliderInput min={0} max={1} step={0.1} value={fill.color.a} onChanged={onAlphaChanged} showValue />
+            <SliderInput min={0} max={1} step={0.1} value={resolvedColor.a} onChanged={onAlphaChanged} showValue />
           </div>
         </div>
         <div className="mt-2">

@@ -90,6 +90,7 @@ export function createInitialAppCanvasStateContext(arg: {
     selectSheet: () => {},
 
     getShapeComposite: () => newShapeComposite({ shapes: [], getStruct: getCommonStruct }),
+    getColorPalette: () => [],
     getShapes: () => [],
     getSelectedShapeIdMap: () => ({}),
     getLastSelectedShapeId: () => undefined,

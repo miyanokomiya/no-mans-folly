@@ -1,5 +1,5 @@
 import { AffineMatrix, IRectangle, IVec2, getDistance, getOuterRectangle, getRectCenter, moveRect } from "okageo";
-import { Direction4, Shape, StyleScheme, UserSetting } from "../models";
+import { Direction4, RGBA, Shape, StyleScheme, UserSetting } from "../models";
 import { cloneShapes, createShape, getIntersectedOutlines, hasSpecialOrderPriority } from "../shapes";
 import { applyFillStyle } from "../utils/fillStyle";
 import { LineShape, isLineShape } from "../shapes/line";
@@ -41,6 +41,7 @@ export type BranchTemplate = Pick<
 
 interface Option {
   getShapeComposite: () => ShapeComposite;
+  getColorPalette?: () => RGBA[];
   targetId: string;
   branchTemplate?: BranchTemplate;
   ignoreObstacles?: boolean;
@@ -99,6 +100,7 @@ const getBaseHandler = defineShapeHandler<SmartBranchHitResult, Option>((option)
       const renderer = newShapeRenderer({
         shapeComposite: previewShapeComposite,
         scale,
+        colorPalette: option.getColorPalette?.(),
       });
       renderer.render(ctx);
 

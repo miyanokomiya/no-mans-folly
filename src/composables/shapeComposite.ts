@@ -10,7 +10,7 @@ import {
   getRectCenter,
   multiAffines,
 } from "okageo";
-import { EntityPatchInfo, Shape } from "../models";
+import { EntityPatchInfo, RGBA, Shape } from "../models";
 import * as shapeModule from "../shapes";
 import * as geometry from "../utils/geometry";
 import { findBackward, mergeMap, toMap } from "../utils/commons";
@@ -92,6 +92,11 @@ export function newShapeComposite(option: Option) {
   // shape context always refers to merged shapes.
   const mergedShapeContext = newShapeContext(getStruct, mergedShapes, mergedShapeMap, mergedShapeTreeMap);
 
+  function getContextWithPalette(colorPalette?: RGBA[]): ShapeContext {
+    if (!colorPalette || colorPalette.length === 0) return mergedShapeContext;
+    return { ...mergedShapeContext, colorPalette };
+  }
+
   const docCompositeCacheMap: { [id: string]: [info: DocCompositionInfo, src: DocOutput] } = {};
 
   const sortedMergedShapeTreeCache = newCache(() => {
@@ -129,20 +134,24 @@ export function newShapeComposite(option: Option) {
     return [...unboundParents, ...branchShapes];
   }
 
-  function render(ctx: CanvasCTX, shape: Shape, imageStore?: ImageStore) {
-    shapeModule.renderShape(getStruct, ctx, shape, mergedShapeContext, imageStore);
+  function render(ctx: CanvasCTX, shape: Shape, imageStore?: ImageStore, colorPalette?: RGBA[]) {
+    shapeModule.renderShape(getStruct, ctx, shape, getContextWithPalette(colorPalette), imageStore);
   }
 
-  function clip(shape: Shape): Path2D | undefined {
-    return shapeModule.clipShape(getStruct, shape, mergedShapeContext);
+  function clip(shape: Shape, colorPalette?: RGBA[]): Path2D | undefined {
+    return shapeModule.clipShape(getStruct, shape, getContextWithPalette(colorPalette));
   }
 
-  function createSVGElementInfo(shape: Shape, imageStore?: ImageStore): SVGElementInfo | undefined {
-    return shapeModule.createSVGElementInfo(getStruct, shape, mergedShapeContext, imageStore);
+  function createSVGElementInfo(
+    shape: Shape,
+    imageStore?: ImageStore,
+    colorPalette?: RGBA[],
+  ): SVGElementInfo | undefined {
+    return shapeModule.createSVGElementInfo(getStruct, shape, getContextWithPalette(colorPalette), imageStore);
   }
 
-  function createClipSVGPath(shape: Shape): string | undefined {
-    return shapeModule.createClipSVGPath(getStruct, shape, mergedShapeContext);
+  function createClipSVGPath(shape: Shape, colorPalette?: RGBA[]): string | undefined {
+    return shapeModule.createClipSVGPath(getStruct, shape, getContextWithPalette(colorPalette));
   }
 
   /**
@@ -567,6 +576,7 @@ function newShapeContext(
       return lineJumpMap;
     },
     renderingPaths: new Set(),
+    colorPalette: [],
   };
 }
 

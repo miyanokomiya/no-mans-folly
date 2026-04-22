@@ -8,7 +8,8 @@ import { FillStyle, LineHead } from "../../models";
 import { PopupButton } from "../atoms/PopupButton";
 import { FillPanel } from "./FillPanel";
 import { StrokePanel } from "./StrokePanel";
-import { rednerRGBA } from "../../utils/color";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 import { HighlightShapeMeta } from "../../composables/states/appCanvas/core";
 import { AppStateMachineContext } from "../../contexts/AppContext";
 
@@ -19,6 +20,7 @@ interface Props {
 
 export const FloatMenuSmartBranch: React.FC<Props> = ({ popupKey, onPopupKeyChange }) => {
   const { handleEvent } = useContext(AppStateMachineContext);
+  const palette = useColorPalette();
   const staticShapeComposite = useStaticShapeComposite();
   const [userSetting, patchUserSetting] = useUserSetting();
   const popupButtonCommonProps = {
@@ -115,7 +117,7 @@ export const FloatMenuSmartBranch: React.FC<Props> = ({ popupKey, onPopupKeyChan
         >
           <div
             className="w-8 h-8 border-2 rounded-full"
-            style={{ backgroundColor: rednerRGBA(indexLineShape.fill.color) }}
+            style={{ backgroundColor: rednerRGBA(resolveColor(indexLineShape.fill.color, palette)) }}
           ></div>
         </PopupButton>
         <PopupButton
@@ -128,7 +130,7 @@ export const FloatMenuSmartBranch: React.FC<Props> = ({ popupKey, onPopupKeyChan
           <div className="w-8 h-8 flex justify-center items-center">
             <div
               className="w-1.5 h-9 border rounded-xs rotate-45"
-              style={{ backgroundColor: rednerRGBA(indexLineShape.stroke.color) }}
+              style={{ backgroundColor: rednerRGBA(resolveColor(indexLineShape.stroke.color, palette)) }}
             ></div>
           </div>
         </PopupButton>

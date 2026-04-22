@@ -1,5 +1,5 @@
 import { AffineMatrix, IRectangle, IVec2 } from "okageo";
-import { BoxPadding, CommonStyle, FillStyle, Shape, Size, StrokeStyle } from "../models";
+import { BoxPadding, CommonStyle, FillStyle, RGBA, Shape, Size, StrokeStyle } from "../models";
 import { isSameFillStyle } from "../utils/fillStyle";
 import { isSameStrokeStyle } from "../utils/strokeStyle";
 import { TreeNode } from "../utils/tree";
@@ -26,6 +26,7 @@ export interface ShapeContext {
   lineJumpMap: LineJumpMap;
   // This can be used to avoid circular reference during hierarchical rendering.
   renderingPaths: Set<string>;
+  colorPalette: RGBA[];
 }
 
 /**

@@ -1,7 +1,7 @@
 import type { ModeStateBase, ModeStateEventBase } from "../core";
 import type { CanvasStateContext, CanvasStateEvent } from "../commons";
 import type { StateGenerators } from ".";
-import { EntityPatchInfo, Shape, Sheet } from "../../../models";
+import { EntityPatchInfo, RGBA, Shape, Sheet } from "../../../models";
 import { IVec2 } from "okageo";
 import { GetShapeStruct } from "../../../shapes";
 import { DocAttrInfo, DocAttributes, DocDelta, DocOutput } from "../../../models/document";
@@ -18,6 +18,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   selectSheet: (id: string) => void;
 
   getShapeComposite: () => ShapeComposite;
+  getColorPalette: () => RGBA[];
   getShapes: () => Shape[];
   getSelectedShapeIdMap: () => { [id: string]: true };
   getLastSelectedShapeId: () => string | undefined;

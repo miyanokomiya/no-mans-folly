@@ -1,11 +1,16 @@
 import { useCallback, useContext, useMemo, useSyncExternalStore } from "react";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
-import { Shape, Sheet, UserSetting } from "../models";
+import { RGBA, Shape, Sheet, UserSetting } from "../models";
 import { ShapeStore } from "../stores/shapes";
 import { ShapeComposite } from "../composables/shapeComposite";
 import { DocOutput } from "../models/document";
 import { mapReduce } from "../utils/commons";
 import { SheetStore } from "../stores/sheets";
+
+export function useColorPalette(): RGBA[] {
+  const { diagramStore } = useContext(AppCanvasContext);
+  return useSyncExternalStore(diagramStore.watch, () => diagramStore.getEntity().colorPalette ?? []);
+}
 
 export function useUserSetting(): [UserSetting, patchUserSetting: (patch: Partial<UserSetting>) => void] {
   const { userSettingStore } = useContext(AppCanvasContext);

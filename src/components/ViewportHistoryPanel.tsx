@@ -7,7 +7,8 @@ import { ImageStore } from "../composables/imageStore";
 import { DocOutput } from "../models/document";
 import { useDocumentMapWithoutTmpInfo, useSelectedSheet, useStaticShapeComposite } from "../hooks/storeHooks";
 import { FrameShape } from "../shapes/frame";
-import { rednerRGBA } from "../utils/color";
+import { rednerRGBA, resolveColor } from "../utils/color";
+import { useColorPalette } from "../hooks/storeHooks";
 import emptyIcon from "../assets/icons/empty.svg";
 import iconAdd from "../assets/icons/add_filled.svg";
 import deleteIcon from "../assets/icons/delete_filled.svg";
@@ -20,7 +21,8 @@ export const ViewportHistoryPanel: React.FC = () => {
   const documentMap = useDocumentMapWithoutTmpInfo();
   const imageStore = getImageStore();
   const sheet = useSelectedSheet();
-  const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
+  const palette = useColorPalette();
+  const sheetColor = sheet?.bgcolor ? rednerRGBA(resolveColor(sheet.bgcolor, palette)) : "#fff";
 
   const handleAdd = useCallback(() => {
     addViewportHistory(getViewRect());
@@ -109,6 +111,7 @@ const PanelItem: React.FC<PanelItemProps> = ({
   onClick,
   onDelete,
 }) => {
+  const palette = useColorPalette();
   const mockFrame = useMemo<FrameShape | undefined>(() => {
     return viewport
       ? shapeComposite.getShapeStruct("frame").create({ p: viewport, width: viewport.width, height: viewport.height })
@@ -139,6 +142,7 @@ const PanelItem: React.FC<PanelItemProps> = ({
               documentMap={documentMap}
               imageStore={imageStore}
               backgroundColor={backgroundColor}
+              colorPalette={palette}
             />
           </button>
           {index > 0 ? (

@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { ImageStore, ImageData, newImageStore } from "../../composables/imageStore";
 import { isImageAssetShape } from "../../shapes/image";
 import { ShapeStore } from "../../stores/shapes";
+import { DiagramStore } from "../../stores/diagram";
 import { EntityPatchInfo, Shape, Sheet } from "../../models";
 import { AppCanvasStateContext } from "../../composables/states/appCanvas/core";
 import { getSheetThumbnailFileName } from "../../utils/fileAccess";
@@ -125,6 +126,7 @@ export function useSetupStateContext({
   userSettingStore,
   imageStore,
   sheetStore,
+  diagramStore,
   shapeStore,
   documentStore,
   showEmojiPicker,
@@ -160,6 +162,7 @@ export function useSetupStateContext({
   focus: () => void;
   userSettingStore: UserSettingStore;
   imageStore: ImageStore;
+  diagramStore: DiagramStore;
   sheetStore: SheetStore;
   shapeStore: ShapeStore;
   documentStore: DocumentStore;
@@ -242,6 +245,7 @@ export function useSetupStateContext({
       selectSheet: sheetStore.selectSheet,
 
       getShapeComposite: () => shapeStore.shapeComposite,
+      getColorPalette: () => diagramStore.getEntity().colorPalette ?? [],
       getShapes: () => shapeStore.shapeComposite.shapes,
 
       getTmpShapeMap: () => shapeStore.shapeComposite.tmpShapeMap,
@@ -326,6 +330,7 @@ export function useSetupStateContext({
     userSettingStore,
     imageStore,
     setSmctx,
+    diagramStore,
     sheetStore,
     shapeStore,
     showEmojiPicker,

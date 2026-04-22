@@ -5,7 +5,8 @@ import { AppStateContext, AppStateMachineContext } from "../../contexts/AppConte
 import { canHaveTextPadding, getTextPadding, patchTextPadding, switchShapeType } from "../../shapes";
 import { BoxAlign, BoxPadding, LineHead, Shape, StrokeStyle } from "../../models";
 import { PopupButton, PopupDirection } from "../atoms/PopupButton";
-import { rednerRGBA } from "../../utils/color";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 import { StrokePanel } from "./StrokePanel";
 import { TextItems } from "./TextItems";
 import { DocAttrInfo, DocAttributes } from "../../models/document";
@@ -51,6 +52,7 @@ export const FloatMenuInspector: React.FC<Props> = ({
   onPopupKeyChange,
 }) => {
   const { shapeStore } = useContext(AppCanvasContext);
+  const palette = useColorPalette();
   const { handleEvent } = useContext(AppStateMachineContext);
   const { getShapeStruct, setTmpShapeMap, patchShapes, updateShapes, getSelectedSheet } = useContext(AppStateContext);
   const indexShape = useSelectedTmpShape();
@@ -373,11 +375,11 @@ export const FloatMenuInspector: React.FC<Props> = ({
             <div className="w-8 h-8 relative">
               <div
                 className="w-8 h-1.5 border rounded-xs absolute top-1/2 left-0 -translate-y-1/2"
-                style={{ backgroundColor: rednerRGBA(tableBodyStroke.color) }}
+                style={{ backgroundColor: rednerRGBA(resolveColor(tableBodyStroke.color, palette)) }}
               ></div>
               <div
                 className="w-1.5 h-8 border rounded-xs absolute top-0 left-1/2 -translate-x-1/2"
-                style={{ backgroundColor: rednerRGBA(tableBodyStroke.color) }}
+                style={{ backgroundColor: rednerRGBA(resolveColor(tableBodyStroke.color, palette)) }}
               ></div>
             </div>
           </PopupButton>

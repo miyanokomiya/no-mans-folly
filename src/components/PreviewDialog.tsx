@@ -6,7 +6,8 @@ import { useCanvas } from "../hooks/canvas";
 import { AppStateContext } from "../contexts/AppContext";
 import { newCanvasBank } from "../composables/canvasBank";
 import { AppCanvasContext } from "../contexts/AppCanvasContext";
-import { rednerRGBA } from "../utils/color";
+import { rednerRGBA, resolveColor } from "../utils/color";
+import { useColorPalette } from "../hooks/storeHooks";
 import { useClickable } from "../hooks/clickable";
 import { useGlobalMousemoveEffect, useGlobalMouseupEffect } from "../hooks/window";
 import { ModeStateContextBase, newStateMachine } from "../composables/states/core";
@@ -32,6 +33,7 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
   const { shapeStore } = useContext(AppCanvasContext);
   const sheet = useSelectedTmpSheet();
   const smctx = useContext(AppStateContext);
+  const colorPalette = useColorPalette();
   const canvasBank = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     shapeStore; // For exhaustive-deps
@@ -79,9 +81,22 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
       imageStore: smctx.getImageStore(),
       scale,
       canvasBank,
+      colorPalette,
     });
     renderer.render(ctx);
-  }, [open, shapeComposite, documentMap, smctx, scale, viewOrigin.x, viewOrigin.y, canvasBank, canvasState, viewSize]);
+  }, [
+    open,
+    shapeComposite,
+    documentMap,
+    smctx,
+    scale,
+    viewOrigin.x,
+    viewOrigin.y,
+    canvasBank,
+    canvasState,
+    viewSize,
+    colorPalette,
+  ]);
 
   const focus = useCallback(() => {
     wrapperRef.current?.focus();
@@ -312,7 +327,9 @@ export const PreviewDialog: React.FC<Props> = ({ open, onClose }) => {
         <div
           ref={wrapperRef}
           className="w-full h-full outline-hidden"
-          style={{ backgroundColor: sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff" }}
+          style={{
+            backgroundColor: sheet?.bgcolor ? rednerRGBA(resolveColor(sheet.bgcolor, colorPalette)) : "#fff",
+          }}
           onPointerDown={onMouseDown}
           onPointerMove={onMouseHover}
           onKeyDown={onKeyDown}

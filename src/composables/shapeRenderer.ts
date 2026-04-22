@@ -1,5 +1,5 @@
 import { IRectangle } from "okageo";
-import { Shape, StrokeStyle } from "../models";
+import { RGBA, Shape, StrokeStyle } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
 import { hasStrokeStyle } from "../shapes/core";
@@ -27,10 +27,12 @@ interface Option {
   canvasBank?: CanvasBank;
   targetRect?: IRectangle;
   noTextLod?: boolean;
+  colorPalette?: RGBA[];
 }
 
 export function newShapeRenderer(option: Option) {
   const shapeComposite = option.shapeComposite;
+  const colorPalette = option.colorPalette;
   const { mergedShapeMap } = shapeComposite;
   const docMap = option.getDocumentMap?.() ?? {};
   const ignoreDocIdSet = new Set(option.ignoreDocIds ?? []);
@@ -121,13 +123,21 @@ export function newShapeRenderer(option: Option) {
       return;
     }
 
-    clipWithinGroup(shapeComposite, shape, clips, others, ctx, () => {
-      others.forEach((c) => renderShapeTreeStepWithAlpha(ctx, c));
-    });
+    clipWithinGroup(
+      shapeComposite,
+      shape,
+      clips,
+      others,
+      ctx,
+      () => {
+        others.forEach((c) => renderShapeTreeStepWithAlpha(ctx, c));
+      },
+      colorPalette,
+    );
   }
 
   function renderShapeAndDoc(ctx: CanvasCTX, shape: Shape) {
-    shapeComposite.render(ctx, shape, option.imageStore);
+    shapeComposite.render(ctx, shape, option.imageStore, colorPalette);
     renderDoc(ctx, shape);
   }
 
@@ -160,6 +170,7 @@ function clipWithinGroup(
   others: TreeNode[],
   ctx: CanvasCTX,
   renderMain: () => void,
+  colorPalette?: RGBA[],
 ) {
   const regions: [Path2D, StrokeStyle?, cropClipBorder?: boolean][] = [];
   let shouldStroke = false;
@@ -167,7 +178,7 @@ function clipWithinGroup(
     const rootChildShape = shapeComposite.shapeMap[c.id];
 
     shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
-      const subRegion = shapeComposite.clip(s);
+      const subRegion = shapeComposite.clip(s, colorPalette);
       if (subRegion) {
         if (hasStrokeStyle(s) && !s.stroke.disabled) {
           regions.push([subRegion, s.stroke, rootChildShape.cropClipBorder]);
@@ -187,7 +198,7 @@ function clipWithinGroup(
     const otherRegion: Path2D = new Path2D();
     others.forEach((c) => {
       shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
-        const subRegion = shapeComposite.clip(s);
+        const subRegion = shapeComposite.clip(s, colorPalette);
         if (subRegion) {
           otherRegion.addPath(subRegion);
         }

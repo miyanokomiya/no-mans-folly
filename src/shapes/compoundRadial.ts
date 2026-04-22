@@ -1,4 +1,5 @@
 import { Shape } from "../models";
+import { resolveColor } from "../utils/color";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
 import { ShapeSnappingLines, ShapeStruct, createBaseShape, textContainerModule } from "./core";
@@ -157,7 +158,7 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
       });
     });
   },
-  createSVGElementInfo(shape): SVGElementInfo | undefined {
+  createSVGElementInfo(shape, shapeContext): SVGElementInfo | undefined {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.rx * 2, height: shape.ry * 2 };
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
@@ -244,13 +245,14 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
 
     const allLabels = [...gridLabels, ...polarLabels];
     if (allLabels.length > 0) {
+      const strokeColor = resolveColor(shape.stroke.color, shapeContext?.colorPalette ?? []);
       children.push({
         tag: "g",
         attributes: {
           "text-anchor": "middle",
           "dominant-baseline": "middle",
-          fill: colorToHex(shape.stroke.color),
-          "fill-opacity": shape.stroke.color.a !== 1 ? shape.stroke.color.a : undefined,
+          fill: colorToHex(strokeColor),
+          "fill-opacity": strokeColor.a !== 1 ? strokeColor.a : undefined,
           stroke: "none",
         },
         children: allLabels.map(({ label, fontSize, rect: labelRect }) => {

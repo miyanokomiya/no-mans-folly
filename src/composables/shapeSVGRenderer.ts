@@ -1,4 +1,4 @@
-import { Shape, StrokeStyle } from "../models";
+import { RGBA, Shape, StrokeStyle } from "../models";
 import { DocOutput } from "../models/document";
 import { getShapeTextBounds } from "../shapes";
 import { hasStrokeStyle } from "../shapes/core";
@@ -23,6 +23,7 @@ type Option = {
   getDocumentMap: () => { [id: string]: DocOutput };
   imageStore?: ImageStore;
   assetAPI: AssetAPI;
+  colorPalette?: RGBA[];
 } & SVGElementOption;
 
 export function newShapeSVGRenderer(option: Option) {
@@ -108,9 +109,18 @@ export function newShapeSVGRenderer(option: Option) {
       return;
     }
 
-    clipWithinGroup(option.shapeComposite, shape, clips, others, root, elm, () => {
-      others.forEach((c) => renderShapeTreeStep(elm, ctx, c));
-    });
+    clipWithinGroup(
+      option.shapeComposite,
+      shape,
+      clips,
+      others,
+      root,
+      elm,
+      () => {
+        others.forEach((c) => renderShapeTreeStep(elm, ctx, c));
+      },
+      option.colorPalette,
+    );
   }
 
   function renderShapeAndDoc(ctx: CanvasCTX, shape: Shape): SVGElement | undefined {
@@ -134,7 +144,7 @@ export function newShapeSVGRenderer(option: Option) {
 export type ShapeSVGRenderer = ReturnType<typeof newShapeSVGRenderer>;
 
 function createShapeElement(option: Option, ctx: CanvasCTX, shape: Shape, doc?: DocOutput): SVGElement | undefined {
-  const shapeElmInfo = option.shapeComposite.createSVGElementInfo(shape, option.imageStore);
+  const shapeElmInfo = option.shapeComposite.createSVGElementInfo(shape, option.imageStore, option.colorPalette);
   if (!shapeElmInfo) return;
 
   if (!doc || hasDocNoContent(doc)) {
@@ -165,6 +175,7 @@ function clipWithinGroup(
   root: SVGElement,
   groupElm: SVGElement,
   renderMain: () => void,
+  colorPalette?: RGBA[],
 ) {
   const pathList: [string, id: string, StrokeStyle?, cropClipBorder?: boolean][] = [];
   let shouldStroke = false;
@@ -172,7 +183,7 @@ function clipWithinGroup(
     const rootChildShape = shapeComposite.shapeMap[c.id];
 
     shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
-      const pathStr = shapeComposite.createClipSVGPath(s);
+      const pathStr = shapeComposite.createClipSVGPath(s, colorPalette);
       if (pathStr) {
         if (hasStrokeStyle(s) && !s.stroke.disabled) {
           pathList.push([pathStr, s.id, s.stroke, rootChildShape.cropClipBorder]);
@@ -194,7 +205,7 @@ function clipWithinGroup(
     const pathStrList: string[] = [];
     others.forEach((c) => {
       shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
-        const pathStr = shapeComposite.createClipSVGPath(s);
+        const pathStr = shapeComposite.createClipSVGPath(s, colorPalette);
         if (pathStr) {
           pathStrList.push(pathStr);
         }

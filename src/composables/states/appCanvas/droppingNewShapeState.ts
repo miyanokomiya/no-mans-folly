@@ -112,6 +112,7 @@ export function newDroppingNewShapeState(option: Option): AppCanvasState {
         shapeComposite: minShapeComposite,
         getDocumentMap: () => option.docMap ?? {},
         imageStore: ctx.getImageStore(),
+        colorPalette: ctx.getColorPalette(),
       });
       scaleGlobalAlpha(renderCtx, 0.5, () => {
         renderer.render(renderCtx);

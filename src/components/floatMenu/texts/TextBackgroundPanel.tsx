@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from "react";
 import { ColorPickerPanel } from "../../molecules/ColorPickerPanel";
 import { Color } from "../../../models";
-import { COLORS, parseRGBA, rednerRGBA } from "../../../utils/color";
+import { COLORS, parseRGBA, rednerRGBA, resolveColor } from "../../../utils/color";
+import { useColorPalette } from "../../../hooks/storeHooks";
 import { ToggleInput } from "../../atoms/inputs/ToggleInput";
 import { SliderInput } from "../../atoms/inputs/SliderInput";
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export const TextBackgroundPanel: React.FC<Props> = ({ value, onChanged }) => {
+  const palette = useColorPalette();
   const color = useMemo(() => {
     return value ? parseRGBA(value) : undefined;
   }, [value]);
@@ -35,9 +37,9 @@ export const TextBackgroundPanel: React.FC<Props> = ({ value, onChanged }) => {
     (val: Color, draft = false) => {
       if (!color) return;
 
-      onChanged?.(rednerRGBA({ ...val, a: color.a }), draft);
+      onChanged?.(rednerRGBA({ ...resolveColor(val, palette), a: color.a }), draft);
     },
-    [onChanged, color],
+    [onChanged, color, palette],
   );
 
   return (

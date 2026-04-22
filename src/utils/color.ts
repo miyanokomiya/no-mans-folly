@@ -1,7 +1,5 @@
 import { circleClamp, clamp } from "okageo";
-import { Color } from "../models";
-
-type RGBA = Color;
+import { Color, ColorIndex, RGBA } from "../models";
 
 export const COLORS = {
   WHITE: { r: 255, g: 255, b: 255, a: 1 },
@@ -133,8 +131,22 @@ function slToSv(s: number, l: number): { s: number; v: number } {
   return { s: ss, v };
 }
 
-export function isSameColor(a?: RGBA, b?: RGBA): boolean {
-  if (a && b) return a.r === b.r && a.g === b.g && a.b === b.b && a.a === b.a;
+export function isIndexedColor(c: Color): c is ColorIndex {
+  return "index" in c;
+}
+
+export function resolveColor(color: Color, palette: RGBA[]): RGBA {
+  if (isIndexedColor(color)) return palette[color.index] ?? COLORS.BLACK;
+  return color;
+}
+
+export function isSameColor(a?: Color, b?: Color): boolean {
+  if (a && b) {
+    if (isIndexedColor(a) || isIndexedColor(b)) {
+      return isIndexedColor(a) && isIndexedColor(b) && a.index === b.index;
+    }
+    return a.r === b.r && a.g === b.g && a.b === b.b && a.a === b.a;
+  }
   return a === b;
 }
 
@@ -143,11 +155,11 @@ function componentToHex(c: number) {
   return hex.length == 1 ? "0" + hex : hex;
 }
 
-export function colorToHex(color: Color): string {
+export function colorToHex(color: RGBA): string {
   return "#" + componentToHex(color.r) + componentToHex(color.g) + componentToHex(color.b);
 }
 
-export function hexToColor(hex: string, alpha = 1): Color {
+export function hexToColor(hex: string, alpha = 1): RGBA {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {

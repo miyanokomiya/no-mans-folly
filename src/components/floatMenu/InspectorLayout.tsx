@@ -12,7 +12,8 @@ import {
 import { GetAppStateContext } from "../../contexts/AppContext";
 import { FillPanel } from "./FillPanel";
 import { StrokePanel } from "./StrokePanel";
-import { rednerRGBA } from "../../utils/color";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 import { useShapeComposite } from "../../hooks/storeHooks";
 import { getPatchByLayouts } from "../../composables/shapeLayoutHandler";
 import { IVec2 } from "okageo";
@@ -38,6 +39,7 @@ export const InspectorLayout: React.FC<Props> = ({
   children,
 }) => {
   const getCtx = useContext(GetAppStateContext);
+  const palette = useColorPalette();
   const shapeComposite = useShapeComposite();
 
   const indexCommonStyle = useMemo<CommonStyle | undefined>(() => {
@@ -138,7 +140,7 @@ export const InspectorLayout: React.FC<Props> = ({
         >
           <div
             className="w-8 h-8 border-2 rounded-full"
-            style={{ backgroundColor: rednerRGBA(indexCommonStyle.fill.color) }}
+            style={{ backgroundColor: rednerRGBA(resolveColor(indexCommonStyle.fill.color, palette)) }}
           ></div>
         </PopupButton>
       ) : undefined}
@@ -153,7 +155,7 @@ export const InspectorLayout: React.FC<Props> = ({
           <div className="w-8 h-8 flex justify-center items-center">
             <div
               className="w-1.5 h-9 border rounded-xs rotate-45"
-              style={{ backgroundColor: rednerRGBA(indexCommonStyle.stroke.color) }}
+              style={{ backgroundColor: rednerRGBA(resolveColor(indexCommonStyle.stroke.color, palette)) }}
             ></div>
           </div>
         </PopupButton>

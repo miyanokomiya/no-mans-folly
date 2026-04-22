@@ -1,15 +1,18 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Color } from "../../models";
+import { Color, RGBA } from "../../models";
 import {
   COLORS,
   HSVA,
   colorToHex,
   hexToColor,
   hsvaToRgba,
+  isIndexedColor,
   isSameColor,
   rednerRGBA,
+  resolveColor,
   rgbaToHsva,
 } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 import { useGlobalDrag } from "../../hooks/window";
 import { clamp } from "okageo";
 import { TextInput } from "../atoms/inputs/TextInput";
@@ -20,7 +23,7 @@ import { useLocalStorageAdopter } from "../../hooks/localStorage";
 
 const getV = (i: number) => clamp(0, 255, 51 * i);
 const base = [...Array(5)].map((_, i) => i - 2);
-const COLOR_TABLE: Color[][] = [
+const COLOR_TABLE: RGBA[][] = [
   [
     { r: 0, g: 0, b: 0, a: 1 },
     { r: 64, g: 64, b: 64, a: 1 },
@@ -44,6 +47,7 @@ const COLOR_TABLE: Color[][] = [
 const COLOR_GROUP_SIZE = COLOR_TABLE.length;
 
 const ColorPickerItem: React.FC<{ color: Color; onClick?: (color: Color) => void }> = (props) => {
+  const palette = useColorPalette();
   const onClick = useCallback(() => {
     props.onClick?.(props.color);
   }, [props]);
@@ -52,7 +56,7 @@ const ColorPickerItem: React.FC<{ color: Color; onClick?: (color: Color) => void
     <button
       type="button"
       className="w-4.5 h-4.5 border"
-      style={{ backgroundColor: rednerRGBA(props.color) }}
+      style={{ backgroundColor: rednerRGBA(resolveColor(props.color, palette)) }}
       onClick={onClick}
     ></button>
   );
@@ -64,6 +68,7 @@ interface ColorPickerPanelProps {
 }
 
 export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onChange }) => {
+  const palette = useColorPalette();
   const [colorHistory, setColorHistory] = useLocalStorageAdopter<Color[]>({
     key: "color-history",
     version: "1",
@@ -95,7 +100,7 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onCha
     [handleColorChange],
   );
 
-  const actualColor = color ?? COLORS.BLACK;
+  const actualColor: RGBA = useMemo(() => resolveColor(color ?? COLORS.BLACK, palette), [color, palette]);
   const hsva = useMemo(() => rgbaToHsva(actualColor), [actualColor]);
 
   // Keep HSVA detail as much as possible even if it's lost by RGBA converting.
@@ -149,7 +154,11 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onCha
         {colorHistory.length > 0 ? (
           <div className="mt-1 grid" style={{ gridTemplateColumns: `repeat(${COLOR_GROUP_SIZE}, minmax(0, 1fr))` }}>
             {colorHistory.map((color) => (
-              <ColorPickerItem key={rednerRGBA(color)} color={color} onClick={handleColorChange} />
+              <ColorPickerItem
+                key={isIndexedColor(color) ? `index-${color.index}` : rednerRGBA(color)}
+                color={color}
+                onClick={handleColorChange}
+              />
             ))}
           </div>
         ) : undefined}

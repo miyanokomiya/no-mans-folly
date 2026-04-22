@@ -6,7 +6,8 @@ import { AppStateMachineContext, GetAppStateContext } from "../../contexts/AppCo
 import { getViewportForRectWithinSize } from "../../utils/geometry";
 import { newShapeRenderer } from "../../composables/shapeRenderer";
 import { newCanvasBank } from "../../composables/canvasBank";
-import { rednerRGBA } from "../../utils/color";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 import { useGlobalKeydownEffect, useGlobalResizeEffect } from "../../hooks/window";
 import { getLineJoin } from "../../utils/strokeStyle";
 
@@ -104,7 +105,8 @@ const SlideshowBody: React.FC<{
   const imageStore = getCtx().getImageStore();
   const canvasBank = useMemo(() => newCanvasBank(), []);
   const sheet = useSelectedSheet();
-  const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
+  const palette = useColorPalette();
+  const sheetColor = sheet?.bgcolor ? rednerRGBA(resolveColor(sheet.bgcolor, palette)) : "#fff";
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const frame = useMemo(() => {
@@ -139,6 +141,7 @@ const SlideshowBody: React.FC<{
       canvasBank,
       targetRect: frameRectWithBorder,
       scale: viewport.scale,
+      colorPalette: palette,
     });
     renderer.render(ctx);
 
@@ -149,7 +152,7 @@ const SlideshowBody: React.FC<{
     ctx.lineJoin = getLineJoin(frame.stroke.lineJoin);
     ctx.fillStyle = "#000";
     ctx.fill();
-  }, [frame, canvasBank, documentMap, imageStore, shapeComposite]);
+  }, [frame, canvasBank, documentMap, imageStore, shapeComposite, palette]);
 
   useEffect(render, [render]);
   useGlobalResizeEffect(render);

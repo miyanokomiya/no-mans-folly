@@ -10,7 +10,8 @@ import { LoadingDialog } from "../navigations/LoadingDialog";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { FrameThumbnail } from "./FrameThumbnail";
 import { useSelectedSheet } from "../../hooks/storeHooks";
-import { rednerRGBA } from "../../utils/color";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 import { BlockGroupField } from "../atoms/BlockGroupField";
 import { FrameShape, isFrameShape } from "../../shapes/frame";
 import { isFrameAlignGroupShape } from "../../shapes/frameGroups/frameAlignGroup";
@@ -165,7 +166,11 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose, targetId }) 
   const documentMap = getCtx().getDocumentMap();
   const imageStore = getCtx().getImageStore();
   const sheet = useSelectedSheet();
-  const backgroundColor = useMemo(() => (sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff"), [sheet]);
+  const palette = useColorPalette();
+  const backgroundColor = useMemo(
+    () => (sheet?.bgcolor ? rednerRGBA(resolveColor(sheet.bgcolor, palette)) : "#fff"),
+    [sheet, palette],
+  );
 
   const handleAllFramesClick = useCallback(
     (val: boolean) => {
@@ -187,10 +192,11 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose, targetId }) 
           imageStore={imageStore}
           backgroundColor={backgroundColor}
           frame={frame}
+          colorPalette={palette}
         />
       );
     },
-    [shapeComposite, documentMap, imageStore, backgroundColor],
+    [shapeComposite, documentMap, imageStore, backgroundColor, palette],
   );
 
   return (

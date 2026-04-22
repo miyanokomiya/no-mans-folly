@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ShapeComposite, swapShapeParent } from "../../composables/shapeComposite";
+import { RGBA } from "../../models";
 import {
   useDocumentMapWithoutTmpInfo,
   useSelectedSheet,
@@ -14,7 +15,8 @@ import { useGlobalDrag } from "../../hooks/window";
 import { IVec2 } from "okageo";
 import { getModifierOptions } from "../../utils/devices";
 import { selectShapesInRange } from "../../composables/states/appCanvas/commons";
-import { rednerRGBA } from "../../utils/color";
+import { rednerRGBA, resolveColor } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 import { FrameShape, isFrameShape } from "../../shapes/frame";
 import { FrameItem } from "./FrameItem";
 import { FrameThumbnail } from "./FrameThumbnail";
@@ -37,7 +39,8 @@ type Props = {
 export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
   const getCtx = useContext(GetAppStateContext);
   const sheet = useSelectedSheet();
-  const sheetColor = sheet?.bgcolor ? rednerRGBA(sheet.bgcolor) : "#fff";
+  const palette = useColorPalette();
+  const sheetColor = sheet?.bgcolor ? rednerRGBA(resolveColor(sheet.bgcolor, palette)) : "#fff";
   const documentMap = useDocumentMapWithoutTmpInfo();
   const imageStore = getCtx().getImageStore();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -64,9 +67,10 @@ export const FrameTreePanel: React.FC<Props> = ({ onFrameExport }) => {
         sheetColor,
         documentMap,
         imageStore,
+        palette,
       ),
     );
-  }, [shapeComposite, selectedIdMap, selectedLastId, selectionScope, sheetColor, documentMap, imageStore]);
+  }, [shapeComposite, selectedIdMap, selectedLastId, selectionScope, sheetColor, documentMap, imageStore, palette]);
 
   const { handleEvent } = useContext(AppStateMachineContext);
 
@@ -495,6 +499,7 @@ function getUITreeNodeProps(
   sheetColor: string,
   documentMap: { [id: string]: DocOutput },
   imageStore: ImageStore,
+  colorPalette?: RGBA[],
 ): UITreeNodeProps {
   const shape = shapeComposite.shapeMap[shapeNode.id] as FrameShape | FrameGroup;
   const primeSibling = isSameShapeSelectionScope(selectedScope, shapeComposite.getSelectionScope(shape));
@@ -520,6 +525,7 @@ function getUITreeNodeProps(
         sheetColor,
         documentMap,
         imageStore,
+        colorPalette,
       ),
     ),
     sheetColor,
@@ -531,6 +537,7 @@ function getUITreeNodeProps(
             documentMap={documentMap}
             imageStore={imageStore}
             backgroundColor={sheetColor}
+            colorPalette={colorPalette}
           />
         )
       : undefined,

@@ -49,6 +49,7 @@ describe("struct", () => {
         getStruct: getCommonStruct,
         lineJumpMap: new Map(),
         renderingPaths: new Set(),
+        colorPalette: [],
       });
       expect(ctx.stroke).toHaveBeenCalled();
     });
@@ -69,6 +70,7 @@ describe("struct", () => {
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
           renderingPaths: new Set(),
+          colorPalette: [],
         }),
       ).toMatchSnapshot("straight spline");
 
@@ -86,6 +88,7 @@ describe("struct", () => {
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
           renderingPaths: new Set(),
+          colorPalette: [],
         }),
       ).toMatchSnapshot("bezier spline");
 
@@ -100,6 +103,7 @@ describe("struct", () => {
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
           renderingPaths: new Set(),
+          colorPalette: [],
         }),
       ).toMatchSnapshot("arc spline");
     });
@@ -119,6 +123,7 @@ describe("struct", () => {
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
           renderingPaths: new Set(),
+          colorPalette: [],
         }),
       ).toMatchSnapshot("dot_blank, dot_filled");
 
@@ -134,6 +139,7 @@ describe("struct", () => {
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
           renderingPaths: new Set(),
+          colorPalette: [],
         }),
       ).toMatchSnapshot("closed_blank, closed_filled");
 
@@ -148,6 +154,7 @@ describe("struct", () => {
           getStruct: getCommonStruct,
           lineJumpMap: new Map(),
           renderingPaths: new Set(),
+          colorPalette: [],
         }),
       ).toMatchSnapshot("open");
     });
@@ -190,6 +197,7 @@ describe("struct", () => {
         getStruct: getCommonStruct,
         lineJumpMap: new Map(),
         renderingPaths: new Set<string>(),
+        colorPalette: [],
       };
 
       expect(struct.getWrapperRect(line, ctx, false)).toEqual({ x: 0, y: 0, width: 10, height: 0 });
