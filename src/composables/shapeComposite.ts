@@ -138,8 +138,8 @@ export function newShapeComposite(option: Option) {
     shapeModule.renderShape(getStruct, ctx, shape, getContextWithPalette(colorPalette), imageStore);
   }
 
-  function clip(shape: Shape, colorPalette?: RGBA[]): Path2D | undefined {
-    return shapeModule.clipShape(getStruct, shape, getContextWithPalette(colorPalette));
+  function clip(shape: Shape): Path2D | undefined {
+    return shapeModule.clipShape(getStruct, shape, mergedShapeContext);
   }
 
   function createSVGElementInfo(
@@ -150,8 +150,8 @@ export function newShapeComposite(option: Option) {
     return shapeModule.createSVGElementInfo(getStruct, shape, getContextWithPalette(colorPalette), imageStore);
   }
 
-  function createClipSVGPath(shape: Shape, colorPalette?: RGBA[]): string | undefined {
-    return shapeModule.createClipSVGPath(getStruct, shape, getContextWithPalette(colorPalette));
+  function createClipSVGPath(shape: Shape): string | undefined {
+    return shapeModule.createClipSVGPath(getStruct, shape, mergedShapeContext);
   }
 
   /**

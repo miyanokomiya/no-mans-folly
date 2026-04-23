@@ -559,7 +559,7 @@ export function newTextEditorController(options: TextEditorControllerOptions) {
     _selection = 0;
   }
 
-  function render(ctx: CanvasCTX) {
+  function render(ctx: CanvasCTX, option?: textEditorUtil.RenderDocOption) {
     if (!_ctx) {
       setRenderingContext(ctx);
       updateComposition();
@@ -570,7 +570,7 @@ export function newTextEditorController(options: TextEditorControllerOptions) {
     const cursor = getCursor();
     const selection = getSelection();
 
-    renderDocByComposition(ctx, _composition, _compositionLines);
+    renderDocByComposition(ctx, _composition, _compositionLines, option);
 
     if (!isIME) {
       renderSelection(ctx, {

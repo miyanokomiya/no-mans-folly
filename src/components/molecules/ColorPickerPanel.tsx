@@ -7,6 +7,7 @@ import {
   hexToColor,
   hsvaToRgba,
   isIndexedColor,
+  isPartialRGBA,
   isSameColor,
   rednerRGBA,
   resolveColor,
@@ -20,6 +21,8 @@ import eyeDropperIcon from "../../assets/icons/eyedropper.svg";
 import { isEyedropperAvailable } from "../../utils/devices";
 import { BlockGroupField } from "../atoms/BlockGroupField";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
+import { SliderInput } from "../atoms/inputs/SliderInput";
+import { IndexedColors } from "./IndexedColors";
 
 const getV = (i: number) => clamp(0, 255, 51 * i);
 const base = [...Array(5)].map((_, i) => i - 2);
@@ -46,7 +49,7 @@ const COLOR_TABLE: RGBA[][] = [
 ];
 const COLOR_GROUP_SIZE = COLOR_TABLE.length;
 
-const ColorPickerItem: React.FC<{ color: Color; onClick?: (color: Color) => void }> = (props) => {
+const ColorPickerItem: React.FC<{ color: RGBA; onClick?: (color: RGBA) => void }> = (props) => {
   const palette = useColorPalette();
   const onClick = useCallback(() => {
     props.onClick?.(props.color);
@@ -64,44 +67,64 @@ const ColorPickerItem: React.FC<{ color: Color; onClick?: (color: Color) => void
 
 interface ColorPickerPanelProps {
   color?: Color;
-  onChange?: (color: Color, draft?: boolean) => void;
+  onChange?: (color: Partial<Color>, draft?: boolean) => void;
+  alphaDisabled?: boolean;
+  indexedColorDisabled?: boolean;
 }
 
-export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onChange }) => {
+export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({
+  color,
+  onChange,
+  alphaDisabled,
+  indexedColorDisabled,
+}) => {
   const palette = useColorPalette();
-  const [colorHistory, setColorHistory] = useLocalStorageAdopter<Color[]>({
+  const [colorHistory, setColorHistory] = useLocalStorageAdopter<RGBA[]>({
     key: "color-history",
     version: "1",
     initialValue: () => [],
     duration: 0,
   });
+  const colorValue = color ?? COLORS.BLACK;
+  const actualColor: RGBA = useMemo(() => resolveColor(colorValue, palette), [colorValue, palette]);
+  const hsva = useMemo(() => rgbaToHsva(actualColor), [actualColor]);
 
   const handleColorChange = useCallback(
-    (color: Color, draft?: boolean) => {
-      onChange?.(color, draft);
+    (val: Partial<Color>, draft?: boolean) => {
+      if (isPartialRGBA(val)) {
+        onChange?.({ ...val, index: undefined }, draft);
+      } else {
+        onChange?.({ index: val.index }, draft);
+      }
+    },
+    [onChange],
+  );
+
+  const handleRGBAChange = useCallback(
+    (val: Partial<RGBA>, draft?: boolean) => {
+      handleColorChange?.(val, draft);
+      const nextColor = { ...actualColor, ...val };
+
       if (!draft) {
         setColorHistory((v) => {
-          const next = v.filter((a) => !isSameColor(a, color));
-          next.unshift(color);
+          const next = v.filter((a) => !isSameColor(a, nextColor));
+          next.unshift(nextColor);
           return next.slice(0, COLOR_GROUP_SIZE * 2);
         });
       }
     },
-    [onChange, setColorHistory],
+    [handleColorChange, setColorHistory, actualColor],
   );
 
   const table = useMemo(
     () =>
       COLOR_TABLE.map((line) => {
         return line.map((item) => {
-          return <ColorPickerItem key={rednerRGBA(item)} color={item} onClick={handleColorChange} />;
+          return <ColorPickerItem key={rednerRGBA(item)} color={item} onClick={handleRGBAChange} />;
         });
       }),
-    [handleColorChange],
+    [handleRGBAChange],
   );
-
-  const actualColor: RGBA = useMemo(() => resolveColor(color ?? COLORS.BLACK, palette), [color, palette]);
-  const hsva = useMemo(() => rgbaToHsva(actualColor), [actualColor]);
 
   // Keep HSVA detail as much as possible even if it's lost by RGBA converting.
   const [hsvaCache, setHsvaCache] = useState(hsva);
@@ -115,21 +138,23 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onCha
     }
   }, [hsva]);
 
-  const handleHSVAChange = useCallback(
+  const handleHSVChange = useCallback(
     (val: HSVA, draft = false) => {
       setHsvaCache(val);
-      handleColorChange?.(hsvaToRgba(val), draft);
+      const rgba = hsvaToRgba(val);
+      handleRGBAChange?.({ r: rgba.r, g: rgba.g, b: rgba.b }, draft);
     },
-    [handleColorChange],
+    [handleRGBAChange],
   );
 
   const handleHueChange = useCallback(
     (val: number, draft = false) => {
       const nextHsva = { ...hsva, h: val };
       setHsvaCache(nextHsva);
-      handleColorChange?.(hsvaToRgba(nextHsva), draft);
+      const rgba = hsvaToRgba(nextHsva);
+      handleRGBAChange?.({ r: rgba.r, g: rgba.g, b: rgba.b }, draft);
     },
-    [hsva, handleColorChange],
+    [hsva, handleRGBAChange],
   );
 
   const handleEyedropperClick = useCallback(async () => {
@@ -144,27 +169,52 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onCha
     }
     if (!hex) return;
 
-    handleColorChange?.(hexToColor(hex));
-  }, [handleColorChange]);
+    handleRGBAChange?.(hexToColor(hex));
+  }, [handleRGBAChange]);
+
+  const handleAlphaChanged = useCallback(
+    (val: number, draft = false) => {
+      handleColorChange?.({ a: val }, draft);
+    },
+    [handleColorChange],
+  );
+
+  const handleIndexedColorClick = useCallback(
+    (val: number) => {
+      handleColorChange?.({ index: val });
+    },
+    [handleColorChange],
+  );
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1">
+      {indexedColorDisabled ? undefined : (
+        <IndexedColors
+          palette={palette}
+          selected={isIndexedColor(colorValue) ? colorValue.index : undefined}
+          onClick={handleIndexedColorClick}
+        />
+      )}
       <div>
+        {alphaDisabled ? undefined : (
+          <div className="flex items-center">
+            <span>Alpha:</span>
+            <div className="ml-2 flex-1">
+              <SliderInput min={0} max={1} step={0.1} value={actualColor.a} onChanged={handleAlphaChanged} showValue />
+            </div>
+          </div>
+        )}
         <div className="grid grid-rows-5 grid-flow-col">{table}</div>
         {colorHistory.length > 0 ? (
           <div className="mt-1 grid" style={{ gridTemplateColumns: `repeat(${COLOR_GROUP_SIZE}, minmax(0, 1fr))` }}>
             {colorHistory.map((color) => (
-              <ColorPickerItem
-                key={isIndexedColor(color) ? `index-${color.index}` : rednerRGBA(color)}
-                color={color}
-                onClick={handleColorChange}
-              />
+              <ColorPickerItem key={rednerRGBA(color)} color={color} onClick={handleRGBAChange} />
             ))}
           </div>
         ) : undefined}
       </div>
       <BlockGroupField label="Color detail" accordionKey="color-detail">
-        <HSVColorRect hsva={hsvaCache} onChange={handleHSVAChange} />
+        <HSVColorRect hsva={hsvaCache} onChange={handleHSVChange} />
         <HueBar value={hsvaCache.h} onChange={handleHueChange} />
         <div className="flex items-center">
           {isEyedropperAvailable() ? (
@@ -177,7 +227,7 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({ color, onCha
             </button>
           ) : undefined}
           <div className="ml-auto">
-            <HexField {...actualColor} onChange={handleColorChange} />
+            <HexField {...actualColor} onChange={handleRGBAChange} />
           </div>
         </div>
       </BlockGroupField>
@@ -317,7 +367,7 @@ interface HexFieldProps {
   r: number;
   g: number;
   b: number;
-  onChange?: (color: Color, draft?: boolean) => void;
+  onChange?: (color: RGBA, draft?: boolean) => void;
 }
 
 export const HexField: React.FC<HexFieldProps> = ({ r, g, b, onChange }) => {
@@ -332,7 +382,7 @@ export const HexField: React.FC<HexFieldProps> = ({ r, g, b, onChange }) => {
   }, [onChange, draftValue]);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SubmitEvent) => {
       e.preventDefault();
       finish();
     },

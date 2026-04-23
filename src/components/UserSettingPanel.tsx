@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ToggleInput } from "./atoms/inputs/ToggleInput";
 import { SelectInput } from "./atoms/inputs/SelectInput";
 import { InlineField } from "./atoms/InlineField";
@@ -9,8 +9,7 @@ import { useUserSetting } from "../hooks/storeHooks";
 import { OutsideObserver } from "./atoms/OutsideObserver";
 import { PopupButton } from "./atoms/PopupButton";
 import { ColorPickerPanel } from "./molecules/ColorPickerPanel";
-import { parseRGBA, rednerRGBA, resolveColor } from "../utils/color";
-import { useColorPalette } from "../hooks/storeHooks";
+import { parseRGBA, rednerRGBA } from "../utils/color";
 import { GRID_DEFAULT_COLOR } from "../composables/grid";
 
 const modifierSupportOptions: { value: Exclude<UserSetting["virtualKeyboard"], undefined>; label: string }[] = [
@@ -37,7 +36,6 @@ const displayModeOptions: { value: Exclude<UserSetting["displayMode"], undefined
 export const UserSettingPanel: React.FC = () => {
   const [userSetting, patchUserSetting] = useUserSetting();
   const [popupedKey, setPopupedKey] = useState<string>();
-  const palette = useColorPalette();
   const closePopup = useCallback(() => setPopupedKey(undefined), []);
 
   const handleDebugChange = useCallback(
@@ -103,11 +101,13 @@ export const UserSettingPanel: React.FC = () => {
     [patchUserSetting],
   );
 
+  const gridColor = useMemo(() => parseRGBA(userSetting.gridColor ?? GRID_DEFAULT_COLOR)!, [userSetting.gridColor]);
+
   const handleGridColorChange = useCallback(
-    (val: Color) => {
-      patchUserSetting({ gridColor: rednerRGBA(resolveColor(val, palette)) });
+    (val: Partial<Color>) => {
+      patchUserSetting({ gridColor: rednerRGBA({ ...gridColor, ...val }) });
     },
-    [patchUserSetting, palette],
+    [patchUserSetting, gridColor],
   );
 
   const handleGridOrderChange = useCallback(
@@ -241,8 +241,10 @@ export const UserSettingPanel: React.FC = () => {
                 popup={
                   <div className="p-2">
                     <ColorPickerPanel
-                      color={parseRGBA(userSetting.gridColor ?? GRID_DEFAULT_COLOR)}
+                      color={gridColor}
                       onChange={handleGridColorChange}
+                      alphaDisabled
+                      indexedColorDisabled
                     />
                   </div>
                 }

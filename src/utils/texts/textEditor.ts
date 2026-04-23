@@ -8,11 +8,11 @@ import {
   DocListValue,
   DocOutput,
 } from "../../models/document";
-import { Size } from "../../models";
+import { RGBA, Size } from "../../models";
 import { applyDefaultStrokeStyle } from "../strokeStyle";
 import { newChronoCache } from "../stateful/cache";
 import { SVGElementInfo, getColorAttributes } from "../svgElements";
-import { toHexAndAlpha } from "../color";
+import { resolveHexText, toHexAndAlpha } from "../color";
 import { CanvasCTX } from "../types";
 import {
   DocCompositionItem,
@@ -129,17 +129,17 @@ export function getDocRawLength(doc: DocOutput): number {
   return doc.map((d) => d.insert).reduce((p, v) => p + v.length, 0);
 }
 
-export function renderDoc(ctx: CanvasCTX, doc: DocOutput, range: IRectangle) {
+export function renderDoc(ctx: CanvasCTX, doc: DocOutput, range: IRectangle, option?: RenderDocOption) {
   const info = getDocCompositionInfo(doc, ctx, range.width, range.height);
   const lines = info.lines;
   const composition = info.composition;
-  renderDocByComposition(ctx, composition, lines);
+  renderDocByComposition(ctx, composition, lines, option);
 }
 
-function renderQuote(ctx: CanvasCTX, [from, to, attrs]: QuoteStackItem) {
+function renderQuote(ctx: CanvasCTX, [from, to, attrs]: QuoteStackItem, option?: RenderDocOption) {
   const fontSize = attrs?.size ?? DEFAULT_FONT_SIZE;
   ctx.lineWidth = fontSize * TEXT_ADJUSTMENTS.quoteWidth;
-  ctx.strokeStyle = attrs?.color ?? "#000";
+  ctx.strokeStyle = resolveHexText(attrs?.color ?? "#000", option?.palette);
   ctx.lineCap = "butt"; // Should be "butt", otherwise it can overlap background of other lines
   ctx.beginPath();
   ctx.moveTo(from.x, from.y);
@@ -147,7 +147,7 @@ function renderQuote(ctx: CanvasCTX, [from, to, attrs]: QuoteStackItem) {
   ctx.stroke();
 }
 
-function renderQuoteSVGDoc([from, to, attrs]: QuoteStackItem): SVGElementInfo {
+function renderQuoteSVGDoc([from, to, attrs]: QuoteStackItem, option?: RenderDocOption): SVGElementInfo {
   const fontSize = attrs?.size ?? DEFAULT_FONT_SIZE;
   return {
     tag: "line",
@@ -156,7 +156,7 @@ function renderQuoteSVGDoc([from, to, attrs]: QuoteStackItem): SVGElementInfo {
       y1: from.y,
       x2: to.x,
       y2: to.y,
-      ...getColorAttributes("stroke", toHexAndAlpha(attrs?.color ?? "#000")),
+      ...getColorAttributes("stroke", toHexAndAlpha(resolveHexText(attrs?.color ?? "#000", option?.palette))),
       "stroke-width": fontSize * TEXT_ADJUSTMENTS.quoteWidth,
     },
   };
@@ -215,15 +215,21 @@ function newQuoteStack() {
   };
 }
 
+export type RenderDocOption = {
+  palette?: RGBA[];
+};
+
 export function renderDocByComposition(
   ctx: CanvasCTX,
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
-  scale?: number, // If provided, text may be simplified when the visual size is too small.
+  option?: RenderDocOption & {
+    scale?: number; // If provided, text may be simplified when the visual size is too small.
+  },
 ) {
   let index = 0;
   let lastAttributes: DocAttributes | undefined;
-  applyDocAttributesToCtx(ctx, lastAttributes);
+  applyDocAttributesToCtx(ctx, lastAttributes, false, option);
 
   const quoteStack = newQuoteStack();
 
@@ -265,8 +271,8 @@ export function renderDocByComposition(
     groups.forEach((group, i) => {
       const fontSize = group.attributes.size ?? DEFAULT_FONT_SIZE;
 
-      if (scale !== undefined && fontSize / scale < LOD_THRESHOLD) {
-        ctx.fillStyle = group.attributes.color ?? "#000";
+      if (option?.scale !== undefined && fontSize / option?.scale < LOD_THRESHOLD) {
+        ctx.fillStyle = resolveHexText(group.attributes.color ?? "#000", option?.palette);
         const size = fontSize / 3;
         ctx.beginPath();
         ctx.rect(group.bounds.x, group.bounds.y + (group.bounds.height - size) / 2, group.bounds.width, size);
@@ -278,17 +284,17 @@ export function renderDocByComposition(
       }
 
       if (group.attributes.background) {
-        ctx.fillStyle = group.attributes.background;
+        ctx.fillStyle = resolveHexText(group.attributes.background, option?.palette);
         ctx.beginPath();
         ctx.fillRect(group.bounds.x, lineTop, group.bounds.width, lineHeight);
       }
 
       if (lastAttributes !== group.attributes) {
-        applyDocAttributesToCtx(ctx, group.attributes);
+        applyDocAttributesToCtx(ctx, group.attributes, false, option);
         lastAttributes = group.attributes;
       } else {
         // Need to reset fill style for background at least.
-        ctx.fillStyle = group.attributes.color ?? "#000";
+        ctx.fillStyle = resolveHexText(group.attributes.color ?? "#000", option?.palette);
       }
       if (i === 0) {
         processList(group, fontSize);
@@ -300,7 +306,7 @@ export function renderDocByComposition(
         ctx.lineWidth = fontHeight * TEXT_ADJUSTMENTS.lineWidth;
         ctx.lineCap = "butt";
         if (group.attributes.color) {
-          ctx.strokeStyle = group.attributes.color;
+          ctx.strokeStyle = resolveHexText(group.attributes.color, option?.palette);
         }
       }
 
@@ -331,7 +337,7 @@ export function renderDocByComposition(
 
   quoteStack.finishAll();
   quoteStack.finishedList.forEach((quote) => {
-    renderQuote(ctx, quote);
+    renderQuote(ctx, quote, option);
   });
 
   // For debug
@@ -348,6 +354,7 @@ export function renderDocByComposition(
 export function renderSVGDocByComposition(
   composition: DocCompositionItem[],
   compositionLines: DocCompositionLine[],
+  option?: RenderDocOption,
 ): SVGElementInfo {
   const bgElement: SVGElementInfo = { tag: "g", children: [] };
   const textElement: SVGElementInfo = {
@@ -406,10 +413,14 @@ export function renderSVGDocByComposition(
             y: group.bounds.y,
             width: group.bounds.width,
             height: lineHeight,
-            ...getColorAttributes("fill", toHexAndAlpha(group.attributes.background)),
+            ...getColorAttributes("fill", toHexAndAlpha(resolveHexText(group.attributes.background, option?.palette))),
           },
         });
       }
+
+      const colorHexAlpha = group.attributes.color
+        ? toHexAndAlpha(resolveHexText(group.attributes.color, option?.palette))
+        : undefined;
 
       if (group.attributes.underline) {
         const y = fontTop + fontHeight * TEXT_ADJUSTMENTS.underlineTop;
@@ -420,7 +431,7 @@ export function renderSVGDocByComposition(
             y1: y,
             x2: group.bounds.x + group.bounds.width,
             y2: y,
-            ...getColorAttributes("stroke", toHexAndAlpha(group.attributes.color)),
+            ...getColorAttributes("stroke", colorHexAlpha),
             "stroke-width": fontHeight * TEXT_ADJUSTMENTS.lineWidth,
           },
         });
@@ -435,7 +446,7 @@ export function renderSVGDocByComposition(
             y1: y,
             x2: group.bounds.x + group.bounds.width,
             y2: y,
-            ...getColorAttributes("stroke", toHexAndAlpha(group.attributes.color)),
+            ...getColorAttributes("stroke", colorHexAlpha),
             "stroke-width": fontHeight * TEXT_ADJUSTMENTS.lineWidth,
           },
         });
@@ -445,7 +456,7 @@ export function renderSVGDocByComposition(
         tag: "tspan",
         attributes: {
           x: group.bounds.x,
-          ...getColorAttributes("fill", toHexAndAlpha(group.attributes.color)),
+          ...getColorAttributes("fill", colorHexAlpha),
           "font-size": group.attributes?.size ?? undefined,
           "font-weight": group.attributes?.bold ? "bold" : undefined,
           "font-style": group.attributes?.italic ? "italic" : undefined,
@@ -465,7 +476,7 @@ export function renderSVGDocByComposition(
               tag: "tspan",
               attributes: {
                 x: group.bounds.x,
-                ...getColorAttributes("fill", toHexAndAlpha(group.attributes.color)),
+                ...getColorAttributes("fill", colorHexAlpha),
                 "font-size": group.attributes?.size ?? undefined,
                 "font-weight": group.attributes?.bold ? "bold" : undefined,
                 "font-style": group.attributes?.italic ? "italic" : undefined,
@@ -500,7 +511,7 @@ export function renderSVGDocByComposition(
 
   quoteStack.finishAll();
   quoteStack.finishedList.map((quote) => {
-    fwElement.children!.push(renderQuoteSVGDoc(quote));
+    fwElement.children!.push(renderQuoteSVGDoc(quote, option));
   });
 
   return rootElement;
@@ -667,7 +678,12 @@ export function getCursorLocation(compositionLines: DocCompositionLine[], cursor
   return { x, y };
 }
 
-export function applyDocAttributesToCtx(ctx: CanvasCTX, attrs: DocAttributes = {}, forMeasureWidth = false): void {
+function applyDocAttributesToCtx(
+  ctx: CanvasCTX,
+  attrs: DocAttributes = {},
+  forMeasureWidth = false,
+  option?: RenderDocOption,
+): void {
   const fontSize = attrs.size ?? DEFAULT_FONT_SIZE;
   const fontFamily = attrs.font ?? "Arial";
   const fontDecoration =
@@ -675,7 +691,7 @@ export function applyDocAttributesToCtx(ctx: CanvasCTX, attrs: DocAttributes = {
 
   ctx.font = `${fontDecoration} ${fontSize}px ${fontFamily}`;
   if (!forMeasureWidth) {
-    const color = attrs.color ?? "#000";
+    const color = resolveHexText(attrs.color ?? "#000", option?.palette);
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     ctx.setLineDash([]);

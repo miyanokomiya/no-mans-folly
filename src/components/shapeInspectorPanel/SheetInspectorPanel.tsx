@@ -6,7 +6,6 @@ import { COLORS, rednerRGBA, resolveColor } from "../../utils/color";
 import { Color } from "../../models";
 import { useColorPalette } from "../../hooks/storeHooks";
 import { useSelectedSheet, useSelectedTmpSheet } from "../../hooks/storeHooks";
-import { SliderInput } from "../atoms/inputs/SliderInput";
 import { OutsideObserver } from "../atoms/OutsideObserver";
 import { InlineField } from "../atoms/InlineField";
 
@@ -39,10 +38,10 @@ export const SheetInspectorPanel: React.FC = () => {
   const resolvedBgColor = useMemo(() => resolveColor(bgColor, palette), [bgColor, palette]);
 
   const onColorClick = useCallback(
-    (color: Color, draft = false) => {
+    (color: Partial<Color>, draft = false) => {
       if (!sheet) return;
 
-      const patch = { bgcolor: { ...resolveColor(color, palette), a: resolvedBgColor.a } };
+      const patch = { bgcolor: { ...bgColor, ...color } };
       if (draft) {
         sheetStore.setTmpSheetMap({ [sheet.id]: patch });
       } else {
@@ -50,22 +49,7 @@ export const SheetInspectorPanel: React.FC = () => {
         sheetStore.setTmpSheetMap({});
       }
     },
-    [sheet, sheetStore, palette, resolvedBgColor],
-  );
-
-  const onAlphaChanged = useCallback(
-    (val: number, draft = false) => {
-      if (!sheet) return;
-
-      const patch = { bgcolor: { ...resolvedBgColor, a: val } };
-      if (draft) {
-        sheetStore.setTmpSheetMap({ [sheet.id]: patch });
-      } else {
-        sheetStore.patchEntity(sheet.id, patch);
-        sheetStore.setTmpSheetMap({});
-      }
-    },
-    [sheetStore, sheet, resolvedBgColor],
+    [sheet, sheetStore, bgColor],
   );
 
   const bgColorPanel = useMemo(() => {
@@ -73,13 +57,10 @@ export const SheetInspectorPanel: React.FC = () => {
 
     return (
       <div className="p-2">
-        <div className="mb-2">
-          <SliderInput min={0} max={1} value={resolvedBgColor.a} onChanged={onAlphaChanged} />
-        </div>
         <ColorPickerPanel color={bgColor} onChange={onColorClick} />
       </div>
     );
-  }, [bgColor, sheet, onAlphaChanged, onColorClick, resolvedBgColor]);
+  }, [bgColor, sheet, onColorClick]);
 
   if (!sheet) return undefined;
 

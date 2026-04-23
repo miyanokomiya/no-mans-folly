@@ -52,18 +52,18 @@ export const struct: ShapeStruct<RectangleShape> = {
       textPadding: arg.textPadding ?? createBoxPadding([2, 2, 2, 2]),
     };
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeContext) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     const rectPolygon = getLocalRectPolygon(shape);
     ctx.beginPath();
     applyPath(ctx, rectPolygon, true);
     if (!shape.fill.disabled) {
-      applyFillStyle(ctx, shape.fill);
+      applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
       ctx.fill();
     }
     if (!shape.stroke.disabled) {
-      applyStrokeStyle(ctx, shape.stroke);
+      applyStrokeStyle(ctx, shape.stroke, shapeContext?.colorPalette);
       ctx.stroke();
     }
   },
@@ -74,7 +74,7 @@ export const struct: ShapeStruct<RectangleShape> = {
     applyPath(region, rectPolygon, true);
     return region;
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(shape, shapeContext) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
@@ -84,8 +84,8 @@ export const struct: ShapeStruct<RectangleShape> = {
         width: shape.width,
         height: shape.height,
         transform: renderTransform(affine),
-        ...renderFillSVGAttributes(shape.fill),
-        ...renderStrokeSVGAttributes(shape.stroke),
+        ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
+        ...renderStrokeSVGAttributes(shape.stroke, shapeContext?.colorPalette),
       },
     };
   },

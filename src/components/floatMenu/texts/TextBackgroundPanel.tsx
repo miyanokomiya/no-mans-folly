@@ -1,10 +1,8 @@
 import { useCallback, useMemo } from "react";
 import { ColorPickerPanel } from "../../molecules/ColorPickerPanel";
 import { Color } from "../../../models";
-import { COLORS, parseRGBA, rednerRGBA, resolveColor } from "../../../utils/color";
-import { useColorPalette } from "../../../hooks/storeHooks";
+import { COLORS, getColorText, parseColorText, rednerRGBA } from "../../../utils/color";
 import { ToggleInput } from "../../atoms/inputs/ToggleInput";
-import { SliderInput } from "../../atoms/inputs/SliderInput";
 
 interface Props {
   value?: string;
@@ -12,9 +10,8 @@ interface Props {
 }
 
 export const TextBackgroundPanel: React.FC<Props> = ({ value, onChanged }) => {
-  const palette = useColorPalette();
   const color = useMemo(() => {
-    return value ? parseRGBA(value) : undefined;
+    return value ? parseColorText(value) : undefined;
   }, [value]);
 
   const onDisabledChanged = useCallback(
@@ -24,22 +21,12 @@ export const TextBackgroundPanel: React.FC<Props> = ({ value, onChanged }) => {
     [onChanged],
   );
 
-  const onAlphaChanged = useCallback(
-    (val: number, draft = false) => {
-      if (!color) return;
-
-      onChanged?.(rednerRGBA({ ...color, a: val }), draft);
+  const onColorChange = useCallback(
+    (val: Partial<Color>, draft = false) => {
+      const current = color ?? COLORS.YELLOW;
+      onChanged?.(getColorText({ ...current, ...val }), draft);
     },
     [onChanged, color],
-  );
-
-  const onColorChange = useCallback(
-    (val: Color, draft = false) => {
-      if (!color) return;
-
-      onChanged?.(rednerRGBA({ ...resolveColor(val, palette), a: color.a }), draft);
-    },
-    [onChanged, color, palette],
   );
 
   return (
@@ -49,13 +36,8 @@ export const TextBackgroundPanel: React.FC<Props> = ({ value, onChanged }) => {
           Disabled
         </ToggleInput>
       </div>
-      <div className={!color ? "opacity-50 pointer-events-none" : ""}>
-        <div className="mt-2">
-          <SliderInput min={0} max={1} value={color?.a ?? 1} onChanged={onAlphaChanged} />
-        </div>
-        <div className="mt-2">
-          <ColorPickerPanel color={color} onChange={onColorChange} />
-        </div>
+      <div className={!color ? "opacity-50" : ""}>
+        <ColorPickerPanel color={color} onChange={onColorChange} />
       </div>
     </div>
   );

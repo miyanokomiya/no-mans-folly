@@ -157,7 +157,7 @@ function createShapeElement(option: Option, ctx: CanvasCTX, shape: Shape, doc?: 
   const infoCache = option.shapeComposite.getDocCompositeCache(shape.id, doc);
   const docInfo = infoCache ?? getDocCompositionInfo(doc, ctx, bounds.range.width, bounds.range.height);
 
-  const docElmInfo = renderSVGDocByComposition(docInfo.composition, docInfo.lines);
+  const docElmInfo = renderSVGDocByComposition(docInfo.composition, docInfo.lines, { palette: option.colorPalette });
   const transform = renderTransform(bounds.affine);
   if (transform) {
     docElmInfo.attributes ??= {};

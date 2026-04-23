@@ -123,17 +123,9 @@ export function newShapeRenderer(option: Option) {
       return;
     }
 
-    clipWithinGroup(
-      shapeComposite,
-      shape,
-      clips,
-      others,
-      ctx,
-      () => {
-        others.forEach((c) => renderShapeTreeStepWithAlpha(ctx, c));
-      },
-      colorPalette,
-    );
+    clipWithinGroup(shapeComposite, shape, clips, others, ctx, () => {
+      others.forEach((c) => renderShapeTreeStepWithAlpha(ctx, c));
+    });
   }
 
   function renderShapeAndDoc(ctx: CanvasCTX, shape: Shape) {
@@ -154,7 +146,10 @@ export function newShapeRenderer(option: Option) {
         shapeComposite.setDocCompositeCache(shape.id, info, doc);
       }
 
-      renderDocByComposition(ctx, info.composition, info.lines, option.noTextLod ? undefined : option.scale);
+      renderDocByComposition(ctx, info.composition, info.lines, {
+        palette: option?.colorPalette,
+        scale: option.noTextLod ? undefined : option.scale,
+      });
       ctx.restore();
     }
   }
@@ -170,7 +165,6 @@ function clipWithinGroup(
   others: TreeNode[],
   ctx: CanvasCTX,
   renderMain: () => void,
-  colorPalette?: RGBA[],
 ) {
   const regions: [Path2D, StrokeStyle?, cropClipBorder?: boolean][] = [];
   let shouldStroke = false;
@@ -178,7 +172,7 @@ function clipWithinGroup(
     const rootChildShape = shapeComposite.shapeMap[c.id];
 
     shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
-      const subRegion = shapeComposite.clip(s, colorPalette);
+      const subRegion = shapeComposite.clip(s);
       if (subRegion) {
         if (hasStrokeStyle(s) && !s.stroke.disabled) {
           regions.push([subRegion, s.stroke, rootChildShape.cropClipBorder]);
@@ -198,7 +192,7 @@ function clipWithinGroup(
     const otherRegion: Path2D = new Path2D();
     others.forEach((c) => {
       shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
-        const subRegion = shapeComposite.clip(s, colorPalette);
+        const subRegion = shapeComposite.clip(s);
         if (subRegion) {
           otherRegion.addPath(subRegion);
         }

@@ -1,17 +1,21 @@
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 import { ColorPickerPanel } from "../molecules/ColorPickerPanel";
-import { isIndexedColor, rednerRGBA } from "../../utils/color";
+import { isPartialRGBA } from "../../utils/color";
 import { Color, RGBA } from "../../models";
 import { useColorPalette } from "../../hooks/storeHooks";
-import { SliderInput } from "../atoms/inputs/SliderInput";
 import { BlockField } from "../atoms/BlockField";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
+import { IndexedColors } from "../molecules/IndexedColors";
 
 export const DiagramInspectorPanel: React.FC = () => {
   const { diagramStore } = useContext(AppCanvasContext);
   const palette = useColorPalette();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [draftColor, setDraftColor] = useState<RGBA>(palette[selectedIndex]);
+
+  const draftPalette = useMemo(() => {
+    return palette.map((p, i) => (i === selectedIndex ? draftColor : p));
+  }, [palette, selectedIndex, draftColor]);
 
   const handleClickIndex = useCallback(
     (index: number) => {
@@ -22,75 +26,35 @@ export const DiagramInspectorPanel: React.FC = () => {
   );
 
   const patchColor = useCallback(
-    (color: RGBA, draft = false) => {
-      setDraftColor(color);
+    (color: Partial<RGBA>, draft = false) => {
+      const next = { ...draftColor, ...color };
+      setDraftColor(next);
       if (!draft) {
         const nextPalette = palette.slice();
-        nextPalette[selectedIndex] = color;
+        nextPalette[selectedIndex] = next;
         diagramStore.patchEntity({ colorPalette: nextPalette });
       }
     },
-    [diagramStore, selectedIndex, palette],
+    [diagramStore, selectedIndex, palette, draftColor],
   );
 
   const handleColorClick = useCallback(
-    (color: Color, draft = false) => {
-      if (!isIndexedColor(color)) {
+    (color: Partial<Color>, draft = false) => {
+      if (isPartialRGBA(color)) {
         patchColor(color, draft);
       }
     },
     [patchColor],
   );
 
-  const onAlphaChanged = useCallback(
-    (val: number, draft = false) => {
-      patchColor({ ...draftColor, a: val }, draft);
-    },
-    [patchColor, draftColor],
-  );
-
   return (
     <div>
       <BlockField label="Indexed color">
-        <div className="w-max grid grid-cols-10 grid-flow-row">
-          {palette.map((color, i) => {
-            const selected = i === selectedIndex;
-            return (
-              <ColorIndexItem
-                key={i}
-                index={i}
-                color={selected ? draftColor : color}
-                selected={selected}
-                onClick={handleClickIndex}
-              />
-            );
-          })}
+        <div className="mb-1">
+          <IndexedColors palette={draftPalette} selected={selectedIndex} onClick={handleClickIndex} />
         </div>
-        <div className="my-2">
-          <SliderInput min={0} max={1} value={draftColor.a} onChanged={onAlphaChanged} />
-        </div>
-        <ColorPickerPanel color={draftColor} onChange={handleColorClick} />
+        <ColorPickerPanel color={draftColor} onChange={handleColorClick} indexedColorDisabled />
       </BlockField>
     </div>
-  );
-};
-
-interface ColorIndexItemProps {
-  index: number;
-  color: RGBA;
-  selected?: boolean;
-  onClick?: (index: number) => void;
-}
-
-export const ColorIndexItem: React.FC<ColorIndexItemProps> = ({ index, color, selected, onClick }) => {
-  const handleClick = useCallback(() => onClick?.(index), [index, onClick]);
-  return (
-    <button
-      key={index}
-      type="button"
-      className={"w-6 h-6 border-2" + (selected ? " border-cyan-400" : "")}
-      style={{ backgroundColor: rednerRGBA(color) }}
-      onClick={handleClick}
-    />
   );
 };

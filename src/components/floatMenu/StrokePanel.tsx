@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ColorPickerPanel } from "../molecules/ColorPickerPanel";
 import { Color, LineDash, StrokeStyle } from "../../models";
-import { resolveColor } from "../../utils/color";
-import { useColorPalette } from "../../hooks/storeHooks";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { getLineCap, getLineDash, getLineDashArrayWithCap, getLineJoin } from "../../utils/strokeStyle";
@@ -23,21 +21,11 @@ interface Props {
 }
 
 export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
-  const palette = useColorPalette();
-  const resolvedColor = resolveColor(stroke.color, palette);
-
   const onColorChange = useCallback(
-    (color: Color, draft = false) => {
-      onChanged?.({ color: { ...resolveColor(color, palette), a: resolvedColor.a }, disabled: false }, draft);
+    (color: Partial<Color>, draft = false) => {
+      onChanged?.({ color: { ...stroke.color, ...color }, disabled: false }, draft);
     },
-    [onChanged, palette, resolvedColor],
-  );
-
-  const onAlphaChanged = useCallback(
-    (val: number, draft = false) => {
-      onChanged?.({ color: { ...resolvedColor, a: val }, disabled: false }, draft);
-    },
-    [onChanged, resolvedColor],
+    [onChanged, stroke],
   );
 
   const onWidthChanged = useCallback(
@@ -99,15 +87,7 @@ export const StrokePanel: React.FC<Props> = ({ stroke, onChanged }) => {
           </InlineField>
           <LineDashField stroke={stroke} onChange={onChanged} />
         </BlockGroupField>
-        <div className="mt-2 flex items-center">
-          <span>Alpha:</span>
-          <div className="ml-2 flex-1">
-            <SliderInput min={0} max={1} step={0.1} value={resolvedColor.a} onChanged={onAlphaChanged} showValue />
-          </div>
-        </div>
-        <div className="mt-2">
-          <ColorPickerPanel color={stroke.color} onChange={onColorChange} />
-        </div>
+        <ColorPickerPanel color={stroke.color} onChange={onColorChange} />
       </div>
     </div>
   );

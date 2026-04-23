@@ -25,6 +25,8 @@ import { TextColorBgIcon, TextColorIcon } from "../atoms/icons/TextColorIcon";
 import { TextLink } from "./texts/TextLink";
 import { RadioSelectInput } from "../atoms/inputs/RadioSelectInput";
 import { IconButton } from "../atoms/buttons/IconButton";
+import { resolveHexText } from "../../utils/color";
+import { useColorPalette } from "../../hooks/storeHooks";
 
 const FONT_SIZE_OPTIONS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42].map((v) => ({ value: v, label: `${v}` }));
 
@@ -181,6 +183,8 @@ export const TextItems: React.FC<Props> = ({
   textEditing,
   sheetId,
 }) => {
+  const palette = useColorPalette();
+
   const onListClick = useCallback(() => {
     setPopupedKey("list");
   }, [setPopupedKey]);
@@ -267,6 +271,8 @@ export const TextItems: React.FC<Props> = ({
     [onInlineChanged],
   );
 
+  const textColorStyle = docAttrInfo.cursor?.color ? resolveHexText(docAttrInfo.cursor.color, palette) : "#000000";
+
   return (
     <div className="flex gap-1 items-center">
       <div className="w-12 h-full flex items-center">
@@ -286,10 +292,7 @@ export const TextItems: React.FC<Props> = ({
         onClick={setPopupedKey}
         defaultDirection={defaultDirection}
       >
-        <div
-          className="w-8 h-8 flex justify-center items-center"
-          style={{ color: docAttrInfo.cursor?.color ?? "#000000" }}
-        >
+        <div className="w-8 h-8 flex justify-center items-center" style={{ color: textColorStyle }}>
           <TextColorIcon />
         </div>
       </PopupButton>
@@ -304,9 +307,13 @@ export const TextItems: React.FC<Props> = ({
       >
         <div
           className="w-8 h-8 flex justify-center items-center"
-          style={{ color: docAttrInfo.cursor?.background ?? "transparent" }}
+          style={{
+            color: docAttrInfo.cursor?.background
+              ? resolveHexText(docAttrInfo.cursor.background, palette)
+              : "transparent",
+          }}
         >
-          <TextColorBgIcon color={docAttrInfo.cursor?.color ?? undefined} />
+          <TextColorBgIcon color={textColorStyle} />
         </div>
       </PopupButton>
       <TextDecoration
