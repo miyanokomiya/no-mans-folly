@@ -22,6 +22,7 @@ import { ShapeSelectionPanel } from "./ShapeSelectionPanel";
 import { ToggleInput } from "../atoms/inputs/ToggleInput";
 import { BlockGroupField } from "../atoms/BlockGroupField";
 import { AppText } from "../molecules/AppText";
+import { DiagramInspectorPanel } from "./DiagramInspectorPanel";
 
 export const ShapeInspectorPanel: React.FC = () => {
   const targetShape = useSelectedShape();
@@ -32,7 +33,17 @@ export const ShapeInspectorPanel: React.FC = () => {
       <ShapeInspectorPanelWithShape targetShape={targetShape} />
     </div>
   ) : (
-    <SheetInspectorPanel />
+    <div>
+      <div>
+        <h2 className="text-lg">Diagram</h2>
+        <DiagramInspectorPanel />
+      </div>
+      <div className="my-1 border-t" />
+      <div>
+        <h2 className="text-lg">Sheet</h2>
+        <SheetInspectorPanel />
+      </div>
+    </div>
   );
 };
 

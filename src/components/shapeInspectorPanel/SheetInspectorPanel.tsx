@@ -85,7 +85,7 @@ export const SheetInspectorPanel: React.FC = () => {
 
   return (
     <div>
-      <InlineField label="Sheet name">
+      <InlineField label="Name">
         <span>{sheet.name}</span>
       </InlineField>
       <InlineField label="Background color">
