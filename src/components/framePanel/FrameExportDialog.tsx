@@ -104,7 +104,7 @@ export const FrameExportDialog: React.FC<Props> = ({ open, onClose, targetId }) 
   }, [frameIdSet, exportOptions, getCtx]);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SubmitEvent) => {
       e.preventDefault();
       handleExport();
     },

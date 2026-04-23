@@ -45,7 +45,7 @@ export const NumberCombobox: React.FC<Props> = ({
   );
 
   const onSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SubmitEvent) => {
       e.preventDefault();
       close();
       const val = Math.min(Math.max(draftValue, min), max);

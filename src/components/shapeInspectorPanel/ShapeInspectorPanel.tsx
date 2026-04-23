@@ -107,7 +107,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
   }, [getTmpShapeMap, setTmpShapeMap, patchShapes, breakState]);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SubmitEvent) => {
       e.preventDefault();
       commit();
     },

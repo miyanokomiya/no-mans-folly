@@ -89,7 +89,7 @@ export const SheetPanel: React.FC<Props> = ({
   }, [sheet, draftName, onChangeName]);
 
   const handleNameSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SubmitEvent) => {
       e.preventDefault();
       finishRename();
     },

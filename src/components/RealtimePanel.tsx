@@ -26,7 +26,7 @@ export const RealtimePanel: React.FC = () => {
   }, []);
 
   const handleConnect = useCallback(
-    async (e: React.FormEvent) => {
+    async (e: React.SubmitEvent) => {
       e.preventDefault();
       if (!roomIdDraft || status !== "disconnected") return;
 

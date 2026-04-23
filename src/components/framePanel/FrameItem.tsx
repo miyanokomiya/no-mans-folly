@@ -115,7 +115,7 @@ export const FrameItem: React.FC<Props> = ({
   }, [id, draftName, onNameChange]);
 
   const handleNameSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SubmitEvent) => {
       e.preventDefault();
       finishRename();
     },
