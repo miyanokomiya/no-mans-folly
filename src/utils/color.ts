@@ -132,12 +132,53 @@ function slToSv(s: number, l: number): { s: number; v: number } {
 }
 
 export function isIndexedColor(c: Color): c is ColorIndex {
-  return "index" in c;
+  return "index" in c && c.index != null;
+}
+
+export function isPartialRGBA(c: Partial<Color>): c is Partial<RGBA> {
+  return !("index" in c && c.index != null);
 }
 
 export function resolveColor(color: Color, palette: RGBA[]): RGBA {
   if (isIndexedColor(color)) return palette[color.index] ?? COLORS.BLACK;
   return color;
+}
+
+export function isIndexedColorText(str: string): boolean {
+  return /indexed-color_/.test(str);
+}
+
+export function resolveColorText(str: string, palette: RGBA[], defaultAlpha = 1): RGBA | undefined {
+  if (isIndexedColorText(str)) {
+    const index = getIndexedColorFromText(str);
+    return resolveColor({ index }, palette);
+  }
+  return parseRGBA(str, defaultAlpha);
+}
+
+export function getIndexedColorText(index: number): string {
+  return `indexed-color_${index}`;
+}
+
+export function getIndexedColorFromText(text: string): number {
+  const val = parseInt(text.slice("indexed-color_".length), 10);
+  return isNaN(val) ? 0 : val;
+}
+
+export function getColorText(color: Color): string {
+  return isIndexedColor(color) ? getIndexedColorText(color.index) : rednerRGBA(color);
+}
+
+export function parseColorText(text: string): Color | undefined {
+  return isIndexedColorText(text) ? { index: getIndexedColorFromText(text) } : parseRGBA(text);
+}
+
+export function resolveHexText(hexOrIndex: string, palette?: RGBA[]): string {
+  if (!palette) return hexOrIndex;
+  if (!isIndexedColorText(hexOrIndex)) return hexOrIndex;
+
+  const color = palette[getIndexedColorFromText(hexOrIndex)];
+  return color ? colorToHex(color) : "";
 }
 
 export function isSameColor(a?: Color, b?: Color): boolean {

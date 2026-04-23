@@ -1,17 +1,25 @@
 import { describe, test, expect } from "vitest";
 
 import {
+  COLORS,
   colorToHex,
   generateUIColorFromInteger,
+  getIndexedColorFromText,
+  getIndexedColorText,
   hslaToHsva,
   hsvaToHsla,
   hsvaToRgba,
+  isIndexedColor,
+  isPartialRGBA,
   parseHSLA,
   parseHSVA,
   parseRGBA,
   rednerHSLA,
   rednerHSVA,
   rednerRGBA,
+  resolveColor,
+  resolveColorText,
+  resolveHexText,
   rgbaToHsva,
   toHexAndAlpha,
 } from "./color";
@@ -221,5 +229,71 @@ describe("generateUIColorFromInteger", () => {
     expect(res0).not.toEqual(res1);
     expect(res0).not.toEqual(res2);
     expect(res0).toEqual(generateUIColorFromInteger(0));
+  });
+});
+
+describe("isIndexedColor", () => {
+  test("should return true when the value is indexed color", () => {
+    expect(isIndexedColor({ index: -1 }), "invalid as index but still treated as indexed color").toBe(true);
+    expect(isIndexedColor({ index: 0 })).toBe(true);
+    expect(isIndexedColor({ index: 1 })).toBe(true);
+    expect(isIndexedColor({ r: 255, g: 100, b: 10, a: 1 })).toBe(false);
+    expect(isIndexedColor({ r: 255, g: 100, b: 10, a: 1, index: 0 })).toBe(true);
+  });
+});
+
+describe("isPartialRGBA", () => {
+  test("should return true when the value is indexed color", () => {
+    expect(isPartialRGBA({ index: -1 }), "invalid as index but still treated as indexed color").toBe(false);
+    expect(isPartialRGBA({ index: 0 })).toBe(false);
+    expect(isPartialRGBA({ index: 1 })).toBe(false);
+    expect(isPartialRGBA({ r: 255 })).toBe(true);
+    expect(isPartialRGBA({ a: 0 })).toBe(true);
+    expect(isPartialRGBA({ g: 1, index: 0 })).toBe(false);
+  });
+});
+
+describe("resolveColor", () => {
+  const palette = [COLORS.WHITE, COLORS.GRAY_1];
+  test("should resolve indexed color", () => {
+    expect(resolveColor({ index: 0 }, palette)).toEqual(palette[0]);
+    expect(resolveColor({ index: 1 }, palette)).toEqual(palette[1]);
+    expect(resolveColor({ index: 10 }, palette)).toEqual(COLORS.BLACK);
+    expect(resolveColor(COLORS.YELLOW, palette)).toEqual(COLORS.YELLOW);
+  });
+});
+
+describe("resolveColorText", () => {
+  const palette = [COLORS.WHITE, COLORS.GRAY_1];
+  test("should resolve indexed color", () => {
+    expect(resolveColorText("rgba(1,2,3,0)", palette)).toEqual({ r: 1, g: 2, b: 3, a: 0 });
+    expect(resolveColorText("indexed-color_1", palette)).toEqual(palette[1]);
+    expect(resolveColorText("xxx", palette)).toEqual(undefined);
+  });
+});
+
+describe("getIndexedColorText", () => {
+  test("should return text representation of an indexed color", () => {
+    expect(getIndexedColorText(0)).toBe("indexed-color_0");
+    expect(getIndexedColorText(1)).toBe("indexed-color_1");
+    expect(getIndexedColorText(10)).toBe("indexed-color_10");
+  });
+});
+
+describe("getIndexedColorFromText", () => {
+  test("should return the index from a text representation", () => {
+    expect(getIndexedColorFromText("indexed-color_0")).toBe(0);
+    expect(getIndexedColorFromText("indexed-color_1")).toBe(1);
+    expect(getIndexedColorFromText("indexed-color_10")).toBe(10);
+    expect(getIndexedColorFromText("xxx_10"), "fallback to zero when invalid").toBe(0);
+  });
+});
+
+describe("resolveHexText", () => {
+  const palette = [COLORS.WHITE, COLORS.GRAY_1];
+  test("should resolve indexed color", () => {
+    expect(resolveHexText("#001122", palette)).toBe("#001122");
+    expect(resolveHexText("indexed-color_1", palette)).toBe("#bfbfbf");
+    expect(resolveHexText("indexed-color_10", palette)).toBe("");
   });
 });
