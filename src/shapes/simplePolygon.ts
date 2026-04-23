@@ -107,7 +107,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
   | "getSnappingLines"
 > {
   return {
-    render(ctx, shape) {
+    render(ctx, shape, shapeContext) {
       if (shape.fill.disabled && shape.stroke.disabled) return;
 
       const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
@@ -119,14 +119,14 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
         applyCurvePath(ctx, path, curves, !polyline);
 
         if (polyline) {
-          renderLineStroke(ctx, shape);
+          renderLineStroke(ctx, shape, shapeContext?.colorPalette);
         } else {
           if (!shape.fill.disabled) {
-            applyFillStyle(ctx, shape.fill);
+            applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
             ctx.fill("evenodd");
           }
           if (!shape.stroke.disabled) {
-            applyStrokeStyle(ctx, shape.stroke);
+            applyStrokeStyle(ctx, shape.stroke, shapeContext?.colorPalette);
             ctx.stroke();
           }
         }
@@ -143,7 +143,7 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
       region.addPath(localRegion, { a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] });
       return region;
     },
-    createSVGElementInfo(shape) {
+    createSVGElementInfo(shape, shapeContext) {
       const transform = getShapeTransform(shape);
       const { path, curves } = getPath(shape);
       const polyline = isPolyline(shape);
@@ -155,7 +155,11 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
               transform: renderTransform(transform),
               fill: "none",
             },
-            children: createLineStrokeSVGElementInfo(shape, pathSegmentRawsToString(createSVGCurvePath(path, curves))),
+            children: createLineStrokeSVGElementInfo(
+              shape,
+              pathSegmentRawsToString(createSVGCurvePath(path, curves)),
+              shapeContext?.colorPalette,
+            ),
           }
         : {
             tag: "path",
@@ -163,8 +167,8 @@ export function getStructForSimplePolygon<T extends SimplePolygonShape>(
               transform: renderTransform(transform),
               d: pathSegmentRawsToString(createSVGCurvePath(path, curves, true)),
               "fill-rule": "evenodd",
-              ...renderFillSVGAttributes(shape.fill),
-              ...renderStrokeSVGAttributes(shape.stroke),
+              ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
+              ...renderStrokeSVGAttributes(shape.stroke, shapeContext?.colorPalette),
             },
           };
     },

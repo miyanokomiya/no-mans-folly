@@ -36,18 +36,18 @@ export const struct: ShapeStruct<DonutShape> = {
       holeRate: arg.holeRate ?? 0.6,
     };
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeContext) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     ctx.beginPath();
     applyDonutPath(ctx, shape);
 
     if (!shape.fill.disabled) {
-      applyFillStyle(ctx, shape.fill);
+      applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
       ctx.fill();
     }
     if (!shape.stroke.disabled) {
-      applyStrokeStyle(ctx, shape.stroke);
+      applyStrokeStyle(ctx, shape.stroke, shapeContext?.colorPalette);
       ctx.stroke();
     }
   },
@@ -56,7 +56,7 @@ export const struct: ShapeStruct<DonutShape> = {
     applyDonutPath(region, shape);
     return region;
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(shape, shapeContext) {
     const rect = {
       x: shape.p.x,
       y: shape.p.y,
@@ -71,8 +71,8 @@ export const struct: ShapeStruct<DonutShape> = {
       attributes: {
         d,
         transform: renderTransform(affine),
-        ...renderFillSVGAttributes(shape.fill),
-        ...renderStrokeSVGAttributes(shape.stroke),
+        ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
+        ...renderStrokeSVGAttributes(shape.stroke, shapeContext?.colorPalette),
       },
     };
   },

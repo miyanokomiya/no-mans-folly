@@ -30,21 +30,21 @@ export const struct: ShapeStruct<VnNodeShape> = {
       r: arg.r ?? 4,
     };
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeContext) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     ctx.beginPath();
     ctx.arc(shape.p.x, shape.p.y, shape.r, 0, TAU);
     if (!shape.fill.disabled) {
-      applyFillStyle(ctx, shape.fill);
+      applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
       ctx.fill();
     }
     if (!shape.stroke.disabled) {
-      applyStrokeStyle(ctx, shape.stroke);
+      applyStrokeStyle(ctx, shape.stroke, shapeContext?.colorPalette);
       ctx.stroke();
     }
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(shape, shapeContext) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     const rect = getArcBounds(shape);
@@ -58,8 +58,8 @@ export const struct: ShapeStruct<VnNodeShape> = {
         rx: shape.r,
         ry: shape.r,
         transform: renderTransform(affine),
-        ...renderFillSVGAttributes(shape.fill),
-        ...renderStrokeSVGAttributes(shape.stroke),
+        ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
+        ...renderStrokeSVGAttributes(shape.stroke, shapeContext?.colorPalette),
       },
     };
   },

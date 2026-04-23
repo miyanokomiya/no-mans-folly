@@ -60,17 +60,17 @@ export const struct: ShapeStruct<EllipseShape> = {
       ry: arg.ry ?? 50,
     };
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeContext) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     ctx.beginPath();
     ctx.ellipse(shape.p.x + shape.rx, shape.p.y + shape.ry, shape.rx, shape.ry, shape.rotation, 0, TAU);
     if (!shape.fill.disabled) {
-      applyFillStyle(ctx, shape.fill);
+      applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
       ctx.fill();
     }
     if (!shape.stroke.disabled) {
-      applyStrokeStyle(ctx, shape.stroke);
+      applyStrokeStyle(ctx, shape.stroke, shapeContext?.colorPalette);
       ctx.stroke();
     }
   },
@@ -79,7 +79,7 @@ export const struct: ShapeStruct<EllipseShape> = {
     region.ellipse(shape.p.x + shape.rx, shape.p.y + shape.ry, shape.rx, shape.ry, shape.rotation, 0, TAU);
     return region;
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(shape, shapeContext) {
     const rect = {
       x: shape.p.x,
       y: shape.p.y,
@@ -96,8 +96,8 @@ export const struct: ShapeStruct<EllipseShape> = {
         rx: shape.rx,
         ry: shape.ry,
         transform: renderTransform(affine),
-        ...renderFillSVGAttributes(shape.fill),
-        ...renderStrokeSVGAttributes(shape.stroke),
+        ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
+        ...renderStrokeSVGAttributes(shape.stroke, shapeContext?.colorPalette),
       },
     };
   },

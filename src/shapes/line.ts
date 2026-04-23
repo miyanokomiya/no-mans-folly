@@ -13,7 +13,7 @@ import {
   pathSegmentRawsToString,
   sub,
 } from "okageo";
-import { ConnectionPoint, CurveControl, FillStyle, LineHead, Shape, StrokeStyle } from "../models";
+import { ConnectionPoint, CurveControl, FillStyle, LineHead, RGBA, Shape, StrokeStyle } from "../models";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import {
   ISegment,
@@ -128,8 +128,8 @@ export const struct: ShapeStruct<LineShape> = {
     return obj;
   },
   render(ctx, shape, shapeContext) {
-    applyStrokeStyle(ctx, { ...shape.stroke, dash: undefined });
-    applyFillStyle(ctx, shape.fill);
+    applyStrokeStyle(ctx, { ...shape.stroke, dash: undefined }, shapeContext?.colorPalette);
+    applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
     const treeNode = shapeContext?.treeNodeMap[shape.id];
     const hasLabels = treeNode && treeNode.children.length > 0;
     const { pAffine, qAffine } = getHeadAffines(shape);
@@ -173,7 +173,7 @@ export const struct: ShapeStruct<LineShape> = {
     const curvePath = combineJumps(shape, shapeContext?.lineJumpMap.get(shape.id));
     applyCurvePath(ctx, curvePath.path, curvePath.curves);
 
-    renderLineStroke(ctx, shape);
+    renderLineStroke(ctx, shape, shapeContext?.colorPalette);
 
     if (clipoutRenderer) {
       ctx.restore();
@@ -239,15 +239,18 @@ export const struct: ShapeStruct<LineShape> = {
         {
           tag: "g",
           attributes: { fill: "none", "clip-path": clipId ? `url(#${clipId})` : undefined },
-          children: createLineStrokeSVGElementInfo(shape, pathStr),
+          children: createLineStrokeSVGElementInfo(shape, pathStr, shapeContext?.colorPalette),
         },
         ...(heads.length > 0
           ? [
               {
                 tag: "g",
                 attributes: {
-                  ...renderFillSVGAttributes({ ...shape.stroke, disabled: false }),
-                  ...renderStrokeSVGAttributes({ ...shape.stroke, dash: undefined, disabled: false }),
+                  ...renderFillSVGAttributes({ ...shape.stroke, disabled: false }, shapeContext?.colorPalette),
+                  ...renderStrokeSVGAttributes(
+                    { ...shape.stroke, dash: undefined, disabled: false },
+                    shapeContext?.colorPalette,
+                  ),
                 },
                 children: heads,
               },
@@ -792,30 +795,34 @@ export function getLineWidth(shape: LineShape): number {
   return getStrokeWidth(shape.stroke);
 }
 
-export function renderLineStroke(ctx: CanvasCTX, shape: Pick<LineShape, "fill" | "stroke">) {
+export function renderLineStroke(ctx: CanvasCTX, shape: Pick<LineShape, "fill" | "stroke">, palette?: RGBA[]) {
   if (!shape.fill.disabled) {
-    applyStrokeStyle(ctx, { ...shape.stroke, disabled: false, color: shape.fill.color, dash: undefined });
+    applyStrokeStyle(ctx, { ...shape.stroke, disabled: false, color: shape.fill.color, dash: undefined }, palette);
     ctx.stroke();
     if (!shape.stroke.disabled) {
-      applyStrokeStyle(ctx, { ...shape.stroke, width: getLineStrokeWidth(shape) });
+      applyStrokeStyle(ctx, { ...shape.stroke, width: getLineStrokeWidth(shape) }, palette);
       ctx.stroke();
     }
   } else {
     if (!shape.stroke.disabled) {
-      applyStrokeStyle(ctx, shape.stroke);
+      applyStrokeStyle(ctx, shape.stroke, palette);
       ctx.stroke();
     }
   }
 }
 
-export function createLineStrokeSVGElementInfo(shape: Pick<LineShape, "fill" | "stroke">, pathStr: string) {
+export function createLineStrokeSVGElementInfo(
+  shape: Pick<LineShape, "fill" | "stroke">,
+  pathStr: string,
+  palette?: RGBA[],
+) {
   return shape.fill.disabled
     ? [
         {
           tag: "path",
           attributes: {
             d: pathStr,
-            ...renderStrokeSVGAttributes(shape.stroke),
+            ...renderStrokeSVGAttributes(shape.stroke, palette),
           },
         },
       ]
@@ -824,14 +831,14 @@ export function createLineStrokeSVGElementInfo(shape: Pick<LineShape, "fill" | "
           tag: "path",
           attributes: {
             d: pathStr,
-            ...renderStrokeSVGAttributes({ ...shape.stroke, disabled: false, color: shape.fill.color }),
+            ...renderStrokeSVGAttributes({ ...shape.stroke, disabled: false, color: shape.fill.color }, palette),
           },
         },
         {
           tag: "path",
           attributes: {
             d: pathStr,
-            ...renderStrokeSVGAttributes({ ...shape.stroke, width: getLineStrokeWidth(shape) }),
+            ...renderStrokeSVGAttributes({ ...shape.stroke, width: getLineStrokeWidth(shape) }, palette),
           },
         },
       ];

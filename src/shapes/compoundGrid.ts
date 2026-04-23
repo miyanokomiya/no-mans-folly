@@ -1,5 +1,5 @@
 import { getRectCenter, IRectangle, IVec2, MINVALUE } from "okageo";
-import { Shape, Size, StrokeStyle } from "../models";
+import { RGBA, Shape, Size, StrokeStyle } from "../models";
 import { resolveColor } from "../utils/color";
 import { applyFillStyle, createFillStyle, renderFillSVGAttributes } from "../utils/fillStyle";
 import { applyStrokeStyle, createStrokeStyle, getStrokeWidth, renderStrokeSVGAttributes } from "../utils/strokeStyle";
@@ -71,11 +71,11 @@ export const struct: ShapeStruct<CompoundGridShape> = {
       },
     };
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeContext) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     applyLocalSpace(ctx, rect, shape.rotation, () => {
       if (!shape.fill.disabled) {
-        applyFillStyle(ctx, shape.fill);
+        applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
         ctx.beginPath();
         ctx.rect(0, 0, shape.width, shape.height);
         ctx.fill();
@@ -91,10 +91,14 @@ export const struct: ShapeStruct<CompoundGridShape> = {
       const baseStrokeWidth = getStrokeWidth(shape.stroke);
 
       if (outlineWidth > 0) {
-        applyStrokeStyle(ctx, {
-          ...shape.stroke,
-          width: outlineWidth,
-        });
+        applyStrokeStyle(
+          ctx,
+          {
+            ...shape.stroke,
+            width: outlineWidth,
+          },
+          shapeContext?.colorPalette,
+        );
         ctx.beginPath();
         if (!verticalOnly) {
           ctx.moveTo(0, 0);
@@ -110,7 +114,17 @@ export const struct: ShapeStruct<CompoundGridShape> = {
       const xList = verticalOnly ? [] : resolveGridValues(shape.grid, shape.width);
       const yList = horizontalOnly ? [] : resolveGridValues(shape.grid, shape.height);
       const labelSize = getGridLabelSize(shape);
-      renderGridLabels(ctx, rect, outlineWidth, baseStrokeWidth, labelSize, shape.stroke, xList, yList);
+      renderGridLabels(
+        ctx,
+        rect,
+        outlineWidth,
+        baseStrokeWidth,
+        labelSize,
+        shape.stroke,
+        xList,
+        yList,
+        shapeContext?.colorPalette,
+      );
     });
   },
   createSVGElementInfo(shape, shapeContext): SVGElementInfo | undefined {
@@ -151,7 +165,7 @@ export const struct: ShapeStruct<CompoundGridShape> = {
           width: shape.width,
           height: shape.height,
           stroke: "none",
-          ...renderFillSVGAttributes(shape.fill),
+          ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
         },
       });
     }
@@ -166,7 +180,7 @@ export const struct: ShapeStruct<CompoundGridShape> = {
           attributes: {
             d: outlineParts.join(" "),
             fill: "none",
-            ...renderStrokeSVGAttributes({ ...shape.stroke, width: outlineWidth }),
+            ...renderStrokeSVGAttributes({ ...shape.stroke, width: outlineWidth }, shapeContext?.colorPalette),
           },
         });
       }
@@ -183,7 +197,10 @@ export const struct: ShapeStruct<CompoundGridShape> = {
             attributes: {
               d,
               fill: "none",
-              ...renderStrokeSVGAttributes({ ...shape.stroke, width: baseStrokeWidth * lineScale }),
+              ...renderStrokeSVGAttributes(
+                { ...shape.stroke, width: baseStrokeWidth * lineScale },
+                shapeContext?.colorPalette,
+              ),
             },
           },
         ];
@@ -199,7 +216,10 @@ export const struct: ShapeStruct<CompoundGridShape> = {
             attributes: {
               d,
               fill: "none",
-              ...renderStrokeSVGAttributes({ ...shape.stroke, width: baseStrokeWidth * lineScale }),
+              ...renderStrokeSVGAttributes(
+                { ...shape.stroke, width: baseStrokeWidth * lineScale },
+                shapeContext?.colorPalette,
+              ),
             },
           },
         ];
@@ -398,6 +418,7 @@ function renderGridLabels(
   stroke: StrokeStyle,
   xList: ResolvedGridValue[],
   yList: ResolvedGridValue[],
+  palette?: RGBA[],
 ) {
   const labelLayout = computeGridLabelLayout(
     rectSize.width,
@@ -427,20 +448,26 @@ function renderGridLabels(
     });
   });
 
-  renderXGroups(ctx, rectSize, stroke, xList);
-  renderYGroups(ctx, rectSize, stroke, yList);
+  renderXGroups(ctx, rectSize, stroke, xList, palette);
+  renderYGroups(ctx, rectSize, stroke, yList, palette);
   ctx.restore();
 
   labelLayout.labels.forEach((item) => {
     applyDefaultTextStyle(ctx, item.fontSize, "center", true);
-    applyFillStyle(ctx, { color: stroke.color });
+    applyFillStyle(ctx, { color: stroke.color }, palette);
     ctx.beginPath();
     const c = getRectCenter(item.rect);
     ctx.fillText(item.label, c.x, c.y);
   });
 }
 
-function renderXGroups(ctx: CanvasCTX, rectSize: Size, stroke: StrokeStyle, xList: ResolvedGridValue[]) {
+function renderXGroups(
+  ctx: CanvasCTX,
+  rectSize: Size,
+  stroke: StrokeStyle,
+  xList: ResolvedGridValue[],
+  palette?: RGBA[],
+) {
   const xGroups = groupBy(xList, (v) => v.scale);
   const baseStrokeWidth = getStrokeWidth(stroke);
 
@@ -448,10 +475,14 @@ function renderXGroups(ctx: CanvasCTX, rectSize: Size, stroke: StrokeStyle, xLis
     const lineScale = group[0].scale;
     if (lineScale <= 0) return;
 
-    applyStrokeStyle(ctx, {
-      ...stroke,
-      width: baseStrokeWidth * lineScale,
-    });
+    applyStrokeStyle(
+      ctx,
+      {
+        ...stroke,
+        width: baseStrokeWidth * lineScale,
+      },
+      palette,
+    );
     ctx.beginPath();
     group.forEach(({ v }) => {
       ctx.moveTo(v, 0);
@@ -461,7 +492,13 @@ function renderXGroups(ctx: CanvasCTX, rectSize: Size, stroke: StrokeStyle, xLis
   });
 }
 
-function renderYGroups(ctx: CanvasCTX, rectSize: Size, stroke: StrokeStyle, yList: ResolvedGridValue[]) {
+function renderYGroups(
+  ctx: CanvasCTX,
+  rectSize: Size,
+  stroke: StrokeStyle,
+  yList: ResolvedGridValue[],
+  palette?: RGBA[],
+) {
   const yGroups = groupBy(yList, (v) => v.scale);
   const baseStrokeWidth = getStrokeWidth(stroke);
 
@@ -469,10 +506,14 @@ function renderYGroups(ctx: CanvasCTX, rectSize: Size, stroke: StrokeStyle, yLis
     const lineScale = group[0].scale;
     if (lineScale <= 0) return;
 
-    applyStrokeStyle(ctx, {
-      ...stroke,
-      width: baseStrokeWidth * lineScale,
-    });
+    applyStrokeStyle(
+      ctx,
+      {
+        ...stroke,
+        width: baseStrokeWidth * lineScale,
+      },
+      palette,
+    );
     ctx.beginPath();
     group.forEach(({ v }) => {
       ctx.moveTo(0, v);

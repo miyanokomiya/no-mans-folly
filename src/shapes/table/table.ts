@@ -164,7 +164,7 @@ export const struct: ShapeStruct<TableShape> = {
       };
     }
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeContext) {
     const info = getTableShapeInfo(shape);
     if (!info) return;
 
@@ -174,7 +174,7 @@ export const struct: ShapeStruct<TableShape> = {
       if (!shape.fill.disabled) {
         ctx.beginPath();
         ctx.rect(0, 0, rect.width, rect.height);
-        applyFillStyle(ctx, shape.fill);
+        applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
         ctx.fill();
       }
 
@@ -204,7 +204,7 @@ export const struct: ShapeStruct<TableShape> = {
 
       forEachBackward(styleAreaInfoList, (styleAreaInfo) => {
         if (styleAreaInfo.value.fill && !styleAreaInfo.value.fill.disabled) {
-          applyFillStyle(ctx, styleAreaInfo.value.fill);
+          applyFillStyle(ctx, styleAreaInfo.value.fill, shapeContext?.colorPalette);
           ctx.beginPath();
           styleAreaInfo.rects.forEach((styleRect) =>
             ctx.rect(styleRect.x, styleRect.y, styleRect.width, styleRect.height),
@@ -225,7 +225,7 @@ export const struct: ShapeStruct<TableShape> = {
         if (!rma.style?.fill || rma.style?.fill?.disabled) return;
 
         const areaRect = getAreaRect(coordsLocations, rma.area);
-        applyFillStyle(ctx, rma.style.fill);
+        applyFillStyle(ctx, rma.style.fill, shapeContext?.colorPalette);
         ctx.beginPath();
         ctx.rect(areaRect.x, areaRect.y, areaRect.width, areaRect.height);
         ctx.fill();
@@ -238,14 +238,14 @@ export const struct: ShapeStruct<TableShape> = {
           ctx.moveTo(seg[0].x, seg[0].y);
           ctx.lineTo(seg[1].x, seg[1].y);
         });
-        applyStrokeStyle(ctx, bodyStroke);
+        applyStrokeStyle(ctx, bodyStroke, shapeContext?.colorPalette);
         ctx.stroke();
       }
 
       if (!shape.stroke.disabled) {
         ctx.beginPath();
         ctx.rect(0, 0, rect.width, rect.height);
-        applyStrokeStyle(ctx, shape.stroke);
+        applyStrokeStyle(ctx, shape.stroke, shapeContext?.colorPalette);
         ctx.stroke();
       }
     });
@@ -256,7 +256,7 @@ export const struct: ShapeStruct<TableShape> = {
     applyPath(region, rectPolygon, true);
     return region;
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(shape, shapeContext) {
     const info = getTableShapeInfo(shape);
     if (!info) return;
 
@@ -302,7 +302,7 @@ export const struct: ShapeStruct<TableShape> = {
               width: areaRect.width,
               height: areaRect.height,
               "clip-path": clipId ? `url(#${clipId})` : undefined,
-              ...renderFillSVGAttributes(fillStyle),
+              ...renderFillSVGAttributes(fillStyle, shapeContext?.colorPalette),
             },
           });
         });
@@ -325,7 +325,7 @@ export const struct: ShapeStruct<TableShape> = {
           y: areaRect.y,
           width: areaRect.width,
           height: areaRect.height,
-          ...renderFillSVGAttributes(rma.style.fill),
+          ...renderFillSVGAttributes(rma.style.fill, shapeContext?.colorPalette),
         },
       });
     });
@@ -352,14 +352,14 @@ export const struct: ShapeStruct<TableShape> = {
             width: rect.width,
             height: rect.height,
             stroke: "none",
-            ...renderFillSVGAttributes(shape.fill),
+            ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
           },
         },
         ...fillElms,
         ...mergeFillElms,
         {
           tag: "g",
-          attributes: renderStrokeSVGAttributes(bodyStroke),
+          attributes: renderStrokeSVGAttributes(bodyStroke, shapeContext?.colorPalette),
           children: borderElms,
         },
         {
@@ -368,7 +368,7 @@ export const struct: ShapeStruct<TableShape> = {
             width: rect.width,
             height: rect.height,
             fill: "none",
-            ...renderStrokeSVGAttributes(shape.stroke),
+            ...renderStrokeSVGAttributes(shape.stroke, shapeContext?.colorPalette),
           },
         },
       ],

@@ -76,7 +76,7 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
       },
     };
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeContext) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.rx * 2, height: shape.ry * 2 };
     applyLocalSpace(ctx, rect, shape.rotation, () => {
       const baseStrokeWidth = getStrokeWidth(shape.stroke);
@@ -84,7 +84,7 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
       ctx.beginPath();
       ctx.ellipse(shape.rx, shape.ry, shape.rx, shape.ry, 0, 0, TAU);
       if (!shape.fill.disabled) {
-        applyFillStyle(ctx, shape.fill);
+        applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
         ctx.fill();
       }
 
@@ -119,7 +119,7 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
       });
 
       gridValues.forEach((item) => {
-        applyStrokeStyle(ctx, { ...shape.stroke, width: baseStrokeWidth * item.scale });
+        applyStrokeStyle(ctx, { ...shape.stroke, width: baseStrokeWidth * item.scale }, shapeContext?.colorPalette);
         ctx.beginPath();
         ctx.ellipse(shape.rx, shape.ry, item.v, item.v * ryRate, 0, 0, TAU);
         ctx.stroke();
@@ -130,7 +130,7 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
         const lineScale = group[0].scale;
         if (lineScale <= 0) return;
 
-        applyStrokeStyle(ctx, { ...shape.stroke, width: baseStrokeWidth * lineScale });
+        applyStrokeStyle(ctx, { ...shape.stroke, width: baseStrokeWidth * lineScale }, shapeContext?.colorPalette);
         ctx.beginPath();
         group.forEach((item) => {
           const v = getPolarPerimeterVector(shape, item.v);
@@ -144,14 +144,14 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
 
       girdLabels.forEach((label) => {
         applyDefaultTextStyle(ctx, label.fontSize, "center", true);
-        applyFillStyle(ctx, { color: shape.stroke.color });
+        applyFillStyle(ctx, { color: shape.stroke.color }, shapeContext?.colorPalette);
         ctx.beginPath();
         const c = getRectCenter(label.rect);
         ctx.fillText(label.label, c.x, c.y);
       });
       polarLabels.forEach((label) => {
         applyDefaultTextStyle(ctx, label.fontSize, "center", true);
-        applyFillStyle(ctx, { color: shape.stroke.color });
+        applyFillStyle(ctx, { color: shape.stroke.color }, shapeContext?.colorPalette);
         ctx.beginPath();
         const c = getRectCenter(label.rect);
         ctx.fillText(label.label, c.x, c.y);
@@ -192,7 +192,7 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
           rx: shape.rx,
           ry: shape.ry,
           stroke: "none",
-          ...renderFillSVGAttributes(shape.fill),
+          ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
         },
       });
     }
@@ -211,7 +211,10 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
             rx: v,
             ry: v * ryRate,
             fill: "none",
-            ...renderStrokeSVGAttributes({ ...shape.stroke, width: baseStrokeWidth * lineScale }),
+            ...renderStrokeSVGAttributes(
+              { ...shape.stroke, width: baseStrokeWidth * lineScale },
+              shapeContext?.colorPalette,
+            ),
           },
         });
       });
@@ -231,7 +234,10 @@ export const struct: ShapeStruct<CompoundRadialShape> = {
         attributes: {
           d,
           fill: "none",
-          ...renderStrokeSVGAttributes({ ...shape.stroke, width: baseStrokeWidth * lineScale }),
+          ...renderStrokeSVGAttributes(
+            { ...shape.stroke, width: baseStrokeWidth * lineScale },
+            shapeContext?.colorPalette,
+          ),
         },
       });
     });

@@ -26,7 +26,7 @@ export const struct: ShapeStruct<ImageShape> = {
       assetId: arg.assetId,
     };
   },
-  render(ctx, shape, _shapeContext, imageStore) {
+  render(ctx, shape, shapeContext, imageStore) {
     const affine = getRotatedRectAffine(
       { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
       shape.rotation,
@@ -37,7 +37,7 @@ export const struct: ShapeStruct<ImageShape> = {
 
     ctx.beginPath();
     if (!shape.fill.disabled) {
-      applyFillStyle(ctx, shape.fill);
+      applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
       ctx.fillRect(0, 0, shape.width, shape.height);
     }
 
@@ -50,13 +50,13 @@ export const struct: ShapeStruct<ImageShape> = {
     }
 
     if (!shape.stroke.disabled) {
-      applyStrokeStyle(ctx, shape.stroke);
+      applyStrokeStyle(ctx, shape.stroke, shapeContext?.colorPalette);
       ctx.strokeRect(0, 0, shape.width, shape.height);
     }
 
     ctx.restore();
   },
-  createSVGElementInfo(shape, _shapeContext, imageStore) {
+  createSVGElementInfo(shape, shapeContext, imageStore) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
@@ -96,7 +96,7 @@ export const struct: ShapeStruct<ImageShape> = {
                   width: shape.width,
                   height: shape.height,
                   stroke: "none",
-                  ...renderFillSVGAttributes(shape.fill),
+                  ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
                 },
               },
             ]),
@@ -110,7 +110,7 @@ export const struct: ShapeStruct<ImageShape> = {
                   width: shape.width,
                   height: shape.height,
                   fill: "none",
-                  ...renderStrokeSVGAttributes(shape.stroke),
+                  ...renderStrokeSVGAttributes(shape.stroke, shapeContext?.colorPalette),
                 },
               },
             ]),

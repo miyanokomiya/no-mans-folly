@@ -33,7 +33,7 @@ export const struct: ShapeStruct<BoardCardShape> = {
       laneId: arg.laneId ?? "",
     };
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeContext) {
     rectangleStruct.render(ctx, shape);
 
     if (!shape.stroke.disabled) {
@@ -50,7 +50,7 @@ export const struct: ShapeStruct<BoardCardShape> = {
         { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
         shape.rotation,
         () => {
-          applyFillStyle(ctx, { color: shape.stroke.color });
+          applyFillStyle(ctx, { color: shape.stroke.color }, shapeContext?.colorPalette);
           ctx.beginPath();
           ctx.fillRect(0, y, shape.width, paddingBottom / 2);
           ctx.stroke();
@@ -58,7 +58,7 @@ export const struct: ShapeStruct<BoardCardShape> = {
       );
     }
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(shape, shapeContext) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const affine = getRotatedRectAffine(rect, shape.rotation);
     const body = rectangleStruct.createSVGElementInfo!({ ...shape, p: { x: 0, y: 0 }, rotation: 0 })!;
@@ -82,7 +82,7 @@ export const struct: ShapeStruct<BoardCardShape> = {
             width: shape.width,
             height: paddingBottom / 2,
             stroke: "none",
-            ...renderFillSVGAttributes(shape.stroke),
+            ...renderFillSVGAttributes(shape.stroke, shapeContext?.colorPalette),
           },
         },
       ],

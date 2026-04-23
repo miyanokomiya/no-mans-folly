@@ -109,18 +109,9 @@ export function newShapeSVGRenderer(option: Option) {
       return;
     }
 
-    clipWithinGroup(
-      option.shapeComposite,
-      shape,
-      clips,
-      others,
-      root,
-      elm,
-      () => {
-        others.forEach((c) => renderShapeTreeStep(elm, ctx, c));
-      },
-      option.colorPalette,
-    );
+    clipWithinGroup(option.shapeComposite, shape, clips, others, root, elm, () => {
+      others.forEach((c) => renderShapeTreeStep(elm, ctx, c));
+    });
   }
 
   function renderShapeAndDoc(ctx: CanvasCTX, shape: Shape): SVGElement | undefined {
@@ -175,7 +166,6 @@ function clipWithinGroup(
   root: SVGElement,
   groupElm: SVGElement,
   renderMain: () => void,
-  colorPalette?: RGBA[],
 ) {
   const pathList: [string, id: string, StrokeStyle?, cropClipBorder?: boolean][] = [];
   let shouldStroke = false;
@@ -183,7 +173,7 @@ function clipWithinGroup(
     const rootChildShape = shapeComposite.shapeMap[c.id];
 
     shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
-      const pathStr = shapeComposite.createClipSVGPath(s, colorPalette);
+      const pathStr = shapeComposite.createClipSVGPath(s);
       if (pathStr) {
         if (hasStrokeStyle(s) && !s.stroke.disabled) {
           pathList.push([pathStr, s.id, s.stroke, rootChildShape.cropClipBorder]);
@@ -205,7 +195,7 @@ function clipWithinGroup(
     const pathStrList: string[] = [];
     others.forEach((c) => {
       shapeComposite.getAllBranchMergedShapes([c.id]).forEach((s) => {
-        const pathStr = shapeComposite.createClipSVGPath(s, colorPalette);
+        const pathStr = shapeComposite.createClipSVGPath(s);
         if (pathStr) {
           pathStrList.push(pathStr);
         }

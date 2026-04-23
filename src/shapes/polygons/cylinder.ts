@@ -38,7 +38,7 @@ export const struct: ShapeStruct<CylinderShape> = {
       c0: arg.c0 ?? { x: 0.5, y: 0.3 },
     };
   },
-  render(ctx, src) {
+  render(ctx, src, shapeContext) {
     if (src.fill.disabled && src.stroke.disabled) return;
 
     const shape = getNormalizedSimplePolygonShape(src);
@@ -49,11 +49,11 @@ export const struct: ShapeStruct<CylinderShape> = {
       if (!shape.fill.disabled) {
         ctx.beginPath();
         applyCurvePath(ctx, path, curves, true);
-        applyFillStyle(ctx, shape.fill);
+        applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
         ctx.fill();
       }
       if (!shape.stroke.disabled) {
-        applyStrokeStyle(ctx, shape.stroke);
+        applyStrokeStyle(ctx, shape.stroke, shapeContext?.colorPalette);
 
         const ry = getCylinderRadiusY(shape);
         const upperC = curves[0]!;
@@ -80,7 +80,7 @@ export const struct: ShapeStruct<CylinderShape> = {
       }
     });
   },
-  createSVGElementInfo(src) {
+  createSVGElementInfo(src, shapeContext) {
     const shape = getNormalizedSimplePolygonShape(src);
     const transform = getShapeTransform(shape);
     const { path, curves } = getPath(shape);
@@ -103,8 +103,8 @@ export const struct: ShapeStruct<CylinderShape> = {
       attributes: {
         transform: renderTransform(transform),
         d: pathSegmentRawsToString(createSVGCurvePath(path, curves, true)) + ` ${innerD}`,
-        ...renderFillSVGAttributes(shape.fill),
-        ...renderStrokeSVGAttributes(shape.stroke),
+        ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
+        ...renderStrokeSVGAttributes(shape.stroke, shapeContext?.colorPalette),
       },
     };
   },

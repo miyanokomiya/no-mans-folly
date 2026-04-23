@@ -25,7 +25,7 @@ export const struct: ShapeStruct<EmojiShape> = {
       emoji: arg.emoji ?? "?",
     };
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeContext) {
     const affine = getRotatedRectAffine(
       { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height },
       shape.rotation,
@@ -36,7 +36,7 @@ export const struct: ShapeStruct<EmojiShape> = {
 
     ctx.beginPath();
     if (!shape.fill.disabled) {
-      applyFillStyle(ctx, shape.fill);
+      applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
       ctx.fillRect(0, 0, shape.width, shape.height);
     }
 
@@ -50,13 +50,13 @@ export const struct: ShapeStruct<EmojiShape> = {
     ctx.fillText(shape.emoji, shape.width / 2, shape.height);
 
     if (!shape.stroke.disabled) {
-      applyStrokeStyle(ctx, shape.stroke);
+      applyStrokeStyle(ctx, shape.stroke, shapeContext?.colorPalette);
       ctx.strokeRect(0, 0, shape.width, shape.height);
     }
 
     ctx.restore();
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(shape, shapeContext) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
@@ -71,8 +71,8 @@ export const struct: ShapeStruct<EmojiShape> = {
           attributes: {
             width: shape.width,
             height: shape.height,
-            ...renderFillSVGAttributes(shape.fill),
-            ...renderStrokeSVGAttributes(shape.stroke),
+            ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
+            ...renderStrokeSVGAttributes(shape.stroke, shapeContext?.colorPalette),
           },
         },
         {

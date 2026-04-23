@@ -18,9 +18,9 @@ export const struct: ShapeStruct<Shape> = {
       type: "unknown",
     };
   },
-  render(ctx, shape) {
-    applyStrokeStyle(ctx, { color: COLORS.BLACK, width: lineWidth });
-    applyFillStyle(ctx, { color: COLORS.GRAY_1 });
+  render(ctx, shape, shapeContext) {
+    applyStrokeStyle(ctx, { color: COLORS.BLACK, width: lineWidth }, shapeContext?.colorPalette);
+    applyFillStyle(ctx, { color: COLORS.GRAY_1 }, shapeContext?.colorPalette);
     ctx.beginPath();
     ctx.arc(shape.p.x, shape.p.y, radius, 0, TAU);
     ctx.fill();
@@ -34,14 +34,14 @@ export const struct: ShapeStruct<Shape> = {
     ctx.lineTo(shape.p.x + size, shape.p.y - size);
     ctx.stroke();
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(shape, shapeContext) {
     const size = radius * 0.5;
 
     return {
       tag: "g",
       attributes: {
         transform: renderTransform([1, 0, 0, 1, shape.p.x, shape.p.y]),
-        ...renderStrokeSVGAttributes({ color: COLORS.BLACK, width: lineWidth }),
+        ...renderStrokeSVGAttributes({ color: COLORS.BLACK, width: lineWidth }, shapeContext?.colorPalette),
       },
       children: [
         {
@@ -49,7 +49,7 @@ export const struct: ShapeStruct<Shape> = {
           attributes: {
             rx: radius,
             ry: radius,
-            ...renderFillSVGAttributes({ color: COLORS.GRAY_1 }),
+            ...renderFillSVGAttributes({ color: COLORS.GRAY_1 }, shapeContext?.colorPalette),
           },
         },
         {

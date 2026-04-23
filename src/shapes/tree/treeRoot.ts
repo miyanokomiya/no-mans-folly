@@ -40,7 +40,7 @@ export const struct: ShapeStruct<TreeRootShape> = {
       childMargin: arg.childMargin,
     };
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeContext) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     applyLocalSpace(
@@ -52,17 +52,17 @@ export const struct: ShapeStruct<TreeRootShape> = {
         ctx.roundRect(0, 0, shape.width, shape.height, 6);
 
         if (!shape.fill.disabled) {
-          applyFillStyle(ctx, shape.fill);
+          applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
           ctx.fill();
         }
         if (!shape.stroke.disabled) {
-          applyStrokeStyle(ctx, shape.stroke);
+          applyStrokeStyle(ctx, shape.stroke, shapeContext?.colorPalette);
           ctx.stroke();
         }
       },
     );
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(shape, shapeContext) {
     const rect = { x: shape.p.x, y: shape.p.y, width: shape.width, height: shape.height };
     const affine = getRotatedRectAffine(rect, shape.rotation);
 
@@ -70,8 +70,8 @@ export const struct: ShapeStruct<TreeRootShape> = {
       tag: "g",
       attributes: {
         transform: renderTransform(affine),
-        ...renderFillSVGAttributes(shape.fill),
-        ...renderStrokeSVGAttributes(shape.stroke),
+        ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
+        ...renderStrokeSVGAttributes(shape.stroke, shapeContext?.colorPalette),
       },
       children: [
         {

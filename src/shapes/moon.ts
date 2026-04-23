@@ -52,18 +52,18 @@ export const struct: ShapeStruct<MoonShape> = {
       radiusRate: arg.radiusRate ?? 1,
     };
   },
-  render(ctx, shape) {
+  render(ctx, shape, shapeContext) {
     if (shape.fill.disabled && shape.stroke.disabled) return;
 
     ctx.beginPath();
     applyMoonPath(ctx, shape);
 
     if (!shape.fill.disabled) {
-      applyFillStyle(ctx, shape.fill);
+      applyFillStyle(ctx, shape.fill, shapeContext?.colorPalette);
       ctx.fill();
     }
     if (!shape.stroke.disabled) {
-      applyStrokeStyle(ctx, shape.stroke);
+      applyStrokeStyle(ctx, shape.stroke, shapeContext?.colorPalette);
       ctx.stroke();
     }
   },
@@ -72,7 +72,7 @@ export const struct: ShapeStruct<MoonShape> = {
     applyMoonPath(region, shape);
     return region;
   },
-  createSVGElementInfo(shape) {
+  createSVGElementInfo(shape, shapeContext) {
     const rawPath = createLocalSVGRawPath(shape);
     if (rawPath === "ellipse") return ellipseStruct.createSVGElementInfo?.(shape);
     if (!rawPath) return;
@@ -90,8 +90,8 @@ export const struct: ShapeStruct<MoonShape> = {
       attributes: {
         d: pathSegmentRawsToString(rawPath),
         transform: renderTransform(affine),
-        ...renderFillSVGAttributes(shape.fill),
-        ...renderStrokeSVGAttributes(shape.stroke),
+        ...renderFillSVGAttributes(shape.fill, shapeContext?.colorPalette),
+        ...renderStrokeSVGAttributes(shape.stroke, shapeContext?.colorPalette),
       },
     };
   },
