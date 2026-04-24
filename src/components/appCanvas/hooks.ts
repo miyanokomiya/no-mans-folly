@@ -31,6 +31,8 @@ import {
 } from "../../composables/realtime/websocketChannel";
 import { AssetAPI } from "../../composables/assetAPI";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
+import { PaletteStore } from "../../stores/palettes";
+import { getPaletteColors } from "../../utils/palette";
 
 export function useImageStore(shapeStore: ShapeStore, sheets: Sheet[]) {
   // Use the same store for all sheets to handle asyncronous processes properly.
@@ -126,6 +128,7 @@ export function useSetupStateContext({
   userSettingStore,
   imageStore,
   sheetStore,
+  paletteStore,
   diagramStore,
   shapeStore,
   documentStore,
@@ -164,6 +167,7 @@ export function useSetupStateContext({
   imageStore: ImageStore;
   diagramStore: DiagramStore;
   sheetStore: SheetStore;
+  paletteStore: PaletteStore;
   shapeStore: ShapeStore;
   documentStore: DocumentStore;
   showEmojiPicker: boolean;
@@ -245,7 +249,7 @@ export function useSetupStateContext({
       selectSheet: sheetStore.selectSheet,
 
       getShapeComposite: () => shapeStore.shapeComposite,
-      getColorPalette: () => diagramStore.getEntity().colorPalette ?? [],
+      getSelectedPalette: () => getPaletteColors(paletteStore.getSelectedPalette()),
       getShapes: () => shapeStore.shapeComposite.shapes,
 
       getTmpShapeMap: () => shapeStore.shapeComposite.tmpShapeMap,
@@ -331,6 +335,7 @@ export function useSetupStateContext({
     imageStore,
     setSmctx,
     diagramStore,
+    paletteStore,
     sheetStore,
     shapeStore,
     showEmojiPicker,

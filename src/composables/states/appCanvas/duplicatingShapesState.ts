@@ -122,7 +122,7 @@ export function newDuplicatingShapesState(): AppCanvasState {
         shapeComposite: duplicatedShapeComposite,
         getDocumentMap: () => duplicated.docMap,
         imageStore: ctx.getImageStore(),
-        colorPalette: ctx.getColorPalette(),
+        colorPalette: ctx.getSelectedPalette(),
       });
       scaleGlobalAlpha(renderCtx, 0.5, () => {
         renderer.render(renderCtx);

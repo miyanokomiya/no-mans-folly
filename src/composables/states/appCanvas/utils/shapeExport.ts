@@ -62,7 +62,7 @@ export async function exportFrameAsPNG(
       shapeComposite: info.targetShapeComposite,
       getDocumentMap: ctx.getDocumentMap,
       imageStore: ctx.getImageStore(),
-      colorPalette: ctx.getColorPalette(),
+      colorPalette: ctx.getSelectedPalette(),
     });
     const builder = newImageBuilder({ render: renderer.render, range: info.range });
 
@@ -117,7 +117,7 @@ export async function exportFrameAsSVG(
       imageStore: ctx.getImageStore(),
       assetAPI: ctx.assetAPI,
       roundFloat: options.roundFloat,
-      colorPalette: ctx.getColorPalette(),
+      colorPalette: ctx.getSelectedPalette(),
     });
     const builder = newSVGImageBuilder({
       render: withMeta ? renderer.renderWithMeta : renderer.render,
@@ -178,7 +178,7 @@ export async function printFrameAsDocument(
         getDocumentMap: ctx.getDocumentMap,
         imageStore: ctx.getImageStore(),
         assetAPI: ctx.assetAPI,
-        colorPalette: ctx.getColorPalette(),
+        colorPalette: ctx.getSelectedPalette(),
       });
       const builder = newSVGImageBuilder({
         render: renderer.render,
@@ -247,7 +247,7 @@ export async function saveSheetThumbnailAsSvg(
     getDocumentMap: ctx.getDocumentMap,
     imageStore,
     assetAPI,
-    colorPalette: ctx.getColorPalette(),
+    colorPalette: ctx.getSelectedPalette(),
   });
   const builder = newSVGImageBuilder({
     render: renderer.renderWithMeta,

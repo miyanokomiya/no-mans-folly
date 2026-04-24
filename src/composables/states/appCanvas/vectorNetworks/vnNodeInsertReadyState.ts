@@ -206,7 +206,7 @@ export function newVnNodeInsertReadyState(): AppCanvasState {
       newShapeRenderer({
         shapeComposite: newShapeComposite({ getStruct: ctx.getShapeStruct, shapes: [{ ...vnnode, alpha: 0.5 }] }),
         scale,
-        colorPalette: ctx.getColorPalette(),
+        colorPalette: ctx.getSelectedPalette(),
       }).render(renderCtx);
 
       if (vertex) {

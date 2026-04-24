@@ -18,7 +18,7 @@ export interface AppCanvasStateContext extends CanvasStateContext {
   selectSheet: (id: string) => void;
 
   getShapeComposite: () => ShapeComposite;
-  getColorPalette: () => RGBA[];
+  getSelectedPalette: () => RGBA[];
   getShapes: () => Shape[];
   getSelectedShapeIdMap: () => { [id: string]: true };
   getLastSelectedShapeId: () => string | undefined;

@@ -4,26 +4,37 @@ import { Diagram, RGBA, Shape, Sheet, UserSetting } from "../models";
 import { ShapeStore } from "../stores/shapes";
 import { ShapeComposite } from "../composables/shapeComposite";
 import { DocOutput } from "../models/document";
-import { fillArray, mapReduce } from "../utils/commons";
+import { mapReduce } from "../utils/commons";
 import { SheetStore } from "../stores/sheets";
-
-const initialPalette: RGBA[] = [
-  { r: 255, g: 255, b: 255, a: 1 },
-  { r: 0, g: 0, b: 0, a: 1 },
-  ...fillArray(18, { r: 0, g: 0, b: 0, a: 1 }),
-];
+import { getPaletteColors } from "../utils/palette";
 
 export function useColorPalette(): RGBA[] {
-  const { diagramStore } = useContext(AppCanvasContext);
-  return useSyncExternalStore(diagramStore.watch, () => {
-    const val = diagramStore.getEntity().colorPalette;
-    return val && val.length > 0 ? val : initialPalette;
-  });
+  const { paletteStore } = useContext(AppCanvasContext);
+  const palette = useSyncExternalStore(
+    useCallback(
+      (onChange: () => void) => {
+        const list = [paletteStore.watch(onChange), paletteStore.watchSelected(onChange)];
+        return () => list.forEach((fn) => fn());
+      },
+      [paletteStore],
+    ),
+    paletteStore.getSelectedPalette,
+  );
+  const tmpPalette = useSyncExternalStore(
+    paletteStore.watchTmpPaletteMap,
+    useCallback(() => {
+      const selected = paletteStore.getSelectedPalette();
+      return selected ? paletteStore.getTmpPaletteMap()[selected.id] : undefined;
+    }, [paletteStore]),
+  );
+
+  if (!palette || !tmpPalette) return getPaletteColors(palette);
+  return getPaletteColors({ ...palette, ...tmpPalette });
 }
 
 export function useDiagram(): Diagram {
   const { diagramStore } = useContext(AppCanvasContext);
-  return useSyncExternalStore(diagramStore.watch, () => diagramStore.getEntity());
+  return useSyncExternalStore(diagramStore.watch, diagramStore.getEntity);
 }
 
 export function useUserSetting(): [UserSetting, patchUserSetting: (patch: Partial<UserSetting>) => void] {

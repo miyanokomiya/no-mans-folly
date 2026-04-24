@@ -7,7 +7,6 @@ export interface Entity {
 
 export interface Diagram extends Entity {
   name: string;
-  colorPalette?: RGBA[];
 }
 
 export interface Sheet extends Entity {
@@ -18,6 +17,15 @@ export interface Sheet extends Entity {
 export interface Layer extends Entity {
   name: string;
 }
+
+type Digit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+export type ColorFieldKey = `c_0${Digit}` | `c_1${Digit}` | `c_2${Digit}`;
+export type PaletteColors = {
+  [K in ColorFieldKey]?: RGBA; // the number of items is 30
+};
+export type Palette = Entity & {
+  name: string;
+} & PaletteColors;
 
 export interface Shape extends Entity {
   layerId?: string;

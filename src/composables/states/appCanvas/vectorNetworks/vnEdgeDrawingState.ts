@@ -200,7 +200,7 @@ export function newVnEdgeDrawingState(option: Option): AppCanvasState {
         shapes: previewShapes,
         getStruct: ctx.getShapeStruct,
       });
-      newShapeRenderer({ shapeComposite: previewShapeComposite, scale, colorPalette: ctx.getColorPalette() }).render(
+      newShapeRenderer({ shapeComposite: previewShapeComposite, scale, colorPalette: ctx.getSelectedPalette() }).render(
         renderCtx,
       );
 

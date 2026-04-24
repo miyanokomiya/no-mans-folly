@@ -608,7 +608,7 @@ function getSVGBuilderForShapesWithRange(
     getDocumentMap: ctx.getDocumentMap,
     imageStore: ctx.getImageStore(),
     assetAPI: ctx.assetAPI,
-    colorPalette: ctx.getColorPalette(),
+    colorPalette: ctx.getSelectedPalette(),
   });
   return newSVGImageBuilder({ render: withMeta ? renderer.renderWithMeta : renderer.render, range });
 }
@@ -622,7 +622,7 @@ function getImageBuilderForShapesWithRange(
     shapeComposite: targetShapeComposite,
     getDocumentMap: ctx.getDocumentMap,
     imageStore: ctx.getImageStore(),
-    colorPalette: ctx.getColorPalette(),
+    colorPalette: ctx.getSelectedPalette(),
   });
 
   return newImageBuilder({ render: renderer.render, range });

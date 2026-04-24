@@ -11,7 +11,7 @@ import { newLeveledThrottle } from "../utils/stateful/throttle";
 import { COLORS } from "../utils/color";
 import { newFeatureFlags } from "../composables/featureFlags";
 import { getSheetIdFromQuery } from "../utils/route";
-import { generateKeyBetween } from "../utils/findex";
+import { generateKeyBetween, generateNKeysBetween } from "../utils/findex";
 import { AssetAPI, newFileAssetAPI } from "../composables/assetAPI";
 import {
   closeWSClient,
@@ -22,6 +22,8 @@ import {
 } from "../composables/realtime/websocketChannel";
 import { newFileInMemoryAccess } from "../composables/fileInMemoryAccess";
 import { i18n } from "../i18n";
+import { newPaletteStore, PaletteStore } from "../stores/palettes";
+import { generateDefaultPaletteColors } from "../utils/palette";
 
 const INDEXEDDB_DIAGRAM_KEY = "test-project-diagram";
 const SYNC_THROTTLE_INTERVALS = [5000, 20000, 40000, 60000];
@@ -57,9 +59,11 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
   const [diagramStores, setDiagramStores] = useState<{
     diagramStore: DiagramStore;
     sheetStore: SheetStore;
+    paletteStore: PaletteStore;
   }>(() => ({
     diagramStore: newDiagramStore({ ydoc: diagramDoc }),
     sheetStore: newSheetStore({ ydoc: diagramDoc }),
+    paletteStore: newPaletteStore({ ydoc: diagramDoc }),
   }));
 
   const [sheetStores, setSheetStores] = useState<{
@@ -366,6 +370,11 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
         nextDiagramDoc.meta.diagramId = diagramStore.getEntity().id;
       }
 
+      const paletteStore = newPaletteStore({ ydoc: nextDiagramDoc });
+      if (paletteStore.getEntities().length === 0) {
+        createInitialPalette(paletteStore, generateUuid);
+      }
+
       const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
       if (sheetStore.getEntities().length === 0) {
         createInitialSheet(sheetStore, generateUuid);
@@ -377,7 +386,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
       setDbProviderDiagram(provider);
       setDiagramDoc(nextDiagramDoc);
-      setDiagramStores({ diagramStore, sheetStore });
+      setDiagramStores({ diagramStore, sheetStore, paletteStore });
       setReady(true);
     },
     [generateUuid, initSheet],
@@ -408,6 +417,11 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     await provider?.whenSynced;
     const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
 
+    const paletteStore = newPaletteStore({ ydoc: nextDiagramDoc });
+    if (paletteStore.getEntities().length === 0) {
+      createInitialPalette(paletteStore, generateUuid);
+    }
+
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
     if (sheetStore.getEntities().length === 0) {
       createInitialSheet(sheetStore, generateUuid);
@@ -427,7 +441,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
     setDbProviderDiagram(provider);
     setDiagramDoc(nextDiagramDoc);
-    setDiagramStores({ diagramStore, sheetStore });
+    setDiagramStores({ diagramStore, sheetStore, paletteStore });
     setReady(true);
     return true;
   }, [generateUuid, activeFileAccess, handleSyncError, initSheet, flushSaveThrottles]);
@@ -444,6 +458,11 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
     await provider?.whenSynced;
     const diagramStore = newDiagramStore({ ydoc: nextDiagramDoc });
 
+    const paletteStore = newPaletteStore({ ydoc: nextDiagramDoc });
+    if (paletteStore.getEntities().length === 0) {
+      createInitialPalette(paletteStore, generateUuid);
+    }
+
     const sheetStore = newSheetStore({ ydoc: nextDiagramDoc });
     if (sheetStore.getEntities().length === 0) {
       createInitialSheet(sheetStore, generateUuid);
@@ -454,7 +473,7 @@ export function usePersistence({ generateUuid, fileAccess }: PersistenceOption) 
 
     setDbProviderDiagram(provider);
     setDiagramDoc(nextDiagramDoc);
-    setDiagramStores({ diagramStore, sheetStore });
+    setDiagramStores({ diagramStore, sheetStore, paletteStore });
     setReady(true);
   }, [generateUuid, activeFileAccess, initSheet, flushSaveThrottles]);
 
@@ -625,6 +644,19 @@ function createInitialSheet(sheetStore: SheetStore, generateUuid: () => string) 
     bgcolor: COLORS.GRAY_1,
   });
   sheetStore.selectSheet(sheetId);
+}
+
+function createInitialPalette(paletteStore: PaletteStore, generateUuid: () => string) {
+  const indexList = generateNKeysBetween(null, null, 3);
+  paletteStore.addEntities([
+    ...indexList.map((findex, i) => ({
+      id: generateUuid(),
+      findex,
+      name: `Palette ${i.toString().padStart(2, "0")}`,
+      ...generateDefaultPaletteColors(),
+    })),
+  ]);
+  paletteStore.selectPalette(paletteStore.getEntities()[0].id);
 }
 
 function newIndexeddbPersistence(key: string, doc: Y.Doc): IndexeddbPersistence | undefined {

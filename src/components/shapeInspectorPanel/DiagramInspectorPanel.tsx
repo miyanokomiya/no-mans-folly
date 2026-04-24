@@ -3,39 +3,40 @@ import { ColorPickerPanel } from "../molecules/ColorPickerPanel";
 import { isPartialRGBA } from "../../utils/color";
 import { Color, RGBA } from "../../models";
 import { useColorPalette } from "../../hooks/storeHooks";
-import { BlockField } from "../atoms/BlockField";
 import { AppCanvasContext } from "../../contexts/AppCanvasContext";
 import { IndexedColors } from "../molecules/IndexedColors";
+import { generatePaletteKey } from "../../utils/palette";
+import { InlineField } from "../atoms/InlineField";
+import { SelectInput } from "../atoms/inputs/SelectInput";
 
 export const DiagramInspectorPanel: React.FC = () => {
-  const { diagramStore } = useContext(AppCanvasContext);
+  const { paletteStore } = useContext(AppCanvasContext);
   const palette = useColorPalette();
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [draftColor, setDraftColor] = useState<RGBA>(palette[selectedIndex]);
-
-  const draftPalette = useMemo(() => {
-    return palette.map((p, i) => (i === selectedIndex ? draftColor : p));
-  }, [palette, selectedIndex, draftColor]);
-
-  const handleClickIndex = useCallback(
-    (index: number) => {
-      setSelectedIndex(index);
-      setDraftColor(palette[index]);
-    },
-    [palette],
+  const [selectedIndex, setSelectedIndex] = useState<number>();
+  const draftColor = useMemo(
+    () => (selectedIndex !== undefined ? palette[selectedIndex] : undefined),
+    [palette, selectedIndex],
   );
+
+  const handleClickIndex = useCallback((index: number) => {
+    setSelectedIndex((prev) => (prev === index ? undefined : index));
+  }, []);
 
   const patchColor = useCallback(
     (color: Partial<RGBA>, draft = false) => {
+      const selectedPalette = paletteStore.getSelectedPalette();
+      if (!selectedPalette || selectedIndex === undefined) return;
+
       const next = { ...draftColor, ...color };
-      setDraftColor(next);
-      if (!draft) {
-        const nextPalette = palette.slice();
-        nextPalette[selectedIndex] = next;
-        diagramStore.patchEntity({ colorPalette: nextPalette });
+      const patch = { [generatePaletteKey(selectedIndex)]: next };
+      if (draft) {
+        paletteStore.setTmpPaletteMap({ [selectedPalette.id]: patch });
+      } else {
+        paletteStore.setTmpPaletteMap({});
+        paletteStore.patchEntity(selectedPalette.id, patch);
       }
     },
-    [diagramStore, selectedIndex, palette, draftColor],
+    [paletteStore, selectedIndex, draftColor],
   );
 
   const handleColorClick = useCallback(
@@ -47,14 +48,33 @@ export const DiagramInspectorPanel: React.FC = () => {
     [patchColor],
   );
 
+  const paletteOptions = useMemo(
+    () => paletteStore.getEntities().map((p, i) => ({ value: p.id, label: `${i}`.padStart(2, "0") })),
+    [paletteStore],
+  );
+
+  const handlePaletteChange = useCallback(
+    (id: string) => {
+      paletteStore.selectPalette(id);
+    },
+    [paletteStore],
+  );
+
   return (
     <div>
-      <BlockField label="Indexed color">
-        <div className="mb-1">
-          <IndexedColors palette={draftPalette} selected={selectedIndex} onClick={handleClickIndex} />
-        </div>
-        <ColorPickerPanel color={draftColor} onChange={handleColorClick} indexedColorDisabled />
-      </BlockField>
+      <InlineField label="Indexed color">
+        <SelectInput
+          options={paletteOptions}
+          value={paletteStore.getSelectedPalette()?.id ?? ""}
+          onChange={handlePaletteChange}
+        />
+      </InlineField>
+      <div className="mt-1 flex flex-col items-end">
+        <IndexedColors palette={palette} selected={selectedIndex} onClick={handleClickIndex} />
+        {draftColor ? (
+          <ColorPickerPanel color={draftColor} onChange={handleColorClick} indexedColorDisabled />
+        ) : undefined}
+      </div>
     </div>
   );
 };

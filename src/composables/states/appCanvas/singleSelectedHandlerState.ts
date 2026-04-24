@@ -77,7 +77,7 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
       ) {
         smartBranchHandler = newSmartBranchHandler({
           getShapeComposite: ctx.getShapeComposite,
-          getColorPalette: ctx.getColorPalette,
+          getColorPalette: ctx.getSelectedPalette,
           targetId: targetShape.id,
           branchTemplate: ctx.getUserSetting(),
         });

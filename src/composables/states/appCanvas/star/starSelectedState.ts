@@ -171,7 +171,7 @@ export const newStarSelectedState = defineSingleSelectedHandlerState<StarShape, 
               getDocumentMap: ctx.getDocumentMap,
               imageStore: ctx.getImageStore(),
               scale: ctx.getScale(),
-              colorPalette: ctx.getColorPalette(),
+              colorPalette: ctx.getSelectedPalette(),
             });
             renderer.render(renderCtx);
             break;

@@ -141,7 +141,7 @@ export function newBoardCardMovingState(option: { boardId: string }): AppCanvasS
             getStruct: shapeComposite.getShapeStruct,
           }),
           getDocumentMap: ctx.getDocumentMap,
-          colorPalette: ctx.getColorPalette(),
+          colorPalette: ctx.getSelectedPalette(),
         });
         scaleGlobalAlpha(renderCtx, 0.5, () => {
           shapeRenderer.render(renderCtx);

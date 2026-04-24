@@ -83,7 +83,7 @@ export function newTextEditingState(option: Option): AppCanvasState {
     renderCtx.strokeRect(textBounds.range.x, textBounds.range.x, textBounds.range.width, textBounds.range.height);
     renderCtx.stroke();
 
-    textEditorController.render(renderCtx, { palette: ctx.getColorPalette() });
+    textEditorController.render(renderCtx, { palette: ctx.getSelectedPalette() });
     renderCtx.restore();
   };
 

@@ -46,7 +46,7 @@ import { ShapeLink } from "../../utils/texts/textLink";
 const DroppableFileRegs = [/image\/.+/, /^$/];
 
 export const AppCanvas: React.FC = () => {
-  const { diagramStore, sheetStore, shapeStore, documentStore, undoManager, userSettingStore } =
+  const { diagramStore, sheetStore, paletteStore, shapeStore, documentStore, undoManager, userSettingStore } =
     useContext(AppCanvasContext);
   const sm = useContext(AppStateMachineContext);
   const smctx = useContext(AppStateContext);
@@ -280,6 +280,7 @@ export const AppCanvas: React.FC = () => {
     imageStore,
     sheetStore,
     diagramStore,
+    paletteStore,
     shapeStore,
     documentStore,
     showEmojiPicker,

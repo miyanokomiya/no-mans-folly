@@ -14,11 +14,13 @@ import { UserSettingStore } from "../stores/userSettingStore";
 import { ToastMessage } from "../composables/states/types";
 import { stateGenerators } from "../composables/states/appCanvas";
 import { AssetAPI, newMemoryAssetAPI } from "../composables/assetAPI";
+import { PaletteStore } from "../stores/palettes";
 
 export interface IAppCanvasContext {
   workspaceType: string;
   diagramStore: DiagramStore;
   sheetStore: SheetStore;
+  paletteStore: PaletteStore;
   layerStore: LayerStore;
   shapeStore: ShapeStore;
   documentStore: DocumentStore;
@@ -90,7 +92,7 @@ export function createInitialAppCanvasStateContext(arg: {
     selectSheet: () => {},
 
     getShapeComposite: () => newShapeComposite({ shapes: [], getStruct: getCommonStruct }),
-    getColorPalette: () => [],
+    getSelectedPalette: () => [],
     getShapes: () => [],
     getSelectedShapeIdMap: () => ({}),
     getLastSelectedShapeId: () => undefined,
