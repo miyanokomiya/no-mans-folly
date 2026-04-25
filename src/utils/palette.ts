@@ -1,17 +1,20 @@
 import { clamp } from "okageo";
-import { ColorFieldKey, Palette, PaletteColors, RGBA } from "../models";
+import { ColorFieldKey, PaletteColors, RGBA } from "../models";
 import { COLORS } from "./color";
 import { fillArray } from "./commons";
+import { isWithinRange } from "./geometry";
 
-export function getPaletteColors(palette?: Palette): RGBA[] {
-  const colors = fillArray(30, COLORS.BLACK);
+const PALETTE_SIZE = 30;
+
+export function getPaletteColors(palette?: PaletteColors): RGBA[] {
+  const colors = fillArray(PALETTE_SIZE, COLORS.BLACK);
   if (!palette) return colors;
 
   Object.entries(palette).forEach(([key, value]) => {
-    if (!value || !/^c_/.test(key)) return;
-
-    const i = parseInt(key.slice(2), 10);
-    colors[i] = value;
+    const index = parsePaletteIndex(key);
+    if (index !== undefined) {
+      colors[index] = value;
+    }
   });
   return colors;
 }
@@ -43,6 +46,13 @@ export function generateDefaultPaletteColors(): PaletteColors {
 
 export function generatePaletteKey(index: number): ColorFieldKey {
   return `c_${index.toString().padStart(2, "0")}` as ColorFieldKey;
+}
+
+function parsePaletteIndex(text: string): number | undefined {
+  if (!text || !/^c_/.test(text)) return;
+  const index = parseInt(text.slice(2), 10);
+  if (!isWithinRange(0, PALETTE_SIZE - 1, index)) return;
+  return index;
 }
 
 const getV = (i: number) => clamp(0, 255, 51 * i);
