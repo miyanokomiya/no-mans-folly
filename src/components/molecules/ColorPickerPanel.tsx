@@ -23,47 +23,9 @@ import { BlockGroupField } from "../atoms/BlockGroupField";
 import { useLocalStorageAdopter } from "../../hooks/localStorage";
 import { SliderInput } from "../atoms/inputs/SliderInput";
 import { IndexedColors } from "./IndexedColors";
+import { COLOR_TABLE } from "../../utils/palette";
 
-const getV = (i: number) => clamp(0, 255, 51 * i);
-const base = [...Array(5)].map((_, i) => i - 2);
-const COLOR_TABLE: RGBA[][] = [
-  [
-    { r: 0, g: 0, b: 0, a: 1 },
-    { r: 64, g: 64, b: 64, a: 1 },
-    { r: 127, g: 127, b: 127, a: 1 },
-    { r: 191, g: 191, b: 191, a: 1 },
-    { r: 255, g: 255, b: 255, a: 1 },
-  ],
-  base.map((i) => ({ r: getV(i + 5), g: getV(i), b: getV(i), a: 1 })),
-  base.map((i) => ({ r: getV(i + 5), g: getV(i + 2.5), b: getV(i), a: 1 })),
-  base.map((i) => ({ r: getV(i + 5), g: getV(i + 5), b: getV(i), a: 1 })),
-  base.map((i) => ({ r: getV(i + 2.5), g: getV(i + 5), b: getV(i), a: 1 })),
-  base.map((i) => ({ r: getV(i), g: getV(i + 5), b: getV(i), a: 1 })),
-  base.map((i) => ({ r: getV(i), g: getV(i + 5), b: getV(i + 2.5), a: 1 })),
-  base.map((i) => ({ r: getV(i), g: getV(i + 5), b: getV(i + 5), a: 1 })),
-  base.map((i) => ({ r: getV(i), g: getV(i + 2.5), b: getV(i + 5), a: 1 })),
-  base.map((i) => ({ r: getV(i), g: getV(i), b: getV(i + 5), a: 1 })),
-  base.map((i) => ({ r: getV(i + 2.5), g: getV(i), b: getV(i + 5), a: 1 })),
-  base.map((i) => ({ r: getV(i + 5), g: getV(i), b: getV(i + 5), a: 1 })),
-  base.map((i) => ({ r: getV(i + 5), g: getV(i), b: getV(i + 2.5), a: 1 })),
-];
 const COLOR_GROUP_SIZE = COLOR_TABLE.length;
-
-const ColorPickerItem: React.FC<{ color: RGBA; onClick?: (color: RGBA) => void }> = (props) => {
-  const palette = useColorPalette();
-  const onClick = useCallback(() => {
-    props.onClick?.(props.color);
-  }, [props]);
-
-  return (
-    <button
-      type="button"
-      className="w-4.5 h-4.5 border"
-      style={{ backgroundColor: rednerRGBA(resolveColor(props.color, palette)) }}
-      onClick={onClick}
-    ></button>
-  );
-};
 
 interface ColorPickerPanelProps {
   color?: Color;
@@ -88,6 +50,7 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({
   const colorValue = color ?? COLORS.BLACK;
   const actualColor: RGBA = useMemo(() => resolveColor(colorValue, palette), [colorValue, palette]);
   const hsva = useMemo(() => rgbaToHsva(actualColor), [actualColor]);
+  const isIndexedColorFlag = isIndexedColor(colorValue);
 
   const handleColorChange = useCallback(
     (val: Partial<Color>, draft?: boolean) => {
@@ -189,13 +152,15 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({
   return (
     <div className="flex flex-col gap-1">
       {indexedColorDisabled ? undefined : (
-        <IndexedColors
-          palette={palette}
-          selected={isIndexedColor(colorValue) ? colorValue.index : undefined}
-          onClick={handleIndexedColorClick}
-        />
+        <div className={isIndexedColorFlag ? "" : "opacity-50"}>
+          <IndexedColors
+            palette={palette}
+            selected={isIndexedColorFlag ? colorValue.index : undefined}
+            onClick={handleIndexedColorClick}
+          />
+        </div>
       )}
-      <div>
+      <div className={isIndexedColorFlag ? "opacity-50" : ""}>
         {alphaDisabled ? undefined : (
           <div className="flex items-center">
             <span>Alpha:</span>
@@ -232,6 +197,22 @@ export const ColorPickerPanel: React.FC<ColorPickerPanelProps> = ({
         </div>
       </BlockGroupField>
     </div>
+  );
+};
+
+const ColorPickerItem: React.FC<{ color: RGBA; onClick?: (color: RGBA) => void }> = (props) => {
+  const palette = useColorPalette();
+  const onClick = useCallback(() => {
+    props.onClick?.(props.color);
+  }, [props]);
+
+  return (
+    <button
+      type="button"
+      className="w-4.5 h-4.5 border"
+      style={{ backgroundColor: rednerRGBA(resolveColor(props.color, palette)) }}
+      onClick={onClick}
+    ></button>
   );
 };
 

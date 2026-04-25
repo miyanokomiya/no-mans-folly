@@ -31,11 +31,14 @@ const ColorIndexItem: React.FC<ColorIndexItemProps> = ({ index, color, selected,
     <button
       key={index}
       type="button"
-      className={"w-6 h-6 border-2 flex items-center justify-center" + (selected ? " border-cyan-400" : "")}
+      className={
+        "w-6 h-6 border-2 flex items-center justify-center text-xs text-shadow-md text-shadow-white" +
+        (selected ? " border-3 border-cyan-400 font-bold rounded-full" : "")
+      }
       style={{ backgroundColor: rednerRGBA(color) }}
       onClick={handleClick}
     >
-      <span className="text-xs font-bold text-shadow-md text-shadow-white">{index}</span>
+      {index}
     </button>
   );
 };

@@ -1,3 +1,4 @@
+import { clamp } from "okageo";
 import { ColorFieldKey, Palette, PaletteColors, RGBA } from "../models";
 import { COLORS } from "./color";
 import { fillArray } from "./commons";
@@ -43,3 +44,27 @@ export function generateDefaultPaletteColors(): PaletteColors {
 export function generatePaletteKey(index: number): ColorFieldKey {
   return `c_${index.toString().padStart(2, "0")}` as ColorFieldKey;
 }
+
+const getV = (i: number) => clamp(0, 255, 51 * i);
+const base = [...Array(5)].map((_, i) => i - 2);
+export const COLOR_TABLE: RGBA[][] = [
+  [
+    { r: 0, g: 0, b: 0, a: 1 },
+    { r: 64, g: 64, b: 64, a: 1 },
+    { r: 127, g: 127, b: 127, a: 1 },
+    { r: 191, g: 191, b: 191, a: 1 },
+    { r: 255, g: 255, b: 255, a: 1 },
+  ],
+  base.map((i) => ({ r: getV(i + 5), g: getV(i), b: getV(i), a: 1 })),
+  base.map((i) => ({ r: getV(i + 5), g: getV(i + 2.5), b: getV(i), a: 1 })),
+  base.map((i) => ({ r: getV(i + 5), g: getV(i + 5), b: getV(i), a: 1 })),
+  base.map((i) => ({ r: getV(i + 2.5), g: getV(i + 5), b: getV(i), a: 1 })),
+  base.map((i) => ({ r: getV(i), g: getV(i + 5), b: getV(i), a: 1 })),
+  base.map((i) => ({ r: getV(i), g: getV(i + 5), b: getV(i + 2.5), a: 1 })),
+  base.map((i) => ({ r: getV(i), g: getV(i + 5), b: getV(i + 5), a: 1 })),
+  base.map((i) => ({ r: getV(i), g: getV(i + 2.5), b: getV(i + 5), a: 1 })),
+  base.map((i) => ({ r: getV(i), g: getV(i), b: getV(i + 5), a: 1 })),
+  base.map((i) => ({ r: getV(i + 2.5), g: getV(i), b: getV(i + 5), a: 1 })),
+  base.map((i) => ({ r: getV(i + 5), g: getV(i), b: getV(i + 5), a: 1 })),
+  base.map((i) => ({ r: getV(i + 5), g: getV(i), b: getV(i + 2.5), a: 1 })),
+];
