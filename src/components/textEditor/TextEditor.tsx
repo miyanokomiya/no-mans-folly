@@ -76,6 +76,22 @@ export const TextEditor: React.FC<Props> = ({
     inputRef.current?.focus?.();
   }, [setShowEmojiPicker]);
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (composition) return;
+      onKeyDown?.(e);
+    },
+    [composition, onKeyDown],
+  );
+
+  const handleKeyUp = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (composition) return;
+      onKeyUp?.(e);
+    },
+    [composition, onKeyUp],
+  );
+
   return (
     <>
       <div
@@ -88,8 +104,8 @@ export const TextEditor: React.FC<Props> = ({
           ref={setTextareaRef}
           value={draft}
           onChange={onChange}
-          onKeyDown={onKeyDown}
-          onKeyUp={onKeyUp}
+          onKeyDown={handleKeyDown}
+          onKeyUp={handleKeyUp}
           onCompositionStart={onCompositionStart}
           onCompositionEnd={onCompositionEnd}
           autoCapitalize="none"
