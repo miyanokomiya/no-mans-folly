@@ -9,6 +9,7 @@ import {
   getAttachmentAnchorPoint,
   getEvenlySpacedLineAttachment,
   getEvenlySpacedLineAttachmentBetweenFixedOnes,
+  getLineAttachmentPatch,
   newPreserveAttachmentByShapeHandler,
   snapRectWithLineAttachment,
 } from "../../../lineAttachmentHandler";
@@ -110,6 +111,8 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
           const shapeComposite = ctx.getShapeComposite();
           const shapeMap = shapeComposite.shapeMap;
           const latestShape = shapeComposite.mergedShapeMap[option.shapeId];
+          const shape = shapeMap[option.shapeId];
+          if (!shape) return ctx.states.newSelectionHubState;
 
           if (!event.data.shift) {
             const latestAnchorP = getAttachmentAnchorPoint(shapeComposite, latestShape);
@@ -191,46 +194,50 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
             }
           }
 
+          const attachedShapeMap = toMap(Array.from(attachInfoMap.keys()).map((id) => shapeMap[id]));
+          const attachmentPatch = mapReduce(attachedShapeMap, (s) => {
+            const info = attachInfoMap.get(s.id)!;
+            const attachment: ShapeAttachment = {
+              anchor: { x: 0.5, y: 0.5 },
+              rotationType: "absolute",
+              rotation: 0,
+              // Inherit both source and temporary attachment to preserve attachment state as much as possible.
+              // => Attachment can be deleted in temporary data so "mergedShapeMap" doesn't work for this purpose.
+              ...shapeMap[s.id].attachment,
+              ...patchAtStart[s.id]?.attachment,
+              id: line.id,
+              to: info[0],
+            };
+            return { attachment };
+          });
+
+          // Derive the translate affine of the index shape.
+          const indexShapePatch = getLineAttachmentPatch(shapeComposite, {
+            update: { [shape.id]: attachmentPatch[shape.id] },
+          });
+          const attachedIndexShape = { ...shape, ...indexShapePatch[shape.id] };
+          const attachedIndexAffine: AffineMatrix = [
+            1,
+            0,
+            0,
+            1,
+            attachedIndexShape.p.x - shape.p.x,
+            attachedIndexShape.p.y - shape.p.y,
+          ];
+
           const patch = patchPipe(
             [
-              (src) => {
-                return mapReduce(src, (s) => {
-                  const info = attachInfoMap.get(s.id)!;
-                  const attachment: ShapeAttachment = {
-                    anchor: { x: 0.5, y: 0.5 },
-                    rotationType: "absolute",
-                    rotation: 0,
-                    // Inherit both source and temporary attachment to preserve attachment state as much as possible.
-                    // => Attachment can be deleted in temporary data so "mergedShapeMap" doesn't work for this purpose.
-                    ...shapeMap[s.id].attachment,
-                    ...patchAtStart[s.id]?.attachment,
-                    id: line.id,
-                    to: info[0],
-                  };
-                  return { attachment };
-                });
-              },
-              (_, currentPatch) => {
-                return getPatchAfterLayouts(shapeComposite, { update: currentPatch });
-              },
-              (latestMap) => {
-                const shape = shapeMap[option.shapeId];
-                const latestShape = latestMap[option.shapeId];
-                if (!shape || !latestShape) return {};
-
+              () => attachmentPatch,
+              () => {
                 // Translate unattachable shapes along with the target.
-                const t: AffineMatrix = [1, 0, 0, 1, latestShape.p.x - shape.p.x, latestShape.p.y - shape.p.y];
-                return mapReduce(toMap(unattachableShapes), (s) => shapeComposite.transformShape(s, t));
+                return mapReduce(toMap(unattachableShapes), (s) =>
+                  shapeComposite.transformShape(s, attachedIndexAffine),
+                );
               },
-              (latestMap) => {
-                const shape = shapeMap[option.shapeId];
-                const latestShape = latestMap[option.shapeId];
-                if (!shape || !latestShape) return {};
-
+              () => {
                 // Translate other attached shapes as well as the target.
-                const t: AffineMatrix = [1, 0, 0, 1, latestShape.p.x - shape.p.x, latestShape.p.y - shape.p.y];
                 const patch = otherAttachedShapes.reduce<{ [id: string]: Partial<Shape> }>((p, s) => {
-                  p[s.id] = shapeComposite.transformShape(s, t);
+                  p[s.id] = shapeComposite.transformShape(s, attachedIndexAffine);
                   return p;
                 }, {});
 
@@ -242,7 +249,7 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
                 return getPatchAfterLayouts(shapeComposite, { update: currentPatch });
               },
             ],
-            toMap(Array.from(attachInfoMap.keys()).map((id) => shapeMap[id])),
+            attachedShapeMap,
           );
           ctx.setTmpShapeMap(patch.patch);
 
