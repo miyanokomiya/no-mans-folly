@@ -86,9 +86,20 @@ export function getModifierOptions(e: ModifiedEvent): ModifierOptions {
 }
 
 export function getMouseOptions(e: ModifiedMouseEvent): MouseOptions {
+  const options = getModifierOptions(e);
+  if (isMac() && e.button === 0 && e.ctrlKey)
+    return {
+      ...options,
+      button: 2,
+      ctrl: false,
+    };
+
   return {
-    ...getModifierOptions(e),
+    ...options,
     button: e.button,
+    // For Mac, "ctrl+left click" should be treated as "right click"
+    // => Turn off "ctrl" as a modifier for pointer down event.
+    ctrl: isMac() && e.ctrlKey ? false : options.ctrl,
   };
 }
 
