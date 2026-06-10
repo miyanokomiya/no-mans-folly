@@ -40,6 +40,7 @@ export interface Shape extends Entity {
   noBounds?: boolean; // When this is set true, the shape doesn't affect the bounds of the parent shape.
   alpha?: number; // "undefined" should mean 1.
   attachment?: ShapeAttachment;
+  attachmentAttrs?: ShapeAttachmentAttrs; // Preserve a part of "attachment" related to self.
   /**
    * Represents additional parent information.
    * e.g. `${rowId}:${columnId}` when the parent is a table.
@@ -123,13 +124,16 @@ export interface ArcCurveControl {
   d: IVec2;
 }
 
-export interface ShapeAttachment {
+export type ShapeAttachment = {
   id: string; // id of target shape that is attached to
   to: IVec2; // relative rete within the bounds of the target
+} & ShapeAttachmentAttrs;
+
+export type ShapeAttachmentAttrs = {
   anchor: IVec2; // relative rate within the bounds of attaching shape
   rotationType: "relative" | "absolute";
   rotation: number; // this value becomes either relative or absolute based on "rotationType"
-}
+};
 
 export interface BoxAlign {
   hAlign?: "left" | "center" | "right"; // "left" should be default

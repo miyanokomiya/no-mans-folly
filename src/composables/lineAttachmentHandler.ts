@@ -72,7 +72,10 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
       const line = shapeMap[lineId];
       if (!line || !isLineShape(line)) {
         attachedIdSet.forEach((attachedId) => {
-          ret[attachedId] = { attachment: undefined };
+          const patch = getPatchByDetachFromLine(shapeMap[attachedId]);
+          if (patch) {
+            ret[attachedId] = patch;
+          }
         });
         return;
       }
@@ -85,8 +88,9 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
 
         // This check shouldn't be done with "nextSubSC" because it doesn't have the parent of "shape".
         if (!shapeComposite.canAttach({ ...shape, ...updatedMap[attachedId] })) {
-          if (shape.attachment) {
-            ret[attachedId] = { attachment: undefined };
+          const patch = getPatchByDetachFromLine(shape);
+          if (patch) {
+            ret[attachedId] = patch;
           }
           return;
         }
@@ -489,7 +493,10 @@ export function newPreserveAttachmentByShapeHandler({
           return p;
         }
 
-        p[nextShape.id] = { attachment: undefined };
+        const detachPatch = getPatchByDetachFromLine(nextShape);
+        if (detachPatch) {
+          p[nextShape.id] = detachPatch;
+        }
         return p;
       }
 
@@ -563,4 +570,16 @@ export function snapRectWithLineAttachment({
 
 function isInnerRateValue(val: number): boolean {
   return Math.abs(val - 0.5) <= 0.5;
+}
+
+export function getPatchByDetachFromLine(src?: Partial<Shape>): Partial<Shape> | undefined {
+  if (!src?.attachment) return;
+  return {
+    attachment: undefined,
+    attachmentAttrs: {
+      anchor: src.attachment.anchor,
+      rotationType: src.attachment.rotationType,
+      rotation: src.attachment.rotation,
+    },
+  };
 }

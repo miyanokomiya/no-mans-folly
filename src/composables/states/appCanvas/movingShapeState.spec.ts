@@ -74,7 +74,7 @@ describe("newMovingShapeState", () => {
       expect(result).toBe(undefined);
     });
 
-    test("should clear line attachment when exists and attaching target isn't moving", () => {
+    test("should clear line attachment but preserve its properties when exists and attaching target isn't moving", () => {
       const ctx = getMockCtx();
       ctx.getShapeComposite = () =>
         newShapeComposite({
@@ -107,7 +107,19 @@ describe("newMovingShapeState", () => {
         type: "pointermove",
         data: { start: { x: 0, y: 0 }, startAbs: { x: 0, y: 0 }, current: { x: 10, y: 0 }, scale: 1 },
       });
-      expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, { a: { p: { x: 10, y: 0 } } });
+      expect(ctx.setTmpShapeMap).toHaveBeenNthCalledWith(1, {
+        a: {
+          p: { x: 10, y: 0 },
+          attachmentAttrs: {
+            anchor: {
+              x: 0.5,
+              y: 0.5,
+            },
+            rotation: 0,
+            rotationType: "relative",
+          },
+        },
+      });
       expect(tmpMap["a"]).toHaveProperty("attachment");
     });
 

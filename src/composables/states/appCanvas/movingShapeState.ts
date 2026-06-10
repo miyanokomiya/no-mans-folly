@@ -29,6 +29,7 @@ import { newCacheWithArg } from "../../../utils/stateful/cache";
 import { handleCommonWheel } from "../commons";
 import { isLineShape } from "../../../shapes/line";
 import { renderMovingHighlight } from "./utils/highlight";
+import { getPatchByDetachFromLine } from "../../lineAttachmentHandler";
 
 interface Option extends ModifierOptions {
   boundingBox?: BoundingBox;
@@ -174,8 +175,12 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
                 !targetIdSet.has(s.attachment.id) &&
                 shapeMap[s.attachment.id] &&
                 isLineShape(shapeMap[s.attachment.id])
-              )
-                m[id].attachment = undefined;
+              ) {
+                const detachPatch = getPatchByDetachFromLine(s);
+                if (detachPatch) {
+                  m[id] = { ...m[id], ...detachPatch };
+                }
+              }
             }
             return m;
           }, {});

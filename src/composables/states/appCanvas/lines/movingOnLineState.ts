@@ -201,6 +201,8 @@ export function newMovingOnLineState(option: Option): AppCanvasState {
               anchor: { x: 0.5, y: 0.5 },
               rotationType: "absolute",
               rotation: 0,
+              // Inherit preserved attrs if exist
+              ...shapeMap[s.id].attachmentAttrs,
               // Inherit both source and temporary attachment to preserve attachment state as much as possible.
               // => Attachment can be deleted in temporary data so "mergedShapeMap" doesn't work for this purpose.
               ...shapeMap[s.id].attachment,
