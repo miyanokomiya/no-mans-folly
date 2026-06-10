@@ -580,6 +580,7 @@ export function getPatchByDetachFromLine(src?: Partial<Shape>): Partial<Shape> |
       anchor: src.attachment.anchor,
       rotationType: src.attachment.rotationType,
       rotation: src.attachment.rotation,
+      clipout: src.attachment.clipout,
     },
   };
 }

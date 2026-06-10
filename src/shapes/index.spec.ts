@@ -68,6 +68,7 @@ describe("renderShape", () => {
       getStruct: getCommonStruct,
       lineJumpMap: new Map(),
       renderingPaths: new Set(),
+      attachmentMap: new Map(),
     });
     expect(ctx.fill).toHaveBeenCalled();
     expect(ctx.stroke).toHaveBeenCalled();

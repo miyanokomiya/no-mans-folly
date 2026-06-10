@@ -89,6 +89,13 @@ export const AttachmentInspector: React.FC<Props> = ({
     },
     [attachment, updateAttchment],
   );
+  const handleClipoutChange = useCallback(
+    (val: boolean) => {
+      if (!attachment) return;
+      updateAttachment({ clipout: val ? true : undefined });
+    },
+    [attachment, updateAttachment],
+  );
 
   if (!attachment || !tmpAttachment) return;
 
@@ -127,28 +134,33 @@ export const AttachmentInspector: React.FC<Props> = ({
         ) : undefined}
       </BlockGroupField>
       {lineAttached ? (
-        <BlockField label="Anchor" fullBody>
-          <InlineField label="Left" fullBody>
-            <SliderInput
-              value={tmpAttachment.anchor.x}
-              onChanged={handleAnchorXChange}
-              min={0}
-              max={1}
-              step={0.01}
-              showValue
-            />
+        <>
+          <BlockField label="Anchor" fullBody>
+            <InlineField label="Left" fullBody>
+              <SliderInput
+                value={tmpAttachment.anchor.x}
+                onChanged={handleAnchorXChange}
+                min={0}
+                max={1}
+                step={0.01}
+                showValue
+              />
+            </InlineField>
+            <InlineField label="Top" fullBody>
+              <SliderInput
+                value={tmpAttachment.anchor.y}
+                onChanged={handleAnchorYChange}
+                min={0}
+                max={1}
+                step={0.01}
+                showValue
+              />
+            </InlineField>
+          </BlockField>
+          <InlineField label="Clip out">
+            <ToggleInput value={tmpAttachment.clipout} onChange={handleClipoutChange} />
           </InlineField>
-          <InlineField label="Top" fullBody>
-            <SliderInput
-              value={tmpAttachment.anchor.y}
-              onChanged={handleAnchorYChange}
-              min={0}
-              max={1}
-              step={0.01}
-              showValue
-            />
-          </InlineField>
-        </BlockField>
+        </>
       ) : undefined}
     </BlockGroupField>
   );

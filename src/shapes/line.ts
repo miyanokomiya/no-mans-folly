@@ -61,6 +61,7 @@ import {
 import { SVGElementInfo } from "../utils/svgElements";
 import { CanvasCTX } from "../utils/types";
 import { newClipoutRenderer, newSVGClipoutRenderer } from "../composables/clipRenderer";
+import { walkTree } from "../utils/tree";
 
 export type LineType = undefined | "stright" | "elbow"; // undefined means "stright"
 export type CurveType = undefined | "auto";
@@ -133,11 +134,14 @@ export const struct: ShapeStruct<LineShape> = {
     const treeNode = shapeContext?.treeNodeMap[shape.id];
     const hasLabels = treeNode && treeNode.children.length > 0;
     const { pAffine, qAffine } = getHeadAffines(shape);
+    const attachments = shapeContext?.attachmentMap
+      .get(shape.id)
+      ?.filter((id) => shapeContext.shapeMap[id].attachment?.clipout);
 
     let fillRange: ((region: Path2D) => void) | undefined;
 
-    if (pAffine || qAffine || hasLabels) {
-      const outline = struct.getWrapperRect(shape, shapeContext, true);
+    if (pAffine || qAffine || hasLabels || attachments) {
+      const outline = expandRect(struct.getWrapperRect(shape, shapeContext, true), 2);
       fillRange = (region) => region.rect(outline.x, outline.y, outline.width, outline.height);
     }
 
@@ -169,6 +173,21 @@ export const struct: ShapeStruct<LineShape> = {
       });
     }
 
+    if (clipoutRenderer && shapeContext && attachments) {
+      attachments.forEach((id) => {
+        walkTree([shapeContext.treeNodeMap[id]], (t) => {
+          const attached = shapeContext.shapeMap[t.id];
+          const attachedStruct = shapeContext.getStruct(attached.type);
+          const clipPath = attachedStruct.getClipPath?.(attached, shapeContext);
+          if (clipPath) {
+            clipoutRenderer.applyClip((region) => {
+              region.addPath(clipPath);
+            });
+          }
+        });
+      });
+    }
+
     ctx.beginPath();
     const curvePath = combineJumps(shape, shapeContext?.lineJumpMap.get(shape.id));
     applyCurvePath(ctx, curvePath.path, curvePath.curves);
@@ -193,12 +212,15 @@ export const struct: ShapeStruct<LineShape> = {
     const pathStr = pathSegmentRawsToString(createSVGCurvePath(curvePath.path, curvePath.curves));
     const hasLabels = treeNode && treeNode.children.length > 0;
     const { pAffine, qAffine } = getHeadAffines(shape);
+    const attachments = shapeContext?.attachmentMap
+      .get(shape.id)
+      ?.filter((id) => shapeContext.shapeMap[id].attachment?.clipout);
     const defaultWidth = getStrokeWidth({ ...shape.stroke, disabled: false });
 
     const clipoutRenderer = newSVGClipoutRenderer({
       clipId: `clip-${shape.id}`,
       rangeStr: pathSegmentRawsToString(
-        createSVGCurvePath(getRectPoints(struct.getWrapperRect(shape, shapeContext, true))),
+        createSVGCurvePath(getRectPoints(expandRect(struct.getWrapperRect(shape, shapeContext, true), 2))),
       ),
     });
 
@@ -220,6 +242,19 @@ export const struct: ShapeStruct<LineShape> = {
             pathSegmentRawsToString(createSVGCurvePath(textStruct.getLocalRectPolygon(label, shapeContext), [], true)),
           ]);
         }
+      });
+    }
+
+    if (clipoutRenderer && shapeContext && attachments) {
+      attachments.forEach((id) => {
+        walkTree([shapeContext.treeNodeMap[id]], (t) => {
+          const attached = shapeContext.shapeMap[t.id];
+          const attachedStruct = shapeContext.getStruct(attached.type);
+          const clipPath = attachedStruct.createClipSVGPath?.(attached, shapeContext);
+          if (clipPath) {
+            clipoutRenderer.applyClip([clipPath]);
+          }
+        });
       });
     }
 

@@ -556,6 +556,7 @@ function newShapeContext(
   shapeTreeMap: { [id: string]: TreeNode },
 ): ShapeContext {
   let lineJumpMap: LineJumpMap;
+  let attachmentMap: Map<string, string[]>;
   return {
     shapeMap: shapeMap,
     treeNodeMap: shapeTreeMap,
@@ -567,6 +568,22 @@ function newShapeContext(
       return lineJumpMap;
     },
     renderingPaths: new Set(),
+    get attachmentMap() {
+      if (!attachmentMap) {
+        attachmentMap = new Map();
+        shapes.forEach((s) => {
+          if (!s.attachment || !shapeMap[s.attachment.id]) return;
+          const toId = s.attachment.id;
+          const map = attachmentMap.get(toId);
+          if (map) {
+            map.push(s.id);
+          } else {
+            attachmentMap.set(toId, [s.id]);
+          }
+        });
+      }
+      return attachmentMap;
+    },
   };
 }
 

@@ -26,6 +26,7 @@ export interface ShapeContext {
   lineJumpMap: LineJumpMap;
   // This can be used to avoid circular reference during hierarchical rendering.
   renderingPaths: Set<string>;
+  attachmentMap: Map<string, string[]>;
 }
 
 /**

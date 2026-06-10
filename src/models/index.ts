@@ -133,6 +133,7 @@ export type ShapeAttachmentAttrs = {
   anchor: IVec2; // relative rate within the bounds of attaching shape
   rotationType: "relative" | "absolute";
   rotation: number; // this value becomes either relative or absolute based on "rotationType"
+  clipout?: boolean; // works only for lines
 };
 
 export interface BoxAlign {
