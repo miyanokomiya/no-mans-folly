@@ -194,6 +194,41 @@ describe("getLineAttachmentPatch", () => {
     });
     expect(Object.keys(result0)).toEqual([shapeA.id, shapeB.id]);
   });
+
+  test("should ignore resolved lines", () => {
+    const line2 = { ...line, id: "line2" };
+    const shapeB2 = { ...shapeB, id: "b2", attachment: { ...shapeB.attachment!, id: line2.id } };
+    const shapeComposite = newShapeComposite({
+      shapes: [line, shapeA, shapeB, line2, shapeB2],
+      getStruct: getCommonStruct,
+    });
+
+    const result0 = getLineAttachmentPatch(
+      shapeComposite,
+      {
+        update: {
+          [line.id]: { q: { x: 0, y: 100 } } as Partial<LineShape>,
+          [line2.id]: { q: { x: 0, y: 100 } } as Partial<LineShape>,
+        },
+      },
+      new Set([line.id]),
+    );
+    expect(Object.keys(result0)).toEqual([shapeB2.id]);
+    expect(result0[shapeB2.id].p).toEqualPoint({ x: -50, y: -30 });
+
+    const result1 = getLineAttachmentPatch(
+      shapeComposite,
+      {
+        update: {
+          [shapeB.id]: { width: 200 } as Partial<RectangleShape>,
+          [shapeB2.id]: { width: 200 } as Partial<RectangleShape>,
+        },
+      },
+      new Set([line.id]),
+    );
+    expect(Object.keys(result1)).toEqual([shapeB2.id]);
+    expect(result1[shapeB2.id].p).toEqualPoint({ x: -80, y: -50 });
+  });
 });
 
 describe("getAffineByMoveToAttachedPoint", () => {

@@ -52,7 +52,10 @@ import {
 import { CanvasCTX } from "../utils/types";
 
 export interface LineAttachmentHandler {
-  onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> };
+  onModified(
+    updatedMap: { [id: string]: Partial<Shape> },
+    resolvedLineIdSet?: Set<string>, // Lines in this set are treated as resolved and ignored for attachment layout
+  ): { [id: string]: Partial<Shape> };
 }
 
 interface Option {
@@ -60,14 +63,17 @@ interface Option {
 }
 
 function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
-  function onModified(updatedMap: { [id: string]: Partial<Shape> }): { [id: string]: Partial<Shape> } {
+  function onModified(
+    updatedMap: { [id: string]: Partial<Shape> },
+    resolvedLineIdSet?: Set<string>,
+  ): { [id: string]: Partial<Shape> } {
     const shapeComposite = option.ctx.getShapeComposite();
     const shapeMap = shapeComposite.shapeMap;
     const attachedMap = getUpdatedAttachedMap(shapeComposite, updatedMap);
 
     const ret: { [id: string]: Partial<Shape> } = {};
     attachedMap.forEach((attachedIdSet, lineId) => {
-      if (attachedIdSet.size === 0) return;
+      if (attachedIdSet.size === 0 || resolvedLineIdSet?.has(lineId)) return;
 
       const line = shapeMap[lineId];
       if (!line || !isLineShape(line)) {
@@ -197,13 +203,14 @@ function getUpdatedAttachedMap(
 export function getLineAttachmentPatch(
   srcComposite: ShapeComposite,
   patchInfo: EntityPatchInfo<Shape>,
+  resolvedLineIdSet?: Set<string>,
 ): { [id: string]: Partial<Shape> } {
   if (!patchInfo.update) return {};
 
   const handler = newLineAttachmentHandler({
     ctx: { getShapeComposite: () => srcComposite },
   });
-  return handler.onModified(patchInfo.update);
+  return handler.onModified(patchInfo.update, resolvedLineIdSet);
 }
 
 export function getAffineByMoveToAttachedPoint(

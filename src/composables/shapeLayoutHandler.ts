@@ -187,6 +187,10 @@ function getLineRelatedLayoutPatch(
 
   // When target id is in this set, its patch will be merged into "nextSC" and won't be in "nextPatch".
   const finishedSet = new Set<string>();
+  // Keep resolved IDs to avoid recalculating layout for them.
+  // Almost same as "finishedSet" but this always updates after each step.
+  const resolvedIdSet = new Set<string>();
+
   let latestPatch: { [id: string]: Partial<Shape> } = initialPatch;
   let nextPatch: { [id: string]: Partial<Shape> } = initialPatch;
   let nextSC = shapeComposite;
@@ -197,7 +201,7 @@ function getLineRelatedLayoutPatch(
         (_, patch) => getConnectedLinePatch(sc, { update: patch }),
         (_, patch) => getCurveLinePatch(sc, { update: patch }),
         (_, patch) => getLineLabelPatch(sc, { update: patch }),
-        (_, patch) => getLineAttachmentPatch(sc, { update: patch }),
+        (_, patch) => getLineAttachmentPatch(sc, { update: patch }, resolvedIdSet),
         (_, patch) => getShapeAttachmentPatch(sc, { update: patch }),
       ],
       sc.shapeMap,
@@ -248,6 +252,7 @@ function getLineRelatedLayoutPatch(
     if (!isObjectEmpty(nextPatchPartial, true)) {
       step(nextSC, nextPatchPartial);
     }
+    ids.forEach((id) => resolvedIdSet.add(id));
   });
 
   // Keep procing "step" until converges.
@@ -257,6 +262,7 @@ function getLineRelatedLayoutPatch(
     step(nextSC, nextPatch);
     for (const id in nextPatch) {
       finishedSet.add(id);
+      resolvedIdSet.add(id);
     }
   }
 

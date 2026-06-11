@@ -331,6 +331,57 @@ describe("getPatchInfoByLayouts", () => {
       curves: [{ c1: { x: 15, y: 10 }, c2: { x: 100, y: 70 } }],
     });
   });
+
+  test("bug fix: lines within a group that is attached to a line with relative rotation get invalid positions", () => {
+    const line1 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line1",
+      p: { x: 0, y: 0 },
+      q: { x: 100, y: 0 },
+    });
+    const group = createShape(getCommonStruct, "group", {
+      id: "group",
+      attachment: {
+        id: line1.id,
+        to: { x: 0.5, y: 0 },
+        anchor: { x: 0.5, y: 0.5 },
+        rotationType: "relative",
+        rotation: 0,
+      },
+    });
+    const rect = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "rect",
+      parentId: group.id,
+      p: { x: 0, y: -50 },
+      width: 100,
+      height: 100,
+    });
+    const line2 = createShape<LineShape>(getCommonStruct, "line", {
+      id: "line2",
+      parentId: group.id,
+      p: { x: 50, y: -50 },
+      q: { x: 50, y: 50 },
+    });
+    const shapeComposite = newShapeComposite({
+      shapes: [line1, group, rect, line2],
+      getStruct: getCommonStruct,
+    });
+
+    const result = getPatchInfoByLayouts(shapeComposite, {
+      update: {
+        [line1.id]: { q: { x: 0, y: 100 } } as Partial<LineShape>,
+      },
+    });
+    expect(result.update?.[line1.id]).toMatchObject({
+      q: { x: 0, y: 100 },
+    });
+    expect(result.update?.[group.id]?.rotation).toBeCloseTo(Math.PI / 2);
+    expect(result.update?.[group.id]?.p).toBeUndefined();
+    expect(result.update?.[rect.id]?.rotation).toBeCloseTo(Math.PI / 2);
+    expect(result.update?.[rect.id]?.p).toEqualPoint({ x: -50, y: 0 });
+    expect(result.update?.[line2.id]?.rotation).toBeUndefined();
+    expect(result.update?.[line2.id]?.p).toEqualPoint({ x: 50, y: 50 });
+    expect((result.update?.[line2.id] as LineShape)?.q).toEqualPoint({ x: -50, y: 50 });
+  });
 });
 
 describe("getPatchAfterLayouts", () => {
