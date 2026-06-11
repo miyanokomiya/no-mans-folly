@@ -423,7 +423,19 @@ describe("remapShapeIds", () => {
         true,
       );
       expect(result0.shapes[0].attachment).toBe(undefined);
+      expect(result0.shapes[0].attachmentAttrs).toEqual({
+        anchor: { x: 0, y: 0 },
+        clipout: undefined,
+        rotation: 0,
+        rotationType: "relative",
+      });
       expect(result0.shapes[1].attachment).toBe(undefined);
+      expect(result0.shapes[1].attachmentAttrs).toEqual({
+        anchor: { x: 0, y: 0 },
+        clipout: undefined,
+        rotation: 0,
+        rotationType: "relative",
+      });
 
       const result1 = remapShapeIds(getCommonStruct, [a, b], () => {
         count++;
@@ -439,11 +451,9 @@ describe("refreshShapeRelations", () => {
     const text = createShape<TextShape>(getCommonStruct, "text", { id: "text", parentId: "line", lineAttached: 0.5 });
 
     const result0 = refreshShapeRelations(getCommonStruct, [text], new Set([]));
-    expect(result0).toEqual({
+    expect(result0).toStrictEqual({
       text: { parentId: undefined, lineAttached: undefined },
     });
-    expect(result0.text).toHaveProperty("parentId");
-    expect(result0.text).toHaveProperty("lineAttached");
 
     const result1 = refreshShapeRelations(getCommonStruct, [text], new Set(["line"]));
     expect(result1).toEqual({});
@@ -462,10 +472,17 @@ describe("refreshShapeRelations", () => {
     });
 
     const result0 = refreshShapeRelations(getCommonStruct, [a], new Set([]));
-    expect(result0).toEqual({
-      a: { attachment: undefined },
+    expect(result0).toStrictEqual({
+      a: {
+        attachment: undefined,
+        attachmentAttrs: {
+          anchor: { x: 0, y: 0 },
+          clipout: undefined,
+          rotation: 0,
+          rotationType: "relative",
+        },
+      },
     });
-    expect(result0.a).toHaveProperty("attachment");
 
     const result1 = refreshShapeRelations(getCommonStruct, [a], new Set(["line"]));
     expect(result1).toEqual({});

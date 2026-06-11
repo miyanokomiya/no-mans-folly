@@ -50,6 +50,7 @@ import {
   SnappingResult,
 } from "./shapeSnapping";
 import { CanvasCTX } from "../utils/types";
+import { getPatchByDetach } from "../shapes";
 
 export interface LineAttachmentHandler {
   onModified(
@@ -78,7 +79,7 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
       const line = shapeMap[lineId];
       if (!line || !isLineShape(line)) {
         attachedIdSet.forEach((attachedId) => {
-          const patch = getPatchByDetachFromLine(shapeMap[attachedId]);
+          const patch = getPatchByDetach(shapeMap[attachedId]);
           if (patch) {
             ret[attachedId] = patch;
           }
@@ -94,7 +95,7 @@ function newLineAttachmentHandler(option: Option): LineAttachmentHandler {
 
         // This check shouldn't be done with "nextSubSC" because it doesn't have the parent of "shape".
         if (!shapeComposite.canAttach({ ...shape, ...updatedMap[attachedId] })) {
-          const patch = getPatchByDetachFromLine(shape);
+          const patch = getPatchByDetach(shape);
           if (patch) {
             ret[attachedId] = patch;
           }
@@ -500,7 +501,7 @@ export function newPreserveAttachmentByShapeHandler({
           return p;
         }
 
-        const detachPatch = getPatchByDetachFromLine(nextShape);
+        const detachPatch = getPatchByDetach(nextShape);
         if (detachPatch) {
           p[nextShape.id] = detachPatch;
         }
@@ -577,17 +578,4 @@ export function snapRectWithLineAttachment({
 
 function isInnerRateValue(val: number): boolean {
   return Math.abs(val - 0.5) <= 0.5;
-}
-
-export function getPatchByDetachFromLine(src?: Partial<Shape>): Partial<Shape> | undefined {
-  if (!src?.attachment) return;
-  return {
-    attachment: undefined,
-    attachmentAttrs: {
-      anchor: src.attachment.anchor,
-      rotationType: src.attachment.rotationType,
-      rotation: src.attachment.rotation,
-      clipout: src.attachment.clipout,
-    },
-  };
 }

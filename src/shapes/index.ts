@@ -339,7 +339,10 @@ export function remapShapeIds(
       if (oldToNewMap[s.attachment.id]) {
         patch.attachment = { ...s.attachment, id: oldToNewMap[s.attachment.id] };
       } else if (removeNotFound) {
-        patch.attachment = undefined;
+        const patchByDetach = getPatchByDetach(s);
+        if (patchByDetach) {
+          patch = { ...patch, ...patchByDetach };
+        }
       }
     }
 
@@ -367,7 +370,10 @@ export function refreshShapeRelations(
       patch.parentId = undefined;
     }
     if (s.attachment && !availableIdSet.has(s.attachment.id)) {
-      patch.attachment = undefined;
+      const patchByDetach = getPatchByDetach(s);
+      if (patchByDetach) {
+        patch = { ...patch, ...patchByDetach };
+      }
     }
 
     const struct = getStruct(s.type);
@@ -484,4 +490,17 @@ export function isNoRotationShape(getStruct: GetShapeStruct, shape: Shape): bool
 export function getSizePresets(getStruct: GetShapeStruct, shape: Shape): { value: Size; label: string }[] | undefined {
   const struct = getStruct(shape.type);
   return struct.sizePresets;
+}
+
+export function getPatchByDetach(src?: Partial<Shape>): Partial<Shape> | undefined {
+  if (!src?.attachment) return;
+  return {
+    attachment: undefined,
+    attachmentAttrs: {
+      anchor: src.attachment.anchor,
+      rotationType: src.attachment.rotationType,
+      rotation: src.attachment.rotation,
+      clipout: src.attachment.clipout,
+    },
+  };
 }
