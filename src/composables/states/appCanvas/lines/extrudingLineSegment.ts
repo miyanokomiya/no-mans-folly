@@ -14,6 +14,7 @@ import { getPatchByExtrudeLineSegment } from "../../../../shapes/utils/line";
 import { handleCommonWheel } from "../../commons";
 import { getSnappableCandidates } from "../commons";
 import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
+import { getPatchAfterLayoutsWithPreserveAttachment } from "../utils/attachment";
 
 interface Option {
   lineShape: LineShape;
@@ -100,12 +101,14 @@ export function newExtrudingLineSegmentState(option: Option): AppCanvasState {
 
           const patch = getPatchByExtrudeLineSegment(option.lineShape, option.index, translate);
           preserveAttachmentHandler.setActive(!!event.data.alt);
-          const update = {
-            [option.lineShape.id]: patch,
-            ...preserveAttachmentHandler.getPatch(patch),
-          };
-
-          ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
+          ctx.setTmpShapeMap(
+            getPatchAfterLayoutsWithPreserveAttachment(
+              ctx.getShapeComposite(),
+              preserveAttachmentHandler,
+              option.lineShape.id,
+              patch,
+            ),
+          );
           editing = true;
           return;
         }

@@ -19,6 +19,7 @@ import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { isArcControl } from "../../../../utils/path";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
+import { getPatchAfterLayoutsWithPreserveAttachment } from "../utils/attachment";
 
 interface Option {
   lineShape: LineShape;
@@ -103,12 +104,14 @@ export function newMovingLineArcState(option: Option): AppCanvasState {
           const patch = { curves } as Partial<LineShape>;
 
           preserveAttachmentHandler.setActive(!!event.data.alt);
-          const update = {
-            [option.lineShape.id]: patch,
-            ...preserveAttachmentHandler.getPatch(patch),
-          };
-
-          ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
+          ctx.setTmpShapeMap(
+            getPatchAfterLayoutsWithPreserveAttachment(
+              ctx.getShapeComposite(),
+              preserveAttachmentHandler,
+              option.lineShape.id,
+              patch,
+            ),
+          );
           return;
         }
         case "pointerup": {

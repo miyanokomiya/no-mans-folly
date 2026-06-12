@@ -159,16 +159,14 @@ export function getPatchAfterLayouts(
   shapeComposite: ShapeComposite,
   patchInfo: EntityPatchInfo<Shape>,
 ): { [id: string]: Partial<Shape> } {
-  const result = patchPipe(
+  return patchPipe(
     [
-      () => patchInfo.update ?? {},
+      () => patchInfo.update,
       // Use the composite from here that contains newly added shapes.
       (_, patch) => getLineRelatedLayoutPatch(applyAddAndDelete(shapeComposite, patchInfo), patch),
     ],
-    shapeComposite.shapeMap,
-  );
-
-  return result.patch;
+    {},
+  ).patch;
 }
 
 /**

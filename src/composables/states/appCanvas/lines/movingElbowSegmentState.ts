@@ -1,14 +1,13 @@
 import type { AppCanvasState } from "../core";
 import { LineShape, getEdges, getLinePath, patchBodyVertex } from "../../../../shapes/line";
 import { MINVALUE, add, getDistance, getInner, getOuterRectangle, getPedal, getRadian, moveRect, sub } from "okageo";
-import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { ElbowLineHandler, newElbowLineHandler } from "../../../elbowLineHandler";
 import { ShapeSnapping, SnappingResult, newShapeSnapping, renderSnappingResult } from "../../../shapeSnapping";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
 import { getSnappableCandidates } from "../commons";
 import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
-import { patchPipe } from "../../../../utils/commons";
+import { getPatchAfterLayoutsWithPreserveAttachment } from "../utils/attachment";
 
 interface Option {
   lineShape: LineShape;
@@ -72,7 +71,6 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
 
       switch (event.type) {
         case "pointermove": {
-          const shapeComposite = ctx.getShapeComposite();
           const v = sub(event.data.current, event.data.startAbs);
           snappingResult = event.data.ctrl
             ? undefined
@@ -92,23 +90,21 @@ export function newMovingElbowSegmentState(option: Option): AppCanvasState {
           const d = sign * getDistance(pedal, p) + (elbow?.d ?? 0);
           const nextElbow = { ...elbow, d, p: origin };
 
-          preserveAttachmentHandler.setActive(!!event.data.alt);
-          const update = patchPipe(
-            [
-              () => {
-                let linePatch = patchBodyVertex(option.lineShape, option.index - 1, {
-                  ...srcBodyItem,
-                  elbow: nextElbow,
-                });
-                linePatch = { ...linePatch, body: elbowHandler.optimizeElbow({ ...option.lineShape, ...linePatch }) };
-                return { [option.lineShape.id]: linePatch };
-              },
-              (_, patch) => preserveAttachmentHandler.getPatch(patch[option.lineShape.id]) ?? {},
-            ],
-            shapeComposite.shapeMap,
-          ).patch;
+          let linePatch = patchBodyVertex(option.lineShape, option.index - 1, {
+            ...srcBodyItem,
+            elbow: nextElbow,
+          });
+          linePatch = { ...linePatch, body: elbowHandler.optimizeElbow({ ...option.lineShape, ...linePatch }) };
 
-          ctx.setTmpShapeMap(getPatchAfterLayouts(shapeComposite, { update }));
+          preserveAttachmentHandler.setActive(!!event.data.alt);
+          ctx.setTmpShapeMap(
+            getPatchAfterLayoutsWithPreserveAttachment(
+              ctx.getShapeComposite(),
+              preserveAttachmentHandler,
+              option.lineShape.id,
+              linePatch,
+            ),
+          );
           return;
         }
         case "pointerup": {

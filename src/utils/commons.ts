@@ -114,7 +114,7 @@ export function mapEach<T, K extends string>(map: { [key in K]: T }, fn: (t: T, 
 export type PatchPipeItem<T extends { id: string }> = (
   itemMap: { [id: string]: T },
   patchMap: { [id: string]: Partial<T> },
-) => { [id: string]: Partial<T> };
+) => { [id: string]: Partial<T> } | undefined;
 
 /**
  * "initialParch" will be included in the returned "patch"
@@ -129,6 +129,8 @@ export function patchPipe<T extends { id: string }>(
   const patchList: { [id: string]: Partial<T> }[] = [];
   patchFns.forEach((fn) => {
     const patch = fn(currentResult, currentPatch);
+    if (!patch) return;
+
     currentPatch = mergeMap(currentPatch, patch);
     currentResult = mergeMap(currentResult, currentPatch) as { [id: string]: T };
     patchList.push(patch);

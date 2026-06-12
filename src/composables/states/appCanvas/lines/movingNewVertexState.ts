@@ -13,7 +13,6 @@ import {
 import { COMMAND_EXAM_SRC } from "../commandExams";
 import { newShapeSnapping } from "../../../shapeSnapping";
 import { TAU } from "../../../../utils/geometry";
-import { getPatchAfterLayouts } from "../../../shapeLayoutHandler";
 import { renderBezierControls } from "../../../lineBounding";
 import { newCoordinateRenderer } from "../../../coordinateRenderer";
 import { newPreserveAttachmentHandler, PreserveAttachmentHandler } from "../../../lineAttachmentHandler";
@@ -22,6 +21,7 @@ import { newCacheWithArg } from "../../../../utils/stateful/cache";
 import { handleCommonWheel } from "../../commons";
 import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
 import { getMovingLineVertex } from "../../../../shapes/utils/line";
+import { getPatchAfterLayoutsWithPreserveAttachment } from "../utils/attachment";
 
 interface Option {
   lineShape: LineShape;
@@ -112,12 +112,14 @@ export function newMovingNewVertexState(option: Option): AppCanvasState {
           patch = optimized ? { ...patch, ...optimized } : patch;
 
           preserveAttachmentHandler.setActive(!!event.data.alt);
-          const update = {
-            [option.lineShape.id]: patch,
-            ...preserveAttachmentHandler.getPatch(patch),
-          };
-
-          ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
+          ctx.setTmpShapeMap(
+            getPatchAfterLayoutsWithPreserveAttachment(
+              shapeComposite,
+              preserveAttachmentHandler,
+              option.lineShape.id,
+              patch,
+            ),
+          );
           return;
         }
         case "pointerup": {

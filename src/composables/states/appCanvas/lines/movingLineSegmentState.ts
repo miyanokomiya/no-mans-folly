@@ -17,6 +17,7 @@ import { handleCommonWheel } from "../../commons";
 import { applyStrokeStyle } from "../../../../utils/strokeStyle";
 import { handleLineVertexExistence } from "../utils/shapeUpdatedEventHandlers";
 import { renderMovingBoundsHighlight } from "../utils/highlight";
+import { getPatchAfterLayoutsWithPreserveAttachment } from "../utils/attachment";
 
 interface Option {
   lineShape: LineShape;
@@ -136,12 +137,14 @@ export function newMovingLineSegmentState(option: Option): AppCanvasState {
           const patch = getLinePatch(ctx, translate);
 
           preserveAttachmentHandler.setActive(!!event.data.alt);
-          const update = {
-            [option.lineShape.id]: patch,
-            ...preserveAttachmentHandler.getPatch(patch),
-          };
-
-          ctx.setTmpShapeMap(getPatchAfterLayouts(ctx.getShapeComposite(), { update }));
+          ctx.setTmpShapeMap(
+            getPatchAfterLayoutsWithPreserveAttachment(
+              ctx.getShapeComposite(),
+              preserveAttachmentHandler,
+              option.lineShape.id,
+              patch,
+            ),
+          );
           return;
         }
         case "pointerup": {
