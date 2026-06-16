@@ -1,5 +1,5 @@
 import type { AppCanvasState, AppCanvasStateContext } from "./core";
-import { IDENTITY_AFFINE, IRectangle, IVec2, add, moveRect, sub } from "okageo";
+import { IDENTITY_AFFINE, IRectangle, IVec2, add, applyAffine, moveRect, sub } from "okageo";
 import { Shape } from "../../../models";
 import { SnappingResult, newShapeSnapping, renderSnappingResult } from "../../shapeSnapping";
 import * as geometry from "../../../utils/geometry";
@@ -30,6 +30,9 @@ import { handleCommonWheel } from "../commons";
 import { isLineShape } from "../../../shapes/line";
 import { renderMovingHighlight } from "./utils/highlight";
 import { getPatchByDetach } from "../../../shapes";
+import { applyFillStyle } from "../../../utils/fillStyle";
+import { applyRectProjectionPath, scaleGlobalAlpha } from "../../../utils/renderer";
+import { newPrimarySnappingGuidelineHandler } from "../../primarySnappingGuideline";
 
 interface Option extends ModifierOptions {
   boundingBox?: BoundingBox;
@@ -48,6 +51,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
   let connectionRenderer: ConnectionRenderer;
   let beforeMove = true;
   let indexShapeId: string;
+  const primarySnappingGuidelineHandler = newPrimarySnappingGuidelineHandler();
 
   const snappingCache = newCacheWithArg((ctx: AppCanvasStateContext) => {
     const shapeComposite = ctx.getShapeComposite();
@@ -58,6 +62,25 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       settings: ctx.getUserSetting(),
     });
   });
+
+  const complete = (ctx: AppCanvasStateContext) => {
+    const val = ctx.getTmpShapeMap();
+
+    if (Object.keys(val).length > 0) {
+      ctx.patchShapes(
+        getPatchByPointerUpOutsideLayout(ctx.getShapeComposite(), val, Object.keys(ctx.getSelectedShapeIdMap())),
+      );
+    }
+    return () => ctx.states.newSelectionHubState({ boundingBox: boundingBox.getTransformedBoundingBox(affine) });
+  };
+
+  const initCommands = (ctx: AppCanvasStateContext) => {
+    ctx.setCommandExams([
+      ...(!snappingResult ? [] : primarySnappingGuidelineHandler.getCommands()),
+      COMMAND_EXAM_SRC.DISABLE_SNAP,
+      COMMAND_EXAM_SRC.ATTACH_TO_LINE_TOGGLE,
+    ]);
+  };
 
   return {
     getLabel: () => "MovingShape",
@@ -91,7 +114,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
 
       ctx.startDragging();
       ctx.setCursor("move");
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP, COMMAND_EXAM_SRC.ATTACH_TO_LINE_TOGGLE]);
+      initCommands(ctx);
 
       const targetRootIds = subShapeComposite.mergedShapeTree.map((t) => t.id);
       movingRect = geometry.getWrapperRect(targetRootIds.map((id) => shapeComposite.getWrapperRect(shapeMap[id])));
@@ -122,7 +145,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
     },
     onResume(ctx) {
       beforeMove = true;
-      ctx.setCommandExams([COMMAND_EXAM_SRC.DISABLE_SNAP, COMMAND_EXAM_SRC.ATTACH_TO_LINE_TOGGLE]);
+      initCommands(ctx);
     },
     onEnd: (ctx) => {
       ctx.stopDragging();
@@ -134,7 +157,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       switch (event.type) {
         case "pointermove": {
           beforeMove = false;
-          if (indexShapeId) {
+          if (indexShapeId && !primarySnappingGuidelineHandler.getPrimaryInfo()) {
             const onFrameLayoutResult = handlePointerMoveOnFrameLayout(ctx, event, targetIds, indexShapeId, option);
             if (onFrameLayoutResult) return onFrameLayoutResult;
 
@@ -145,8 +168,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
             if (onLineResult) return onLineResult;
           }
 
-          const d = sub(event.data.current, event.data.startAbs);
-
+          const d = primarySnappingGuidelineHandler.getDiff(movingRect, sub(event.data.current, event.data.startAbs));
           const outlinePoints = movingOutlinePoints?.map((p) => add(p, d));
           const outlinePointsSub = movingOutlinePointsSub?.map((p) => add(p, d));
           snappingResult = event.data.ctrl
@@ -158,6 +180,7 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
                   movingRectSub ? { rect: moveRect(movingRectSub, d), outlinePoints: outlinePointsSub } : undefined,
                   ctx.getScale(),
                 );
+          initCommands(ctx);
 
           const translate = snappingResult ? add(d, snappingResult.diff) : d;
           affine = [1, 0, 0, 1, translate.x, translate.y];
@@ -191,26 +214,32 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
           return;
         }
         case "pointerup": {
-          const val = ctx.getTmpShapeMap();
-
-          if (Object.keys(val).length > 0) {
-            ctx.patchShapes(
-              getPatchByPointerUpOutsideLayout(ctx.getShapeComposite(), val, Object.keys(ctx.getSelectedShapeIdMap())),
-            );
-          }
-          return () => ctx.states.newSelectionHubState({ boundingBox: boundingBox.getTransformedBoundingBox(affine) });
+          return complete(ctx);
         }
         case "selection": {
           return ctx.states.newSelectionHubState;
         }
         case "keydown": {
           switch (event.data.key) {
+            case "Escape":
+              return ctx.states.newSelectionHubState;
+            case "Enter":
+              return complete(ctx);
+            case "Tab": {
+              event.data.prevent?.();
+              if (event.data.shift) {
+                primarySnappingGuidelineHandler.clear();
+              } else {
+                primarySnappingGuidelineHandler.update(snappingResult, applyAffine(affine, movingRect));
+              }
+              ctx.redraw();
+              initCommands(ctx);
+              return;
+            }
             case "a": {
               ctx.patchUserSetting({ attachToLine: ctx.getUserSetting().attachToLine === "on" ? "off" : "on" });
               return;
             }
-            case "Escape":
-              return ctx.states.newSelectionHubState;
             case "g":
               if (event.data.shift) return;
               ctx.patchUserSetting({ grid: ctx.getGrid().disabled ? "on" : "off" });
@@ -235,6 +264,20 @@ export function newMovingShapeState(option?: Option): AppCanvasState {
       const shapeComposite = ctx.getShapeComposite();
       const scale = ctx.getScale();
       const style = ctx.getStyleScheme();
+
+      const primaryGuidelineRadian = primarySnappingGuidelineHandler.getGuidelineRadian();
+      if (primaryGuidelineRadian !== undefined) {
+        scaleGlobalAlpha(renderCtx, 0.2, () => {
+          applyRectProjectionPath(
+            renderCtx,
+            ctx.getViewRect(),
+            moveRect(movingRect, { x: affine[4], y: affine[5] }),
+            primaryGuidelineRadian,
+          );
+          applyFillStyle(renderCtx, { color: style.selectionSecondaly });
+          renderCtx.fill();
+        });
+      }
 
       const v = { x: affine[4], y: affine[5] };
       renderMovingHighlight(renderCtx, {

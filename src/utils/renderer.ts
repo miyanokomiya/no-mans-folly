@@ -1,5 +1,13 @@
 import { IRectangle, IVec2, PathSegmentRaw, add, getRadian, getUnit, isSame, multi, rotate, sub } from "okageo";
-import { ISegment, TAU, divideSafely, getArcCurveParamsByNormalizedControl, getRotateFn } from "./geometry";
+import {
+  ISegment,
+  TAU,
+  divideSafely,
+  getArcCurveParamsByNormalizedControl,
+  getRectPoints,
+  getRotateFn,
+  normalizeLineRotation,
+} from "./geometry";
 import { applyStrokeStyle } from "./strokeStyle";
 import { applyFillStyle } from "./fillStyle";
 import { COLORS } from "./color";
@@ -459,4 +467,15 @@ export function getImageAtCenterParams(img: Size, size: Size): IRectangle {
 export function renderImageAtCenter(ctx: CanvasCTX, img: HTMLImageElement, size: Size) {
   const rect = getImageAtCenterParams(img, size);
   ctx.drawImage(img, 0, 0, img.width, img.height, rect.x, rect.y, rect.width, rect.height);
+}
+
+export function applyRectProjectionPath(ctx: CanvasCTX, viewRect: IRectangle, srcRect: IRectangle, radian: number) {
+  const size = Math.max(viewRect.width, viewRect.height) * 2;
+  const nRadian = normalizeLineRotation(radian);
+  const v = multi(rotate({ x: 1, y: 0 }, nRadian), size);
+  const movingRectPoints = getRectPoints(srcRect);
+  const [a, b] =
+    nRadian > Math.PI / 2 ? [movingRectPoints[0], movingRectPoints[2]] : [movingRectPoints[1], movingRectPoints[3]];
+  const path = [add(a, v), sub(a, v), sub(b, v), add(b, v)];
+  applyPath(ctx, path);
 }

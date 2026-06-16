@@ -46,7 +46,7 @@ export interface SnappingResult extends SnappingTargetInfo {
   anchorPoints: IVec2[];
 }
 
-interface SnappingTargetInfo {
+export interface SnappingTargetInfo {
   targets: SnappingResultTarget[];
   intervalTargets: IntervalSnappingResultTarget[];
 }
@@ -1126,6 +1126,21 @@ export function getGuidelinesFromSnappingResult(snappingResult: SnappingTargetIn
     }),
   );
   return filterAt ? allCandidates.filter((seg) => isOnLine(filterAt, seg)) : allCandidates;
+}
+
+export function getIndexGuidelineFromSnappingResult(
+  snappingResult: SnappingTargetInfo,
+): SnappingResultTarget | undefined {
+  const candidate = snappingResult.targets.find((t) => !t.outOfRange);
+  if (candidate) return candidate;
+
+  const intervalCandidate = snappingResult.intervalTargets.at(0);
+  if (intervalCandidate) {
+    const l = intervalCandidate.lines[0];
+    const v = rotate(sub(l[1], l[0]), Math.PI / 2);
+    const line: ISegment = [l[0], add(l[0], v)];
+    return { id: intervalCandidate.pairs[0][0], line };
+  }
 }
 
 export function filterSnappingTargetsBySecondGuideline(
