@@ -18,6 +18,7 @@ export const COMMAND_EXAM_SRC = {
   EXTRUDE_LINE_SEGMENT: { command: "e", title: "Extrude segment" },
   SLIDE_LINE_SEGMENT: { command: "e", title: "Slide segment" },
   HOOK_TO_SHAPE: { command: "Shift", title: "Hook to shape" },
+  COPY_BOUNDS: { command: "Click", title: "Select copy target" },
 
   PICK_PRIMARY_GUIDE: { command: "Tab", title: "Pick primary guideline" },
   SWITCH_PRIMARY_GUIDE: { command: "Tab", title: "Switch primary guideline" },

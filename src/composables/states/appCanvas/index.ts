@@ -28,6 +28,7 @@ import { newShapeAttachingState } from "./attachments/shapeAttachingState";
 import { newMovingShapeInTableState } from "./table/movingShapeInTableState";
 import { newMovingShapeInAlignState } from "./align/movingShapeInAlignState";
 import { newTextEditingState } from "./text/textEditingState";
+import { newBoundsEyedropperState } from "./boundsEyedropperState";
 
 // TODO: Should hoist all states here to avoid circular dependencies.
 export const stateGenerators = {
@@ -61,5 +62,6 @@ export const stateGenerators = {
   newMovingShapeInTableState,
   newMovingShapeInAlignState,
   newTextEditingState,
+  newBoundsEyedropperState,
 };
 export type StateGenerators = typeof stateGenerators;

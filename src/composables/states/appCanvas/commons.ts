@@ -66,7 +66,8 @@ type AcceptableEvent =
   | "VnCreatePolygon"
   | "RectSelectReady"
   | "ShapeInspection"
-  | "PanToShape";
+  | "PanToShape"
+  | "BoundsEyedropper";
 
 export function getCommonAcceptableEvents(excludes: AcceptableEvent[] = []): AcceptableEvent[] {
   const ex = new Set(excludes);
@@ -82,6 +83,7 @@ export function getCommonAcceptableEvents(excludes: AcceptableEvent[] = []): Acc
     "RectSelectReady",
     "ShapeInspection",
     "PanToShape",
+    "BoundsEyedropper",
   ];
   return list.filter((s) => !ex.has(s));
 }
@@ -117,6 +119,8 @@ export function handleStateEvent(
       return () => newShapeInspectionState();
     case "PanToShape":
       return () => newPanToShapeState(event.data.options);
+    case "BoundsEyedropper":
+      return () => ctx.states.newBoundsEyedropperState(event.data.options);
   }
 }
 
@@ -694,6 +698,7 @@ export const handleIntransientEvent: AppCanvasState["handleEvent"] = (ctx, event
         "RectSelectReady",
         "ShapeInspection",
         "PanToShape",
+        "BoundsEyedropper",
       ]);
     case "contextmenu": {
       const userSetting = ctx.getUserSetting();

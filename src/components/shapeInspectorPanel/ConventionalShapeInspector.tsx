@@ -1,16 +1,17 @@
 import { useCallback, useMemo } from "react";
 import { PointField } from "./PointField";
-import { AffineMatrix, IRectangle, IVec2, getCenter, isSame, multiAffines } from "okageo";
+import { AffineMatrix, IRectangle, IVec2, isSame } from "okageo";
 import { Shape, Size } from "../../models";
 import { getRectWithRotationFromRectPolygon } from "../../utils/geometry";
 import { NumberInput } from "../atoms/inputs/NumberInput";
-import { ShapeComposite } from "../../composables/shapeComposite";
 import { InlineField } from "../atoms/InlineField";
 import { useShapeComposite, useStaticShapeComposite } from "../../hooks/storeHooks";
 import { resizeShapeTrees } from "../../composables/shapeResizing";
 import { BlockGroupField } from "../atoms/BlockGroupField";
 import { getAttachmentByUpdatingRotation, getSizePresets, isNoRotationShape } from "../../shapes";
 import { SelectInput } from "../atoms/inputs/SelectInput";
+import eyeDropperIcon from "../../assets/icons/eyedropper.svg";
+import { getMoveToAffine, getRotateToAffine, getScaleToAffine } from "../../composables/inspector";
 
 interface Props {
   targetShape: Shape;
@@ -18,6 +19,7 @@ interface Props {
   commit: () => void;
   updateTmpShapes: (patch: { [id: string]: Partial<Shape> }) => void;
   readyState: () => void;
+  onBoundsEyeDropperClick?: (type?: "position" | "size" | "rotation") => void;
 }
 
 export const ConventionalShapeInspector: React.FC<Props> = ({
@@ -26,6 +28,7 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
   commit,
   updateTmpShapes,
   readyState,
+  onBoundsEyeDropperClick,
 }) => {
   const shapeComposite = useShapeComposite();
   const staticShapeComposite = useStaticShapeComposite();
@@ -132,37 +135,46 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
     [handleResize, subShapeComposite, targetShape, sizePresetOptions],
   );
 
-  const rotationField = isNoRotationShape(shapeComposite.getShapeStruct, targetShape) ? undefined : (
-    <InlineField label={"angle"}>
-      <div className="w-24">
-        <NumberInput
-          value={(targetLocalBounds[1] * 180) / Math.PI}
-          onChange={handleChangeRotation}
-          onBlur={commit}
-          keepFocus
-          slider
+  const sizeField = (
+    <InlineField label={"w, h"}>
+      <div className="flex items-center">
+        <PointField
+          value={targetSize}
+          onChange={handleChangeSize}
+          min={1}
+          disabledX={srcSize.x === 0}
+          disabledY={srcSize.y === 0}
+          swappable
         />
+        <EyedropperButton type="size" onBoundsEyeDropperClick={onBoundsEyeDropperClick} />
       </div>
     </InlineField>
   );
 
-  const sizeField = (
-    <InlineField label={"w, h"}>
-      <PointField
-        value={targetSize}
-        onChange={handleChangeSize}
-        min={1}
-        disabledX={srcSize.x === 0}
-        disabledY={srcSize.y === 0}
-        swappable
-      />
+  const rotationField = isNoRotationShape(shapeComposite.getShapeStruct, targetShape) ? undefined : (
+    <InlineField label={"angle"}>
+      <div className="flex items-center">
+        <div className="w-24">
+          <NumberInput
+            value={(targetLocalBounds[1] * 180) / Math.PI}
+            onChange={handleChangeRotation}
+            onBlur={commit}
+            keepFocus
+            slider
+          />
+        </div>
+        <EyedropperButton type="rotation" onBoundsEyeDropperClick={onBoundsEyeDropperClick} />
+      </div>
     </InlineField>
   );
 
   return (
     <BlockGroupField label="Local bounds" accordionKey="shape-bounds">
       <InlineField label={"x, y"}>
-        <PointField value={targetLocation} onChange={handleChangePosition} />
+        <div className="flex items-center">
+          <PointField value={targetLocation} onChange={handleChangePosition} />
+          <EyedropperButton type="position" onBoundsEyeDropperClick={onBoundsEyeDropperClick} />
+        </div>
       </InlineField>
       {sizePresetOptions && sizePreset ? (
         <BlockGroupField label="Size">
@@ -181,36 +193,18 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
   );
 };
 
-function getMoveToAffine(subShapeComposite: ShapeComposite, shape: Shape, to: IVec2): AffineMatrix {
-  const [origin] = getRectWithRotationFromRectPolygon(subShapeComposite.getLocalRectPolygon(shape));
-  return [1, 0, 0, 1, to.x - origin.x, to.y - origin.y];
+interface EyedropperButtonProps {
+  type?: "position" | "size" | "rotation";
+  onBoundsEyeDropperClick?: (type?: "position" | "size" | "rotation") => void;
 }
 
-function getScaleToAffine(subShapeComposite: ShapeComposite, shape: Shape, to: IVec2): AffineMatrix {
-  const polygon = subShapeComposite.getLocalRectPolygon(shape);
-  const [rect] = getRectWithRotationFromRectPolygon(polygon);
-  const origin = polygon[0];
-  const sin = Math.sin(shape.rotation);
-  const cos = Math.cos(shape.rotation);
-
-  return multiAffines([
-    [1, 0, 0, 1, origin.x, origin.y],
-    [cos, sin, -sin, cos, 0, 0],
-    [rect.width === 0 ? 1 : to.x / rect.width, 0, 0, rect.height === 0 ? 1 : to.y / rect.height, 0, 0],
-    [cos, -sin, sin, cos, 0, 0],
-    [1, 0, 0, 1, -origin.x, -origin.y],
-  ]);
-}
-
-function getRotateToAffine(subShapeComposite: ShapeComposite, shape: Shape, to: number): AffineMatrix {
-  const polygon = subShapeComposite.getLocalRectPolygon(shape);
-  const origin = getCenter(polygon[0], polygon[2]);
-  const sin = Math.sin(to - shape.rotation);
-  const cos = Math.cos(to - shape.rotation);
-
-  return multiAffines([
-    [1, 0, 0, 1, origin.x, origin.y],
-    [cos, sin, -sin, cos, 0, 0],
-    [1, 0, 0, 1, -origin.x, -origin.y],
-  ]);
-}
+const EyedropperButton: React.FC<EyedropperButtonProps> = ({ type, onBoundsEyeDropperClick }) => {
+  const handleSizeEyeDropperClick = useCallback(() => {
+    onBoundsEyeDropperClick?.(type);
+  }, [type, onBoundsEyeDropperClick]);
+  return (
+    <button type="button" className="px-1 self-stretch hover:bg-gray-200" onClick={handleSizeEyeDropperClick}>
+      <img src={eyeDropperIcon} className="w-5 h-5" />
+    </button>
+  );
+};

@@ -125,6 +125,16 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [getShapeComposite, setTmpShapeMap],
   );
 
+  const handleBoundsEyeDropperClick = useCallback(
+    (type?: "position" | "size" | "rotation") => {
+      handleEvent({
+        type: "state",
+        data: { name: "BoundsEyedropper", options: { type } },
+      });
+    },
+    [handleEvent],
+  );
+
   // Intended for patching common attributes rather than transforming.
   const updateTargetShapesBySamePatch = useCallback(
     (patch: Partial<Shape>, draft = false) => {
@@ -266,6 +276,7 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
               commit={commit}
               updateTmpShapes={updateTmpShapes}
               readyState={readyState}
+              onBoundsEyeDropperClick={handleBoundsEyeDropperClick}
             />
           )}
         </>
