@@ -102,10 +102,29 @@ const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size,
     fetchIndex();
   }, [fetchIndex]);
 
+  const [metaTags, setMetaTags] = useState<Record<string, string[]>>();
+  const fetchMeta = useCallback(async () => {
+    if (metaTags !== undefined) return;
+    try {
+      const res = await fetch(`${basePath}/meta.json`);
+      if (res.ok) {
+        setMetaTags(await res.json());
+      } else {
+        setMetaTags({});
+      }
+    } catch {
+      setMetaTags({});
+    }
+  }, [metaTags, basePath]);
+
   const [keyword, setKeyword] = useState("");
-  const handleKeywordChange = useCallback((val: string) => {
-    setKeyword(val);
-  }, []);
+  const handleKeywordChange = useCallback(
+    (val: string) => {
+      if (val && metaTags === undefined) fetchMeta();
+      setKeyword(val);
+    },
+    [metaTags, fetchMeta],
+  );
 
   const sortedIndexData = useSortedObjectItems(indexData);
 
@@ -113,7 +132,7 @@ const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size,
     if (!indexData) return;
 
     const base = new Map<string, { url: string; tag: string; name: string }>();
-    makePathMap(base, basePath, indexData);
+    makePathMap(base, basePath, indexData, metaTags);
 
     const ret = new Map<string, { url: string; tag: string; name: string }>();
     Array.from(base.entries())
@@ -122,7 +141,7 @@ const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size,
         ret.set(key, value);
       });
     return ret;
-  }, [indexData, basePath]);
+  }, [indexData, basePath, metaTags]);
 
   const filteredIndexData = useMemo(() => {
     if (!keyword || !indexDataForSearch) return;
@@ -335,13 +354,17 @@ function makePathMap(
   ret: Map<string, { url: string; tag: string; name: string }>,
   currentPath: string,
   data: ListItemData,
+  metaTags?: Record<string, string[]>,
 ) {
   Object.entries(data).forEach(([key, obj]) => {
     if (typeof obj === "string") {
       const url = currentPath + "/" + key;
-      ret.set(obj, { url, tag: getAssetSearchTag(url), name: key });
+      const pathTag = getAssetSearchTag(url);
+      const sidecarTags = metaTags?.[key];
+      const tag = sidecarTags ? `${pathTag} ${sidecarTags.join(" ")}` : pathTag;
+      ret.set(obj, { url, tag, name: key });
     } else {
-      makePathMap(ret, currentPath + "/" + key, obj);
+      makePathMap(ret, currentPath + "/" + key, obj, metaTags);
     }
   });
 }
