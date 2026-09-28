@@ -7,7 +7,7 @@ import { newShapeComposite } from "../composables/shapeComposite";
 import { duplicateShapes } from "../shapes/utils/duplicator";
 import { getSymbolAssetMigrationInfo } from "../shapes/utils/symbol";
 
-const TEMPLATE_LIST = ["Flowchart", "Sequence", "Presentation", "Misc"];
+const TEMPLATE_LIST = ["Flowchart", "Sequence", "Presentation", "Circuit", "Misc"];
 
 export const ShapeTemplatePanel: React.FC = () => {
   const getCtx = useContext(GetAppStateContext);

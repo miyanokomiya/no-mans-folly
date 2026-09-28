@@ -345,7 +345,7 @@ export const IconItem: React.FC<IconButtonProps> = ({ url, name, id, size, onDra
           onLoad={setIconSize}
         />
       </ClickOrDragHandler>
-      {size === "lg" ? <div className="pb-1 border-b border-gray-300" /> : undefined}
+      {size === "lg" ? <div className="pb-1" /> : undefined}
     </li>
   );
 };
