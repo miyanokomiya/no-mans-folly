@@ -96,7 +96,7 @@ export function newTextEditorController(options: TextEditorControllerOptions) {
   }
 
   function shiftSelectionBy(diff: number) {
-    _selection += diff;
+    setCursor(_cursor, _selection + diff);
   }
 
   // This value always refers to the left bound of the selection range.
@@ -556,7 +556,7 @@ export function newTextEditorController(options: TextEditorControllerOptions) {
 
   function stopIME() {
     isIME = false;
-    _selection = 0;
+    setCursor(_cursor, 0);
   }
 
   function render(ctx: CanvasCTX) {
