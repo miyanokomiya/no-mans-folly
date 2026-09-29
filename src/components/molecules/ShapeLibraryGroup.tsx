@@ -204,8 +204,9 @@ const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size,
             })}
           </ul>
         )
-      ) : (
-        sortedIndexData.map(([key, item]) => (
+      ) : undefined}
+      <div className={rootItems ? "hidden" : ""}>
+        {sortedIndexData.map(([key, item]) => (
           <ListItem
             key={key}
             name={key}
@@ -216,8 +217,8 @@ const ShapeLibraryGroup: React.FC<ShapeLibraryGroupProps> = ({ name, type, size,
             onIconDragStart={onIconDragStart}
             onIconClick={onIconClick}
           />
-        ))
-      )}
+        ))}
+      </div>
     </div>
   );
 };

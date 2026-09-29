@@ -323,7 +323,7 @@ export const HexField: React.FC<HexFieldProps> = ({ r, g, b, onChange }) => {
   }, [onChange, draftValue]);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SubmitEvent) => {
       e.preventDefault();
       finish();
     },

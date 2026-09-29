@@ -69,7 +69,7 @@ export const TextLinkPanel: React.FC<TextLinkPanelProps> = ({ value, onChange, s
   }, [value]);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SubmitEvent) => {
       e.preventDefault();
       onChange?.(draftValue);
     },
