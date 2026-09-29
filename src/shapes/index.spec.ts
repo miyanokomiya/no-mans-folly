@@ -18,6 +18,7 @@ import {
   refreshShapeRelations,
   remapShapeIds,
   renderShape,
+  resizeShape,
   shouldResizeOnTextEdit,
   switchShapeType,
 } from ".";
@@ -32,6 +33,7 @@ import { EllipseShape } from "./ellipse";
 import { createFillStyle } from "../utils/fillStyle";
 import { COLORS } from "../utils/color";
 import { ShapeAttachment } from "../models";
+import { getRotatedAtAffine } from "../utils/geometry";
 
 describe("getCommonStruct", () => {
   test("should return the struct of the type", () => {
@@ -164,6 +166,37 @@ describe("isPointOn", () => {
     const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", { id: "test", width: 10, height: 20 });
     expect(isPointOn(getCommonStruct, shape, { x: -3, y: 3 }, {} as any)).toBe(false);
     expect(isPointOn(getCommonStruct, shape, { x: 3, y: 3 }, {} as any)).toBe(true);
+  });
+});
+
+describe("resizeShape", () => {
+  test("should regard fixedRotation when it's defined", () => {
+    const shape = createShape<RectangleShape>(getCommonStruct, "rectangle", {
+      id: "test",
+      width: 10,
+      height: 20,
+      rotation: Math.PI / 4,
+    });
+    expect(resizeShape(getCommonStruct, shape, getRotatedAtAffine({ x: -3, y: 3 }, Math.PI / 2))).toStrictEqual({
+      p: {
+        x: -15,
+        y: 1,
+      },
+      rotation: (Math.PI / 4) * 3,
+    });
+    expect(
+      resizeShape(
+        getCommonStruct,
+        { ...shape, fixedRotation: shape.rotation },
+        getRotatedAtAffine({ x: -3, y: 3 }, Math.PI / 2),
+      ),
+    ).toStrictEqual({
+      p: {
+        x: -15,
+        y: 1,
+      },
+      rotation: Math.PI / 4,
+    });
   });
 });
 

@@ -24,6 +24,7 @@ export interface Shape extends Entity {
   type: string;
   p: IVec2; // should always represent the top left position
   rotation: number;
+  fixedRotation?: number;
   gcV?: GroupConstraint;
   gcH?: GroupConstraint;
   lcV?: LayoutConstraint;

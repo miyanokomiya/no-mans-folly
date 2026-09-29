@@ -155,7 +155,24 @@ export function resizeShape<T extends Shape>(
   shapeContext?: ShapeContext,
 ): Partial<T> {
   const struct = getStruct(shape.type);
-  return struct.resize(shape, resizingAffine, shapeContext);
+  let ret = struct.resize(shape, resizingAffine, shapeContext);
+
+  if (shape.fixedRotation !== undefined) {
+    const dr = (ret.rotation ?? shape.rotation) - shape.fixedRotation;
+    if (dr !== 0) {
+      const nextShape = { ...shape, ...ret };
+      const fixedRotationAffine = geometry.getRotatedAtAffine(
+        {
+          x: nextShape.p.x + nextShape.width / 2,
+          y: nextShape.p.y + nextShape.height / 2,
+        },
+        -dr,
+      );
+      ret = { ...ret, ...struct.resize(nextShape, fixedRotationAffine) };
+    }
+  }
+
+  return ret;
 }
 
 export function applyScaleToShape<T extends Shape>(

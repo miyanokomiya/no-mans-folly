@@ -66,7 +66,8 @@ export function defineSingleSelectedHandlerState<S extends Shape, H extends Shap
         path: shapeComposite.getLocalRectPolygon(targetShape),
         locked: targetShape.locked,
         noExport: targetShape.noExport,
-        noRotation: isNoRotationShape(shapeComposite.getShapeStruct, targetShape),
+        noRotation:
+          isNoRotationShape(shapeComposite.getShapeStruct, targetShape) || targetShape.fixedRotation !== undefined,
       });
 
       if (

@@ -12,6 +12,7 @@ import { getAttachmentByUpdatingRotation, getSizePresets, isNoRotationShape } fr
 import { SelectInput } from "../atoms/inputs/SelectInput";
 import eyeDropperIcon from "../../assets/icons/eyedropper.svg";
 import { getMoveToAffine, getRotateToAffine, getScaleToAffine } from "../../composables/inspector";
+import { ToggleInput } from "../atoms/inputs/ToggleInput";
 
 interface Props {
   targetShape: Shape;
@@ -102,6 +103,14 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
     [targetShape, subShapeComposite, commit, readyState, updateTmpShapes, shapeComposite],
   );
 
+  const handleChangeFixedRotation = useCallback(
+    (val: boolean) => {
+      updateTmpShapes({ [targetShape.id]: { fixedRotation: val ? targetShape.rotation : undefined } });
+      commit();
+    },
+    [targetShape, updateTmpShapes, commit],
+  );
+
   const sizePresetOptions = useMemo<{ value: string; label: string; size: Size }[] | undefined>(() => {
     const presets = getSizePresets(staticShapeComposite.getShapeStruct, targetShape);
     if (!presets) return;
@@ -154,11 +163,17 @@ export const ConventionalShapeInspector: React.FC<Props> = ({
   const rotationField = isNoRotationShape(shapeComposite.getShapeStruct, targetShape) ? undefined : (
     <InlineField label={"angle"}>
       <div className="flex items-center">
+        <div className="mr-2">
+          <ToggleInput value={targetShape.fixedRotation !== undefined} onChange={handleChangeFixedRotation}>
+            Fixed
+          </ToggleInput>
+        </div>
         <div className="w-24">
           <NumberInput
             value={(targetLocalBounds[1] * 180) / Math.PI}
             onChange={handleChangeRotation}
             onBlur={commit}
+            disabled={targetShape.fixedRotation !== undefined}
             keepFocus
             slider
           />
