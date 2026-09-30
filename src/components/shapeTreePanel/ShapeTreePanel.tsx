@@ -423,7 +423,7 @@ const NodeHeader: React.FC<Omit<UITreeNodeProps, "childNode"> & { dropElm?: Reac
     };
 
     return (
-      <div data-anchor-root>
+      <div data-anchor-root onPointerEnter={handleNodePointerEnter}>
         <LazyOnScreenRender className="flex items-center relative h-[30px]" onRender={renderTargetShape}>
           <div className="w-4 h-full flex items-center justify-center">{getPrefixElm()}</div>
           <ClickOrDragHandler
@@ -431,7 +431,7 @@ const NodeHeader: React.FC<Omit<UITreeNodeProps, "childNode"> & { dropElm?: Reac
             onClick={handleNodeClick}
             onDragStart={handleDragStart}
           >
-            <button type="button" className="flex items-center gap-2" onPointerEnter={handleNodePointerEnter}>
+            <button type="button" className="flex items-center gap-2">
               <div className="border rounded-xs" style={{ backgroundColor: sheetColor, padding: 2 }}>
                 <canvas ref={canvasRef} width="24" height="24" />
               </div>
