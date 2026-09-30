@@ -38,15 +38,12 @@ export const struct: ShapeStruct<TextShape> = {
     return ret;
   },
   refreshRelation(shape, availableIdSet) {
-    if (shape.parentId && availableIdSet.has(shape.parentId)) {
+    if (shape.lineAttached === undefined || (shape.parentId && availableIdSet.has(shape.parentId))) {
       return undefined;
     }
 
-    const ret: Partial<TextShape> = { lineAttached: undefined };
-    if (shape.hAlign && shape.hAlign !== "left") ret.hAlign = undefined;
-    if (shape.vAlign && shape.vAlign !== "top") ret.vAlign = undefined;
-
-    return ret;
+    // Note: Refreshing "hAlign" and "vAlign" here doesn't work well for plain text shapes.
+    return { lineAttached: undefined };
   },
   canAttachSmartBranch: false,
   resizeOnTextEdit: patchSize,

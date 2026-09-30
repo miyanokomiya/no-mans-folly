@@ -16,19 +16,19 @@ describe("refreshRelation", () => {
     expect(struct.refreshRelation?.(shape, new Set(["a"]))).toEqual(undefined);
 
     const result = struct.refreshRelation?.(shape, new Set([]));
-    expect(result).toEqual({ lineAttached: undefined, hAlign: undefined, vAlign: undefined });
-    expect(result).toHaveProperty("lineAttached");
-    expect(result).toHaveProperty("hAlign");
-    expect(result).toHaveProperty("vAlign");
+    expect(result).toStrictEqual({ lineAttached: undefined });
   });
 
   test("should patch object to refresh line connection whenever it has no valid parent but has lineAttached", () => {
     const shape = struct.create({ hAlign: "center", vAlign: "center", lineAttached: 0.5 });
-    expect(struct.refreshRelation?.(shape, new Set(["a"]))).toEqual({
+    expect(struct.refreshRelation?.(shape, new Set(["a"]))).toStrictEqual({
       lineAttached: undefined,
-      hAlign: undefined,
-      vAlign: undefined,
     });
+  });
+
+  test("should not refresh alignment when the source isn't line label", () => {
+    const shape = struct.create({ hAlign: "center", vAlign: "center" });
+    expect(struct.refreshRelation?.(shape, new Set(["a"]))).toEqual(undefined);
   });
 
   test("should not refresh parent when it has valid parent but doesn't have lineAttached", () => {
