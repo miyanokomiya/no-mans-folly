@@ -33,6 +33,11 @@ export function handlePointerMoveOnLine(
     // => Directly connected ones are likely close to the moving shape.
     if (getConnections(shape).some((c) => c?.id === movingShape.id)) return false;
 
+    // Exclude lines that should be ignored as snap targets or are in such branches.
+    if (shape.snapMode === "off") return false;
+    const branchPath = shapeComposite.getBranchPathTo(shape.id);
+    if (branchPath.some((id) => shapeComposite.shapeMap[id].snapMode === "off")) return false;
+
     return true;
   };
 

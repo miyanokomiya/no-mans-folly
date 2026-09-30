@@ -39,6 +39,7 @@ export interface Shape extends Entity {
   clipping?: boolean; // When this is set true, it's prioritized over all child shapes.
   cropClipBorder?: boolean; // This is prioritized over all child shapes.
   noBounds?: boolean; // When this is set true, the shape doesn't affect the bounds of the parent shape.
+  snapMode?: "off"; // "undefined" means "on": this shape can be snapping target.
   alpha?: number; // "undefined" should mean 1.
   attachment?: ShapeAttachment;
   attachmentAttrs?: ShapeAttachmentAttrs; // Preserve a part of "attachment" related to self.

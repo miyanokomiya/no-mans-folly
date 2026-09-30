@@ -788,10 +788,12 @@ export function getSnappableCandidates(
   const snappableCandidateIds = getLineUnrelatedIds(shapeComposite, targetIds);
   const shapes = snappableCandidateIds.map((id) => shapeMap[id]);
   const ignoreLine = ctx.getUserSetting().snapIgnoreLine === "on";
-  return shapeComposite.getShapesOverlappingRect(
-    ignoreLine ? shapes.filter((s) => !isLineShape(s)) : shapes,
-    ctx.getViewRect(),
-  );
+  const ignoreIds = shapeComposite.shapes.filter((s) => s.snapMode === "off").map((s) => s.id);
+  const ignoreAllBranchShapes = shapeComposite.getAllBranchMergedShapes(ignoreIds);
+  const ignoreIdSet = new Set(ignoreAllBranchShapes.map((s) => s.id));
+  const candidates =
+    ignoreIdSet.size > 0 || ignoreLine ? shapes.filter((s) => !ignoreIdSet.has(s.id) && !isLineShape(s)) : shapes;
+  return shapeComposite.getShapesOverlappingRect(candidates, ctx.getViewRect());
 }
 
 /**

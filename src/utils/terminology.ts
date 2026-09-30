@@ -90,6 +90,12 @@ const TERMINOLOGIES: { [key: string]: TerminologyItem } = {
       description: i18n.t("term.nobounds.desc"),
     };
   },
+  get IGNORE_SNAP() {
+    return {
+      text: i18n.t("term.ignore_snap"),
+      description: i18n.t("term.ignore_snap.desc"),
+    };
+  },
 };
 
 export function parseTerminologies(src: string): TerminologyItem[] {

@@ -161,6 +161,29 @@ describe("getSnappableCandidates", () => {
       ),
     ).toEqual([shapeComposite.shapes[0]]);
   });
+
+  test("should ignore shape branches with snap-mode off", () => {
+    const shapeComposite = newShapeComposite({
+      shapes: [
+        createShape(getCommonStruct, "group", { id: "group1" }),
+        createShape(getCommonStruct, "rectangle", { id: "rect1", parentId: "group1" }),
+        createShape(getCommonStruct, "rectangle", { id: "rect2", parentId: "group1", snapMode: "off" }),
+        createShape(getCommonStruct, "group", { id: "group1_1", parentId: "group1", snapMode: "off" }),
+        createShape(getCommonStruct, "rectangle", { id: "rect1_1", parentId: "group1_1" }),
+      ],
+      getStruct: getCommonStruct,
+    });
+    expect(
+      getSnappableCandidates(
+        {
+          getShapeComposite: () => shapeComposite,
+          getViewRect: () => ({ x: -1000, y: -1000, width: 2000, height: 2000 }),
+          getUserSetting: () => ({}),
+        },
+        [],
+      ).map((s) => s.id),
+    ).toEqual(["group1", "rect1"]);
+  });
 });
 
 describe("isShapeInteratctiveWithinViewport", () => {

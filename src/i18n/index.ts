@@ -105,6 +105,8 @@ const en = {
       "sheet_to_shape.desc": "Create a shape that displays the thumbnail of the sheet.",
       nobounds: "No bounds within group",
       "nobounds.desc": "This shape doesn't contribute to the bounds of the parent group shape.",
+      ignore_snap: "Ignore as snap target",
+      "ignore_snap.desc": "This shape is ignored as snapping target for other shapes.",
     },
 
     header: {
@@ -285,6 +287,8 @@ const ja: TranslationResource = {
       "sheet_to_shape.desc": "シートのサムネイルを表示するシェイプを作成します。",
       nobounds: "グループ内サイズなし",
       "nobounds.desc": "このシェイプは親グループシェイプのサイズに影響しません。",
+      ignore_snap: "スナップ除外",
+      "ignore_snap.desc": "このシェイプは、他シェイプのスナップ先となりません。",
     },
 
     header: {

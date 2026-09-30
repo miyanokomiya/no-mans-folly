@@ -222,6 +222,13 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
     [updateTargetShapesBySamePatch],
   );
 
+  const handleSnapModeChange = useCallback(
+    (checked: boolean) => {
+      updateTargetShapesBySamePatch({ snapMode: checked ? "off" : undefined });
+    },
+    [updateTargetShapesBySamePatch],
+  );
+
   const statusField = (
     <BlockGroupField label="Status" accordionKey="inspector-status">
       <AlphaField targetTmpShape={targetTmpShape} updateTargetShape={updateTargetShapesBySamePatch} />
@@ -233,6 +240,9 @@ const ShapeInspectorPanelWithShape: React.FC<ShapeInspectorPanelWithShapeProps> 
       </InlineField>
       <InlineField label={<AppText portal>[[NOBOUNDS]]</AppText>}>
         <ToggleInput value={targetTmpShape.noBounds ?? false} onChange={handleNoBoundsChange} />
+      </InlineField>
+      <InlineField label={<AppText portal>[[IGNORE_SNAP]]</AppText>}>
+        <ToggleInput value={!!targetTmpShape.snapMode} onChange={handleSnapModeChange} />
       </InlineField>
     </BlockGroupField>
   );
